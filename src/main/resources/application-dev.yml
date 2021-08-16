@@ -1,0 +1,9 @@
+server:
+  port: 7777
+
+spring:
+  application:
+    name: apex-agent
+
+info:
+  name: test-agent

@@ -1,0 +1,6 @@
+/.idea/
+/test-output/
+/target/
+/.gradle/
+*/.DS_Store
+.DS_Store

@@ -1,0 +1,4 @@
+spring:
+  version: @project.version@
+  profiles:
+    active: @profileActive@
