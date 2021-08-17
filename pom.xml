@@ -58,6 +58,12 @@
             <artifactId>selenium-java</artifactId>
             <version>3.141.59</version>
         </dependency>
+        <!--    解析xml    -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.11.3</version>
+        </dependency>
     </dependencies>
 
     <!--  通过这个配置来决定打包使用哪一个环境  -->

@@ -1,6 +1,8 @@
-package com.sonic.agent.common;
+package com.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
+import com.sonic.agent.interfaces.DeviceStatus;
+import com.sonic.agent.interfaces.LogType;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,10 @@ public class LogTool {
      * @date 2021/8/16 19:57
      */
     public void send(JSONObject message) {
+        //先加上消息附带信息
+        message.put("cid", caseId);
+        message.put("rid", resultId);
+        message.put("udId", udId);
         if (type.equals(DeviceStatus.DEBUGGING)) {
             sendToWebSocket(WebSocketSessionMap.getMap().get(socketSession), message);
         }
@@ -109,10 +115,6 @@ public class LogTool {
         log.put("pf", platform);
         log.put("ver", version);
         log.put("run", totalTime);
-        log.put("udId", udId);
-        log.put("cid", caseId);
-        log.put("rid", resultId);
-        log.put("udId", udId);
         send(log);
     }
 
@@ -148,15 +150,10 @@ public class LogTool {
         log.put("type", type);
         log.put("log", logName);
         log.put("url", url);
-        log.put("udId", udId);
-        log.put("cid", caseId);
-        log.put("rid", resultId);
-        log.put("udId", udId);
         send(log);
     }
 
     /**
-     * @param msgType
      * @param status
      * @param des
      * @param detail
@@ -165,15 +162,58 @@ public class LogTool {
      * @des 发送普通步骤log
      * @date 2021/8/16 19:58
      */
-    public void sendStepLog(String msgType, String status, String des, String detail) {
+    public void sendStepLog(int status, String des, String detail) {
         JSONObject log = new JSONObject();
-        log.put("msg", msgType);
+        log.put("msg", "step");
         log.put("des", des);
         log.put("status", status);
         log.put("log", detail);
-        log.put("cid", caseId);
-        log.put("rid", resultId);
-        log.put("udId", udId);
+        send(log);
+    }
+
+    /**
+     * @param type
+     * @param detail
+     * @return void
+     * @author ZhouYiXun
+     * @des 发送性能数据
+     * @date 2021/8/16 19:58
+     */
+    public void sendPerLog(String type, JSONObject detail) {
+        JSONObject log = new JSONObject();
+        log.put("msg", "perform");
+        log.put("type", type);
+        log.put("detail", detail);
+        send(log);
+    }
+
+    /**
+     * @param isSupport 是否支持录像
+     * @param detail
+     * @return void
+     * @author ZhouYiXun
+     * @des 发送录像数据
+     * @date 2021/8/16 19:58
+     */
+    public void sendRecordLog(boolean isSupport, String detail) {
+        JSONObject log = new JSONObject();
+        log.put("msg", "record");
+        log.put("isSupport", isSupport);
+        log.put("detail", detail);
+        send(log);
+    }
+
+    /**
+     * @param status
+     * @return void
+     * @author ZhouYiXun
+     * @des 发送测试状态
+     * @date 2021/8/16 19:58
+     */
+    public void sendStatusLog(int status) {
+        JSONObject log = new JSONObject();
+        log.put("msg", "status");
+        log.put("status", status);
         send(log);
     }
 
@@ -191,14 +231,14 @@ public class LogTool {
      * @date 2021/8/16 19:59
      */
     public void androidInfo(String platform, String version, String udId, String manufacturer, String model, String api, String size) {
-        sendStepLog("step", "info", "",
-                "设备操作系统：" + platform + "<br>"
-                        + "操作系统版本：" + version + "<br>"
-                        + "设备序列号：" + udId + "<br>"
-                        + "设备制造商：" + manufacturer + "<br>"
-                        + "设备型号：" + model + "<br>"
-                        + "安卓API等级：" + api + "<br>"
-                        + "设备分辨率：" + size
+        sendStepLog(LogType.INFO, "",
+                "设备操作系统：" + platform
+                        + "\n操作系统版本：" + version
+                        + "\n设备序列号：" + udId
+                        + "\n设备制造商：" + manufacturer
+                        + "\n设备型号：" + model
+                        + "\n安卓API等级：" + api
+                        + "\n设备分辨率：" + size
         );
     }
 }

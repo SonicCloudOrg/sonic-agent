@@ -1,7 +1,7 @@
 package com.sonic.agent.bridge;
 
 import com.alibaba.fastjson.JSONObject;
-import com.sonic.agent.common.DeviceStatus;
+import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.maps.AndroidDeviceManagerMap;
 
 /**
@@ -19,7 +19,7 @@ public class AndroidDeviceLocalStatus {
      * @des 发送状态变更消息
      * @date 2021/8/16 20:56
      */
-    public static void send(String udId, DeviceStatus status) {
+    public static void send(String udId, String status) {
         JSONObject deviceDetail = new JSONObject();
         deviceDetail.put("msg", "deviceDetail");
         deviceDetail.put("serialNum", udId);
