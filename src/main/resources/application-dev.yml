@@ -5,5 +5,3 @@ spring:
   application:
     name: apex-agent
 
-info:
-  name: test-agent
