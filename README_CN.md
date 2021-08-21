@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/ZhouYixun/sonic-server/main/logo.png">
 </p>
-<p align="center">🎉Sonic客户端测试平台Agent端模块</p>
+<p align="center">🎉Sonic客户端测试平台后端模块</p>
 
 [English](README.md) | 简体中文
 
@@ -21,6 +21,7 @@
 
 #### sonic能做什么？
 
++ 0编码实现自动化测试
 + 充分利用您的设备（24小时）
 + 远程控制您的设备（安卓、iOS甚至鸿蒙）
 + 在设备执行UI自动化、稳定性和遍历测试
@@ -37,7 +38,7 @@
 ## 打包方式
 
 ```
-mvn package -Pwindows/mac
+mvn package -Pprod
 ```
 
 ## 部署方式

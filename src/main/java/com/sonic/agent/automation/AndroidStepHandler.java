@@ -2,7 +2,7 @@ package com.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.sonic.agent.interfaces.CaseStatus;
+import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.LogType;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.interfaces.PlatformType;
@@ -119,7 +119,7 @@ public class AndroidStepHandler {
         } catch (Exception e) {
             log.sendStepLog(LogType.ERROR, "连接设备驱动失败！", "");
             //测试标记为失败
-            setCaseStatus(CaseStatus.FAIL);
+            setResultDetailStatus(ResultDetailStatus.FAIL);
             if (appiumDriverLocalService.isRunning()) {
                 appiumDriverLocalService.stop();
             }
@@ -153,7 +153,7 @@ public class AndroidStepHandler {
         } catch (Exception e) {
             log.sendStepLog(LogType.WARN, "测试终止异常！请检查设备连接状态", "");
             //测试异常
-            setCaseStatus(CaseStatus.WARN);
+            setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
         }
         if (appiumDriverLocalService.isRunning()) {
@@ -165,7 +165,7 @@ public class AndroidStepHandler {
             e.printStackTrace();
         }
         //默认通过
-        setCaseStatus(CaseStatus.PASS);
+        setResultDetailStatus(ResultDetailStatus.PASS);
         //发送运行时长
         if (version.length() > 0) {
             log.sendElapsed((int) (Calendar.getInstance().getTimeInMillis() - startTime), PlatformType.ANDROID, version);
@@ -195,7 +195,7 @@ public class AndroidStepHandler {
      * @des 发送测试状态
      * @date 2021/8/16 23:46
      */
-    public void setCaseStatus(int status) {
+    public void setResultDetailStatus(int status) {
         if (!isSendStatus) {
             log.sendStatusLog(status);
             isSendStatus = true;

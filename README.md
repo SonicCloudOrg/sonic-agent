@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/ZhouYixun/sonic-server/main/logo.png">
 </p>
-<p align="center">🎉Agent module of sonic client test platform.</p>
+<p align="center">🎉Back end module of sonic client test platform.</p>
 
 English | [简体中文](README_CN.md)
 
@@ -21,6 +21,7 @@ English | [简体中文](README_CN.md)
 
 #### What can sonic do ?
 
++ 0 coding for automated testing
 + Make full use of devices (24hours)
 + Remotely control your device (Android,iOS)
 + Perform UI automation tests,Stability tests and Traversal tests with devices
