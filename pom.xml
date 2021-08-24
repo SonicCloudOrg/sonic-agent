@@ -23,6 +23,11 @@
     </parent>
 
     <dependencies>
+        <!--    rabbitmq    -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
         <!--  webSocket -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
