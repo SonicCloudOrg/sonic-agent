@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
  * @des ADB工具类
  * @date 2021/08/16 19:26
  */
-@Component
+//@Component
 public class AndroidDeviceBridgeTool {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     private static AndroidDebugBridge androidDebugBridge = null;
