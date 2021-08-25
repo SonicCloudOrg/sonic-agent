@@ -2,7 +2,7 @@ package com.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.DeviceStatus;
-import com.sonic.agent.interfaces.LogType;
+import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -231,7 +231,7 @@ public class LogTool {
      * @date 2021/8/16 19:59
      */
     public void androidInfo(String platform, String version, String udId, String manufacturer, String model, String api, String size) {
-        sendStepLog(LogType.INFO, "",
+        sendStepLog(StepType.INFO, "",
                 "设备操作系统：" + platform
                         + "\n操作系统版本：" + version
                         + "\n设备序列号：" + udId

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 
-public class LocalHost {
+public class LocalHostTool {
     public static String host = "127.0.0.1";
 
     public static String getHostIp() {

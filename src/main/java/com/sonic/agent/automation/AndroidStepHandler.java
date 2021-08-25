@@ -3,7 +3,7 @@ package com.sonic.agent.automation;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.ResultDetailStatus;
-import com.sonic.agent.interfaces.LogType;
+import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.interfaces.PlatformType;
 import io.appium.java_client.android.AndroidDriver;
@@ -115,9 +115,9 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability("logcatFilterSpecs", logcatFilter);
         try {
             androidDriver = new AndroidDriver(appiumDriverLocalService.getUrl(), desiredCapabilities);
-            log.sendStepLog(LogType.PASS, "连接设备驱动成功", "");
+            log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
-            log.sendStepLog(LogType.ERROR, "连接设备驱动失败！", "");
+            log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
             //测试标记为失败
             setResultDetailStatus(ResultDetailStatus.FAIL);
             if (appiumDriverLocalService.isRunning()) {
@@ -148,10 +148,10 @@ public class AndroidStepHandler {
                     terminate(testPackage);
                 }
                 androidDriver.quit();
-                log.sendStepLog(LogType.PASS, "退出连接设备", "");
+                log.sendStepLog(StepType.PASS, "退出连接设备", "");
             }
         } catch (Exception e) {
-            log.sendStepLog(LogType.WARN, "测试终止异常！请检查设备连接状态", "");
+            log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", "");
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
@@ -182,9 +182,9 @@ public class AndroidStepHandler {
     public void terminate(String packageName) {
         try {
             androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
-            log.sendStepLog(LogType.PASS, "终止App", "应用包名： " + packageName);
+            log.sendStepLog(StepType.PASS, "终止App", "应用包名： " + packageName);
         } catch (Exception e) {
-            log.sendStepLog(LogType.WARN, "终止App异常！", "应用包名： " + packageName);
+            log.sendStepLog(StepType.WARN, "终止App异常！", "应用包名： " + packageName);
         }
     }
 
@@ -211,7 +211,7 @@ public class AndroidStepHandler {
     public boolean getBattery() {
         double battery = androidDriver.getBatteryInfo().getLevel();
         if (battery <= 0.1) {
-            log.sendStepLog(LogType.ERROR, "设备电量过低!", "跳过本次测试...");
+            log.sendStepLog(StepType.ERROR, "设备电量过低!", "跳过本次测试...");
             return true;
         } else {
             return false;
