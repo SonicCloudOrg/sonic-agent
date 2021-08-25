@@ -16,25 +16,42 @@ import java.util.UUID;
 public class RabbitQueueConfig {
     private final Logger logger = LoggerFactory.getLogger(RabbitQueueConfig.class);
     private String queueId;
+
     @Bean
     public String queueId() {
         queueId = UUID.randomUUID().toString();
         return queueId;
     }
 
+    @Bean("PackageExchange")
+    public FanoutExchange PackageExchange() {
+        return new FanoutExchange("PackageExchange", true, false);
+    }
+
     @Bean("AgentExchange")
-    public FanoutExchange createAgentExchange() {
+    public FanoutExchange AgentExchange() {
         return new FanoutExchange("AgentExchange", true, false);
     }
 
+    @Bean("PackageQueue")
+    public Queue PackageQueue() {
+        return new Queue("PackageQueue-" + queueId, true, false, true);
+    }
+
     @Bean("AgentQueue")
-    public Queue createAgentQueue() {
-        return new Queue("AgentQueue-" +queueId, true, false, true);
+    public Queue AgentQueue() {
+        return new Queue("AgentQueue-" + queueId, true, false, true);
     }
 
     @Bean
-    public Binding bindingDirect(@Qualifier("AgentQueue") Queue queue,
-                                       @Qualifier("AgentExchange") FanoutExchange exchange) {
+    public Binding bindingAgentDirect(@Qualifier("AgentQueue") Queue queue,
+                                      @Qualifier("AgentExchange") FanoutExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange);
+    }
+
+    @Bean
+    public Binding bindingPackageDirect(@Qualifier("PackageQueue") Queue queue,
+                                        @Qualifier("PackageExchange") FanoutExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange);
     }
 
