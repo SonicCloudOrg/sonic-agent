@@ -20,3 +20,7 @@ spring:
         initial-interval: 60000
     publisher-confirm-type: correlated
     publisher-returns: true
+
+sonic:
+  folder:
+    url: http://localhost:8094/api/folder
