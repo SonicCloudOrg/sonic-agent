@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.maps.WebSocketSessionMap;
+import com.sonic.agent.rabbitmq.RabbitMQThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,22 +21,10 @@ import java.util.Date;
 public class LogTool {
     private final Logger logger = LoggerFactory.getLogger(LogTool.class);
     public String socketSession = "";
-    public DeviceStatus type;
+    public String type;
     public int caseId = 0;
     public int resultId = 0;
     public String udId = "";
-
-    /**
-     * @param type
-     * @return com.sonic.agent.common.LogTool
-     * @author ZhouYiXun
-     * @des 设置log类型，因为要区分发送到哪个地方
-     * @date 2021/8/16 19:56
-     */
-    public LogTool setType(DeviceStatus type) {
-        this.type = type;
-        return this;
-    }
 
     /**
      * @param message
@@ -67,7 +56,7 @@ public class LogTool {
      */
     private void sendToServer(JSONObject message) {
         message.put("time", new Date());
-        //发送方法
+        RabbitMQThread.send(message);
     }
 
     /**
@@ -119,41 +108,6 @@ public class LogTool {
     }
 
     /**
-     * @param erType
-     * @param erMsg
-     * @param erStack
-     * @param type
-     * @param ver
-     * @param logName
-     * @param url
-     * @return void
-     * @author ZhouYiXun
-     * @des 发送崩溃与卡顿信息
-     * @date 2021/8/16 19:58
-     */
-    public void sendCrash(String erType, String erMsg, String erStack, int type, String ver, String logName, String url) {
-        JSONObject log = new JSONObject();
-        log.put("msg", "crash");
-        if (erType.length() == 0) {
-            erType = "未知类型";
-        }
-        if (erMsg.length() == 0) {
-            erMsg = "未知错误信息";
-        }
-        if (erStack.length() == 0) {
-            erStack = "未知错误堆栈";
-        }
-        log.put("erType", erType.length() > 255 ? erType.substring(0, 240) + "..." : erType);
-        log.put("erMsg", erMsg.length() > 255 ? erMsg.substring(0, 240) + "..." : erMsg);
-        log.put("erStack", erStack.length() > 255 ? erStack.substring(0, 240) + "..." : erStack);
-        log.put("ver", ver);
-        log.put("type", type);
-        log.put("log", logName);
-        log.put("url", url);
-        send(log);
-    }
-
-    /**
      * @param status
      * @param des
      * @param detail
@@ -189,17 +143,33 @@ public class LogTool {
 
     /**
      * @param isSupport 是否支持录像
-     * @param detail
+     * @param url
      * @return void
      * @author ZhouYiXun
      * @des 发送录像数据
      * @date 2021/8/16 19:58
      */
-    public void sendRecordLog(boolean isSupport, String detail) {
+    public void sendRecordLog(boolean isSupport, String fileName, String url) {
         JSONObject log = new JSONObject();
         log.put("msg", "record");
         log.put("isSupport", isSupport);
-        log.put("detail", detail);
+        log.put("name", fileName);
+        log.put("url", url);
+        send(log);
+    }
+
+    /**
+     * @param url
+     * @return void
+     * @author ZhouYiXun
+     * @des 发送日志数据
+     * @date 2021/8/26 19:58
+     */
+    public void sendSelfLog(String fileName, String url) {
+        JSONObject log = new JSONObject();
+        log.put("msg", "log");
+        log.put("name", fileName);
+        log.put("url", url);
         send(log);
     }
 

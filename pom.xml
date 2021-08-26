@@ -51,6 +51,12 @@
             <artifactId>java-client</artifactId>
             <version>7.5.1</version>
         </dependency>
+        <!--    压缩图片    -->
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>0.4.13</version>
+        </dependency>
         <!--  testNG   -->
         <dependency>
             <groupId>org.testng</groupId>
@@ -69,6 +75,32 @@
             <artifactId>jsoup</artifactId>
             <version>1.11.3</version>
         </dependency>
+        <!--    视频处理与图像处理    -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv</artifactId>
+            <version>1.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>openblas</artifactId>
+            <version>0.3.9-1.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>opencv</artifactId>
+            <version>4.3.0-1.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>tesseract</artifactId>
+            <version>4.1.1-1.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>leptonica</artifactId>
+            <version>1.79.0-1.5.3</version>
+        </dependency>
     </dependencies>
 
     <!--  通过这个配置来决定打包使用哪一个环境  -->
@@ -81,6 +113,44 @@
             <properties>
                 <profileActive>dev</profileActive>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>windows-x86_64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>windows-x86_64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>windows-x86_64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>windows-x86_64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>windows-x86_64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>windows-x86_64</classifier>
+                </dependency>
+            </dependencies>
         </profile>
     </profiles>
 

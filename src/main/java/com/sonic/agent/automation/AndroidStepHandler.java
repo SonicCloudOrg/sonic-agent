@@ -6,6 +6,7 @@ import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.interfaces.PlatformType;
+import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
 import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
@@ -36,9 +37,9 @@ import java.util.*;
  * @date 2021/8/16 20:10
  */
 public class AndroidStepHandler {
-    LogTool log = new LogTool();
+    public LogTool log = new LogTool();
     private AndroidDriver androidDriver;
-    private AppiumDriverLocalService appiumDriverLocalService;
+    public AppiumDriverLocalService appiumDriverLocalService;
     //是否已经发送过测试结果
     private Boolean isSendStatus = false;
     //包版本
@@ -47,6 +48,13 @@ public class AndroidStepHandler {
     private long startTime;
     //测试的包名
     private String testPackage = "";
+
+    public void setTestMode(int caseId, int resultId, String udId, String type) {
+        log.caseId = caseId;
+        log.resultId = resultId;
+        log.udId = udId;
+        log.type = type;
+    }
 
     /**
      * @return
@@ -64,7 +72,7 @@ public class AndroidStepHandler {
      * @des 启动appium服务
      * @date 2021/8/16 20:01
      */
-    public void startAppiumServer() {
+    private void startAppiumServer() {
         appiumDriverLocalService = AppiumDriverLocalService.buildService(new AppiumServiceBuilder().usingAnyFreePort()
                 .withArgument(GeneralServerFlag.LOG_LEVEL, "error")
                 .withArgument(GeneralServerFlag.ALLOW_INSECURE, "chromedriver_autodownload")
@@ -170,6 +178,10 @@ public class AndroidStepHandler {
         if (version.length() > 0) {
             log.sendElapsed((int) (Calendar.getInstance().getTimeInMillis() - startTime), PlatformType.ANDROID, version);
         }
+    }
+
+    public AndroidDriver getAndroidDriver() {
+        return androidDriver;
     }
 
     /**
@@ -341,7 +353,7 @@ public class AndroidStepHandler {
             recordOption.withBitRate(3000000);
             androidDriver.startRecordingScreen(recordOption);
         } catch (Exception e) {
-            log.sendRecordLog(false, "");
+            log.sendRecordLog(false, "", "");
         }
     }
 
@@ -358,8 +370,8 @@ public class AndroidStepHandler {
             recordDir.mkdirs();
         }
         long timeMillis = Calendar.getInstance().getTimeInMillis();
-        String fileName = recordDir + File.separator + timeMillis + "_" + udId.substring(0, 4) + ".mp4";
-        File uploadFile = new File(fileName);
+        String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
+        File uploadFile = new File(recordDir + File.separator + fileName);
         try {
             //加锁防止内存泄漏
             synchronized (AndroidStepHandler.class) {
@@ -368,11 +380,9 @@ public class AndroidStepHandler {
                 fileOutputStream.write(bytes);
                 fileOutputStream.close();
             }
-            SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
-            String time = sf.format(timeMillis);
-            log.sendRecordLog(true, "上传方法");
+            log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
         } catch (Exception e) {
-            log.sendRecordLog(false, "");
+            log.sendRecordLog(false, fileName, "");
         }
     }
 }
