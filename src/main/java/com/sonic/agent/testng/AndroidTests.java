@@ -5,11 +5,13 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
-import com.sonic.agent.bridge.AndroidDeviceBridgeTool;
-import com.sonic.agent.bridge.AndroidDeviceLocalStatus;
-import com.sonic.agent.bridge.AndroidDeviceThreadPool;
-import com.sonic.agent.cvhandle.RecordHandler;
+import com.sonic.agent.automation.AppiumServer;
+import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
+import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import com.sonic.agent.cv.RecordHandler;
 import com.sonic.agent.interfaces.DeviceStatus;
+import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.tools.MiniCapTool;
 import com.sonic.agent.tools.UploadTools;
@@ -22,7 +24,6 @@ import org.testng.annotations.Test;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -73,6 +74,8 @@ public class AndroidTests {
         int rid = dataProvider.getInteger("rid");
         int cid = jsonObject.getJSONObject("case").getInteger("id");
         String udId = dataProvider.getString("udId");
+        JSONObject gp = dataProvider.getJSONObject("gp");
+        androidStepHandler.setGlobalParams(gp);
         androidStepHandler.setTestMode(cid, rid, udId, DeviceStatus.TESTING);
         AndroidDeviceLocalStatus.startTest(udId);
 
@@ -96,13 +99,15 @@ public class AndroidTests {
         //正常运行步骤的线程
         Future<?> runStep = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
             JSONArray steps = jsonObject.getJSONArray("steps");
-            int errorNum = 0;
             for (Object step : steps) {
                 JSONObject stepDetail = (JSONObject) step;
                 try {
-//                    androidStepHandler.runStep(stepDetail);
+                    androidStepHandler.runStep(stepDetail);
                 } catch (Throwable e) {
-                    logger.error(e.getMessage());
+                    androidStepHandler.errorScreen();
+                    androidStepHandler.exceptionLog(e);
+                    androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
+                    return;
                 }
             }
         });
@@ -148,29 +153,29 @@ public class AndroidTests {
                     }
                     continue;
                 }
-                File logDec = new File("test-output/log");
-                if (!logDec.exists()) {
-                    logDec.mkdirs();
-                }
+//                File logDec = new File("test-output/log");
+//                if (!logDec.exists()) {
+//                    logDec.mkdirs();
+//                }
                 //写入logcat
-                File logcatFile = new File(logDec + File.separator + Calendar.getInstance().getTimeInMillis() + "_" + udId + ".log");
-                FileOutputStream logFileOut = null;
-                try {
-                    logFileOut = new FileOutputStream(logcatFile);
-                } catch (FileNotFoundException e) {
-                    logger.error(e.getMessage());
-                }
-                FileOutputStream finalLogFileOut = logFileOut;
+//                File logcatFile = new File(logDec + File.separator + Calendar.getInstance().getTimeInMillis() + "_" + udId + ".log");
+//                FileOutputStream logFileOut = null;
+//                try {
+//                    logFileOut = new FileOutputStream(logcatFile);
+//                } catch (FileNotFoundException e) {
+//                    logger.error(e.getMessage());
+//                }
+//                FileOutputStream finalLogFileOut = logFileOut;
                 //添加监听
-                androidStepHandler.getAndroidDriver().addLogcatMessagesListener((msg) -> {
-                    try {
-                        finalLogFileOut.write((msg + "\n").getBytes(StandardCharsets.UTF_8));
-                    } catch (IOException e) {
-                        logger.error(e.getMessage());
-                    }
-                });
+//                androidStepHandler.getAndroidDriver().addLogcatMessagesListener((msg) -> {
+//                    try {
+//                        finalLogFileOut.write((msg + "\n").getBytes(StandardCharsets.UTF_8));
+//                    } catch (IOException e) {
+//                        logger.error(e.getMessage());
+//                    }
+//                });
                 //开始广播
-                androidStepHandler.getAndroidDriver().startLogcatBroadcast("localhost", androidStepHandler.appiumDriverLocalService.getUrl().getPort());
+//                androidStepHandler.getAndroidDriver().startLogcatBroadcast("localhost", AppiumServer.service.getUrl().getPort());
                 Future<?> miniCapPro = null;
                 AtomicReference<List<byte[]>> imgList = new AtomicReference<>(new ArrayList<>());
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
@@ -192,23 +197,23 @@ public class AndroidTests {
                     logger.error(e.getMessage());
                 }
                 //移除监听
-                androidStepHandler.getAndroidDriver().removeAllLogcatListeners();
+//                androidStepHandler.getAndroidDriver().removeAllLogcatListeners();
                 //移除logcat广播
-                androidStepHandler.getAndroidDriver().stopLogcatBroadcast();
+//                androidStepHandler.getAndroidDriver().stopLogcatBroadcast();
                 //关闭流
-                if (logFileOut != null) {
-                    try {
-                        logFileOut.close();
-                    } catch (IOException e) {
-                        logger.error(e.getMessage());
-                    }
-                }
+//                if (logFileOut != null) {
+//                    try {
+//                        logFileOut.close();
+//                    } catch (IOException e) {
+//                        logger.error(e.getMessage());
+//                    }
+//                }
                 //处理logcat日志
-                if (isFail.get()) {
-                    androidStepHandler.log.sendSelfLog(logcatFile.getName(), UploadTools.upload(logcatFile, "logFiles"));
-                } else {
-                    logcatFile.delete();
-                }
+//                if (isFail.get()) {
+//                    androidStepHandler.log.sendSelfLog(logcatFile.getName(), UploadTools.upload(logcatFile, "logFiles"));
+//                } else {
+//                    logcatFile.delete();
+//                }
                 //处理录像
                 if (isSupportRecord) {
                     if (isFail.get()) {

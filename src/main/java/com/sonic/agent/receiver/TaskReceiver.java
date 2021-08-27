@@ -4,11 +4,10 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.rabbitmq.client.Channel;
-import com.sonic.agent.bridge.AndroidDeviceBridgeTool;
-import com.sonic.agent.bridge.LibIMobileDeviceTool;
+import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.bridge.ios.LibIMobileDeviceTool;
 import com.sonic.agent.interfaces.PlatformType;
-import com.sonic.agent.maps.AndroidDeviceManagerMap;
-import com.sonic.agent.maps.IOSDeviceManagerMap;
+import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.testng.AndroidTests;
 import com.sonic.agent.testng.IOSTests;
@@ -49,7 +48,7 @@ public class TaskReceiver {
                 break;
             case "suite":
                 //获取要执行的设备
-                JSONObject assist = jsonObject.getJSONObject("assist");
+                JSONObject plugin = jsonObject.getJSONObject("plugin");
                 List<String> localUdIdList = new ArrayList<>();
                 JSONArray testUdIdList = new JSONArray();
                 if (jsonObject.getInteger("sp") == PlatformType.ANDROID) {
@@ -61,9 +60,11 @@ public class TaskReceiver {
                         }
                     }
                     //找出任务下发的设备列表里是否本地存在
-                    for (String udId : assist.keySet()) {
+                    for (String udId : plugin.keySet()) {
                         if (localUdIdList.contains(udId)) {
                             testUdIdList.add(udId);
+                            //存放密码
+                            AndroidPasswordMap.getMap().put(udId, plugin.getString(udId));
                         }
                     }
                 }
@@ -99,7 +100,7 @@ public class TaskReceiver {
                         parameters.put("rid", jsonObject.getInteger("rid") + "");
                         parameters.put("gp", jsonObject.getJSONObject("gp").toJSONString());
                         parameters.put("dataInfo", caseInfoJson.toJSONString());
-                        parameters.put("udIdList",testUdIdList.toJSONString());
+                        parameters.put("udIdList", testUdIdList.toJSONString());
                         xmlTest.setParameters(parameters);
                         List<XmlClass> classes = new ArrayList<>();
                         if (testCase.getInteger("platform") == PlatformType.ANDROID) {

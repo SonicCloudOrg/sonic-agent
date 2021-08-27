@@ -1,8 +1,8 @@
 package com.sonic.agent.tools;
 
 import com.android.ddmlib.IDevice;
-import com.sonic.agent.bridge.AndroidDeviceBridgeTool;
-import com.sonic.agent.bridge.AndroidDeviceThreadPool;
+import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
