@@ -1,8 +1,5 @@
 package com.sonic.agent.tools;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
-
 import java.net.InetAddress;
 
 public class LocalHostTool {

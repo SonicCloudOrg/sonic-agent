@@ -2,34 +2,54 @@ package com.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.IDevice;
+import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import com.sonic.agent.cv.*;
+import com.sonic.agent.interfaces.ErrorType;
 import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.StepType;
+import com.sonic.agent.maps.AndroidPasswordMap;
+import com.sonic.agent.tools.DownImageTool;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.tools.UploadTools;
+import io.appium.java_client.MobileBy;
+import io.appium.java_client.MultiTouchAction;
+import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
+import io.appium.java_client.android.appmanagement.AndroidInstallApplicationOptions;
 import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
+import io.appium.java_client.android.nativekey.AndroidKey;
+import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.remote.AndroidMobileCapabilityType;
 import io.appium.java_client.remote.AutomationName;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
 import io.appium.java_client.service.local.AppiumServiceBuilder;
 import io.appium.java_client.service.local.flags.GeneralServerFlag;
+import io.appium.java_client.touch.WaitOptions;
+import io.appium.java_client.touch.offset.PointOption;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
-import org.openqa.selenium.Capabilities;
-import org.openqa.selenium.Platform;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.util.Base64Utils;
+import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.testng.Assert.*;
 
 /**
  * @author ZhouYiXun
@@ -39,7 +59,8 @@ import java.util.*;
 public class AndroidStepHandler {
     public LogTool log = new LogTool();
     private AndroidDriver androidDriver;
-    public AppiumDriverLocalService appiumDriverLocalService;
+    private Map<String, String> transferParam = new HashMap<>();
+    private JSONObject globalParams = new JSONObject();
     //是否已经发送过测试结果
     private Boolean isSendStatus = false;
     //包版本
@@ -56,6 +77,10 @@ public class AndroidStepHandler {
         log.type = type;
     }
 
+    public void setGlobalParams(JSONObject jsonObject) {
+        globalParams = jsonObject;
+    }
+
     /**
      * @return
      * @author ZhouYiXun
@@ -67,20 +92,6 @@ public class AndroidStepHandler {
     }
 
     /**
-     * @return void
-     * @author ZhouYiXun
-     * @des 启动appium服务
-     * @date 2021/8/16 20:01
-     */
-    private void startAppiumServer() {
-        appiumDriverLocalService = AppiumDriverLocalService.buildService(new AppiumServiceBuilder().usingAnyFreePort()
-                .withArgument(GeneralServerFlag.LOG_LEVEL, "error")
-                .withArgument(GeneralServerFlag.ALLOW_INSECURE, "chromedriver_autodownload")
-                .withArgument(GeneralServerFlag.SESSION_OVERRIDE));
-        appiumDriverLocalService.start();
-    }
-
-    /**
      * @param udId
      * @return void
      * @author ZhouYiXun
@@ -88,7 +99,6 @@ public class AndroidStepHandler {
      * @date 2021/8/16 20:01
      */
     public void startAndroidDriver(String udId) throws InterruptedException {
-        startAppiumServer();
         DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
         //微信webView配置
         ChromeOptions chromeOptions = new ChromeOptions();
@@ -122,15 +132,12 @@ public class AndroidStepHandler {
         logcatFilter.add("*:S");
         desiredCapabilities.setCapability("logcatFilterSpecs", logcatFilter);
         try {
-            androidDriver = new AndroidDriver(appiumDriverLocalService.getUrl(), desiredCapabilities);
+            androidDriver = new AndroidDriver(AppiumServer.service.getUrl(), desiredCapabilities);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
             //测试标记为失败
             setResultDetailStatus(ResultDetailStatus.FAIL);
-            if (appiumDriverLocalService.isRunning()) {
-                appiumDriverLocalService.stop();
-            }
             throw e;
         }
         Capabilities capabilities = androidDriver.getCapabilities();
@@ -153,7 +160,11 @@ public class AndroidStepHandler {
             if (androidDriver != null) {
                 //终止测试包
                 if (!testPackage.equals("")) {
-                    terminate(testPackage);
+                    try {
+                        androidDriver.terminateApp(testPackage, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
                 androidDriver.quit();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
@@ -163,9 +174,6 @@ public class AndroidStepHandler {
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
-        }
-        if (appiumDriverLocalService.isRunning()) {
-            appiumDriverLocalService.stop();
         }
         try {
             Thread.sleep(500);
@@ -182,22 +190,6 @@ public class AndroidStepHandler {
 
     public AndroidDriver getAndroidDriver() {
         return androidDriver;
-    }
-
-    /**
-     * @param packageName
-     * @return void
-     * @author ZhouYiXun
-     * @des 终止app
-     * @date 2021/8/16 23:46
-     */
-    public void terminate(String packageName) {
-        try {
-            androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
-            log.sendStepLog(StepType.PASS, "终止App", "应用包名： " + packageName);
-        } catch (Exception e) {
-            log.sendStepLog(StepType.WARN, "终止App异常！", "应用包名： " + packageName);
-        }
     }
 
     /**
@@ -383,6 +375,847 @@ public class AndroidStepHandler {
             log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
         } catch (Exception e) {
             log.sendRecordLog(false, fileName, "");
+        }
+    }
+
+    public void settingSonicPlugins(IDevice iDevice) {
+        try {
+            androidDriver.activateApp("com.sonic.plugins");
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+            log.sendStepLog(StepType.INFO, "已安装Sonic插件！", "");
+        } catch (Exception e) {
+            log.sendStepLog(StepType.ERROR, "未安装Sonic插件！", "");
+            throw e;
+        }
+        try {
+            if (!androidDriver.currentActivity().equals("com.sonic.plugins.MainActivity")) {
+                try {
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
+                    Thread.sleep(1000);
+                } catch (Exception e) {
+                }
+            }
+            findEle("xpath", "//android.widget.TextView[@text='服务状态：已开启']");
+        } catch (Exception e) {
+            log.sendStepLog(StepType.ERROR, "未开启Sonic插件服务！请到辅助功能或无障碍开启", "");
+            throw e;
+        }
+        try {
+            findEle("id", "com.sonic.plugins:id/password_edit").clear();
+            if (AndroidPasswordMap.getMap().get(log.udId) != null
+                    && (AndroidPasswordMap.getMap().get(log.udId) != null)
+                    && (!AndroidPasswordMap.getMap().get(log.udId).equals(""))) {
+                findEle("id", "com.sonic.plugins:id/password_edit").sendKeys(AndroidPasswordMap.getMap().get(log.udId));
+            } else {
+                findEle("id", "com.sonic.plugins:id/password_edit").sendKeys("sonic123456");
+            }
+            findEle("id", "com.sonic.plugins:id/save").click();
+        } catch (Exception e) {
+            log.sendStepLog(StepType.ERROR, "配置Sonic插件服务失败！", "");
+            throw e;
+        }
+    }
+
+    public void install(HandleDes handleDes, String path, String packName) {
+        handleDes.setStepDes("安装App");
+        handleDes.setDetail("App安装路径： " + path);
+        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
+        String manufacturer = iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER);
+        try {
+            androidDriver.unlockDevice();
+            if (androidDriver.getConnection().isAirplaneModeEnabled()) {
+                androidDriver.toggleAirplaneMode();
+            }
+            if (!androidDriver.getConnection().isWiFiEnabled()) {
+                androidDriver.toggleWifi();
+            }
+        } catch (Exception e) {
+            log.sendStepLog(StepType.WARN, "安装前准备跳过...", "");
+        }
+        log.sendStepLog(StepType.INFO, "", "开始安装App，请稍后...");
+        if (manufacturer.equals("OPPO") || manufacturer.equals("vivo") || manufacturer.equals("Meizu")) {
+            settingSonicPlugins(iDevice);
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 3");
+        }
+        //单独适配一下oppo
+        if (manufacturer.equals("OPPO")) {
+            try {
+                androidDriver.installApp(path, new AndroidInstallApplicationOptions().withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+            } catch (Exception e) {
+            }
+            //单独再适配colorOs
+            if (androidDriver.currentActivity().equals(".verification.login.AccountActivity")) {
+                try {
+                    if (AndroidPasswordMap.getMap().get(log.udId) != null
+                            && (AndroidPasswordMap.getMap().get(log.udId) != null)
+                            && (!AndroidPasswordMap.getMap().get(log.udId).equals(""))) {
+                        findEle("id", "com.coloros.safecenter:id/et_login_passwd_edit"
+                        ).sendKeys(AndroidPasswordMap.getMap().get(log.udId));
+                    } else {
+                        findEle("id", "com.coloros.safecenter:id/et_login_passwd_edit"
+                        ).sendKeys("sonic123456");
+                    }
+                    findEle("id", "android:id/button1").click();
+                } catch (Exception e) {
+                }
+            }
+            AtomicInteger tryTime = new AtomicInteger(0);
+            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                while (tryTime.get() < 20) {
+                    tryTime.getAndIncrement();
+                    //部分oppo有继续安装
+                    try {
+                        WebElement getContinueButton = findEle("id", "com.android.packageinstaller:id/virus_scan_panel");
+                        Thread.sleep(2000);
+                        AndroidDeviceBridgeTool.executeCommand(iDevice,
+                                String.format("input tap %d %d", (getContinueButton.getRect().width) / 2
+                                        , getContinueButton.getRect().y + getContinueButton.getRect().height));
+                        Thread.sleep(2000);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    //低版本oppo安装按钮在右边
+                    try {
+                        findEle("id", "com.android.packageinstaller:id/install_confirm_panel");
+                        WebElement getInstallButton = findEle("id", "com.android.packageinstaller:id/bottom_button_layout");
+                        Thread.sleep(2000);
+                        AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d"
+                                , ((getInstallButton.getRect().width) / 4) * 3
+                                , getInstallButton.getRect().y + (getInstallButton.getRect().height) / 2));
+                        Thread.sleep(2000);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    //部分oppo无法点击
+                    try {
+                        findEle("xpath", "//*[@text='应用权限']");
+                        WebElement getInstallButton = findEle("id", "com.android.packageinstaller:id/install_confirm_panel");
+                        Thread.sleep(2000);
+                        AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d"
+                                , (getInstallButton.getRect().width) / 2, getInstallButton.getRect().y + getInstallButton.getRect().height));
+                        Thread.sleep(2000);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (!androidDriver.getCurrentPackage().equals("com.android.packageinstaller")) {
+                        break;
+                    }
+                }
+            });
+            while (androidDriver.getCurrentPackage().equals("com.android.packageinstaller") && tryTime.get() < 20) {
+                try {
+                    findEle("xpath", "//*[@text='完成']").click();
+                } catch (Exception e) {
+                }
+            }
+        } else {
+            try {
+                androidDriver.installApp(path, new AndroidInstallApplicationOptions().withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+            } catch (Exception e) {
+                handleDes.setE(e);
+                return;
+            }
+        }
+        //特殊机型要启动验证
+        try {
+            androidDriver.activateApp(packName);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void uninstall(HandleDes handleDes, String appPackage) {
+        handleDes.setStepDes("卸载App");
+        handleDes.setDetail("App包名： " + appPackage);
+        try {
+            androidDriver.removeApp(appPackage);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    /**
+     * @param packageName
+     * @return void
+     * @author ZhouYiXun
+     * @des 终止app
+     * @date 2021/8/16 23:46
+     */
+    public void terminate(HandleDes handleDes, String packageName) throws Exception {
+        handleDes.setStepDes("终止App");
+        handleDes.setDetail("应用包名： " + packageName);
+        try {
+            androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void runBackground(HandleDes handleDes, long time) throws Exception {
+        handleDes.setStepDes("后台运行App");
+        handleDes.setDetail("后台运行App " + time + " ms");
+        try {
+            androidDriver.runAppInBackground(Duration.ofMillis(time));
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void openApp(HandleDes handleDes, String appPackage) throws Exception {
+        handleDes.setStepDes("打开App");
+        handleDes.setDetail("App包名： " + appPackage);
+        try {
+            androidDriver.activateApp(appPackage);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void rotateDevice(HandleDes handleDes, String text) {
+        handleDes.setStepDes("旋转设备");
+        try {
+            androidDriver.rotate(ScreenOrientation.valueOf(text));
+            if (text.equals("LANDSCAPE")) {
+                handleDes.setDetail("旋转横屏");
+            } else {
+                handleDes.setDetail("旋转竖屏");
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void lock(HandleDes handleDes) {
+        handleDes.setStepDes("锁定屏幕");
+        try {
+            androidDriver.lockDevice();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void unLock(HandleDes handleDes) {
+        handleDes.setStepDes("解锁屏幕");
+        try {
+            androidDriver.unlockDevice();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void airPlaneMode(HandleDes handleDes) {
+        handleDes.setStepDes("切换飞行模式");
+        try {
+            androidDriver.toggleAirplaneMode();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void wifiMode(HandleDes handleDes) {
+        handleDes.setStepDes("打开WIFI网络");
+        try {
+            if (!androidDriver.getConnection().isWiFiEnabled()) {
+                androidDriver.toggleWifi();
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void locationMode(HandleDes handleDes) {
+        handleDes.setStepDes("切换位置服务");
+        try {
+            androidDriver.toggleLocationServices();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void asserts(HandleDes handleDes, String actual, String expect, String type) {
+        handleDes.setDetail("真实值： " + actual + " 期望值： " + expect);
+        try {
+            switch (type) {
+                case "assertEquals":
+                    handleDes.setStepDes("断言验证(相等)");
+                    assertEquals(actual, expect);
+                    break;
+                case "assertTrue":
+                    handleDes.setStepDes("断言验证(包含)");
+                    assertTrue(actual.contains(expect));
+                    break;
+                case "assertNotTrue":
+                    handleDes.setStepDes("断言验证(不包含)");
+                    assertFalse(actual.contains(expect));
+                    break;
+            }
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public String getText(HandleDes handleDes, String des, String selector, String pathValue) {
+        String s = "";
+        handleDes.setStepDes("获取" + des + "文本");
+        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        try {
+            s = findEle(selector, pathValue).getText();
+            log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+        return s;
+    }
+
+    public void hideKey(HandleDes handleDes) {
+        handleDes.setStepDes("隐藏键盘");
+        handleDes.setDetail("隐藏弹出键盘");
+        try {
+            androidDriver.hideKeyboard();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void toWebView(HandleDes handleDes, String webViewName) {
+        handleDes.setStepDes("切换到" + webViewName);
+        try {
+            androidDriver.context(webViewName);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void click(HandleDes handleDes, String des, String selector, String pathValue) {
+        handleDes.setStepDes("点击" + des);
+        handleDes.setDetail("点击" + selector + ": " + pathValue);
+        try {
+            findEle(selector, pathValue).click();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void sendKeys(HandleDes handleDes, String des, String selector, String pathValue, String keys) {
+        if (keys.contains("{{random}}")) {
+            String random = (int) (Math.random() * 10 + Math.random() * 10 * 2) + 5 + "";
+            keys = keys.replace("{{random}}", random);
+        }
+        if (keys.contains("{{timestamp}}")) {
+            String timeMillis = Calendar.getInstance().getTimeInMillis() + "";
+            keys = keys.replace("{{timestamp}}", timeMillis);
+        }
+        keys = replaceTrans(keys);
+        handleDes.setStepDes("对" + des + "输入内容");
+        handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
+        try {
+            findEle(selector, pathValue).sendKeys(keys);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void getTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
+        handleDes.setStepDes("获取" + des + "文本");
+        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        try {
+            String s = findEle(selector, pathValue).getText();
+            log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+            try {
+                expect = replaceTrans(expect);
+                assertEquals(s, expect);
+                log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
+            } catch (AssertionError e) {
+                log.sendStepLog(StepType.ERROR, "验证" + des + "文本失败！", "");
+                handleDes.setE(e);
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void longPressPoint(HandleDes handleDes, String des, String xy, int time) {
+        int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+        int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+        handleDes.setStepDes("长按" + des);
+        handleDes.setDetail("长按坐标" + time + "毫秒 (" + x + "," + y + ")");
+        try {
+            TouchAction ta = new TouchAction(androidDriver);
+            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(time))).release().perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void keyCode(HandleDes handleDes, String key) {
+        handleDes.setStepDes("按系统按键" + key + "键");
+        try {
+            androidDriver.pressKey(new KeyEvent().withKey(AndroidKey.valueOf(key)));
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void multiAction(HandleDes handleDes, String des1, String xy1, String des2, String xy2, String des3, String xy3, String des4, String xy4) {
+        int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
+        int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
+        int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
+        int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
+        int x3 = Integer.parseInt(xy3.substring(0, xy3.indexOf(",")));
+        int y3 = Integer.parseInt(xy3.substring(xy3.indexOf(",") + 1));
+        int x4 = Integer.parseInt(xy4.substring(0, xy4.indexOf(",")));
+        int y4 = Integer.parseInt(xy4.substring(xy4.indexOf(",") + 1));
+        String detail = "坐标" + des1 + "( " + x1 + ", " + y1 + " )移动到坐标" + des2 + "( " + x2 + ", " + y2 + " ),同时坐标" + des3 + "( " + x3 + ", " + y3 + " )移动到坐标" + des4 + "( " + x4 + ", " + y4 + " )";
+        handleDes.setStepDes("双指操作");
+        handleDes.setDetail(detail);
+        try {
+            TouchAction hand1 = new TouchAction(androidDriver);
+            TouchAction hand2 = new TouchAction(androidDriver);
+            MultiTouchAction multiTouchAction = new MultiTouchAction(androidDriver);
+            hand1.press(PointOption.point(x1, y1)).moveTo(PointOption.point(x2, y2)).release();
+            hand2.press(PointOption.point(x3, y3)).moveTo(PointOption.point(x4, y4)).release();
+            multiTouchAction.add(hand1);
+            multiTouchAction.add(hand2);
+            multiTouchAction.perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void tap(HandleDes handleDes, String des, String xy) {
+        int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+        int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+        handleDes.setStepDes("点击" + des);
+        handleDes.setDetail("点击坐标(" + x + "," + y + ")");
+        try {
+            TouchAction ta = new TouchAction(androidDriver);
+            ta.tap(PointOption.point(x, y)).perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void swipe(HandleDes handleDes, String des1, String xy1, String des2, String xy2) {
+        int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
+        int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
+        int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
+        int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
+        handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
+        handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+        try {
+            TouchAction ta = new TouchAction(androidDriver);
+            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void longPress(HandleDes handleDes, String des, String selector, String pathValue, int time) {
+        handleDes.setStepDes("长按" + des);
+        handleDes.setDetail("长按元素" + time + "毫秒 ");
+        try {
+            TouchAction ta = new TouchAction(androidDriver);
+            WebElement webElement = findEle(selector, pathValue);
+            int x = webElement.getLocation().getX();
+            int y = webElement.getLocation().getY();
+            Duration duration = Duration.ofMillis(time);
+            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(duration)).release().perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void clear(HandleDes handleDes, String des, String selector, String pathValue) {
+        handleDes.setStepDes("清空" + des);
+        handleDes.setDetail("清空" + selector + ": " + pathValue);
+        try {
+            findEle(selector, pathValue).clear();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void getTitle(HandleDes handleDes, String expect) {
+        String title = androidDriver.getTitle();
+        handleDes.setStepDes("验证网页标题");
+        handleDes.setDetail("标题：" + title + "，期望值：" + expect);
+        try {
+            assertEquals(title, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
+        handleDes.setStepDes("点击图片" + des);
+        handleDes.setDetail("点击图片:" + pathValue);
+        File file = null;
+        if (pathValue.startsWith("http")) {
+            file = DownImageTool.download(pathValue);
+        }
+        FindResult findResult = null;
+        try {
+            SIFTFinder siftFinder = new SIFTFinder();
+            findResult = siftFinder.getSIFTFindResult(file, getScreenToLocal());
+        } catch (Exception e) {
+            log.sendStepLog(StepType.WARN, "SIFT图像算法出错，切换算法中...",
+                    "");
+        }
+        if (findResult != null) {
+            log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+                    findResult.getUrl());
+        } else {
+            log.sendStepLog(StepType.INFO, "SIFT算法无法定位图片，切换AKAZE算法中...",
+                    "");
+            try {
+                AKAZEFinder akazeFinder = new AKAZEFinder();
+                findResult = akazeFinder.getAKAZEFindResult(file, getScreenToLocal());
+            } catch (Exception e) {
+                log.sendStepLog(StepType.WARN, "AKAZE图像算法出错，切换模版匹配算法中...",
+                        "");
+            }
+            if (findResult != null) {
+                log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+                        findResult.getUrl());
+            } else {
+                log.sendStepLog(StepType.INFO, "AKAZE算法无法定位图片，切换模版匹配算法中...",
+                        "");
+                try {
+                    TemMatcher temMatcher = new TemMatcher();
+                    findResult = temMatcher.getTemMatchResult(file, getScreenToLocal());
+                } catch (Exception e) {
+                    log.sendStepLog(StepType.WARN, "模版匹配算法出错",
+                            "");
+                }
+                if (findResult != null) {
+                    log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+                            findResult.getUrl());
+                } else {
+                    handleDes.setE(new Exception("图片定位失败！"));
+                }
+            }
+        }
+        if (findResult != null) {
+            try {
+                TouchAction ta = new TouchAction(androidDriver);
+                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
+            } catch (Exception e) {
+                log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
+                handleDes.setE(e);
+            }
+        }
+    }
+
+    public void readText(HandleDes handleDes, String language, String text) throws Exception {
+        TextReader textReader = new TextReader();
+        String result = textReader.getTessResult(getScreenToLocal(), language);
+        log.sendStepLog(StepType.INFO, "",
+                "图像文字识别结果：<br>" + result);
+        String filter = result.replaceAll(" ", "");
+        handleDes.setStepDes("图像文字识别");
+        handleDes.setDetail("期望包含文本：" + text);
+        if (!filter.contains(text)) {
+            handleDes.setE(new Exception("图像文字识别不通过！"));
+        }
+    }
+
+    public void toHandle(HandleDes handleDes, String titleName) throws Exception {
+        handleDes.setStepDes("切换Handle");
+        Thread.sleep(1000);
+        Set<String> handle = androidDriver.getWindowHandles();//获取handles
+        String ha;
+        for (int i = 1; i <= handle.size(); i++) {
+            ha = (String) handle.toArray()[handle.size() - i];//查找handle
+            try {
+                androidDriver.switchTo().window(ha);//切换到最后一个handle
+            } catch (Exception e) {
+            }
+            if (androidDriver.getTitle().equals(titleName)) {
+                handleDes.setDetail("切换到Handle:" + ha);
+                log.sendStepLog(StepType.INFO, "页面标题:" + androidDriver.getTitle(), "");
+                break;
+            }
+        }
+    }
+
+    public File getScreenToLocal() {
+        File file = ((TakesScreenshot) androidDriver).getScreenshotAs(OutputType.FILE);
+        File resultFile = new File("test-output/" + log.udId + Calendar.getInstance().getTimeInMillis() + ".jpg");
+        try {
+            FileCopyUtils.copy(file, resultFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return resultFile;
+    }
+
+    public String replaceTrans(String text) {
+        if (text.contains("{{") && text.contains("}}")) {
+            String tail = text.substring(text.indexOf("{{") + 2);
+            if (tail.contains("}}")) {
+                String child = tail.substring(tail.indexOf("}}") + 2);
+                String middle = tail.substring(0, tail.indexOf("}}"));
+                text = text.substring(0, text.indexOf("}}") + 2);
+                if (globalParams.getString(middle) != null) {
+                    text = text.replace("{{" + middle + "}}", globalParams.getString(middle));
+                }
+                text = text + replaceTrans(child);
+            }
+        }
+        return text;
+    }
+
+    public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
+        log.sendStepLog(StepType.INFO, "开始检测" + des + "兼容", "检测与当前设备截图相似度，期望相似度为" + matchThreshold + "%");
+        File file = null;
+        if (pathValue.startsWith("http")) {
+            file = DownImageTool.download(pathValue);
+        }
+        double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
+        handleDes.setStepDes("检测" + des + "图片相似度");
+        handleDes.setDetail("相似度为" + score * 100 + "%");
+        if (score == 0) {
+            handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
+        } else if (score < (matchThreshold / 100)) {
+            handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
+        }
+    }
+
+    public void exceptionLog(Throwable e) {
+        log.sendStepLog(StepType.WARN, "", "异常信息： " + e.fillInStackTrace().toString());
+    }
+
+    public void errorScreen() {
+        try {
+            androidDriver.context("NATIVE_APP");//先切换回app
+            log.sendStepLog(StepType.WARN, "获取异常截图", UploadTools
+                    .upload(((TakesScreenshot) androidDriver).getScreenshotAs(OutputType.FILE), "imageFiles"));
+        } catch (Exception e) {
+            log.sendStepLog(StepType.ERROR, "捕获截图失败", "");
+        }
+    }
+
+    public String stepScreen(HandleDes handleDes) {
+        handleDes.setStepDes("获取截图");
+        String url = "";
+        try {
+            androidDriver.context("NATIVE_APP");//先切换回app
+            url = UploadTools.upload(((TakesScreenshot) androidDriver)
+                    .getScreenshotAs(OutputType.FILE), "imageFiles");
+            handleDes.setDetail(url);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+        return url;
+    }
+
+    public void pause(HandleDes handleDes, int time) {
+        handleDes.setStepDes("强制等待");
+        handleDes.setDetail("等待" + time + " ms");
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void runMonkey(JSONObject a, JSONArray b) {
+    }
+
+    public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
+        handleDes.setStepDes("执行公共步骤 " + name);
+        log.sendStepLog(StepType.WARN, "公共步骤 " + name + " 开始执行", "");
+        for (Object publicStep : stepArray) {
+            JSONObject stepDetail = (JSONObject) publicStep;
+            try {
+                runStep(stepDetail);
+            } catch (Throwable e) {
+                handleDes.setE(e);
+                break;
+            }
+        }
+    }
+
+    public WebElement findEle(String selector, String pathValue) {
+        WebDriverWait wait = new WebDriverWait(androidDriver, 10);//显式等待
+        WebElement we = null;
+        switch (selector) {
+            case "id":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.id(pathValue)));
+                break;
+            case "name":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.name(pathValue)));
+                break;
+            case "xpath":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.xpath(pathValue)));
+                break;
+            case "cssSelector":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.cssSelector(pathValue)));
+                break;
+            case "className":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.className(pathValue)));
+                break;
+            case "tagName":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.tagName(pathValue)));
+                break;
+            case "linkText":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.linkText(pathValue)));
+                break;
+            case "partialLinkText":
+                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.partialLinkText(pathValue)));
+                break;
+            default:
+                log.sendStepLog(StepType.ERROR, "查找元素失败", "这个元素类型: " + selector + " 不存在!!!");
+                break;
+        }
+        return we;
+    }
+
+    public void runStep(JSONObject stepJSON) throws Throwable {
+        JSONObject step = stepJSON.getJSONObject("steps");
+        JSONArray eleList = step.getJSONArray("elements");
+        HandleDes handleDes = new HandleDes();
+        switch (step.getString("stepType")) {
+            case "toWebView":
+                toWebView(handleDes, step.getString("content"));
+                break;
+            case "toHandle":
+                toHandle(handleDes, step.getString("content"));
+                break;
+            case "readText":
+                readText(handleDes, step.getString("content"), step.getString("text"));
+                break;
+            case "clickByImg":
+                clickByImg(handleDes, eleList.getJSONObject(0).getString("eleName")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "click":
+                click(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "getTitle":
+                getTitle(handleDes, step.getString("content"));
+                break;
+            case "sendKeys":
+                sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "getText":
+                getTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "clear":
+                clear(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "longPress":
+                longPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), Integer.parseInt(step.getString("content")));
+                break;
+            case "swipe":
+                swipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+                break;
+            case "tap":
+                tap(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "longPressPoint":
+                longPressPoint(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                        , Integer.parseInt(step.getString("content")));
+                break;
+            case "pause":
+                pause(handleDes, Integer.parseInt(step.getString("content")));
+                break;
+            case "checkImage":
+                checkImage(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                        , step.getDouble("content"));
+                break;
+            case "stepScreen":
+                stepScreen(handleDes);
+                break;
+            case "openApp":
+                openApp(handleDes, step.getString("text"));
+                break;
+            case "terminate":
+                terminate(handleDes, step.getString("text"));
+                break;
+            case "install":
+                install(handleDes, step.getString("text"), step.getString("content"));
+                break;
+            case "uninstall":
+                uninstall(handleDes, step.getString("text"));
+                break;
+            case "runBack":
+                runBackground(handleDes, Long.parseLong(step.getString("content")));
+                break;
+            case "rotateDevice":
+                rotateDevice(handleDes, step.getString("text"));
+                break;
+            case "lock":
+                lock(handleDes);
+                break;
+            case "unLock":
+                unLock(handleDes);
+                break;
+            case "airPlaneMode":
+                airPlaneMode(handleDes);
+                break;
+            case "wifiMode":
+                wifiMode(handleDes);
+                break;
+            case "locationMode":
+                locationMode(handleDes);
+                break;
+            case "zoom":
+                multiAction(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue")
+                        , eleList.getJSONObject(2).getString("eleName"), eleList.getJSONObject(2).getString("eleValue")
+                        , eleList.getJSONObject(3).getString("eleName"), eleList.getJSONObject(3).getString("eleValue"));
+                break;
+            case "keyCode":
+                keyCode(handleDes, step.getString("content"));
+                break;
+            case "assertEquals":
+            case "assertTrue":
+            case "assertNotTrue":
+                String actual = replaceTrans(step.getString("text"));
+                String expect = replaceTrans(step.getString("content"));
+                asserts(handleDes, actual, expect, step.getString("stepType"));
+                break;
+            case "getTextValue":
+                transferParam.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
+                        , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
+                break;
+            case "hideKey":
+                hideKey(handleDes);
+                break;
+            case "monkey":
+                runMonkey(step.getJSONObject("content"), step.getJSONArray("text"));
+                break;
+            case "publicStep":
+                publicStep(handleDes, step.getString("content"), step.getJSONArray("pubSteps"));
+        }
+        switchType(step.getInteger("error"), handleDes.getStepDes(), handleDes.getDetail(), handleDes.getE());
+    }
+
+    public void switchType(int error, String step, String detail, Throwable e) throws Throwable {
+        if (e != null) {
+            switch (error) {
+                case ErrorType.IGNORE:
+                    log.sendStepLog(StepType.PASS, step + "异常！已忽略...", detail);
+                    break;
+                case ErrorType.WARNING:
+                    log.sendStepLog(StepType.WARN, step + "异常！", detail);
+                    break;
+                case ErrorType.SHUTDOWN:
+                    log.sendStepLog(StepType.ERROR, step + "异常！", detail);
+                    throw e;
+            }
+        } else {
+            log.sendStepLog(StepType.PASS, step, detail);
         }
     }
 }

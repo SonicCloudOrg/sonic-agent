@@ -23,6 +23,11 @@
     </parent>
 
     <dependencies>
+        <!--    监控模块 刷新配置    -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <!--    rabbitmq    -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
