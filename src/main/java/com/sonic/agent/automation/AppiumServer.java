@@ -18,7 +18,7 @@ public class AppiumServer {
      * @des 启动appium服务
      * @date 2021/8/16 20:01
      */
-    private void start() {
+    public static void start() {
         service = AppiumDriverLocalService.buildService(new AppiumServiceBuilder().usingAnyFreePort()
                 .withArgument(GeneralServerFlag.LOG_LEVEL, "error")
                 .withArgument(GeneralServerFlag.ALLOW_INSECURE, "chromedriver_autodownload")
@@ -26,7 +26,7 @@ public class AppiumServer {
         service.start();
     }
 
-    private void close(){
+    public static void close(){
         if (service.isRunning()) {
             service.stop();
         }
