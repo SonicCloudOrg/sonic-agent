@@ -19,14 +19,17 @@ public class LaunchTool implements ApplicationRunner {
     private final Logger logger = LoggerFactory.getLogger(LaunchTool.class);
     @Value("${spring.version}")
     private String version;
+    @Value("${sonic.agent.id}")
+    private int agentId;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
         logger.info("当前apex-agent版本为：" + version);
         AppiumServer.start();
+        AgentTool.agentId = agentId;
         JSONObject agentInfo = new JSONObject();
         agentInfo.put("msg", "agentInfo");
-        agentInfo.put("webPort", GetWebStartPort.getTomcatPort());
+        agentInfo.put("port", GetWebStartPort.getTomcatPort());
         agentInfo.put("version", version);
         agentInfo.put("systemType", System.getProperty("os.name"));
         agentInfo.put("ip", LocalHostTool.getHostIp());
@@ -37,7 +40,7 @@ public class LaunchTool implements ApplicationRunner {
     @PreDestroy
     public void destroy() throws InterruptedException {
         JSONObject agentOffLine = new JSONObject();
-        agentOffLine.put("msg", "agentOffLine");
+        agentOffLine.put("msg", "offLine");
         agentOffLine.put("id", AgentTool.agentId);
         RabbitMQThread.send(agentOffLine);
         AppiumServer.close();
