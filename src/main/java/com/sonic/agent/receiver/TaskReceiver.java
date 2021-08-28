@@ -11,6 +11,7 @@ import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.testng.AndroidTests;
 import com.sonic.agent.testng.IOSTests;
+import com.sonic.agent.tools.AgentTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;

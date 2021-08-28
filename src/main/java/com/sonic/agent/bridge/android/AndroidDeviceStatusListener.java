@@ -3,6 +3,7 @@ package com.sonic.agent.bridge.android;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
+import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.tools.AgentTool;
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("name", device.getProperty("ro.product.name"));
         deviceDetail.put("model", device.getProperty(IDevice.PROP_DEVICE_MODEL));
         deviceDetail.put("status", device.getState());
-        deviceDetail.put("platform", 1);
+        deviceDetail.put("platform", PlatformType.ANDROID);
         deviceDetail.put("version", device.getProperty(IDevice.PROP_BUILD_VERSION));
         deviceDetail.put("size", AndroidDeviceBridgeTool.getScreenSize(device));
         deviceDetail.put("cpu", device.getProperty(IDevice.PROP_DEVICE_CPU_ABI));
