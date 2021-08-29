@@ -38,6 +38,7 @@ public class LogTool {
         message.put("cid", caseId);
         message.put("rid", resultId);
         message.put("udId", udId);
+        message.put("agentId", AgentTool.agentId);
         if (type.equals(DeviceStatus.DEBUGGING)) {
             sendToWebSocket(WebSocketSessionMap.getMap().get(socketSession), message);
         }
@@ -136,8 +137,9 @@ public class LogTool {
     public void sendPerLog(String type, JSONObject detail) {
         JSONObject log = new JSONObject();
         log.put("msg", "perform");
-        log.put("type", type);
-        log.put("detail", detail);
+        log.put("des", type);
+        log.put("log", detail);
+        log.put("status", 0);
         send(log);
     }
 
@@ -152,9 +154,9 @@ public class LogTool {
     public void sendRecordLog(boolean isSupport, String fileName, String url) {
         JSONObject log = new JSONObject();
         log.put("msg", "record");
-        log.put("isSupport", isSupport);
-        log.put("name", fileName);
-        log.put("url", url);
+        log.put("status", isSupport ? 1 : 0);
+        log.put("des", fileName);
+        log.put("log", url);
         send(log);
     }
 
@@ -165,13 +167,13 @@ public class LogTool {
      * @des 发送日志数据
      * @date 2021/8/26 19:58
      */
-    public void sendSelfLog(String fileName, String url) {
-        JSONObject log = new JSONObject();
-        log.put("msg", "log");
-        log.put("name", fileName);
-        log.put("url", url);
-        send(log);
-    }
+//    public void sendSelfLog(String fileName, String url) {
+//        JSONObject log = new JSONObject();
+//        log.put("msg", "log");
+//        log.put("name", fileName);
+//        log.put("url", url);
+//        send(log);
+//    }
 
     /**
      * @param status
@@ -183,6 +185,8 @@ public class LogTool {
     public void sendStatusLog(int status) {
         JSONObject log = new JSONObject();
         log.put("msg", "status");
+        log.put("des", "");
+        log.put("log", "");
         log.put("status", status);
         send(log);
     }
