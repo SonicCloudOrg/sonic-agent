@@ -35,15 +35,17 @@ public class TaskReceiver {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         switch (jsonObject.getString("msg")) {
             case "reboot":
-                if (jsonObject.getInteger("platform") == PlatformType.ANDROID) {
-                    IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(jsonObject.getString("udId"));
-                    if (rebootDevice != null) {
-                        AndroidDeviceBridgeTool.reboot(rebootDevice);
+                if (jsonObject.getInteger("agentId") == AgentTool.agentId) {
+                    if (jsonObject.getInteger("platform") == PlatformType.ANDROID) {
+                        IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(jsonObject.getString("udId"));
+                        if (rebootDevice != null) {
+                            AndroidDeviceBridgeTool.reboot(rebootDevice);
+                        }
                     }
-                }
-                if (jsonObject.getInteger("platform") == PlatformType.IOS) {
-                    if (LibIMobileDeviceTool.getDeviceList().contains(jsonObject.getString("udId"))) {
-                        LibIMobileDeviceTool.reboot(jsonObject.getString("udId"));
+                    if (jsonObject.getInteger("platform") == PlatformType.IOS) {
+                        if (LibIMobileDeviceTool.getDeviceList().contains(jsonObject.getString("udId"))) {
+                            LibIMobileDeviceTool.reboot(jsonObject.getString("udId"));
+                        }
                     }
                 }
                 break;
