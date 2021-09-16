@@ -5,6 +5,7 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.AndroidDeviceManagerMap;
+import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.tools.AgentTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("cpu", device.getProperty(IDevice.PROP_DEVICE_CPU_ABI));
         deviceDetail.put("manufacturer", device.getProperty(IDevice.PROP_DEVICE_MANUFACTURER));
         deviceDetail.put("agentId", AgentTool.agentId);
+        RabbitMQThread.send(deviceDetail);
     }
 
     @Override

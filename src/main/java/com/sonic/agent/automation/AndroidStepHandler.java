@@ -26,9 +26,6 @@ import io.appium.java_client.android.nativekey.KeyEvent;
 import io.appium.java_client.remote.AndroidMobileCapabilityType;
 import io.appium.java_client.remote.AutomationName;
 import io.appium.java_client.remote.MobileCapabilityType;
-import io.appium.java_client.service.local.AppiumDriverLocalService;
-import io.appium.java_client.service.local.AppiumServiceBuilder;
-import io.appium.java_client.service.local.flags.GeneralServerFlag;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
 import org.jsoup.Jsoup;
@@ -70,11 +67,12 @@ public class AndroidStepHandler {
     //测试的包名
     private String testPackage = "";
 
-    public void setTestMode(int caseId, int resultId, String udId, String type) {
+    public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;
         log.resultId = resultId;
         log.udId = udId;
         log.type = type;
+        log.socketSession = sessionId;
     }
 
     public void setGlobalParams(JSONObject jsonObject) {
@@ -1010,6 +1008,15 @@ public class AndroidStepHandler {
             handleDes.setE(e);
         }
         return url;
+    }
+
+    public Set<String> getWebView() {
+        Set<String> contextNames = androidDriver.getContextHandles();
+        return contextNames;
+    }
+
+    public String getCurrentActivity() {
+        return androidDriver.currentActivity();
     }
 
     public void pause(HandleDes handleDes, int time) {

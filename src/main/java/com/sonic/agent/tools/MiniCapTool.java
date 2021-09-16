@@ -1,14 +1,18 @@
 package com.sonic.agent.tools;
 
+import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.websocket.Session;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Future;
@@ -23,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MiniCapTool {
     private final Logger logger = LoggerFactory.getLogger(MiniCapTool.class);
 
-    public Future<?> start(String udId,AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList) {
+    public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, Session session) {
         Queue<byte[]> dataQueue = new LinkedBlockingQueue<>();
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
@@ -91,6 +95,7 @@ public class MiniCapTool {
             int readFrameBytes = 0;
             int frameBodyLength = 0;
             byte[] frameBody = new byte[0];
+            byte[] oldBytes = new byte[0];
             while (!sendImage.isDone()) {
                 if (dataQueue.isEmpty()) {
                     continue;
@@ -152,6 +157,13 @@ public class MiniCapTool {
                         readBannerBytes += 1;
                         if (readBannerBytes == bannerLength) {
                             logger.info("banner读取已就绪");
+                            if (session != null) {
+                                JSONObject size = new JSONObject();
+                                size.put("msgType", "size");
+                                size.put("width", banner.get()[9]);
+                                size.put("height", banner.get()[13]);
+                                sendText(session, size.toJSONString());
+                            }
                         }
                     } else if (readFrameBytes < 4) {//读取并设置图片的大小
                         frameBodyLength += (byte10 << (readFrameBytes * 8));
@@ -167,7 +179,15 @@ public class MiniCapTool {
                             }
                             final byte[] finalBytes = subByteArray(frameBody,
                                     0, frameBody.length);
-                            imgList.get().add(finalBytes);
+                            if (session != null) {
+                                if (!Arrays.equals(oldBytes, finalBytes)) {
+                                    oldBytes = finalBytes;
+                                    sendByte(session, finalBytes);
+                                }
+                            }
+                            if (imgList != null) {
+                                imgList.get().add(finalBytes);
+                            }
                             cursor += frameBodyLength;
                             frameBodyLength = 0;
                             readFrameBytes = 0;
@@ -210,5 +230,25 @@ public class MiniCapTool {
         }
         System.arraycopy(byte1, start, byte2, 0, end - start);
         return byte2;
+    }
+
+    private void sendByte(Session session, byte[] message) {
+        synchronized (session) {
+            try {
+                session.getBasicRemote().sendBinary(ByteBuffer.wrap(message));
+            } catch (IllegalStateException | IOException e) {
+                logger.error("socket发送失败!连接已关闭！");
+            }
+        }
+    }
+
+    private void sendText(Session session, String message) {
+        synchronized (session) {
+            try {
+                session.getBasicRemote().sendText(message);
+            } catch (IllegalStateException | IOException e) {
+                logger.error("socket发送失败!连接已关闭！");
+            }
+        }
     }
 }

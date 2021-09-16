@@ -25,4 +25,4 @@ sonic:
   folder:
     url: http://localhost:8094/api/folder
   agent:
-    id: 1
+    key: 1

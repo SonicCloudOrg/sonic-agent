@@ -7,6 +7,7 @@ import com.android.ddmlib.IShellOutputReceiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2021/08/16 19:26
  */
 @DependsOn({"androidThreadPoolInit", "rabbitMsgInit"})
-//@Component
+@Component
 public class AndroidDeviceBridgeTool {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     private static AndroidDebugBridge androidDebugBridge = null;
