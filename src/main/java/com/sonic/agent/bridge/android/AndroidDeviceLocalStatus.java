@@ -3,6 +3,7 @@ package com.sonic.agent.bridge.android;
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.maps.AndroidDeviceManagerMap;
+import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.tools.AgentTool;
 
 /**
@@ -26,6 +27,7 @@ public class AndroidDeviceLocalStatus {
         deviceDetail.put("udId", udId);
         deviceDetail.put("status", status);
         deviceDetail.put("agentId", AgentTool.agentId);
+        RabbitMQThread.send(deviceDetail);
     }
 
     /**

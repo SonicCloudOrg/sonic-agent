@@ -76,7 +76,7 @@ public class AndroidTests {
         String udId = dataProvider.getString("udId");
         JSONObject gp = dataProvider.getJSONObject("gp");
         androidStepHandler.setGlobalParams(gp);
-        androidStepHandler.setTestMode(cid, rid, udId, DeviceStatus.TESTING);
+        androidStepHandler.setTestMode(cid, rid, udId, DeviceStatus.TESTING, "");
         AndroidDeviceLocalStatus.startTest(udId);
 
         //启动测试
@@ -188,7 +188,7 @@ public class AndroidTests {
                     }
                 } else {
                     MiniCapTool miniCapTool = new MiniCapTool();
-                    miniCapPro = miniCapTool.start(udId, banner, imgList);
+                    miniCapPro = miniCapTool.start(udId, banner, imgList, null);
                 }
                 //两分钟录一次
                 try {

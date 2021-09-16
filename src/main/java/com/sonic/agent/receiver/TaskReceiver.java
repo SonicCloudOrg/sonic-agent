@@ -29,24 +29,11 @@ import java.util.*;
 public class TaskReceiver {
     private final Logger logger = LoggerFactory.getLogger(TaskReceiver.class);
 
-    @RabbitListener(queues = "AgentQueue-#{queueId}")
+    @RabbitListener(queues = "AgentTaskQueue-#{queueId}")
     public void process(JSONObject jsonObject, Channel channel, Message message) throws IOException {
         logger.info("TaskReceiver消费者收到消息  : " + jsonObject.toString());
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         switch (jsonObject.getString("msg")) {
-            case "reboot":
-                if (jsonObject.getInteger("platform") == PlatformType.ANDROID) {
-                    IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(jsonObject.getString("udId"));
-                    if (rebootDevice != null) {
-                        AndroidDeviceBridgeTool.reboot(rebootDevice);
-                    }
-                }
-                if (jsonObject.getInteger("platform") == PlatformType.IOS) {
-                    if (LibIMobileDeviceTool.getDeviceList().contains(jsonObject.getString("udId"))) {
-                        LibIMobileDeviceTool.reboot(jsonObject.getString("udId"));
-                    }
-                }
-                break;
             case "suite":
                 //获取要执行的设备
                 JSONObject plugin = jsonObject.getJSONObject("plugin");

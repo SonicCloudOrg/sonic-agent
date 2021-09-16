@@ -5,6 +5,8 @@ import com.sonic.agent.automation.AppiumServer;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -17,24 +19,17 @@ import javax.annotation.PreDestroy;
 @DependsOn("rabbitMsgInit")
 public class LaunchTool implements ApplicationRunner {
     private final Logger logger = LoggerFactory.getLogger(LaunchTool.class);
-    @Value("${spring.version}")
-    private String version;
-    @Value("${sonic.agent.id}")
-    private int agentId;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    @Value("${sonic.agent.key}")
+    private String key;
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
-        logger.info("当前apex-agent版本为：" + version);
-        AppiumServer.start();
-        AgentTool.agentId = agentId;
-        JSONObject agentInfo = new JSONObject();
-        agentInfo.put("msg", "agentInfo");
-        agentInfo.put("port", GetWebStartPort.getTomcatPort());
-        agentInfo.put("version", version);
-        agentInfo.put("systemType", System.getProperty("os.name"));
-        agentInfo.put("ip", LocalHostTool.getHostIp());
-        agentInfo.put("id", AgentTool.agentId);
-        RabbitMQThread.send(agentInfo);
+    public void run(ApplicationArguments args) {
+        JSONObject auth = new JSONObject();
+        auth.put("msg", "auth");
+        auth.put("key", key);
+        rabbitTemplate.convertAndSend("DataExchange", "data", auth);
     }
 
     @PreDestroy
@@ -43,7 +38,7 @@ public class LaunchTool implements ApplicationRunner {
         agentOffLine.put("msg", "offLine");
         agentOffLine.put("id", AgentTool.agentId);
         RabbitMQThread.send(agentOffLine);
-        AppiumServer.close();
+//        AppiumServer.close();
         Thread.sleep(3000);
         while (true) {
             if (!AppiumServer.service.isRunning()) {

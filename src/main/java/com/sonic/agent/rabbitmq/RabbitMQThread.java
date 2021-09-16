@@ -16,6 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class RabbitMQThread {
     private static LinkedBlockingQueue<JSONObject> msgQueue;
     public static ExecutorService cachedThreadPool;
+    public static boolean isPass = false;
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
@@ -33,9 +34,13 @@ public class RabbitMQThread {
     public void sendToRabbitMQ() {
         cachedThreadPool.submit(() -> {
             while (true) {
+                if (!isPass) {
+                    Thread.sleep(5000);
+                    continue;
+                }
                 try {
                     if (!msgQueue.isEmpty()) {
-                        rabbitTemplate.convertAndSend("MsgDirectExchange", "msg", msgQueue.poll());
+                        rabbitTemplate.convertAndSend("DataExchange", "data", msgQueue.poll());
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
