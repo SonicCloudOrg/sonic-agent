@@ -77,12 +77,12 @@ public class AndroidWSServer {
             try {
                 AndroidDeviceLocalStatus.startDebug(udId);
                 androidStepHandler.startAndroidDriver(udId);
-                result.put("status","success");
+                result.put("status", "success");
                 result.put("detail", "初始化Driver完成！");
                 HandlerMap.getAndroidMap().put(session.getId(), androidStepHandler);
             } catch (Exception e) {
                 logger.error(e.getMessage());
-                result.put("status","error");
+                result.put("status", "error");
                 result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
             } finally {
                 try {
@@ -165,7 +165,7 @@ public class AndroidWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId()+"退出");
+        logger.info(session.getId() + "退出");
     }
 
     @OnError
@@ -181,7 +181,7 @@ public class AndroidWSServer {
             e.printStackTrace();
         }
         error.printStackTrace();
-        logger.info(session.getId()+"退出");
+        logger.info(session.getId() + "退出");
     }
 
     @OnMessage
@@ -191,6 +191,9 @@ public class AndroidWSServer {
         switch (msg.getString("type")) {
             case "text":
                 AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input text " + msg.getString("detail"));
+                break;
+            case "screen":
+                AndroidDeviceBridgeTool.screen(udIdMap.get(session), msg.getString("detail"));
                 break;
             case "touch":
                 OutputStream outputStream = outputMap.get(session);

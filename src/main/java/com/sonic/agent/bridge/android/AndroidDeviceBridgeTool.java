@@ -271,6 +271,20 @@ public class AndroidDeviceBridgeTool {
         return filePath;
     }
 
+    public static void screen(IDevice iDevice, String type) {
+        switch (type) {
+            case "abort":
+                executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0");
+                break;
+            case "landscape":
+                executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1");
+                break;
+            case "portrait":
+                executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0");
+                break;
+        }
+    }
+
     /**
      * @param sdk
      * @return java.lang.String
