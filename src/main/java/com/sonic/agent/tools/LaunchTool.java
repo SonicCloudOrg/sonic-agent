@@ -2,7 +2,6 @@ package com.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.automation.AppiumServer;
-import com.sonic.agent.rabbitmq.RabbitMQThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -26,6 +25,7 @@ public class LaunchTool implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        AppiumServer.start();
         JSONObject auth = new JSONObject();
         auth.put("msg", "auth");
         auth.put("key", key);
@@ -33,17 +33,7 @@ public class LaunchTool implements ApplicationRunner {
     }
 
     @PreDestroy
-    public void destroy() throws InterruptedException {
-        JSONObject agentOffLine = new JSONObject();
-        agentOffLine.put("msg", "offLine");
-        agentOffLine.put("id", AgentTool.agentId);
-        RabbitMQThread.send(agentOffLine);
-//        AppiumServer.close();
-        Thread.sleep(3000);
-        while (true) {
-            if (!AppiumServer.service.isRunning()) {
-                break;
-            }
-        }
+    public void destroy(){
+        System.out.println(1);
     }
 }

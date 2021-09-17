@@ -45,7 +45,6 @@ public class MsgReceiver {
                 agentInfo.put("version", version);
                 agentInfo.put("systemType", System.getProperty("os.name"));
                 agentInfo.put("host", LocalHostTool.getHostIp());
-                agentInfo.put("id", AgentTool.agentId);
                 RabbitMQThread.send(agentInfo);
                 break;
             case "reboot":

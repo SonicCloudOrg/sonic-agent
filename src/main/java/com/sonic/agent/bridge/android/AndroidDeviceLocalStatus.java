@@ -26,7 +26,6 @@ public class AndroidDeviceLocalStatus {
         deviceDetail.put("msg", "deviceDetail");
         deviceDetail.put("udId", udId);
         deviceDetail.put("status", status);
-        deviceDetail.put("agentId", AgentTool.agentId);
         RabbitMQThread.send(deviceDetail);
     }
 
