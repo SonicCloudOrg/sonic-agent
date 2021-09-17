@@ -37,7 +37,6 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("size", AndroidDeviceBridgeTool.getScreenSize(device));
         deviceDetail.put("cpu", device.getProperty(IDevice.PROP_DEVICE_CPU_ABI));
         deviceDetail.put("manufacturer", device.getProperty(IDevice.PROP_DEVICE_MANUFACTURER));
-        deviceDetail.put("agentId", AgentTool.agentId);
         RabbitMQThread.send(deviceDetail);
     }
 

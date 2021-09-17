@@ -31,7 +31,7 @@ public class MiniCapTool {
         Queue<byte[]> dataQueue = new LinkedBlockingQueue<>();
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, 40));
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, 80));
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
@@ -159,7 +159,7 @@ public class MiniCapTool {
                             logger.info("banner读取已就绪");
                             if (session != null) {
                                 JSONObject size = new JSONObject();
-                                size.put("msgType", "size");
+                                size.put("msg", "size");
                                 size.put("width", banner.get()[9]);
                                 size.put("height", banner.get()[13]);
                                 sendText(session, size.toJSONString());

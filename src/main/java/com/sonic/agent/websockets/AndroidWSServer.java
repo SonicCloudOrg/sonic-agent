@@ -77,13 +77,19 @@ public class AndroidWSServer {
             try {
                 AndroidDeviceLocalStatus.startDebug(udId);
                 androidStepHandler.startAndroidDriver(udId);
+                result.put("status","success");
                 result.put("detail", "初始化Driver完成！");
                 HandlerMap.getAndroidMap().put(session.getId(), androidStepHandler);
             } catch (Exception e) {
                 logger.error(e.getMessage());
-                AndroidDeviceLocalStatus.finish(udId);
-                result.put("detail", "初始化Driver失败！");
+                result.put("status","error");
+                result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
             } finally {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 result.put("msg", "openDriver");
                 sendText(session, result.toJSONString());
             }
@@ -95,7 +101,7 @@ public class AndroidWSServer {
         miniCapMap.put(session, miniCapThread);
         Thread.sleep(3000);
 
-        if (devicePlatformVersion < 10) {
+        if (devicePlatformVersion < 9) {
             int finalMiniTouchPort = PortTool.getPort();
             Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> AndroidDeviceBridgeTool.miniTouchStart(iDevice));
             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -149,6 +155,7 @@ public class AndroidWSServer {
 
     @OnClose
     public void onClose(Session session) {
+        AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
         outputMap.remove(session);
         udIdMap.remove(session);
         miniCapMap.get(session).cancel(true);
@@ -158,10 +165,12 @@ public class AndroidWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        logger.info(session.getId()+"退出");
     }
 
     @OnError
     public void onError(Session session, Throwable error) {
+        AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
         outputMap.remove(session);
         udIdMap.remove(session);
         miniCapMap.get(session).cancel(true);
@@ -172,11 +181,13 @@ public class AndroidWSServer {
             e.printStackTrace();
         }
         error.printStackTrace();
+        logger.info(session.getId()+"退出");
     }
 
     @OnMessage
     public void onMessage(String message, Session session) throws UnknownHostException {
         JSONObject msg = JSON.parseObject(message);
+        logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
             case "text":
                 AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input text " + msg.getString("detail"));
@@ -238,7 +249,7 @@ public class AndroidWSServer {
                     AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
                     AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                         JSONObject result = new JSONObject();
-                        result.put("msgType", "installFinish");
+                        result.put("msg", "installFinish");
                         try {
                             finalAndroidStepHandler.install(new HandleDes(), msg.getString("apk"), msg.getString("pkg"));
                             result.put("status", "success");
@@ -254,7 +265,7 @@ public class AndroidWSServer {
                     AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                         try {
                             JSONObject result = new JSONObject();
-                            result.put("msgType", "tree");
+                            result.put("msg", "tree");
                             result.put("detail", finalAndroidStepHandler.getResource());
                             result.put("img", finalAndroidStepHandler.stepScreen(new HandleDes()));
                             result.put("webView", finalAndroidStepHandler.getWebView());
@@ -262,7 +273,7 @@ public class AndroidWSServer {
                             sendText(session, result.toJSONString());
                         } catch (Throwable e) {
                             JSONObject result = new JSONObject();
-                            result.put("msgType", "treeFail");
+                            result.put("msg", "treeFail");
                             sendText(session, result.toJSONString());
                         }
                     });
@@ -272,7 +283,7 @@ public class AndroidWSServer {
                     AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
                     AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                         JSONObject result = new JSONObject();
-                        result.put("msgType", "eleScreen");
+                        result.put("msg", "eleScreen");
                         try {
                             result.put("img", UploadTools.upload(finalAndroidStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
                         } catch (Exception e) {

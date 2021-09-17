@@ -1,6 +1,7 @@
 package com.sonic.agent.rabbitmq;
 
 import com.alibaba.fastjson.JSONObject;
+import com.sonic.agent.tools.AgentTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -40,7 +41,10 @@ public class RabbitMQThread {
                 }
                 try {
                     if (!msgQueue.isEmpty()) {
-                        rabbitTemplate.convertAndSend("DataExchange", "data", msgQueue.poll());
+                        JSONObject m = msgQueue.poll();
+                        m.put("agentId", AgentTool.agentId);
+                        rabbitTemplate.convertAndSend("DataExchange", "data"
+                                , m);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

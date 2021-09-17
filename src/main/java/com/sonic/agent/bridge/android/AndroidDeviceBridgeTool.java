@@ -341,8 +341,8 @@ public class AndroidDeviceBridgeTool {
                 }
             }, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.info(String.format("{} 设备miniCap启动异常！"
-                    , iDevice.getSerialNumber()));
+            logger.info("{} 设备miniCap启动异常！"
+                    , iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
     }
@@ -393,8 +393,8 @@ public class AndroidDeviceBridgeTool {
                 }
             }, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.info(String.format("{} 设备miniTouch启动异常！"
-                    , iDevice.getSerialNumber()));
+            logger.info("{} 设备miniTouch启动异常！"
+                    , iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
     }
