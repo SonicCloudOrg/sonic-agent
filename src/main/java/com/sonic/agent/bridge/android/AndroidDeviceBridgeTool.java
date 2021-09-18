@@ -272,16 +272,42 @@ public class AndroidDeviceBridgeTool {
     }
 
     public static void screen(IDevice iDevice, String type) {
-        switch (type) {
-            case "abort":
-                executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0");
-                break;
-            case "landscape":
-                executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:1");
-                break;
-            case "portrait":
-                executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:0");
-                break;
+        int p = getScreen(iDevice);
+        try {
+            switch (type) {
+                case "abort":
+                    executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0");
+                    break;
+                case "add":
+                    if (p == 3) {
+                        p = 0;
+                    } else {
+                        p++;
+                    }
+                    executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:" + p);
+                    break;
+                case "sub":
+                    if (p == 0) {
+                        p = 3;
+                    } else {
+                        p--;
+                    }
+                    executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:" + p);
+                    break;
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    public static int getScreen(IDevice iDevice) {
+        try {
+            return Integer.parseInt(executeCommand(iDevice, "settings get system user_rotation")
+                    .trim().replaceAll("\n", "")
+                    .replace("\t", ""));
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+            return 0;
         }
     }
 
@@ -310,7 +336,7 @@ public class AndroidDeviceBridgeTool {
      * @des 开启miniCap服务
      * @date 2021/8/16 20:04
      */
-    public static void startMiniCapServer(IDevice iDevice, int quality) {
+    public static void startMiniCapServer(IDevice iDevice, int quality, int screen) {
         //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
         executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
         //获取cpu信息
@@ -338,7 +364,7 @@ public class AndroidDeviceBridgeTool {
         String size = getScreenSize(iDevice);
         try {
             //开始启动
-            iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q " + quality + " -P %s@%s/0", miniCapFileName, size, size), new IShellOutputReceiver() {
+            iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q " + quality + " -P %s@%s/%d", miniCapFileName, size, size, screen), new IShellOutputReceiver() {
                 @Override
                 public void addOutput(byte[] bytes, int i, int i1) {
                     String res = new String(bytes, i, i1);

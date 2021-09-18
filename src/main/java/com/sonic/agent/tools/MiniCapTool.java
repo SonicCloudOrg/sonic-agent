@@ -27,11 +27,41 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MiniCapTool {
     private final Logger logger = LoggerFactory.getLogger(MiniCapTool.class);
 
-    public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, Session session) {
+    public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, String pic, Session session) {
         Queue<byte[]> dataQueue = new LinkedBlockingQueue<>();
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+        int qua = 0;
+        switch (pic) {
+            case "low":
+                qua = 20;
+                break;
+            case "middle":
+                qua = 50;
+                break;
+            case "high":
+                qua = 80;
+                break;
+        }
+        int s = AndroidDeviceBridgeTool.getScreen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId));
+        int c = 0;
+        switch (s) {
+            case 0:
+                c = 0;
+                break;
+            case 1:
+                c = 90;
+                break;
+            case 2:
+                c = 180;
+                break;
+            case 3:
+                c = 270;
+                break;
+        }
+        int finalQua = qua;
+        int finalC = c;
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, 80));
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC));
         try {
             Thread.sleep(3000);
         } catch (InterruptedException e) {
@@ -96,6 +126,7 @@ public class MiniCapTool {
             int frameBodyLength = 0;
             byte[] frameBody = new byte[0];
             byte[] oldBytes = new byte[0];
+            int count = 0;
             while (!sendImage.isDone()) {
                 if (dataQueue.isEmpty()) {
                     continue;
@@ -181,8 +212,21 @@ public class MiniCapTool {
                                     0, frameBody.length);
                             if (session != null) {
                                 if (!Arrays.equals(oldBytes, finalBytes)) {
-                                    oldBytes = finalBytes;
-                                    sendByte(session, finalBytes);
+                                    switch (pic) {
+                                        case "low":
+                                            count++;
+                                            break;
+                                        case "middle":
+                                            count += 2;
+                                            break;
+                                        case "high":
+                                            break;
+                                    }
+                                    if (count % 4 == 0) {
+                                        count = 0;
+                                        oldBytes = finalBytes;
+                                        sendByte(session, finalBytes);
+                                    }
                                 }
                             }
                             if (imgList != null) {

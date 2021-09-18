@@ -95,11 +95,11 @@ public class AndroidWSServer {
             }
         });
 
+        AndroidDeviceBridgeTool.screen(iDevice, "abort");
         MiniCapTool miniCapTool = new MiniCapTool();
         AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, session);
+        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", session);
         miniCapMap.put(session, miniCapThread);
-        Thread.sleep(3000);
 
         if (devicePlatformVersion < 9) {
             int finalMiniTouchPort = PortTool.getPort();
@@ -159,6 +159,7 @@ public class AndroidWSServer {
         outputMap.remove(session);
         udIdMap.remove(session);
         miniCapMap.get(session).cancel(true);
+        miniCapMap.remove(session);
         WebSocketSessionMap.getMap().remove(session.getId());
         try {
             session.close();
@@ -174,6 +175,7 @@ public class AndroidWSServer {
         outputMap.remove(session);
         udIdMap.remove(session);
         miniCapMap.get(session).cancel(true);
+        miniCapMap.remove(session);
         WebSocketSessionMap.getMap().remove(session.getId());
         try {
             session.close();
@@ -185,16 +187,46 @@ public class AndroidWSServer {
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) throws UnknownHostException {
+    public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
             case "text":
                 AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input text " + msg.getString("detail"));
                 break;
-            case "screen":
-                AndroidDeviceBridgeTool.screen(udIdMap.get(session), msg.getString("detail"));
+            case "pic": {
+                Future<?> old = miniCapMap.get(session);
+                old.cancel(true);
+                Thread.sleep(3000);
+                miniCapMap.remove(session);
+                MiniCapTool miniCapTool = new MiniCapTool();
+                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+                Future<?> miniCapThread = miniCapTool.start(
+                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), session);
+                miniCapMap.put(session, miniCapThread);
+                JSONObject picFinish = new JSONObject();
+                picFinish.put("msg", "picFinish");
+                sendText(session, picFinish.toJSONString());
                 break;
+            }
+            case "screen": {
+                AndroidDeviceBridgeTool.screen(udIdMap.get(session), msg.getString("s"));
+                if (!msg.getString("s").equals("abort")) {
+                    Future<?> old = miniCapMap.get(session);
+                    old.cancel(true);
+                    Thread.sleep(3000);
+                    miniCapMap.remove(session);
+                    MiniCapTool miniCapTool = new MiniCapTool();
+                    AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+                    Future<?> miniCapThread = miniCapTool.start(
+                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), session);
+                    miniCapMap.put(session, miniCapThread);
+                    JSONObject picFinish = new JSONObject();
+                    picFinish.put("msg", "picFinish");
+                    sendText(session, picFinish.toJSONString());
+                }
+                break;
+            }
             case "touch":
                 OutputStream outputStream = outputMap.get(session);
                 try {
@@ -253,10 +285,11 @@ public class AndroidWSServer {
                     AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                         JSONObject result = new JSONObject();
                         result.put("msg", "installFinish");
-                        try {
-                            finalAndroidStepHandler.install(new HandleDes(), msg.getString("apk"), msg.getString("pkg"));
+                        HandleDes handleDes = new HandleDes();
+                        finalAndroidStepHandler.install(handleDes, msg.getString("apk"), msg.getString("pkg"));
+                        if (handleDes.getE() == null) {
                             result.put("status", "success");
-                        } catch (Exception e) {
+                        } else {
                             result.put("status", "fail");
                         }
                         sendText(session, result.toJSONString());
@@ -270,11 +303,20 @@ public class AndroidWSServer {
                             JSONObject result = new JSONObject();
                             result.put("msg", "tree");
                             result.put("detail", finalAndroidStepHandler.getResource());
-                            result.put("img", finalAndroidStepHandler.stepScreen(new HandleDes()));
-                            result.put("webView", finalAndroidStepHandler.getWebView());
-                            result.put("activity", finalAndroidStepHandler.getCurrentActivity());
-                            sendText(session, result.toJSONString());
+                            HandleDes handleDes = new HandleDes();
+                            result.put("img", finalAndroidStepHandler.stepScreen(handleDes));
+                            if (handleDes.getE() != null) {
+                                logger.error(handleDes.getE().getMessage());
+                                JSONObject resultFail = new JSONObject();
+                                resultFail.put("msg", "treeFail");
+                                sendText(session, resultFail.toJSONString());
+                            } else {
+                                result.put("webView", finalAndroidStepHandler.getWebView());
+                                result.put("activity", finalAndroidStepHandler.getCurrentActivity());
+                                sendText(session, result.toJSONString());
+                            }
                         } catch (Throwable e) {
+                            logger.error(e.getMessage());
                             JSONObject result = new JSONObject();
                             result.put("msg", "treeFail");
                             sendText(session, result.toJSONString());
