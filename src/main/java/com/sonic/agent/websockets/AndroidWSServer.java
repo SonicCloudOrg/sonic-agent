@@ -155,35 +155,12 @@ public class AndroidWSServer {
 
     @OnClose
     public void onClose(Session session) {
-        AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
-        outputMap.remove(session);
-        udIdMap.remove(session);
-        miniCapMap.get(session).cancel(true);
-        miniCapMap.remove(session);
-        WebSocketSessionMap.getMap().remove(session.getId());
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        logger.info(session.getId() + "退出");
+        exit(session, null);
     }
 
     @OnError
     public void onError(Session session, Throwable error) {
-        AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
-        outputMap.remove(session);
-        udIdMap.remove(session);
-        miniCapMap.get(session).cancel(true);
-        miniCapMap.remove(session);
-        WebSocketSessionMap.getMap().remove(session.getId());
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        error.printStackTrace();
-        logger.info(session.getId() + "退出");
+        exit(session, error);
     }
 
     @OnMessage
@@ -268,17 +245,6 @@ public class AndroidWSServer {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                if (msg.getString("detail").equals("close")) {
-                    androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
-                    try {
-                        androidStepHandler.closeAndroidDriver();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
-                        HandlerMap.getAndroidMap().remove(session.getId());
-                    }
-                }
                 if (msg.getString("detail").equals("install")) {
                     androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
@@ -358,5 +324,33 @@ public class AndroidWSServer {
                 logger.error("socket发送失败!连接已关闭！");
             }
         }
+    }
+
+    private void exit(Session session, Throwable error) {
+        if (error != null) {
+            logger.error(error.getMessage());
+            JSONObject errMsg = new JSONObject();
+            errMsg.put("msg", "error");
+            sendText(session, errMsg.toJSONString());
+        }
+        try {
+            HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
+            HandlerMap.getAndroidMap().remove(session.getId());
+        }
+        outputMap.remove(session);
+        udIdMap.remove(session);
+        miniCapMap.get(session).cancel(true);
+        miniCapMap.remove(session);
+        WebSocketSessionMap.getMap().remove(session.getId());
+        try {
+            session.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        logger.info(session.getId() + "退出");
     }
 }
