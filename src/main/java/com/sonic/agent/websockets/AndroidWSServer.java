@@ -155,12 +155,15 @@ public class AndroidWSServer {
 
     @OnClose
     public void onClose(Session session) {
-        exit(session, null);
+        exit(session);
     }
 
     @OnError
     public void onError(Session session, Throwable error) {
-        exit(session, error);
+        logger.error(error.getMessage());
+        JSONObject errMsg = new JSONObject();
+        errMsg.put("msg", "error");
+        sendText(session, errMsg.toJSONString());
     }
 
     @OnMessage
@@ -326,13 +329,7 @@ public class AndroidWSServer {
         }
     }
 
-    private void exit(Session session, Throwable error) {
-        if (error != null) {
-            logger.error(error.getMessage());
-            JSONObject errMsg = new JSONObject();
-            errMsg.put("msg", "error");
-            sendText(session, errMsg.toJSONString());
-        }
+    private void exit(Session session) {
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
