@@ -66,6 +66,7 @@ public class AndroidStepHandler {
     private long startTime;
     //测试的包名
     private String testPackage = "";
+    private String udId = "";
 
     public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;
@@ -97,6 +98,7 @@ public class AndroidStepHandler {
      * @date 2021/8/16 20:01
      */
     public void startAndroidDriver(String udId) throws InterruptedException {
+        this.udId = udId;
         DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
         //微信webView配置
         ChromeOptions chromeOptions = new ChromeOptions();
@@ -573,14 +575,23 @@ public class AndroidStepHandler {
     }
 
     public void rotateDevice(HandleDes handleDes, String text) {
-        handleDes.setStepDes("旋转设备");
         try {
-            androidDriver.rotate(ScreenOrientation.valueOf(text));
-            if (text.equals("LANDSCAPE")) {
-                handleDes.setDetail("旋转横屏");
-            } else {
-                handleDes.setDetail("旋转竖屏");
+            String s = "";
+            switch (text) {
+                case "screenSub":
+                    s = "sub";
+                    handleDes.setStepDes("左转屏幕");
+                    break;
+                case "screenAdd":
+                    s = "add";
+                    handleDes.setStepDes("右转屏幕");
+                    break;
+                case "screenAbort":
+                    s = "abort";
+                    handleDes.setStepDes("关闭自动旋转");
+                    break;
             }
+            AndroidDeviceBridgeTool.screen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId), s);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -813,7 +824,7 @@ public class AndroidStepHandler {
 
     public void longPress(HandleDes handleDes, String des, String selector, String pathValue, int time) {
         handleDes.setStepDes("长按" + des);
-        handleDes.setDetail("长按元素" + time + "毫秒 ");
+        handleDes.setDetail("长按控件元素" + time + "毫秒 ");
         try {
             TouchAction ta = new TouchAction(androidDriver);
             WebElement webElement = findEle(selector, pathValue);
@@ -1075,7 +1086,7 @@ public class AndroidStepHandler {
                 we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.partialLinkText(pathValue)));
                 break;
             default:
-                log.sendStepLog(StepType.ERROR, "查找元素失败", "这个元素类型: " + selector + " 不存在!!!");
+                log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
                 break;
         }
         return we;
@@ -1158,7 +1169,9 @@ public class AndroidStepHandler {
             case "runBack":
                 runBackground(handleDes, Long.parseLong(step.getString("content")));
                 break;
-            case "rotateDevice":
+            case "screenSub":
+            case "screenAdd":
+            case "screenAbort":
                 rotateDevice(handleDes, step.getString("text"));
                 break;
             case "lock":
