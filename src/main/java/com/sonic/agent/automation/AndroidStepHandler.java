@@ -315,7 +315,7 @@ public class AndroidStepHandler {
                     detail.put("bStart", pointStart);
                     detail.put("bEnd", pointEnd);
                 }
-                detail.put(attr.getKey().replace("-", ""), attr.getValue());
+                detail.put(attr.getKey(), attr.getValue());
             }
             ele.put("detail", detail);
             if (elements.get(i).children().size() > 0) {
