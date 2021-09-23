@@ -1229,6 +1229,7 @@ public class AndroidStepHandler {
                     break;
                 case ErrorType.WARNING:
                     log.sendStepLog(StepType.WARN, step + "异常！", detail);
+                    exceptionLog(e);
                     break;
                 case ErrorType.SHUTDOWN:
                     log.sendStepLog(StepType.ERROR, step + "异常！", detail);
