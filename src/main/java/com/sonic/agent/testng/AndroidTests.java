@@ -104,8 +104,6 @@ public class AndroidTests {
                 try {
                     androidStepHandler.runStep(stepDetail);
                 } catch (Throwable e) {
-                    androidStepHandler.errorScreen();
-                    androidStepHandler.exceptionLog(e);
                     androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
                     return;
                 }
