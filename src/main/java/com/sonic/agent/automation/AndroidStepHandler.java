@@ -67,6 +67,8 @@ public class AndroidStepHandler {
     //测试的包名
     private String testPackage = "";
     private String udId = "";
+    //测试状态
+    private int status = 1;
 
     public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;
@@ -203,7 +205,12 @@ public class AndroidStepHandler {
         if (!isSendStatus) {
             log.sendStatusLog(status);
             isSendStatus = true;
+            this.status = status;
         }
+    }
+
+    public int getStatus() {
+        return status;
     }
 
     /**
@@ -315,7 +322,7 @@ public class AndroidStepHandler {
                     detail.put("bStart", pointStart);
                     detail.put("bEnd", pointEnd);
                 }
-                detail.put(attr.getKey().replace("-", ""), attr.getValue());
+                detail.put(attr.getKey(), attr.getValue());
             }
             ele.put("detail", detail);
             if (elements.get(i).children().size() > 0) {
@@ -420,7 +427,7 @@ public class AndroidStepHandler {
     }
 
     public void install(HandleDes handleDes, String path, String packName) {
-        handleDes.setStepDes("安装App");
+        handleDes.setStepDes("安装应用");
         handleDes.setDetail("App安装路径： " + path);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
         String manufacturer = iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER);
@@ -519,7 +526,6 @@ public class AndroidStepHandler {
                 return;
             }
         }
-        //特殊机型要启动验证
         try {
             androidDriver.activateApp(packName);
         } catch (Exception e) {
@@ -528,7 +534,7 @@ public class AndroidStepHandler {
     }
 
     public void uninstall(HandleDes handleDes, String appPackage) {
-        handleDes.setStepDes("卸载App");
+        handleDes.setStepDes("卸载应用");
         handleDes.setDetail("App包名： " + appPackage);
         try {
             androidDriver.removeApp(appPackage);
@@ -545,7 +551,7 @@ public class AndroidStepHandler {
      * @date 2021/8/16 23:46
      */
     public void terminate(HandleDes handleDes, String packageName) throws Exception {
-        handleDes.setStepDes("终止App");
+        handleDes.setStepDes("终止应用");
         handleDes.setDetail("应用包名： " + packageName);
         try {
             androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
@@ -555,7 +561,7 @@ public class AndroidStepHandler {
     }
 
     public void runBackground(HandleDes handleDes, long time) throws Exception {
-        handleDes.setStepDes("后台运行App");
+        handleDes.setStepDes("后台运行应用");
         handleDes.setDetail("后台运行App " + time + " ms");
         try {
             androidDriver.runAppInBackground(Duration.ofMillis(time));
@@ -565,7 +571,7 @@ public class AndroidStepHandler {
     }
 
     public void openApp(HandleDes handleDes, String appPackage) throws Exception {
-        handleDes.setStepDes("打开App");
+        handleDes.setStepDes("打开应用");
         handleDes.setDetail("App包名： " + appPackage);
         try {
             androidDriver.activateApp(appPackage);
@@ -1172,7 +1178,7 @@ public class AndroidStepHandler {
             case "screenSub":
             case "screenAdd":
             case "screenAbort":
-                rotateDevice(handleDes, step.getString("text"));
+                rotateDevice(handleDes, step.getString("stepType"));
                 break;
             case "lock":
                 lock(handleDes);
@@ -1229,9 +1235,13 @@ public class AndroidStepHandler {
                     break;
                 case ErrorType.WARNING:
                     log.sendStepLog(StepType.WARN, step + "异常！", detail);
+                    errorScreen();
+                    exceptionLog(e);
                     break;
                 case ErrorType.SHUTDOWN:
                     log.sendStepLog(StepType.ERROR, step + "异常！", detail);
+                    errorScreen();
+                    exceptionLog(e);
                     throw e;
             }
         } else {
