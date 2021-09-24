@@ -142,7 +142,6 @@ public class AndroidTests {
                 isSupportRecord = false;
             }
             while (!runStep.isDone()) {
-                AtomicBoolean isFail = new AtomicBoolean(false);
                 if (androidStepHandler.getAndroidDriver() == null) {
                     try {
                         Thread.sleep(500);
@@ -214,14 +213,14 @@ public class AndroidTests {
 //                }
                 //处理录像
                 if (isSupportRecord) {
-                    if (isFail.get()) {
+                    if (androidStepHandler.getStatus() == 3) {
                         androidStepHandler.stopRecord(udId);
                     } else {
                         androidStepHandler.getAndroidDriver().stopRecordingScreen();
                     }
                 } else {
                     miniCapPro.cancel(true);
-                    if (isFail.get()) {
+                    if (androidStepHandler.getStatus() == 3) {
                         File recordByRmvb = new File("test-output/record");
                         if (!recordByRmvb.exists()) {
                             recordByRmvb.mkdirs();
