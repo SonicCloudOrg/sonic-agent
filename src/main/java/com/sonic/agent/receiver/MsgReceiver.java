@@ -76,11 +76,10 @@ public class MsgReceiver {
                         try {
                             androidStepHandler.runStep(stepDetail);
                         } catch (Throwable e) {
-                            androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
-                            return;
+                            break;
                         }
                     }
-                    androidStepHandler.setResultDetailStatus(ResultDetailStatus.PASS);
+                    androidStepHandler.sendStatus();
                 }
                 break;
         }

@@ -104,10 +104,10 @@ public class AndroidTests {
                 try {
                     androidStepHandler.runStep(stepDetail);
                 } catch (Throwable e) {
-                    androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
-                    return;
+                    break;
                 }
             }
+            androidStepHandler.sendStatus();
         });
 
         //性能数据获取线程
