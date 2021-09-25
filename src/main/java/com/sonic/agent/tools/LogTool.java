@@ -20,7 +20,7 @@ import java.util.Date;
  */
 public class LogTool {
     private final Logger logger = LoggerFactory.getLogger(LogTool.class);
-    public String socketSession = "";
+    public String sessionId = "";
     public String type;
     public int caseId = 0;
     public int resultId = 0;
@@ -40,7 +40,7 @@ public class LogTool {
         message.put("udId", udId);
         message.put("agentId", AgentTool.agentId);
         if (type.equals(DeviceStatus.DEBUGGING)) {
-            sendToWebSocket(WebSocketSessionMap.getMap().get(socketSession), message);
+            sendToWebSocket(WebSocketSessionMap.getMap().get(sessionId), message);
         }
         if (type.equals(DeviceStatus.TESTING)) {
             sendToServer(message);

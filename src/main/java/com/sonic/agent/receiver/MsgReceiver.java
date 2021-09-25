@@ -1,11 +1,15 @@
 package com.sonic.agent.receiver;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.rabbitmq.client.Channel;
+import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.ios.LibIMobileDeviceTool;
 import com.sonic.agent.interfaces.PlatformType;
+import com.sonic.agent.interfaces.ResultDetailStatus;
+import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.tools.AgentTool;
 import com.sonic.agent.tools.GetWebStartPort;
@@ -18,6 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ZhouYiXun
@@ -32,7 +38,7 @@ public class MsgReceiver {
 
     @RabbitListener(queues = "MsgQueue-${sonic.agent.key}")
     public void process(JSONObject jsonObject, Channel channel, Message message) throws IOException {
-        logger.info("TaskReceiver消费者收到消息  : " + jsonObject.toString());
+        logger.info("MsgReceiver消费者收到消息  : " + jsonObject.toString());
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         switch (jsonObject.getString("msg")) {
             case "auth":
@@ -58,6 +64,23 @@ public class MsgReceiver {
                     if (LibIMobileDeviceTool.getDeviceList().contains(jsonObject.getString("udId"))) {
                         LibIMobileDeviceTool.reboot(jsonObject.getString("udId"));
                     }
+                }
+                break;
+            case "runStep":
+                if (jsonObject.getInteger("pf") == 2) {
+                    AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
+                    androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
+                    JSONArray steps = jsonObject.getJSONArray("steps");
+                    for (Object step : steps) {
+                        JSONObject stepDetail = (JSONObject) step;
+                        try {
+                            androidStepHandler.runStep(stepDetail);
+                        } catch (Throwable e) {
+                            androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
+                            return;
+                        }
+                    }
+                    androidStepHandler.setResultDetailStatus(ResultDetailStatus.PASS);
                 }
                 break;
         }

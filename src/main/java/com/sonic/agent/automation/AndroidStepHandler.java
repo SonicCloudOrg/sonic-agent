@@ -56,7 +56,6 @@ import static org.testng.Assert.*;
 public class AndroidStepHandler {
     public LogTool log = new LogTool();
     private AndroidDriver androidDriver;
-    private Map<String, String> transferParam = new HashMap<>();
     private JSONObject globalParams = new JSONObject();
     //是否已经发送过测试结果
     private Boolean isSendStatus = false;
@@ -75,7 +74,7 @@ public class AndroidStepHandler {
         log.resultId = resultId;
         log.udId = udId;
         log.type = type;
-        log.socketSession = sessionId;
+        log.sessionId = sessionId;
     }
 
     public void setGlobalParams(JSONObject jsonObject) {
@@ -209,8 +208,14 @@ public class AndroidStepHandler {
         }
     }
 
+    //判断有无出错
     public int getStatus() {
         return status;
+    }
+
+    public void resetResultDetailStatus() {
+        isSendStatus = false;
+        status = 1;
     }
 
     /**
@@ -1212,7 +1217,7 @@ public class AndroidStepHandler {
                 asserts(handleDes, actual, expect, step.getString("stepType"));
                 break;
             case "getTextValue":
-                transferParam.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
+                globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
                 break;
             case "hideKey":
