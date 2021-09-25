@@ -213,6 +213,7 @@ public class AndroidStepHandler {
         return status;
     }
 
+    //调试每次重设状态
     public void resetResultDetailStatus() {
         status = 1;
     }

@@ -69,6 +69,7 @@ public class MsgReceiver {
             case "runStep":
                 if (jsonObject.getInteger("pf") == 2) {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
+                    androidStepHandler.resetResultDetailStatus();
                     androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
                     JSONArray steps = jsonObject.getJSONArray("steps");
                     for (Object step : steps) {
