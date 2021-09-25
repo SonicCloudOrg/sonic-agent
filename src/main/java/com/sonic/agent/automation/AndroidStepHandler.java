@@ -56,7 +56,6 @@ import static org.testng.Assert.*;
 public class AndroidStepHandler {
     public LogTool log = new LogTool();
     private AndroidDriver androidDriver;
-    private Map<String, String> transferParam = new HashMap<>();
     private JSONObject globalParams = new JSONObject();
     //是否已经发送过测试结果
     private Boolean isSendStatus = false;
@@ -75,7 +74,7 @@ public class AndroidStepHandler {
         log.resultId = resultId;
         log.udId = udId;
         log.type = type;
-        log.socketSession = sessionId;
+        log.sessionId = sessionId;
     }
 
     public void setGlobalParams(JSONObject jsonObject) {
@@ -182,8 +181,6 @@ public class AndroidStepHandler {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        //默认通过
-        setResultDetailStatus(ResultDetailStatus.PASS);
         //发送运行时长
         if (version.length() > 0) {
             log.sendElapsed((int) (Calendar.getInstance().getTimeInMillis() - startTime), PlatformType.ANDROID, version);
@@ -198,19 +195,27 @@ public class AndroidStepHandler {
      * @param status
      * @return void
      * @author ZhouYiXun
-     * @des 发送测试状态
+     * @des 设置测试状态
      * @date 2021/8/16 23:46
      */
     public void setResultDetailStatus(int status) {
-        if (!isSendStatus) {
-            log.sendStatusLog(status);
-            isSendStatus = true;
+        if (status > this.status) {
             this.status = status;
         }
     }
 
+    public void sendStatus() {
+        log.sendStatusLog(status);
+    }
+
+    //判断有无出错
     public int getStatus() {
         return status;
+    }
+
+    //调试每次重设状态
+    public void resetResultDetailStatus() {
+        status = 1;
     }
 
     /**
@@ -1212,7 +1217,7 @@ public class AndroidStepHandler {
                 asserts(handleDes, actual, expect, step.getString("stepType"));
                 break;
             case "getTextValue":
-                transferParam.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
+                globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
                 break;
             case "hideKey":
@@ -1235,11 +1240,13 @@ public class AndroidStepHandler {
                     break;
                 case ErrorType.WARNING:
                     log.sendStepLog(StepType.WARN, step + "异常！", detail);
+                    setResultDetailStatus(ResultDetailStatus.WARN);
                     errorScreen();
                     exceptionLog(e);
                     break;
                 case ErrorType.SHUTDOWN:
                     log.sendStepLog(StepType.ERROR, step + "异常！", detail);
+                    setResultDetailStatus(ResultDetailStatus.FAIL);
                     errorScreen();
                     exceptionLog(e);
                     throw e;

@@ -308,10 +308,10 @@ public class AndroidWSServer {
                 }
                 if (msg.getString("detail").equals("runStep")) {
                     JSONObject jsonDebug = new JSONObject();
-                    jsonDebug.put("msg", "runStep");
+                    jsonDebug.put("msg", "findSteps");
                     jsonDebug.put("key", key);
                     jsonDebug.put("udId", udIdMap.get(session).getSerialNumber());
-                    jsonDebug.put("socketSession", session.getId());
+                    jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     RabbitMQThread.send(jsonDebug);
                 }
