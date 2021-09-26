@@ -1,5 +1,6 @@
 package com.sonic.agent.automation;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
@@ -23,6 +24,7 @@ import io.appium.java_client.android.appmanagement.AndroidInstallApplicationOpti
 import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
 import io.appium.java_client.android.nativekey.AndroidKey;
 import io.appium.java_client.android.nativekey.KeyEvent;
+import io.appium.java_client.appmanagement.BaseTerminateApplicationOptions;
 import io.appium.java_client.remote.AndroidMobileCapabilityType;
 import io.appium.java_client.remote.AutomationName;
 import io.appium.java_client.remote.MobileCapabilityType;
@@ -44,6 +46,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.*;
@@ -871,7 +874,7 @@ public class AndroidStepHandler {
 
     public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
         handleDes.setStepDes("点击图片" + des);
-        handleDes.setDetail("点击图片:" + pathValue);
+        handleDes.setDetail(pathValue);
         File file = null;
         if (pathValue.startsWith("http")) {
             file = DownImageTool.download(pathValue);
@@ -1051,9 +1054,6 @@ public class AndroidStepHandler {
         }
     }
 
-    public void runMonkey(JSONObject a, JSONArray b) {
-    }
-
     public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
         handleDes.setStepDes("执行公共步骤 " + name);
         log.sendStepLog(StepType.WARN, "公共步骤 " + name + " 开始执行", "");
@@ -1104,7 +1104,7 @@ public class AndroidStepHandler {
     }
 
     public void runStep(JSONObject stepJSON) throws Throwable {
-        JSONObject step = stepJSON.getJSONObject("steps");
+        JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
         HandleDes handleDes = new HandleDes();
         switch (step.getString("stepType")) {
@@ -1224,10 +1224,10 @@ public class AndroidStepHandler {
                 hideKey(handleDes);
                 break;
             case "monkey":
-                runMonkey(step.getJSONObject("content"), step.getJSONArray("text"));
+//                runMonkey(step.getJSONObject("content"), step.getJSONArray("text"));
                 break;
             case "publicStep":
-                publicStep(handleDes, step.getString("content"), step.getJSONArray("pubSteps"));
+                publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
         }
         switchType(step.getInteger("error"), handleDes.getStepDes(), handleDes.getDetail(), handleDes.getE());
     }
