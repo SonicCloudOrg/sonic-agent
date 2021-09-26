@@ -207,12 +207,12 @@ public class LogTool {
     public void androidInfo(String platform, String version, String udId, String manufacturer, String model, String api, String size) {
         sendStepLog(StepType.INFO, "",
                 "设备操作系统：" + platform
-                        + "\n操作系统版本：" + version
-                        + "\n设备序列号：" + udId
-                        + "\n设备制造商：" + manufacturer
-                        + "\n设备型号：" + model
-                        + "\n安卓API等级：" + api
-                        + "\n设备分辨率：" + size
+                        + "<br>操作系统版本：" + version
+                        + "<br>设备序列号：" + udId
+                        + "<br>设备制造商：" + manufacturer
+                        + "<br>设备型号：" + model
+                        + "<br>安卓API等级：" + api
+                        + "<br>设备分辨率：" + size
         );
     }
 }

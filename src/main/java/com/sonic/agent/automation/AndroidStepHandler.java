@@ -1104,7 +1104,7 @@ public class AndroidStepHandler {
     }
 
     public void runStep(JSONObject stepJSON) throws Throwable {
-        JSONObject step = stepJSON.getJSONObject("steps");
+        JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
         HandleDes handleDes = new HandleDes();
         switch (step.getString("stepType")) {
@@ -1227,7 +1227,7 @@ public class AndroidStepHandler {
                 runMonkey(step.getJSONObject("content"), step.getJSONArray("text"));
                 break;
             case "publicStep":
-                publicStep(handleDes, step.getString("content"), step.getJSONArray("pubSteps"));
+                publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
         }
         switchType(step.getInteger("error"), handleDes.getStepDes(), handleDes.getDetail(), handleDes.getE());
     }
