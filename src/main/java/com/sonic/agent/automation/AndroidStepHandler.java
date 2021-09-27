@@ -60,8 +60,6 @@ public class AndroidStepHandler {
     public LogTool log = new LogTool();
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
-    //是否已经发送过测试结果
-    private Boolean isSendStatus = false;
     //包版本
     private String version = "";
     //测试起始时间
@@ -185,9 +183,9 @@ public class AndroidStepHandler {
             e.printStackTrace();
         }
         //发送运行时长
-        if (version.length() > 0) {
-            log.sendElapsed((int) (Calendar.getInstance().getTimeInMillis() - startTime), PlatformType.ANDROID, version);
-        }
+//        if (version.length() > 0) {
+//            log.sendElapsed((int) (Calendar.getInstance().getTimeInMillis() - startTime), PlatformType.ANDROID, version);
+//        }
     }
 
     public AndroidDriver getAndroidDriver() {
@@ -260,7 +258,7 @@ public class AndroidStepHandler {
                     perform.put(re.get(0).get(memNum).toString(), re.get(1).get(memNum));
                 }
                 memResult.put("data", perform);
-                log.sendPerLog(performName, memResult);
+                log.sendPerLog(testPackage, performName, memResult);
             }
         }
     }
@@ -558,7 +556,7 @@ public class AndroidStepHandler {
      * @des 终止app
      * @date 2021/8/16 23:46
      */
-    public void terminate(HandleDes handleDes, String packageName) throws Exception {
+    public void terminate(HandleDes handleDes, String packageName) {
         handleDes.setStepDes("终止应用");
         handleDes.setDetail("应用包名： " + packageName);
         try {
@@ -568,7 +566,7 @@ public class AndroidStepHandler {
         }
     }
 
-    public void runBackground(HandleDes handleDes, long time) throws Exception {
+    public void runBackground(HandleDes handleDes, long time) {
         handleDes.setStepDes("后台运行应用");
         handleDes.setDetail("后台运行App " + time + " ms");
         try {
@@ -578,10 +576,11 @@ public class AndroidStepHandler {
         }
     }
 
-    public void openApp(HandleDes handleDes, String appPackage) throws Exception {
+    public void openApp(HandleDes handleDes, String appPackage) {
         handleDes.setStepDes("打开应用");
         handleDes.setDetail("App包名： " + appPackage);
         try {
+            testPackage = appPackage;
             androidDriver.activateApp(appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -877,7 +876,12 @@ public class AndroidStepHandler {
         handleDes.setDetail(pathValue);
         File file = null;
         if (pathValue.startsWith("http")) {
-            file = DownImageTool.download(pathValue);
+            try {
+                file = DownImageTool.download(pathValue);
+            } catch (Exception e) {
+                handleDes.setE(e);
+                return;
+            }
         }
         FindResult findResult = null;
         try {
@@ -1054,6 +1058,342 @@ public class AndroidStepHandler {
         }
     }
 
+    public void runMonkey(HandleDes handleDes, JSONObject content, List<JSONObject> text) {
+        handleDes.setStepDes("运行随机事件测试完毕");
+        String packageName = content.getString("packageName");
+        int pctNum = content.getInteger("pctNum");
+        if (!androidDriver.isAppInstalled(packageName)) {
+            log.sendStepLog(StepType.ERROR, "应用未安装！", "设备未安装 " + packageName);
+            handleDes.setE(new Exception("未安装应用"));
+            return;
+        }
+        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+        JSONArray options = content.getJSONArray("options");
+        int width = androidDriver.manage().window().getSize().width;
+        int height = androidDriver.manage().window().getSize().height;
+        int sleepTime = 50;
+        int systemEvent = 0;
+        int tapEvent = 0;
+        int longPressEvent = 0;
+        int swipeEvent = 0;
+        int zoomEvent = 0;
+        int navEvent = 0;
+        boolean isOpenH5Listener = false;
+        boolean isOpenPackageListener = false;
+        boolean isOpenActivityListener = false;
+        boolean isOpenNetworkListener = false;
+        boolean isOpenImageListener = false;
+        if (!options.isEmpty()) {
+            for (int i = options.size() - 1; i >= 0; i--) {
+                JSONObject jsonOption = (JSONObject) options.get(i);
+                if (jsonOption.getString("name").equals("sleepTime")) {
+                    sleepTime = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("systemEvent")) {
+                    systemEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("tapEvent")) {
+                    tapEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("longPressEvent")) {
+                    longPressEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("swipeEvent")) {
+                    swipeEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("zoomEvent")) {
+                    zoomEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("navEvent")) {
+                    navEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("isOpenH5Listener")) {
+                    isOpenH5Listener = jsonOption.getBoolean("value");
+                }
+                if (jsonOption.getString("name").equals("isOpenPackageListener")) {
+                    isOpenPackageListener = jsonOption.getBoolean("value");
+                }
+                if (jsonOption.getString("name").equals("isOpenActivityListener")) {
+                    isOpenActivityListener = jsonOption.getBoolean("value");
+                }
+                if (jsonOption.getString("name").equals("isOpenNetworkListener")) {
+                    isOpenNetworkListener = jsonOption.getBoolean("value");
+                }
+                if (jsonOption.getString("name").equals("isOpenImageListener")) {
+                    isOpenImageListener = jsonOption.getBoolean("value");
+                }
+                options.remove(options.get(i));
+            }
+        }
+        int finalSleepTime = sleepTime;
+        int finalTapEvent = tapEvent;
+        int finalLongPressEvent = longPressEvent;
+        int finalSwipeEvent = swipeEvent;
+        int finalZoomEvent = zoomEvent;
+        int finalSystemEvent = systemEvent;
+        int finalNavEvent = navEvent;
+        Future<?> randomThread = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    log.sendStepLog(StepType.INFO, "", "随机事件数：" + pctNum +
+                            "<br>目标应用：" + packageName
+                            + "<br>用户操作时延：" + finalSleepTime + " ms"
+                            + "<br>轻触事件权重：" + finalTapEvent
+                            + "<br>长按事件权重：" + finalLongPressEvent
+                            + "<br>滑动事件权重：" + finalSwipeEvent
+                            + "<br>多点触控事件权重：" + finalZoomEvent
+                            + "<br>物理按键事件权重：" + finalSystemEvent
+                            + "<br>系统事件权重：" + finalNavEvent
+                    );
+                    openApp(new HandleDes(), packageName);
+                    TouchAction ta = new TouchAction(androidDriver);
+                    TouchAction ta2 = new TouchAction(androidDriver);
+                    MultiTouchAction multiTouchAction = new MultiTouchAction(androidDriver);
+                    int totalCount = finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent;
+                    for (int i = 0; i < pctNum; i++) {
+                        try {
+                            int random = new Random().nextInt(totalCount);
+                            if (random >= 0 && random < finalSystemEvent) {
+                                int key = new Random().nextInt(9);
+                                String keyType = "";
+                                switch (key) {
+                                    case 0:
+                                        keyType = "HOME";
+                                        break;
+                                    case 1:
+                                        keyType = "BACK";
+                                        break;
+                                    case 2:
+                                        keyType = "MENU";
+                                        break;
+                                    case 3:
+                                        keyType = "APP_SWITCH";
+                                        break;
+                                    case 4:
+                                        keyType = "BRIGHTNESS_DOWN";
+                                        break;
+                                    case 5:
+                                        keyType = "BRIGHTNESS_UP";
+                                        break;
+                                    case 6:
+                                        keyType = "VOLUME_UP";
+                                        break;
+                                    case 7:
+                                        keyType = "VOLUME_DOWN";
+                                        break;
+                                    case 8:
+                                        keyType = "VOLUME_MUTE";
+                                        break;
+                                }
+                                androidDriver.pressKey(new KeyEvent(AndroidKey.valueOf(keyType)));
+                            }
+                            if (random >= finalSystemEvent && random < (finalSystemEvent + finalTapEvent)) {
+                                int x = new Random().nextInt(width);
+                                int y = new Random().nextInt(height - 60) + 60;
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, "input tap " + x + " " + y);
+                            }
+                            if (random >= (finalSystemEvent + finalTapEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent)) {
+                                int x = new Random().nextInt(width);
+                                int y = new Random().nextInt(height - 60) + 60;
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x + " " + y + " " + x + " " + y + " " + new Random().nextInt(2) * 500 + 1000);
+                            }
+                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent)) {
+                                int x1 = new Random().nextInt(width);
+                                int y1 = new Random().nextInt(height - 80) + 80;
+                                int x2 = new Random().nextInt(width);
+                                int y2 = new Random().nextInt(height - 80) + 80;
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 300");
+                            }
+                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent)) {
+                                int x1 = new Random().nextInt(width - 80);
+                                int y1 = new Random().nextInt(height - 80);
+                                int x2 = new Random().nextInt(width - 100);
+                                int y2 = new Random().nextInt(height - 80);
+                                int x3 = new Random().nextInt(width - 100);
+                                int y3 = new Random().nextInt(height - 80);
+                                int x4 = new Random().nextInt(width - 100);
+                                int y4 = new Random().nextInt(height - 80);
+                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release();
+                                ta2.press(PointOption.point(x3, y3)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x4, y4)).release();
+                                multiTouchAction.add(ta);
+                                multiTouchAction.add(ta2);
+                                multiTouchAction.perform();
+                            }
+                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent)) {
+                                int key = new Random().nextInt(3);
+                                switch (key) {
+                                    case 0:
+                                        androidDriver.toggleAirplaneMode();
+                                        break;
+                                    case 1:
+                                        androidDriver.toggleWifi();
+                                        break;
+                                    case 2:
+                                        androidDriver.toggleLocationServices();
+                                        break;
+                                }
+                            }
+                            Thread.sleep(finalSleepTime);
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        );
+        Boolean finalIsOpenH5Listener = isOpenH5Listener;
+        Future<?> H5Listener = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    if (finalIsOpenH5Listener) {
+                        int h5Time = 0;
+                        while (!randomThread.isDone()) {
+                            try {
+                                Thread.sleep(8000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            try {
+                                if (androidDriver.findElementsByClassName("android.webkit.WebView").size() > 0) {
+                                    h5Time++;
+                                    AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
+                                } else {
+                                    h5Time = 0;
+                                }
+                                if (h5Time >= 12) {
+                                    androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                                    h5Time = 0;
+                                }
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+        );
+        boolean finalIsOpenPackageListener = isOpenPackageListener;
+        Future<?> packageListener = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    if (finalIsOpenPackageListener) {
+                        while (!randomThread.isDone()) {
+                            int waitTime = 0;
+                            while (waitTime <= 10 && (!randomThread.isDone())) {
+                                try {
+                                    Thread.sleep(5000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                if (!androidDriver.getCurrentPackage().equals(packageName)) {
+                                    androidDriver.activateApp(packageName);
+                                }
+                                waitTime++;
+                            }
+                            androidDriver.activateApp(packageName);
+                        }
+                    }
+                }
+        );
+        boolean finalIsOpenActivityListener = isOpenActivityListener;
+        Future<?> activityListener = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    if (finalIsOpenActivityListener) {
+                        if (text.isEmpty()) {
+                            return;
+                        }
+                        Set<String> blackList = new HashSet<>();
+                        for (JSONObject activities : text) {
+                            blackList.add(activities.getString("name"));
+                        }
+                        while (!randomThread.isDone()) {
+                            try {
+                                Thread.sleep(8000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            if (blackList.contains(getCurrentActivity())) {
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
+                            } else continue;
+                            try {
+                                Thread.sleep(8000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            if (blackList.contains(getCurrentActivity())) {
+                                androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                            }
+                        }
+                    }
+                }
+        );
+        boolean finalIsOpenNetworkListener = isOpenNetworkListener;
+        Future<?> networkListener = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    if (finalIsOpenNetworkListener) {
+                        while (!randomThread.isDone()) {
+                            try {
+                                Thread.sleep(8000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            if (androidDriver.getConnection().isAirplaneModeEnabled()) {
+                                androidDriver.toggleAirplaneMode();
+                            }
+                            try {
+                                Thread.sleep(8000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            if (!androidDriver.getConnection().isWiFiEnabled()) {
+                                androidDriver.toggleWifi();
+                            }
+                        }
+                    }
+                }
+        );
+        boolean finalIsOpenImageListener = isOpenImageListener;
+        Future<?> imageListener = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    if (finalIsOpenImageListener) {
+                        int matchTime = 0;
+                        File first = getScreenToLocal();
+                        while (!randomThread.isDone()) {
+                            try {
+                                Thread.sleep(8000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            File second = getScreenToLocal();
+                            try {
+                                if (SimilarityChecker.getSimilarMSSIMScore(first, second, false) >= 0.94) {
+                                    matchTime++;
+                                } else {
+                                    matchTime = 0;
+                                }
+                                if (matchTime >= 12) {
+                                    androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                                    matchTime = 0;
+                                }
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+                            } finally {
+                                File third = first;
+                                first = second;
+                                third.delete();
+                            }
+                        }
+                        first.delete();
+                    }
+                }
+        );
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (version.length() == 0) {
+            version = AndroidDeviceBridgeTool.getAppOnlyVersion(udId, packageName);
+        }
+        log.sendStepLog(StepType.INFO, "", packageName + "包版本：" + version +
+                (isOpenPackageListener ? "<br>应用包名监听器已开启..." : "") +
+                (isOpenH5Listener ? "<br>H5页面监听器已开启..." : "") +
+                (isOpenActivityListener ? "<br>黑名单Activity监听器..." : "") +
+                (isOpenNetworkListener ? "<br>网络状态监听器已开启..." : "") +
+                (isOpenImageListener ? "<br>图像静止监听器已开启..." : ""));
+        while (!randomThread.isDone() || (!packageListener.isDone()) || (!activityListener.isDone()) || (!networkListener.isDone()) || (!imageListener.isDone()) || (!H5Listener.isDone())) {
+        }
+    }
+
     public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
         handleDes.setStepDes("执行公共步骤 " + name);
         log.sendStepLog(StepType.WARN, "公共步骤 " + name + " 开始执行", "");
@@ -1224,7 +1564,7 @@ public class AndroidStepHandler {
                 hideKey(handleDes);
                 break;
             case "monkey":
-//                runMonkey(step.getJSONObject("content"), step.getJSONArray("text"));
+                runMonkey(handleDes, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
                 break;
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));

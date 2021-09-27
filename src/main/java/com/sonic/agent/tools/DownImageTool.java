@@ -30,6 +30,8 @@ public class DownImageTool {
                 os.write(bs, 0, len);
             }
         } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         } finally {
             try {
                 os.close();

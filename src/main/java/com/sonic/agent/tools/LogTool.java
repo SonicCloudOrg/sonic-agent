@@ -134,12 +134,12 @@ public class LogTool {
      * @des 发送性能数据
      * @date 2021/8/16 19:58
      */
-    public void sendPerLog(String type, JSONObject detail) {
+    public void sendPerLog(String packageName, String type, JSONObject detail) {
         JSONObject log = new JSONObject();
         log.put("msg", "perform");
-        log.put("des", type);
+        log.put("des", packageName);
         log.put("log", detail);
-        log.put("status", 0);
+        log.put("status", type);
         send(log);
     }
 
