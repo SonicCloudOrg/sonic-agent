@@ -24,9 +24,7 @@ import org.testng.annotations.Test;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,6 +45,13 @@ public class AndroidTests {
         List<String> udIdList = JSON.parseArray(
                 context.getCurrentXmlTest().getParameter("udIdList")).toJavaList(String.class);
         List<JSONObject> dataProvider = new ArrayList<>();
+        Map<String, List<String>> valueMap = new HashMap<>();
+        for (String s : globalParams.keySet()) {
+            if (globalParams.getString(s).contains("|")) {
+                valueMap.put(s, Arrays.asList(globalParams.getString(s).split("|")));
+                globalParams.remove(s);
+            }
+        }
         for (String udId : udIdList) {
             if (AndroidDeviceManagerMap.getMap().get(udId) != null
                     || !AndroidDeviceBridgeTool.getIDeviceByUdId(udId).getState()
@@ -57,6 +62,15 @@ public class AndroidTests {
             deviceTestData.put("udId", udId);
             deviceTestData.put("rid", rid);
             deviceTestData.put("dataInfo", dataInfo);
+            for (String k : valueMap.keySet()) {
+                if (valueMap.get(k).size() > 0) {
+                    String v = valueMap.get(k).get(0);
+                    globalParams.put(k, v);
+                    valueMap.get(k).remove(0);
+                } else {
+                    valueMap.remove(k);
+                }
+            }
             deviceTestData.put("gp", globalParams);
             dataProvider.add(deviceTestData);
         }
