@@ -23,8 +23,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ZhouYiXun
@@ -73,7 +72,23 @@ public class MsgReceiver {
                 if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
                     androidStepHandler.resetResultDetailStatus();
-                    androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
+                    JSONObject globalParams = jsonObject.getJSONObject("gp");
+                    Map<String, List<String>> valueMap = new HashMap<>();
+                    for (String s : globalParams.keySet()) {
+                        if (globalParams.getString(s).contains("|")) {
+                            List<String> shuffle = Arrays.asList(globalParams.getString(s).split("|"));
+                            Collections.shuffle(shuffle);
+                            valueMap.put(s, shuffle);
+                            globalParams.remove(s);
+                        }
+                    }
+                    for (String k : valueMap.keySet()) {
+                        if (valueMap.get(k).size() > 0) {
+                            String v = valueMap.get(k).get(0);
+                            globalParams.put(k, v);
+                        }
+                    }
+                    androidStepHandler.setGlobalParams(globalParams);
                     JSONArray steps = jsonObject.getJSONArray("steps");
                     for (Object step : steps) {
                         JSONObject stepDetail = (JSONObject) step;

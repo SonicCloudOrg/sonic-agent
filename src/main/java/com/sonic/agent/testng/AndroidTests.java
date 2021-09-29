@@ -48,7 +48,9 @@ public class AndroidTests {
         Map<String, List<String>> valueMap = new HashMap<>();
         for (String s : globalParams.keySet()) {
             if (globalParams.getString(s).contains("|")) {
-                valueMap.put(s, Arrays.asList(globalParams.getString(s).split("|")));
+                List<String> shuffle = Arrays.asList(globalParams.getString(s).split("|"));
+                Collections.shuffle(shuffle);
+                valueMap.put(s, shuffle);
                 globalParams.remove(s);
             }
         }
