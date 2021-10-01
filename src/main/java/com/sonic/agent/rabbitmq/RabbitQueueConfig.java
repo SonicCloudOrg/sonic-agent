@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Configuration
@@ -36,9 +38,29 @@ public class RabbitQueueConfig {
         return new Queue("MsgQueue-" + key, true);
     }
 
+    @Bean("TaskDirectExchange")
+    public DirectExchange TaskDirectExchange() {
+        return new DirectExchange("TaskDirectExchange", true, false);
+    }
+
+    @Bean("TaskQueue")
+    public Queue TaskQueue() {
+        Map<String, Object> params = new HashMap<>();
+        params.put("x-message-ttl", 1000 * 60 * 10);
+        params.put("x-dead-letter-exchange", "MsgDirectExchange");
+        params.put("x-dead-letter-routing-key", "MsgQueue-" + key);
+        return new Queue("TaskQueue-" + key, true);
+    }
+
     @Bean
-    public Binding bindingDirect(@Qualifier("MsgQueue") Queue queue,
-                                 @Qualifier("MsgDirectExchange") DirectExchange exchange) {
+    public Binding bindingMsgDirect(@Qualifier("MsgQueue") Queue queue,
+                                    @Qualifier("MsgDirectExchange") DirectExchange exchange) {
+        return BindingBuilder.bind(queue).to(exchange).with(key);
+    }
+
+    @Bean
+    public Binding bindingTaskDirect(@Qualifier("TaskQueue") Queue queue,
+                                     @Qualifier("TaskDirectExchange") DirectExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(key);
     }
 
