@@ -35,80 +35,84 @@ public class TaskReceiver {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         switch (jsonObject.getString("msg")) {
             case "suite":
+                AndroidPasswordMap.getMap().put(jsonObject.getString("udId")
+                        , jsonObject.getString("pwd"));
+                AndroidTests androidTests = new AndroidTests();
+                androidTests.run();
                 //获取要执行的设备
-                JSONObject plugin = jsonObject.getJSONObject("plugin");
-                List<String> localUdIdList = new ArrayList<>();
-                JSONArray testUdIdList = new JSONArray();
-                if (jsonObject.getInteger("sp") == PlatformType.ANDROID) {
-                    IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
-                    //获取本地正常的设备列表
-                    for (IDevice iDevice : deviceList) {
-                        if (iDevice.getState().equals(IDevice.DeviceState.ONLINE)) {
-                            localUdIdList.add(iDevice.getSerialNumber());
-                        }
-                    }
-                    //找出任务下发的设备列表里是否本地存在
-                    for (String udId : plugin.keySet()) {
-                        if (localUdIdList.contains(udId)) {
-                            testUdIdList.add(udId);
-                            //存放密码
-                            AndroidPasswordMap.getMap().put(udId, plugin.getString(udId));
-                        }
-                    }
-                }
-                //组装套件
-                JSONArray suiteArray = jsonObject.getJSONArray("suite");
-                TestNG tng = new TestNG();
-                List<XmlSuite> suiteList = new ArrayList<>();
-                Map<String, JSONArray> moduleMap = new HashMap<>();
-                for (Object caseDetail : suiteArray) {
-                    JSONObject caseDetailJson = (JSONObject) caseDetail;
-                    JSONObject testCase = caseDetailJson.getJSONObject("case");
-                    if (moduleMap.containsKey(testCase.getString("module"))) {
-                        moduleMap.get(testCase.getString("module")).add(caseDetailJson);
-                    } else {
-                        JSONArray stepArray = new JSONArray();
-                        stepArray.add(caseDetailJson);
-                        moduleMap.put(testCase.getString("module"), stepArray);
-                    }
-                }
-                for (String module : moduleMap.keySet()) {
-                    XmlSuite xmlSuite = new XmlSuite();
-                    xmlSuite.setName(module);
-                    xmlSuite.setDataProviderThreadCount(jsonObject.getInteger("dt"));
-                    xmlSuite.setParallel(XmlSuite.ParallelMode.TESTS);//并发级别
-                    xmlSuite.setThreadCount(jsonObject.getInteger("ct"));//并发线程数
-                    JSONArray caseArray = moduleMap.get(module);
-                    for (Object caseInfo : caseArray) {
-                        XmlTest xmlTest = new XmlTest(xmlSuite);
-                        JSONObject caseInfoJson = (JSONObject) caseInfo;
-                        JSONObject testCase = caseInfoJson.getJSONObject("case");
-                        xmlTest.setName(testCase.getString("name"));
-                        Map<String, String> parameters = new HashMap<>();
-                        parameters.put("rid", jsonObject.getInteger("rid") + "");
-                        parameters.put("gp", jsonObject.getJSONObject("gp").toJSONString());
-                        parameters.put("dataInfo", caseInfoJson.toJSONString());
-                        parameters.put("udIdList", testUdIdList.toJSONString());
-                        xmlTest.setParameters(parameters);
-                        List<XmlClass> classes = new ArrayList<>();
-                        if (testCase.getInteger("platform") == PlatformType.ANDROID) {
-                            classes.add(new XmlClass(AndroidTests.class));
-                        }
-                        if (testCase.getInteger("platform") == PlatformType.IOS) {
-                            classes.add(new XmlClass(IOSTests.class));
-                        }
-                        xmlTest.setXmlClasses(classes);
-                    }
-                    suiteList.add(xmlSuite);
-                }
-                tng.setSuiteThreadPoolSize(jsonObject.getInteger("mt"));
-                tng.setXmlSuites(suiteList);
-                tng.run();
-                JSONObject suiteResult = new JSONObject();
-                suiteResult.put("msg", "suiteResult");
-                suiteResult.put("rid", jsonObject.getInteger("rid"));
-                suiteResult.put("detail", "finish");
-                RabbitMQThread.send(suiteResult);
+//                JSONObject plugin = jsonObject.getJSONObject("plugin");
+//                List<String> localUdIdList = new ArrayList<>();
+//                JSONArray testUdIdList = new JSONArray();
+//                if (jsonObject.getInteger("sp") == PlatformType.ANDROID) {
+//                    IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
+//                    //获取本地正常的设备列表
+//                    for (IDevice iDevice : deviceList) {
+//                        if (iDevice.getState().equals(IDevice.DeviceState.ONLINE)) {
+//                            localUdIdList.add(iDevice.getSerialNumber());
+//                        }
+//                    }
+//                    //找出任务下发的设备列表里是否本地存在
+//                    for (String udId : plugin.keySet()) {
+//                        if (localUdIdList.contains(udId)) {
+//                            testUdIdList.add(udId);
+//                            //存放密码
+//                            AndroidPasswordMap.getMap().put(udId, plugin.getString(udId));
+//                        }
+//                    }
+//                }
+//                //组装套件
+//                JSONArray suiteArray = jsonObject.getJSONArray("suite");
+//                TestNG tng = new TestNG();
+//                List<XmlSuite> suiteList = new ArrayList<>();
+//                Map<String, JSONArray> moduleMap = new HashMap<>();
+//                for (Object caseDetail : suiteArray) {
+//                    JSONObject caseDetailJson = (JSONObject) caseDetail;
+//                    JSONObject testCase = caseDetailJson.getJSONObject("case");
+//                    if (moduleMap.containsKey(testCase.getString("module"))) {
+//                        moduleMap.get(testCase.getString("module")).add(caseDetailJson);
+//                    } else {
+//                        JSONArray stepArray = new JSONArray();
+//                        stepArray.add(caseDetailJson);
+//                        moduleMap.put(testCase.getString("module"), stepArray);
+//                    }
+//                }
+//                for (String module : moduleMap.keySet()) {
+//                    XmlSuite xmlSuite = new XmlSuite();
+//                    xmlSuite.setName(module);
+//                    xmlSuite.setDataProviderThreadCount(jsonObject.getInteger("dt"));
+//                    xmlSuite.setParallel(XmlSuite.ParallelMode.TESTS);//并发级别
+//                    xmlSuite.setThreadCount(jsonObject.getInteger("ct"));//并发线程数
+//                    JSONArray caseArray = moduleMap.get(module);
+//                    for (Object caseInfo : caseArray) {
+//                        XmlTest xmlTest = new XmlTest(xmlSuite);
+//                        JSONObject caseInfoJson = (JSONObject) caseInfo;
+//                        JSONObject testCase = caseInfoJson.getJSONObject("case");
+//                        xmlTest.setName(testCase.getString("name"));
+//                        Map<String, String> parameters = new HashMap<>();
+//                        parameters.put("rid", jsonObject.getInteger("rid") + "");
+//                        parameters.put("gp", jsonObject.getJSONObject("gp").toJSONString());
+//                        parameters.put("dataInfo", caseInfoJson.toJSONString());
+//                        parameters.put("udIdList", testUdIdList.toJSONString());
+//                        xmlTest.setParameters(parameters);
+//                        List<XmlClass> classes = new ArrayList<>();
+//                        if (testCase.getInteger("platform") == PlatformType.ANDROID) {
+//                            classes.add(new XmlClass(AndroidTests.class));
+//                        }
+//                        if (testCase.getInteger("platform") == PlatformType.IOS) {
+//                            classes.add(new XmlClass(IOSTests.class));
+//                        }
+//                        xmlTest.setXmlClasses(classes);
+//                    }
+//                    suiteList.add(xmlSuite);
+//                }
+//                tng.setSuiteThreadPoolSize(jsonObject.getInteger("mt"));
+//                tng.setXmlSuites(suiteList);
+//                tng.run();
+//                JSONObject suiteResult = new JSONObject();
+//                suiteResult.put("msg", "suiteResult");
+//                suiteResult.put("rid", jsonObject.getInteger("rid"));
+//                suiteResult.put("detail", "finish");
+//                RabbitMQThread.send(suiteResult);
                 break;
         }
         channel.basicAck(deliveryTag, true);

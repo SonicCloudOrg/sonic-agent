@@ -67,9 +67,9 @@ public class MsgReceiver {
                 }
                 break;
             case "runStep":
-                AndroidPasswordMap.getMap().put(jsonObject.getString("udId")
-                        , jsonObject.getString("pwd"));
                 if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
+                    AndroidPasswordMap.getMap().put(jsonObject.getString("udId")
+                            , jsonObject.getString("pwd"));
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
                     androidStepHandler.resetResultDetailStatus();
                     JSONObject globalParams = jsonObject.getJSONObject("gp");
@@ -89,11 +89,10 @@ public class MsgReceiver {
                         }
                     }
                     androidStepHandler.setGlobalParams(globalParams);
-                    JSONArray steps = jsonObject.getJSONArray("steps");
-                    for (Object step : steps) {
-                        JSONObject stepDetail = (JSONObject) step;
+                    List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
+                    for (JSONObject step : steps) {
                         try {
-                            androidStepHandler.runStep(stepDetail);
+                            androidStepHandler.runStep(step);
                         } catch (Throwable e) {
                             break;
                         }
