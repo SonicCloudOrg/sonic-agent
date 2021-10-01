@@ -76,23 +76,7 @@ public class MsgReceiver {
                             , jsonObject.getString("pwd"));
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
                     androidStepHandler.resetResultDetailStatus();
-                    JSONObject globalParams = jsonObject.getJSONObject("gp");
-                    Map<String, List<String>> valueMap = new HashMap<>();
-                    for (String s : globalParams.keySet()) {
-                        if (globalParams.getString(s).contains("|")) {
-                            List<String> shuffle = Arrays.asList(globalParams.getString(s).split("|"));
-                            Collections.shuffle(shuffle);
-                            valueMap.put(s, shuffle);
-                            globalParams.remove(s);
-                        }
-                    }
-                    for (String k : valueMap.keySet()) {
-                        if (valueMap.get(k).size() > 0) {
-                            String v = valueMap.get(k).get(0);
-                            globalParams.put(k, v);
-                        }
-                    }
-                    androidStepHandler.setGlobalParams(globalParams);
+                    androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
                     List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
                     for (JSONObject step : steps) {
                         try {
@@ -124,6 +108,7 @@ public class MsgReceiver {
                     JSONObject subResultCount = new JSONObject();
                     subResultCount.put("rid", jsonObject.getInteger("rid"));
                     RabbitMQThread.send(subResultCount);
+                    channel.basicAck(deliveryTag, true);
                 }
                 break;
         }
