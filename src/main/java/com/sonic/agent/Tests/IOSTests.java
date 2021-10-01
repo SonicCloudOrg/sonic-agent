@@ -1,4 +1,4 @@
-package com.sonic.agent.testng;
+package com.sonic.agent.Tests;
 
 /**
  * @author ZhouYiXun

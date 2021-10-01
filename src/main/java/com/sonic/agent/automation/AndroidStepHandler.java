@@ -189,7 +189,9 @@ public class AndroidStepHandler {
     }
 
     public void waitDevice(int waitCount) {
-        log.sendStepLog(StepType.INFO, "设备非空闲状态！第" + waitCount + "次等待连接...", "");
+        if (waitCount % 3 == 0) {
+            log.sendStepLog(StepType.INFO, "设备非空闲状态！第" + waitCount + "次等待连接...", "");
+        }
     }
 
     public void waitDeviceTimeOut(String udId) {

@@ -1,6 +1,5 @@
 package com.sonic.agent.receiver;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.rabbitmq.client.Channel;
@@ -8,12 +7,10 @@ import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.ios.LibIMobileDeviceTool;
 import com.sonic.agent.interfaces.PlatformType;
-import com.sonic.agent.interfaces.ResultDetailStatus;
-import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
-import com.sonic.agent.testng.AndroidTests;
+import com.sonic.agent.Tests.AndroidTests;
 import com.sonic.agent.tools.AgentTool;
 import com.sonic.agent.tools.GetWebStartPort;
 import com.sonic.agent.tools.LocalHostTool;
@@ -96,10 +93,7 @@ public class MsgReceiver {
                             , device.getString("password"));
                     AndroidTests androidTests = new AndroidTests();
                     try {
-                        androidTests.run(channel, deliveryTag,
-                                jsonObject.getJSONArray("steps").toJavaList(JSONObject.class)
-                                , jsonObject.getInteger("rid"), jsonObject.getInteger("cid")
-                                , device.getString("udId"), jsonObject.getJSONObject("gp"));
+                        androidTests.run(channel, deliveryTag, jsonObject);
                     } catch (Exception e) {
                         channel.basicReject(deliveryTag, true);
                     }
