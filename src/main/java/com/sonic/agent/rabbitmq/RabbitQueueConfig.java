@@ -42,38 +42,6 @@ public class RabbitQueueConfig {
         return BindingBuilder.bind(queue).to(exchange).with(key);
     }
 
-    @Bean("PackageExchange")
-    public FanoutExchange PackageExchange() {
-        return new FanoutExchange("PackageExchange", true, false);
-    }
-
-    @Bean("AgentExchange")
-    public FanoutExchange AgentExchange() {
-        return new FanoutExchange("AgentExchange", true, false);
-    }
-
-    @Bean("PackageQueue")
-    public Queue PackageQueue() {
-        return new Queue("PackageQueue-" + queueId, true, false, true);
-    }
-
-    @Bean("AgentTaskQueue")
-    public Queue AgentTaskQueue() {
-        return new Queue("AgentTaskQueue-" + queueId, true, false, true);
-    }
-
-    @Bean
-    public Binding bindingAgentDirect(@Qualifier("AgentTaskQueue") Queue queue,
-                                      @Qualifier("AgentExchange") FanoutExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange);
-    }
-
-    @Bean
-    public Binding bindingPackageDirect(@Qualifier("PackageQueue") Queue queue,
-                                        @Qualifier("PackageExchange") FanoutExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange);
-    }
-
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate();

@@ -2,12 +2,14 @@ package com.sonic.agent.testng;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
+import com.rabbitmq.client.Channel;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import com.sonic.agent.cv.RecordHandler;
 import com.sonic.agent.interfaces.DeviceStatus;
+import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.tools.MiniCapTool;
 import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;
@@ -26,26 +28,42 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AndroidTests {
     private final Logger logger = LoggerFactory.getLogger(AndroidTests.class);
 
-    public void run(List<JSONObject> steps, int rid, int cid, String udId, JSONObject gp) throws InterruptedException {
+    public void run(Channel channel, long tag, List<JSONObject> steps, int rid, int cid, String udId, JSONObject gp) throws IOException {
         AndroidStepHandler androidStepHandler = new AndroidStepHandler();
         androidStepHandler.setGlobalParams(gp);
         androidStepHandler.setTestMode(cid, rid, udId, DeviceStatus.TESTING, "");
-        AndroidDeviceLocalStatus.startTest(udId);
-
+        channel.basicAck(tag, true);
+        int waitTime = 0;
+        while (!AndroidDeviceLocalStatus.startTest(udId)) {
+            androidStepHandler.waitDevice(waitTime + 1);
+            try {
+                Thread.sleep(60000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            waitTime++;
+            if (waitTime >= 9) {
+                androidStepHandler.waitDeviceTimeOut(udId);
+                androidStepHandler.sendStatus();
+                return;
+            }
+        }
         //启动测试
         try {
             androidStepHandler.startAndroidDriver(udId);
         } catch (Exception e) {
-            AndroidDeviceLocalStatus.finishError(udId);
-            androidStepHandler.closeAndroidDriver();
             logger.error(e.getMessage());
-            throw e;
+            androidStepHandler.closeAndroidDriver();
+            androidStepHandler.sendStatus();
+            AndroidDeviceLocalStatus.finishError(udId);
+            return;
         }
 
         //电量过低退出测试
         if (androidStepHandler.getBattery()) {
-            AndroidDeviceLocalStatus.finish(udId);
             androidStepHandler.closeAndroidDriver();
+            androidStepHandler.sendStatus();
+            AndroidDeviceLocalStatus.finish(udId);
             return;
         }
 
@@ -58,7 +76,6 @@ public class AndroidTests {
                     break;
                 }
             }
-            androidStepHandler.sendStatus();
         });
 
         //性能数据获取线程
@@ -199,6 +216,7 @@ public class AndroidTests {
             }
         }
         androidStepHandler.closeAndroidDriver();
+        androidStepHandler.sendStatus();
         AndroidDeviceLocalStatus.finish(udId);
     }
 }

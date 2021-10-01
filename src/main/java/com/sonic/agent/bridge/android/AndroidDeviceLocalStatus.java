@@ -36,9 +36,16 @@ public class AndroidDeviceLocalStatus {
      * @des 开始测试
      * @date 2021/8/16 20:57
      */
-    public static void startTest(String udId) {
-        send(udId, DeviceStatus.TESTING);
-        AndroidDeviceManagerMap.getMap().put(udId, DeviceStatus.TESTING);
+    public static boolean startTest(String udId) {
+        synchronized (AndroidDeviceLocalStatus.class) {
+            if (AndroidDeviceManagerMap.getMap().get(udId) == null) {
+                send(udId, DeviceStatus.TESTING);
+                AndroidDeviceManagerMap.getMap().put(udId, DeviceStatus.TESTING);
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
     /**
