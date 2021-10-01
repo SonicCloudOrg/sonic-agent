@@ -9,9 +9,11 @@ import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.ios.LibIMobileDeviceTool;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.interfaces.ResultDetailStatus;
+import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
+import com.sonic.agent.testng.AndroidTests;
 import com.sonic.agent.tools.AgentTool;
 import com.sonic.agent.tools.GetWebStartPort;
 import com.sonic.agent.tools.LocalHostTool;
@@ -52,6 +54,7 @@ public class MsgReceiver {
                 agentInfo.put("systemType", System.getProperty("os.name"));
                 agentInfo.put("host", LocalHostTool.getHostIp());
                 RabbitMQThread.send(agentInfo);
+                channel.basicAck(deliveryTag, true);
                 break;
             case "reboot":
                 if (jsonObject.getInteger("platform") == PlatformType.ANDROID) {
@@ -65,43 +68,49 @@ public class MsgReceiver {
                         LibIMobileDeviceTool.reboot(jsonObject.getString("udId"));
                     }
                 }
+                channel.basicAck(deliveryTag, true);
                 break;
             case "runStep":
-                AndroidPasswordMap.getMap().put(jsonObject.getString("udId")
-                        , jsonObject.getString("pwd"));
                 if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
+                    AndroidPasswordMap.getMap().put(jsonObject.getString("udId")
+                            , jsonObject.getString("pwd"));
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
                     androidStepHandler.resetResultDetailStatus();
-                    JSONObject globalParams = jsonObject.getJSONObject("gp");
-                    Map<String, List<String>> valueMap = new HashMap<>();
-                    for (String s : globalParams.keySet()) {
-                        if (globalParams.getString(s).contains("|")) {
-                            List<String> shuffle = Arrays.asList(globalParams.getString(s).split("|"));
-                            Collections.shuffle(shuffle);
-                            valueMap.put(s, shuffle);
-                            globalParams.remove(s);
-                        }
-                    }
-                    for (String k : valueMap.keySet()) {
-                        if (valueMap.get(k).size() > 0) {
-                            String v = valueMap.get(k).get(0);
-                            globalParams.put(k, v);
-                        }
-                    }
-                    androidStepHandler.setGlobalParams(globalParams);
-                    JSONArray steps = jsonObject.getJSONArray("steps");
-                    for (Object step : steps) {
-                        JSONObject stepDetail = (JSONObject) step;
+                    androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
+                    List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
+                    for (JSONObject step : steps) {
                         try {
-                            androidStepHandler.runStep(stepDetail);
+                            androidStepHandler.runStep(step);
                         } catch (Throwable e) {
                             break;
                         }
                     }
                     androidStepHandler.sendStatus();
                 }
+                channel.basicAck(deliveryTag, true);
+                break;
+            case "suite":
+                JSONObject device = jsonObject.getJSONObject("device");
+                if (AndroidDeviceBridgeTool.getIDeviceByUdId(device.getString("udId")) != null) {
+                    AndroidPasswordMap.getMap().put(device.getString("udId")
+                            , device.getString("password"));
+                    AndroidTests androidTests = new AndroidTests();
+                    try {
+                        androidTests.run(channel, deliveryTag,
+                                jsonObject.getJSONArray("steps").toJavaList(JSONObject.class)
+                                , jsonObject.getInteger("rid"), jsonObject.getInteger("cid")
+                                , device.getString("udId"), jsonObject.getJSONObject("gp"));
+                    } catch (Exception e) {
+                        channel.basicReject(deliveryTag, true);
+                    }
+                } else {
+                    //取消本次测试
+                    JSONObject subResultCount = new JSONObject();
+                    subResultCount.put("rid", jsonObject.getInteger("rid"));
+                    RabbitMQThread.send(subResultCount);
+                    channel.basicAck(deliveryTag, true);
+                }
                 break;
         }
-        channel.basicAck(deliveryTag, true);
     }
 }

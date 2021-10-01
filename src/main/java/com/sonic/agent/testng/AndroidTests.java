@@ -1,32 +1,23 @@
 package com.sonic.agent.testng;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
+import com.rabbitmq.client.Channel;
 import com.sonic.agent.automation.AndroidStepHandler;
-import com.sonic.agent.automation.AppiumServer;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import com.sonic.agent.cv.RecordHandler;
 import com.sonic.agent.interfaces.DeviceStatus;
-import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.tools.MiniCapTool;
-import com.sonic.agent.tools.UploadTools;
 import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.ITestContext;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -37,93 +28,54 @@ import java.util.concurrent.atomic.AtomicReference;
 public class AndroidTests {
     private final Logger logger = LoggerFactory.getLogger(AndroidTests.class);
 
-    @DataProvider(name = "testData", parallel = true)
-    public Object[][] getTestData(ITestContext context) {
-        int rid = Integer.parseInt(context.getCurrentXmlTest().getParameter("rid"));
-        String dataInfo = context.getCurrentXmlTest().getParameter("dataInfo");
-        JSONObject globalParams = JSON.parseObject(context.getCurrentXmlTest().getParameter("gp"));
-        List<String> udIdList = JSON.parseArray(
-                context.getCurrentXmlTest().getParameter("udIdList")).toJavaList(String.class);
-        List<JSONObject> dataProvider = new ArrayList<>();
-        Map<String, List<String>> valueMap = new HashMap<>();
-        for (String s : globalParams.keySet()) {
-            if (globalParams.getString(s).contains("|")) {
-                List<String> shuffle = Arrays.asList(globalParams.getString(s).split("|"));
-                Collections.shuffle(shuffle);
-                valueMap.put(s, shuffle);
-                globalParams.remove(s);
-            }
-        }
-        for (String udId : udIdList) {
-            if (AndroidDeviceManagerMap.getMap().get(udId) != null
-                    || !AndroidDeviceBridgeTool.getIDeviceByUdId(udId).getState()
-                    .equals(IDevice.DeviceState.ONLINE)) {
-                continue;
-            }
-            JSONObject deviceTestData = new JSONObject();
-            deviceTestData.put("udId", udId);
-            deviceTestData.put("rid", rid);
-            deviceTestData.put("dataInfo", dataInfo);
-            for (String k : valueMap.keySet()) {
-                if (valueMap.get(k).size() > 0) {
-                    String v = valueMap.get(k).get(0);
-                    globalParams.put(k, v);
-                    valueMap.get(k).remove(0);
-                } else {
-                    valueMap.remove(k);
-                }
-            }
-            deviceTestData.put("gp", globalParams);
-            dataProvider.add(deviceTestData);
-        }
-        Object[][] testDataProvider = new Object[dataProvider.size()][];
-        for (int i = 0; i < dataProvider.size(); i++) {
-            testDataProvider[i] = new Object[]{dataProvider.get(i)};
-        }
-        return testDataProvider;
-    }
-
-    @Test(dataProvider = "testData", description = "Android端测试")
-    public void run(JSONObject dataProvider) throws InterruptedException {
+    public void run(Channel channel, long tag, List<JSONObject> steps, int rid, int cid, String udId, JSONObject gp) throws IOException {
         AndroidStepHandler androidStepHandler = new AndroidStepHandler();
-        JSONObject jsonObject = JSON.parseObject(dataProvider.getString("dataInfo"));
-        int rid = dataProvider.getInteger("rid");
-        int cid = jsonObject.getJSONObject("case").getInteger("id");
-        String udId = dataProvider.getString("udId");
-        JSONObject gp = dataProvider.getJSONObject("gp");
         androidStepHandler.setGlobalParams(gp);
         androidStepHandler.setTestMode(cid, rid, udId, DeviceStatus.TESTING, "");
-        AndroidDeviceLocalStatus.startTest(udId);
-
+        channel.basicAck(tag, true);
+        int waitTime = 0;
+        while (!AndroidDeviceLocalStatus.startTest(udId)) {
+            androidStepHandler.waitDevice(waitTime + 1);
+            try {
+                Thread.sleep(60000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            waitTime++;
+            if (waitTime >= 9) {
+                androidStepHandler.waitDeviceTimeOut(udId);
+                androidStepHandler.sendStatus();
+                return;
+            }
+        }
         //启动测试
         try {
             androidStepHandler.startAndroidDriver(udId);
         } catch (Exception e) {
-            AndroidDeviceLocalStatus.finishError(udId);
-            androidStepHandler.closeAndroidDriver();
             logger.error(e.getMessage());
-            throw e;
+            androidStepHandler.closeAndroidDriver();
+            androidStepHandler.sendStatus();
+            AndroidDeviceLocalStatus.finishError(udId);
+            return;
         }
 
         //电量过低退出测试
         if (androidStepHandler.getBattery()) {
-            AndroidDeviceLocalStatus.finish(udId);
             androidStepHandler.closeAndroidDriver();
+            androidStepHandler.sendStatus();
+            AndroidDeviceLocalStatus.finish(udId);
             return;
         }
 
         //正常运行步骤的线程
         Future<?> runStep = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            JSONArray steps = jsonObject.getJSONArray("steps");
-            for (Object step : steps) {
-                JSONObject stepDetail = (JSONObject) step;
+            for (JSONObject step : steps) {
                 try {
-                    androidStepHandler.runStep(stepDetail);
+                    androidStepHandler.runStep(step);
                 } catch (Throwable e) {
                     break;
                 }
             }
-            androidStepHandler.sendStatus();
         });
 
         //性能数据获取线程
@@ -264,6 +216,7 @@ public class AndroidTests {
             }
         }
         androidStepHandler.closeAndroidDriver();
+        androidStepHandler.sendStatus();
         AndroidDeviceLocalStatus.finish(udId);
     }
 }

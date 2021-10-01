@@ -188,6 +188,16 @@ public class AndroidStepHandler {
 //        }
     }
 
+    public void waitDevice(int waitCount) {
+        log.sendStepLog(StepType.INFO, "设备非空闲状态！第" + waitCount + "次等待连接...", "");
+    }
+
+    public void waitDeviceTimeOut(String udId) {
+        log.sendStepLog(StepType.ERROR, "等待设备超时！测试跳过！", "");
+        //测试标记为异常
+        setResultDetailStatus(ResultDetailStatus.WARN);
+    }
+
     public AndroidDriver getAndroidDriver() {
         return androidDriver;
     }
