@@ -48,7 +48,7 @@ public class RabbitQueueConfig {
         Map<String, Object> params = new HashMap<>();
         params.put("x-message-ttl", 1000 * 60 * 5);
         params.put("x-dead-letter-exchange", "MsgDirectExchange");
-        params.put("x-dead-letter-routing-key", "MsgQueue-" + key);
+        params.put("x-dead-letter-routing-key", key);
         return QueueBuilder.durable("TaskQueue-" + key).withArguments(params).build();
     }
 

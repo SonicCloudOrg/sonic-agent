@@ -1164,84 +1164,73 @@ public class AndroidStepHandler {
                         try {
                             int random = new Random().nextInt(totalCount);
                             if (random >= 0 && random < finalSystemEvent) {
-//                                int key = new Random().nextInt(9);
-//                                String keyType = "";
-//                                switch (key) {
-//                                    case 0:
-//                                        keyType = "HOME";
-//                                        break;
-//                                    case 1:
-//                                        keyType = "BACK";
-//                                        break;
-//                                    case 2:
-//                                        keyType = "MENU";
-//                                        break;
-//                                    case 3:
-//                                        keyType = "APP_SWITCH";
-//                                        break;
-//                                    case 4:
-//                                        keyType = "BRIGHTNESS_DOWN";
-//                                        break;
-//                                    case 5:
-//                                        keyType = "BRIGHTNESS_UP";
-//                                        break;
-//                                    case 6:
-//                                        keyType = "VOLUME_UP";
-//                                        break;
-//                                    case 7:
-//                                        keyType = "VOLUME_DOWN";
-//                                        break;
-//                                    case 8:
-//                                        keyType = "VOLUME_MUTE";
-//                                        break;
-//                                }
-//                                androidDriver.pressKey(new KeyEvent(AndroidKey.valueOf(keyType)));
+                                int key = new Random().nextInt(9);
+                                String keyType = "";
+                                switch (key) {
+                                    case 0:
+                                        keyType = "HOME";
+                                        break;
+                                    case 1:
+                                        keyType = "BACK";
+                                        break;
+                                    case 2:
+                                        keyType = "MENU";
+                                        break;
+                                    case 3:
+                                        keyType = "APP_SWITCH";
+                                        break;
+                                    case 4:
+                                        keyType = "BRIGHTNESS_DOWN";
+                                        break;
+                                    case 5:
+                                        keyType = "BRIGHTNESS_UP";
+                                        break;
+                                    case 6:
+                                        keyType = "VOLUME_UP";
+                                        break;
+                                    case 7:
+                                        keyType = "VOLUME_DOWN";
+                                        break;
+                                    case 8:
+                                        keyType = "VOLUME_MUTE";
+                                        break;
+                                }
+                                androidDriver.pressKey(new KeyEvent(AndroidKey.valueOf(keyType)));
                             }
                             if (random >= finalSystemEvent && random < (finalSystemEvent + finalTapEvent)) {
-                                int x = new Random().nextInt(width);
+                                int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                AndroidDeviceBridgeTool.executeCommand(iDevice, "input tap " + x + " " + y);
+                                ta.tap(PointOption.point(x, y)).perform();
                             }
                             if (random >= (finalSystemEvent + finalTapEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent)) {
-                                int x = new Random().nextInt(width);
+                                int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x + " " + y + " " + x + " " + y + " " + new Random().nextInt(2) * 500 + 1000);
+                                ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofSeconds(new Random().nextInt(3) + 1))).release().perform();
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent)) {
-                                int x1 = new Random().nextInt(width);
+                                int x1 = new Random().nextInt(width - 60) + 60;
                                 int y1 = new Random().nextInt(height - 80) + 80;
-                                int x2 = new Random().nextInt(width);
+                                int x2 = new Random().nextInt(width - 60) + 60;
                                 int y2 = new Random().nextInt(height - 80) + 80;
-                                AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 300");
+                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release().perform();
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent)) {
-//                                int x1 = new Random().nextInt(width - 80);
-//                                int y1 = new Random().nextInt(height - 80);
-//                                int x2 = new Random().nextInt(width - 100);
-//                                int y2 = new Random().nextInt(height - 80);
-//                                int x3 = new Random().nextInt(width - 100);
-//                                int y3 = new Random().nextInt(height - 80);
-//                                int x4 = new Random().nextInt(width - 100);
-//                                int y4 = new Random().nextInt(height - 80);
-//                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release();
-//                                ta2.press(PointOption.point(x3, y3)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x4, y4)).release();
-//                                multiTouchAction.add(ta);
-//                                multiTouchAction.add(ta2);
-//                                multiTouchAction.perform();
+                                int x1 = new Random().nextInt(width - 80);
+                                int y1 = new Random().nextInt(height - 80);
+                                int x2 = new Random().nextInt(width - 100);
+                                int y2 = new Random().nextInt(height - 80);
+                                int x3 = new Random().nextInt(width - 100);
+                                int y3 = new Random().nextInt(height - 80);
+                                int x4 = new Random().nextInt(width - 100);
+                                int y4 = new Random().nextInt(height - 80);
+                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release();
+                                ta2.press(PointOption.point(x3, y3)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x4, y4)).release();
+                                multiTouchAction.add(ta);
+                                multiTouchAction.add(ta2);
+                                multiTouchAction.perform();
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent)) {
-//                                int key = new Random().nextInt(3);
-//                                switch (key) {
-//                                    case 0:
-//                                        androidDriver.toggleAirplaneMode();
-//                                        break;
-//                                    case 1:
-//                                        androidDriver.toggleWifi();
-//                                        break;
-//                                    case 2:
-//                                        androidDriver.toggleLocationServices();
-//                                        break;
-//                                }
+                                androidDriver.toggleWifi();
                             }
                             Thread.sleep(finalSleepTime);
                         } catch (Throwable e) {
