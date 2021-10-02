@@ -55,7 +55,7 @@ public class AndroidTests {
                 androidStepHandler.sendStatus();
             } else {
                 //延时队列
-                logger.info("进入延时队列:", jsonObject);
+                logger.info("进入延时队列:" + jsonObject);
                 jsonObject.put("wait", wait);
                 rabbitTemplate.convertAndSend("TaskDirectExchange", key, jsonObject);
             }

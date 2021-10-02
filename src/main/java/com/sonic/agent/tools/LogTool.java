@@ -39,12 +39,12 @@ public class LogTool {
         message.put("rid", resultId);
         message.put("udId", udId);
         message.put("agentId", AgentTool.agentId);
-        if (type.equals(DeviceStatus.DEBUGGING)) {
-            sendToWebSocket(WebSocketSessionMap.getMap().get(sessionId), message);
-        }
-        if (type.equals(DeviceStatus.TESTING)) {
-            sendToServer(message);
-        }
+//        if (type.equals(DeviceStatus.DEBUGGING)) {
+//            sendToWebSocket(WebSocketSessionMap.getMap().get(sessionId), message);
+//        }
+//        if (type.equals(DeviceStatus.TESTING)) {
+//            sendToServer(message);
+//        }
         logger.info(message.toJSONString());
     }
 

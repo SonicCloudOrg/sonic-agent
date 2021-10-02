@@ -62,12 +62,6 @@
             <artifactId>thumbnailator</artifactId>
             <version>0.4.13</version>
         </dependency>
-        <!--  testNG   -->
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.9.10</version>
-        </dependency>
         <!--    selenium    -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
