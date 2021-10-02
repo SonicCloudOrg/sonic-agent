@@ -50,14 +50,14 @@ public class AndroidTests {
         if (!AndroidDeviceLocalStatus.startTest(udId)) {
             androidStepHandler.waitDevice(wait + 1);
             wait++;
-            if (wait >= 12) {
+            if (wait >= 24) {
                 androidStepHandler.waitDeviceTimeOut(udId);
                 androidStepHandler.sendStatus();
             } else {
                 //延时队列
-                logger.info("进入延时队列:", jsonObject);
                 jsonObject.put("wait", wait);
                 rabbitTemplate.convertAndSend("TaskDirectExchange", key, jsonObject);
+                logger.info("进入延时队列:" + jsonObject);
             }
             return;
         }
