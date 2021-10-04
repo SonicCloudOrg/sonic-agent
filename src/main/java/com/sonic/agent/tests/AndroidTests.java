@@ -1,4 +1,4 @@
-package com.sonic.agent.Tests;
+package com.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;

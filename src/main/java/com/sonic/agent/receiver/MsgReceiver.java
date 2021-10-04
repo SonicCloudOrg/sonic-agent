@@ -11,7 +11,7 @@ import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
-import com.sonic.agent.Tests.AndroidTests;
+import com.sonic.agent.tests.AndroidTests;
 import com.sonic.agent.tools.AgentTool;
 import com.sonic.agent.tools.GetWebStartPort;
 import com.sonic.agent.tools.LocalHostTool;
