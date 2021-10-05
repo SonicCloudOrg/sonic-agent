@@ -63,7 +63,7 @@ public class MiniCapTool {
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
                 AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC));
         try {
-            Thread.sleep(3000);
+            Thread.sleep(4000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
