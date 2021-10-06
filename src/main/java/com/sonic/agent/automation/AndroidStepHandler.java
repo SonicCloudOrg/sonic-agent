@@ -269,8 +269,8 @@ public class AndroidStepHandler {
                 for (Integer memNum : mem) {
                     perform.put(re.get(0).get(memNum).toString(), re.get(1).get(memNum));
                 }
-                memResult.put("data", perform);
-                log.sendPerLog(testPackage, performName, memResult);
+                memResult.put("data", perform.toJSONString());
+                log.sendPerLog(testPackage, performName.equals("memoryinfo") ? 1 : 2, memResult);
             }
         }
     }
