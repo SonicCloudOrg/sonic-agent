@@ -196,6 +196,7 @@ public class AndroidTests {
                 if (isSupportRecord) {
                     if (androidStepHandler.getStatus() == 3) {
                         androidStepHandler.stopRecord(udId);
+                        return;
                     } else {
                         androidStepHandler.getAndroidDriver().stopRecordingScreen();
                     }
@@ -216,6 +217,7 @@ public class AndroidTests {
                         } catch (FrameRecorder.Exception e) {
                             e.printStackTrace();
                         }
+                        return;
                     }
                 }
             }
