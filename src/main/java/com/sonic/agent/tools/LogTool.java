@@ -137,7 +137,7 @@ public class LogTool {
         JSONObject log = new JSONObject();
         log.put("msg", "perform");
         log.put("des", packageName);
-        log.put("log", detail);
+        log.put("log", detail.toJSONString());
         log.put("status", type);
         send(log);
     }

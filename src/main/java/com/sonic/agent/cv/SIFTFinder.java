@@ -62,7 +62,7 @@ public class SIFTFinder {
             }
         }
         logger.info("处理后匹配数：" + goodMatches.size());
-        if (goodMatches.size() == 0) {
+        if (goodMatches.size() <= 4) {
             temFile.delete();
             beforeFile.delete();
             return null;
