@@ -14,7 +14,6 @@ import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.tests.AndroidTests;
 import com.sonic.agent.tools.AgentTool;
 import com.sonic.agent.tools.GetWebStartPort;
-import com.sonic.agent.tools.LocalHostTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.Message;
@@ -35,6 +34,8 @@ import java.util.*;
 public class MsgReceiver {
     @Value("${spring.version}")
     private String version;
+    @Value("${sonic.agent.host}")
+    private String host;
     @Autowired
     private AndroidTests androidTests;
     private final Logger logger = LoggerFactory.getLogger(MsgReceiver.class);
@@ -54,7 +55,7 @@ public class MsgReceiver {
                     agentInfo.put("port", GetWebStartPort.getTomcatPort());
                     agentInfo.put("version", version);
                     agentInfo.put("systemType", System.getProperty("os.name"));
-                    agentInfo.put("host", LocalHostTool.getHostIp());
+                    agentInfo.put("host", host);
                     RabbitMQThread.send(agentInfo);
                     try {
                         channel.basicAck(deliveryTag, true);
