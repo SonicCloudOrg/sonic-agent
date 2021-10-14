@@ -1,0 +1,24 @@
+server:
+  port: 7777
+
+spring:
+  application:
+    name: apex-agent
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:sonic}
+    password: ${RABBITMQ_PASSWORD:sonic}
+    virtual-host: ${RABBITMQ_VHOST:sonic}
+    listener:
+      simple:
+        acknowledge-mode: manual
+    publisher-confirm-type: correlated
+    publisher-returns: true
+
+sonic:
+  folder:
+    url: ${SONIC_FOLDER_URL:http://localhost:8094/api/folder}
+  agent:
+    host: ${SONIC_AGENT_HOST:127.0.0.1}
+    key: ${SONIC_AGENT_KEY}
