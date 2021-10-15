@@ -3,7 +3,7 @@
 </p>
 <p align="center">🎉Sonic云真机测试平台Agent端</p>
 <p align="center">
-  <a href="https://github.com/ZhouYixun/sonic-server/blob/main/README.md">  
+  <a href="https://github.com/ZhouYixun/sonic-agent/blob/main/README.md">  
     English
   </a>
   <span>| 简体中文</span>
