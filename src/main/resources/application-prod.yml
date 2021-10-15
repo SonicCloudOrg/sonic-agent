@@ -21,4 +21,4 @@ sonic:
     url: ${SONIC_FOLDER_URL:http://localhost:8094/api/folder}
   agent:
     host: ${SONIC_AGENT_HOST:127.0.0.1}
-    key: ${SONIC_AGENT_KEY:57c838d2-5363-46fd-a9f8-6d84e415ebfe}
+    key: ${SONIC_AGENT_KEY}
