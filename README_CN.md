@@ -45,7 +45,7 @@
 ## 打包方式
 
 ```
-mvn package -P{your_platform}
+mvn package -P{你的平台}
 ```
 
 例如
