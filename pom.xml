@@ -111,93 +111,361 @@
     <!--  通过这个配置来决定打包使用哪一个环境  -->
     <profiles>
         <profile>
-            <id>dev</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>windows-x86</id>
             <properties>
-                <profileActive>dev</profileActive>
+                <profileActive>windows-x86</profileActive>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>ffmpeg</artifactId>
                     <version>4.2.2-1.5.3</version>
-                    <classifier>windows-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>javacpp</artifactId>
                     <version>1.5.3</version>
-                    <classifier>windows-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>opencv</artifactId>
                     <version>4.3.0-1.5.3</version>
-                    <classifier>windows-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>openblas</artifactId>
                     <version>0.3.9-1.5.3</version>
-                    <classifier>windows-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>tesseract</artifactId>
                     <version>4.1.1-1.5.3</version>
-                    <classifier>windows-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>leptonica</artifactId>
                     <version>1.79.0-1.5.3</version>
-                    <classifier>windows-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
             </dependencies>
         </profile>
+
         <profile>
-            <id>prod</id>
+            <id>windows-x86_64</id>
             <properties>
-                <profileActive>prod</profileActive>
+                <profileActive>windows-x86_64</profileActive>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>ffmpeg</artifactId>
                     <version>4.2.2-1.5.3</version>
-                    <classifier>linux-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>javacpp</artifactId>
                     <version>1.5.3</version>
-                    <classifier>linux-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>opencv</artifactId>
                     <version>4.3.0-1.5.3</version>
-                    <classifier>linux-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>openblas</artifactId>
                     <version>0.3.9-1.5.3</version>
-                    <classifier>linux-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>tesseract</artifactId>
                     <version>4.1.1-1.5.3</version>
-                    <classifier>linux-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
                 <dependency>
                     <groupId>org.bytedeco</groupId>
                     <artifactId>leptonica</artifactId>
                     <version>1.79.0-1.5.3</version>
-                    <classifier>linux-x86_64</classifier>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-arm64</id>
+            <properties>
+                <profileActive>linux-arm64</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-armhf</id>
+            <properties>
+                <profileActive>linux-armhf</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-ppc64le</id>
+            <properties>
+                <profileActive>linux-ppc64le</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-x86</id>
+            <properties>
+                <profileActive>linux-x86</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-x86_64</id>
+            <properties>
+                <profileActive>linux-x86_64</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>macosx-x86_64</id>
+            <properties>
+                <profileActive>macosx-x86_64</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
                 </dependency>
             </dependencies>
         </profile>
@@ -227,7 +495,7 @@
             </resource>
         </resources>
         <!--   最终打包的jar包名，使用artifactId     -->
-        <finalName>${project.artifactId}</finalName>
+        <finalName>${project.artifactId}-${profileActive}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
