@@ -164,8 +164,8 @@ public class AndroidDeviceBridgeTool {
         try {
             iDevice.executeShellCommand(command, output, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.info(String.format("发送shell指令 {} 给设备 {} 异常！"
-                    , command, iDevice.getSerialNumber()));
+            logger.info("发送shell指令 {} 给设备 {} 异常！"
+                    , command, iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
         return output.getOutput();

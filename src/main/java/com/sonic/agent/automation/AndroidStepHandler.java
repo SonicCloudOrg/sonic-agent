@@ -14,6 +14,7 @@ import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.tools.DownImageTool;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.interfaces.PlatformType;
+import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MobileBy;
 import io.appium.java_client.MultiTouchAction;
@@ -128,11 +129,9 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability(MobileCapabilityType.BROWSER_NAME, "");
         //指定设备序列号
         desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
-        //过滤logcat，注意！请将MyCrashTag替换为自己安卓崩溃时的tag，需要跟开发配合约定，有多个的话可以add()多几个
-        List<String> logcatFilter = new ArrayList<>();
-        logcatFilter.add("MyCrashTag:W");
-        logcatFilter.add("*:S");
-        desiredCapabilities.setCapability("logcatFilterSpecs", logcatFilter);
+        //随机systemPort
+        desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT, PortTool.getPort());
+        desiredCapabilities.setCapability("skipLogcatCapture", true);
         try {
             androidDriver = new AndroidDriver(AppiumServer.service.getUrl(), desiredCapabilities);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
