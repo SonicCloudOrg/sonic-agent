@@ -23,6 +23,12 @@
     </parent>
 
     <dependencies>
+        <!--    websocket client    -->
+<!--        <dependency>-->
+<!--            <groupId>org.java-websocket</groupId>-->
+<!--            <artifactId>Java-WebSocket</artifactId>-->
+<!--            <version>1.5.2</version>-->
+<!--        </dependency>-->
         <!--    监控模块 刷新配置    -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
