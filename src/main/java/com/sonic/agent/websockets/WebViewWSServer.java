@@ -6,6 +6,9 @@ import com.android.ddmlib.IDevice;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.java_websocket.WebSocket;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.exceptions.InvalidDataException;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.handshake.HandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
 import org.springframework.stereotype.Component;
 import org.springframework.util.concurrent.ListenableFuture;
@@ -46,24 +49,18 @@ public class WebViewWSServer {
 //        String name = webview.substring(webview.indexOf("@"));
 //        System.out.println(name);
 //        AndroidDeviceBridgeTool.forward(iDevice, 8888, name);
-        String url = "localhost:7778/devtools/page/E404897077123C962D30C19E350A23F4";
-        CompletableFuture<String> awaitedResponse =  new CompletableFuture<>();
+        String url = "ws://localhost:7778/devtools/page/E404897077123C962D30C19E350A23F4";
         URI uri = new URI(url);
         WebSocketClient webSocketClient = new WebSocketClient(uri) {
+
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
-
             }
 
             @Override
             public void onMessage(String s) {
-                if(awaitedResponse != null) {
-                    awaitedResponse.complete(s);
-                    awaitedResponse = null;
-                } else {
-                    // handle asynchronous message
-                    System.out.println("Async message " + s);
-                }
+                System.out.println(s);
+                sendText(session,s);
             }
 
             @Override
@@ -77,11 +74,12 @@ public class WebViewWSServer {
             }
         };
         webSocketClient.connect();
-        new Thread(()->{
-                while (true){
-                    awaitedResponse.get()
-                }
-        }).start();
+Thread.sleep(5000);
+//        new Thread(()->{
+//                while (true){
+//                    awaitedResponse.get()
+//                }
+//        }).start();
         sessionWebSocketClientMap.put(session, webSocketClient);
     }
 
@@ -89,7 +87,7 @@ public class WebViewWSServer {
     public void onMessage(String message, Session session) throws InterruptedException {
         if (sessionWebSocketClientMap.get(session) != null) {
             try {
-                sessionWebSocketClientMap.get(session).onMessage(message);
+                sessionWebSocketClientMap.get(session).send(message);
 //                sessionWebSocketClientMap.get(session).send(message);
             } catch (Exception e) {
 
