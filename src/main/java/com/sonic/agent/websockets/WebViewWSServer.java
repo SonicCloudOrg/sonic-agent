@@ -1,34 +1,20 @@
 package com.sonic.agent.websockets;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.IDevice;
-import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.java_websocket.WebSocket;
 import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.exceptions.InvalidDataException;
-import org.java_websocket.handshake.ClientHandshake;
-import org.java_websocket.handshake.HandshakeBuilder;
 import org.java_websocket.handshake.ServerHandshake;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.concurrent.ListenableFuture;
-import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.WebSocketHttpHeaders;
-import org.springframework.web.socket.WebSocketSession;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * @author ZhouYiXun
@@ -36,36 +22,34 @@ import java.util.concurrent.CompletableFuture;
  * @date 2021/10/25 23:03
  */
 @Component
-@ServerEndpoint(value = "/websockets/webView", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/webView/{key}/{port}/{id}", configurator = MyEndpointConfigure.class)
 public class WebViewWSServer {
-    InputStream inputStream = null;
-    Map<Session, WebSocketClient> sessionWebSocketClientMap = new HashMap<>();
+    private final Logger logger = LoggerFactory.getLogger(WebViewWSServer.class);
+    @Value("${sonic.agent.key}")
+    private String key;
+    private Map<Session, WebSocketClient> sessionWebSocketClientMap = new HashMap<>();
 
     @OnOpen
-    public void onOpen(Session session) throws Exception {
-//        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId("MDX0220610012002");
-//        String webview = AndroidDeviceBridgeTool
-//                .executeCommand(iDevice,"cat /proc/net/unix | grep webview");
-//        String name = webview.substring(webview.indexOf("@"));
-//        System.out.println(name);
-//        AndroidDeviceBridgeTool.forward(iDevice, 8888, name);
-        String url = "ws://localhost:7778/devtools/page/E404897077123C962D30C19E350A23F4";
-        URI uri = new URI(url);
+    public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("port") int port, @PathParam("id") String id) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key))) {
+            logger.info("拦截访问！");
+            return;
+        }
+        URI uri = new URI("ws://localhost:" + port + "/devtools/page/" + id);
         WebSocketClient webSocketClient = new WebSocketClient(uri) {
-
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
+                logger.info("连接成功!");
             }
 
             @Override
             public void onMessage(String s) {
-                System.out.println(s);
-                sendText(session,s);
+                sendText(session, s);
             }
 
             @Override
             public void onClose(int i, String s, boolean b) {
-
+                logger.info("连接断开!");
             }
 
             @Override
@@ -74,12 +58,6 @@ public class WebViewWSServer {
             }
         };
         webSocketClient.connect();
-Thread.sleep(5000);
-//        new Thread(()->{
-//                while (true){
-//                    awaitedResponse.get()
-//                }
-//        }).start();
         sessionWebSocketClientMap.put(session, webSocketClient);
     }
 
@@ -88,20 +66,29 @@ Thread.sleep(5000);
         if (sessionWebSocketClientMap.get(session) != null) {
             try {
                 sessionWebSocketClientMap.get(session).send(message);
-//                sessionWebSocketClientMap.get(session).send(message);
             } catch (Exception e) {
 
             }
         }
     }
 
+    @OnClose
+    public void onClose(Session session) {
+        sessionWebSocketClientMap.get(session).close();
+        sessionWebSocketClientMap.remove(session);
+    }
+
+    @OnError
+    public void onError(Session session, Throwable error) {
+        logger.error(error.getMessage());
+    }
+
     private void sendText(Session session, String message) {
-        System.out.println(message);
         synchronized (session) {
             try {
                 session.getBasicRemote().sendText(message);
             } catch (IllegalStateException | IOException e) {
-//                logger.error("socket发送失败!连接已关闭！");
+                logger.error("socket发送失败!连接已关闭！");
             }
         }
     }
