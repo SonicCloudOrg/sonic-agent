@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.HandleDes;
+import com.sonic.agent.automation.RemoteDebugDriver;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
@@ -17,6 +18,11 @@ import com.sonic.agent.tools.MiniCapTool;
 import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.UploadTools;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -176,6 +182,7 @@ public class AndroidWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
             case "forwardView": {
+                JSONObject forwardView = new JSONObject();
                 IDevice iDevice = udIdMap.get(session);
                 List<String> webViewList = Arrays.asList(AndroidDeviceBridgeTool
                         .executeCommand(iDevice, "cat /proc/net/unix | grep webview").split("\n"));
@@ -192,49 +199,46 @@ public class AndroidWSServer {
                     }
                 }
                 has = new ArrayList<>();
-                JSONObject forwardView = new JSONObject();
                 List<JSONObject> result = new ArrayList<>();
                 if (webViewList.size() > 0) {
                     HttpHeaders headers = new HttpHeaders();
                     headers.add("Content-Type", "application/json");
                     for (String ws : webSet) {
-                            int port = PortTool.getPort();
-                            AndroidDeviceBridgeTool.forward(iDevice, port, ws);
-                            JSONObject j = new JSONObject();
-                            j.put("port", port);
-                            j.put("name", ws);
-                            has.add(j);
-                            JSONObject r = new JSONObject();
-                            r.put("port", port);
-                            r.put("name", ws);
-                            ResponseEntity<LinkedHashMap> infoEntity =
-                                    restTemplate.exchange("http://localhost:" + port + "/json/version", HttpMethod.GET, new HttpEntity(headers), LinkedHashMap.class);
-                            if (infoEntity.getStatusCode() == HttpStatus.OK) {
-                                String webkit = infoEntity.getBody().get("WebKit-Version").toString();
-                                r.put("webkit", webkit.substring(webkit.indexOf("@") + 1, webkit.length() - 1));
-                                r.put("version", infoEntity.getBody().get("Browser"));
-                                r.put("package", infoEntity.getBody().get("Android-Package"));
-                            }
-                            ResponseEntity<JSONArray> responseEntity =
-                                    restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
-                            if (responseEntity.getStatusCode() == HttpStatus.OK) {
-                                List<JSONObject> child = new ArrayList<>();
-                                for (Object e : responseEntity.getBody()) {
-                                    LinkedHashMap objE = (LinkedHashMap) e;
-                                    JSONObject c = new JSONObject();
-                                    c.put("favicon", objE.get("faviconUrl"));
-                                    c.put("title", objE.get("title"));
-                                    c.put("url", objE.get("url"));
-                                    c.put("id", objE.get("id"));
-                                    child.add(c);
-                                }
-                                r.put("children", child);
-                                result.add(r);
-                            }
+                        int port = PortTool.getPort();
+                        AndroidDeviceBridgeTool.forward(iDevice, port, ws);
+                        JSONObject j = new JSONObject();
+                        j.put("port", port);
+                        j.put("name", ws);
+                        has.add(j);
+                        JSONObject r = new JSONObject();
+                        r.put("port", port);
+                        ResponseEntity<LinkedHashMap> infoEntity =
+                                restTemplate.exchange("http://localhost:" + port + "/json/version", HttpMethod.GET, new HttpEntity(headers), LinkedHashMap.class);
+                        if (infoEntity.getStatusCode() == HttpStatus.OK) {
+                            r.put("version", infoEntity.getBody().get("Browser"));
+                            r.put("package", infoEntity.getBody().get("Android-Package"));
                         }
+                        ResponseEntity<JSONArray> responseEntity =
+                                restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
+                        if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                            List<JSONObject> child = new ArrayList<>();
+                            for (Object e : responseEntity.getBody()) {
+                                LinkedHashMap objE = (LinkedHashMap) e;
+                                JSONObject c = new JSONObject();
+                                c.put("favicon", objE.get("faviconUrl"));
+                                c.put("title", objE.get("title"));
+                                c.put("url", objE.get("url"));
+                                c.put("id", objE.get("id"));
+                                child.add(c);
+                            }
+                            r.put("children", child);
+                            result.add(r);
+                        }
+                    }
                     webViewForwardMap.put(iDevice, has);
                 }
                 forwardView.put("msg", "forwardView");
+                forwardView.put("debugPort", RemoteDebugDriver.port);
                 forwardView.put("detail", result);
                 sendText(session, forwardView.toJSONString());
                 break;
