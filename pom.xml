@@ -23,6 +23,12 @@
     </parent>
 
     <dependencies>
+        <!--   重定向   -->
+        <dependency>
+            <groupId>org.mitre.dsmiley.httpproxy</groupId>
+            <artifactId>smiley-http-proxy-servlet</artifactId>
+            <version>1.12</version>
+        </dependency>
         <!--    websocket client    -->
         <dependency>
             <groupId>org.java-websocket</groupId>

@@ -238,7 +238,9 @@ public class AndroidWSServer {
                     webViewForwardMap.put(iDevice, has);
                 }
                 forwardView.put("msg", "forwardView");
-                forwardView.put("debugPort", RemoteDebugDriver.port);
+                if(RemoteDebugDriver.webDriver==null){
+                    RemoteDebugDriver.startChromeDriver();
+                }
                 forwardView.put("detail", result);
                 sendText(session, forwardView.toJSONString());
                 break;

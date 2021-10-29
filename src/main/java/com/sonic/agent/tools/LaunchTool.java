@@ -28,7 +28,6 @@ public class LaunchTool implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         AppiumServer.start();
-        RemoteDebugDriver.start();
         JSONObject auth = new JSONObject();
         auth.put("msg", "auth");
         auth.put("key", key);
