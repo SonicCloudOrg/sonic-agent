@@ -238,7 +238,7 @@ public class AndroidWSServer {
                     webViewForwardMap.put(iDevice, has);
                 }
                 forwardView.put("msg", "forwardView");
-                if(RemoteDebugDriver.webDriver==null){
+                if (RemoteDebugDriver.webDriver == null) {
                     RemoteDebugDriver.startChromeDriver();
                 }
                 forwardView.put("detail", result);
@@ -347,7 +347,9 @@ public class AndroidWSServer {
                             result.put("msg", "tree");
                             result.put("detail", finalAndroidStepHandler.getResource());
                             HandleDes handleDes = new HandleDes();
-                            result.put("img", finalAndroidStepHandler.stepScreen(handleDes));
+                            if (!msg.getBoolean("hasScreen")) {
+                                result.put("img", finalAndroidStepHandler.stepScreen(handleDes));
+                            }
                             if (handleDes.getE() != null) {
                                 logger.error(handleDes.getE().getMessage());
                                 JSONObject resultFail = new JSONObject();
