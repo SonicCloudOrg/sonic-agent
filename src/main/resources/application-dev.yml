@@ -16,6 +16,14 @@ spring:
     publisher-confirm-type: correlated
     publisher-returns: true
 
+logging:
+  file:
+    name: logs/${spring.application.name}.log
+  logback:
+    rollingpolicy:
+      clean-history-on-start: true
+      max-history: 3
+
 sonic:
   folder:
     url: http://localhost:8094/api/folder
