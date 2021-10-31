@@ -33,13 +33,13 @@ public class MiniCapTool {
         int qua = 0;
         switch (pic) {
             case "low":
-                qua = 20;
+                qua = 5;
                 break;
             case "middle":
-                qua = 50;
+                qua = 10;
                 break;
             case "high":
-                qua = 80;
+                qua = 50;
                 break;
         }
         int s = AndroidDeviceBridgeTool.getScreen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId));

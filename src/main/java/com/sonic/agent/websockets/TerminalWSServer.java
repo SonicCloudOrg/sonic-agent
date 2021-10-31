@@ -36,6 +36,7 @@ public class TerminalWSServer {
     private String key;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> terminalMap = new ConcurrentHashMap<>();
+    private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
@@ -49,18 +50,30 @@ public class TerminalWSServer {
             ter.put("user", username);
             sendText(session, ter.toJSONString());
         });
+        Future<?> logcat = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+            logger.info(udId + "开启logcat");
+            JSONObject ter = new JSONObject();
+            ter.put("msg", "logcat");
+            ter.put("user", username);
+            sendText(session, ter.toJSONString());
+        });
         terminalMap.put(session, terminal);
+        logcatMap.put(session, logcat);
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) throws InterruptedException {
+    public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
             case "stopCmd":
                 Future<?> ter = terminalMap.get(session);
-                if (!ter.isDone()) {
-                    ter.cancel(true);
+                if (!ter.isDone() || !ter.isCancelled()) {
+                    try {
+                        ter.cancel(true);
+                    } catch (Exception e) {
+                        logger.error(e.getMessage());
+                    }
                 }
             case "command":
                 ter = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
@@ -69,7 +82,6 @@ public class TerminalWSServer {
                             @Override
                             public void addOutput(byte[] bytes, int i, int i1) {
                                 String res = new String(bytes, i, i1);
-                                logger.info(res);
                                 JSONObject resp = new JSONObject();
                                 resp.put("msg", "terResp");
                                 resp.put("detail", res);
@@ -85,14 +97,8 @@ public class TerminalWSServer {
                                 return false;
                             }
                         }, 0, TimeUnit.MILLISECONDS);
-                    } catch (TimeoutException e) {
-                        e.printStackTrace();
-                    } catch (AdbCommandRejectedException e) {
-                        e.printStackTrace();
-                    } catch (ShellCommandUnresponsiveException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    } catch (Throwable e) {
+                        return;
                     }
                     JSONObject done = new JSONObject();
                     done.put("msg", "terDone");
@@ -100,6 +106,47 @@ public class TerminalWSServer {
                 });
                 terminalMap.put(session, ter);
                 break;
+            case "stopLogcat":
+                Future<?> logcat = logcatMap.get(session);
+                if (!logcat.isDone() || !logcat.isCancelled()) {
+                    try {
+                        logcat.cancel(true);
+                    } catch (Exception e) {
+                        logger.error(e.getMessage());
+                    }
+                }
+            case "logcat": {
+                logcat = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    try {
+                        udIdMap.get(session).executeShellCommand("logcat *:"
+                                + msg.getString("level") +
+                                (msg.getString("filter").length() > 0 ?
+                                        " | grep " + msg.getString("filter") : ""), new IShellOutputReceiver() {
+                            @Override
+                            public void addOutput(byte[] bytes, int i, int i1) {
+                                String res = new String(bytes, i, i1);
+                                JSONObject resp = new JSONObject();
+                                resp.put("msg", "logcatResp");
+                                resp.put("detail", res);
+                                sendText(session, resp.toJSONString());
+                            }
+
+                            @Override
+                            public void flush() {
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return false;
+                            }
+                        }, 0, TimeUnit.MILLISECONDS);
+                    } catch (Throwable e) {
+                        return;
+                    }
+                });
+                logcatMap.put(session, logcat);
+                break;
+            }
         }
     }
 
@@ -118,8 +165,12 @@ public class TerminalWSServer {
 
     private void exit(Session session) {
         Future<?> cmd = terminalMap.get(session);
-        if (!cmd.isDone()) {
-            cmd.cancel(true);
+        if (!cmd.isDone() || !cmd.isCancelled()) {
+            try {
+                cmd.cancel(true);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+            }
         }
         terminalMap.remove(session);
         try {
