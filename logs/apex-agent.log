@@ -1,0 +1,736 @@
+2021-10-31 09:57:44.059  INFO 6388 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 6388 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 09:57:44.075  INFO 6388 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 09:57:48.054  INFO 6388 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 09:57:48.075  INFO 6388 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 09:57:48.076  INFO 6388 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 09:57:48.266  INFO 6388 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 09:57:48.266  INFO 6388 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4024 ms
+2021-10-31 09:57:51.578  INFO 6388 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 09:57:52.565  INFO 6388 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 09:57:52.582  INFO 6388 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 09:57:53.595  INFO 6388 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 09:57:54.814  INFO 6388 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 09:57:54.975  INFO 6388 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 09:57:54.978  INFO 6388 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 09:57:54.983  INFO 6388 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 09:57:55.176  INFO 6388 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#9a9b872f:0/SimpleConnection@f9652806 [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 58885]
+2021-10-31 09:57:55.316  INFO 6388 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 12.905 seconds (JVM running for 14.244)
+2021-10-31 09:58:00.449  INFO 6388 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 09:58:00.453  INFO 6388 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 09:58:35.539  INFO 6388 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 09:58:35.540  INFO 6388 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 09:58:35.543  INFO 6388 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2021-10-31 09:58:35.672  INFO 6388 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 09:58:36.920  INFO 6388 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 29906
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+
+2021-10-31 09:58:36.951  INFO 6388 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 09:58:40.354  INFO 6388 --- [pool-2-thread-3] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：59049
+2021-10-31 09:58:40.373  INFO 6388 --- [pool-2-thread-4] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 09:58:40.398  INFO 6388 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 09:58:42.645  INFO 6388 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 09:58:42.688  INFO 6388 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"09:58:42","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 09:58:42.812  INFO 6388 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"09:58:42","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 09:59:00.720  INFO 6388 --- [http-nio-7777-exec-4] c.s.agent.websockets.TerminalWSServer    : 0退出
+2021-10-31 09:59:00.996 ERROR 6388 --- [http-nio-7777-exec-3] com.sonic.agent.tools.LogTool            : Message will not be sent because the WebSocket session has been closed
+2021-10-31 09:59:00.997  INFO 6388 --- [http-nio-7777-exec-3] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"退出连接设备","log":"","time":"09:59:00","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 09:59:01.508  INFO 6388 --- [http-nio-7777-exec-3] c.s.agent.websockets.AndroidWSServer     : 1退出
+2021-10-31 09:59:01.514  INFO 6388 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备miniCap启动异常！
+2021-10-31 09:59:01.518 ERROR 6388 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : executeRemoteCommand interrupted with immediate timeout via interruption.
+2021-10-31 09:59:01.588  INFO 6388 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : miniCap socket已关闭
+2021-10-31 09:59:01.589  INFO 6388 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : miniCap input流已关闭
+2021-10-31 09:59:01.589  INFO 6388 --- [pool-2-thread-3] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口取消转发到：59049
+2021-10-31 10:02:42.832  INFO 6388 --- [pool-2-thread-6] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:02:44.205  INFO 6388 --- [pool-2-thread-6] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 1831
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+
+2021-10-31 10:02:44.235  INFO 6388 --- [pool-2-thread-6] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:02:47.672  INFO 6388 --- [pool-2-thread-8] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：59397
+2021-10-31 10:02:47.693  INFO 6388 --- [pool-2-thread-7] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:02:47.717  INFO 6388 --- [pool-2-thread-6] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:02:49.475  INFO 6388 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:02:49.491  INFO 6388 --- [pool-2-thread-5] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:02:49","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:02:49.604  INFO 6388 --- [pool-2-thread-5] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:02:49","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:02:51.170  INFO 6388 --- [http-nio-7777-exec-7] c.s.agent.websockets.AndroidWSServer     : 2 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:03:19.055  INFO 6388 --- [http-nio-7777-exec-9] c.s.agent.websockets.TerminalWSServer    : 3退出
+2021-10-31 10:03:19.284 ERROR 6388 --- [http-nio-7777-exec-8] com.sonic.agent.tools.LogTool            : Message will not be sent because the WebSocket session has been closed
+2021-10-31 10:03:19.285  INFO 6388 --- [http-nio-7777-exec-8] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"退出连接设备","log":"","time":"10:03:19","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:03:19.794  INFO 6388 --- [http-nio-7777-exec-8] c.s.agent.websockets.AndroidWSServer     : 2退出
+2021-10-31 10:03:19.797  INFO 6388 --- [pool-2-thread-6] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备miniCap启动异常！
+2021-10-31 10:03:19.798 ERROR 6388 --- [pool-2-thread-6] c.s.a.b.android.AndroidDeviceBridgeTool  : executeRemoteCommand interrupted with immediate timeout via interruption.
+2021-10-31 10:03:19.892  INFO 6388 --- [pool-2-thread-8] com.sonic.agent.tools.MiniCapTool        : miniCap socket已关闭
+2021-10-31 10:03:19.892  INFO 6388 --- [pool-2-thread-8] com.sonic.agent.tools.MiniCapTool        : miniCap input流已关闭
+2021-10-31 10:03:19.893  INFO 6388 --- [pool-2-thread-8] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口取消转发到：59397
+2021-10-31 10:03:50.201  INFO 17116 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 17116 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 10:03:50.214  INFO 17116 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 10:03:53.801  INFO 17116 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 10:03:53.829  INFO 17116 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 10:03:53.831  INFO 17116 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 10:03:54.047  INFO 17116 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 10:03:54.048  INFO 17116 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3689 ms
+2021-10-31 10:03:55.857  INFO 17116 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:03:56.856  INFO 17116 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 10:03:56.881  INFO 17116 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 10:03:57.889  INFO 17116 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 10:03:59.141  INFO 17116 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 10:03:59.328  INFO 17116 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 10:03:59.334  INFO 17116 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 10:03:59.339  INFO 17116 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 10:03:59.488  INFO 17116 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#efaa3278:0/SimpleConnection@19589c0e [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 59498]
+2021-10-31 10:03:59.660  INFO 17116 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 10.597 seconds (JVM running for 11.369)
+2021-10-31 10:04:05.250  INFO 17116 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 10:04:05.255  INFO 17116 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 10:04:10.919  INFO 17116 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 10:04:10.920  INFO 17116 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 10:04:10.922  INFO 17116 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2021-10-31 10:04:11.048  INFO 17116 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:04:12.064  INFO 17116 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 5338
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+
+2021-10-31 10:04:12.096  INFO 17116 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:04:15.534  INFO 17116 --- [pool-2-thread-4] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：59642
+2021-10-31 10:04:15.558  INFO 17116 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:04:15.579  INFO 17116 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:04:15.659  INFO 17116 --- [http-nio-7777-exec-3] c.s.agent.websockets.AndroidWSServer     : 0 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:04:17.424  INFO 17116 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:04:17.454  INFO 17116 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:04:17","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:04:17.561  INFO 17116 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:04:17","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:04:55.960  INFO 17116 --- [http-nio-7777-exec-4] c.s.agent.websockets.AndroidWSServer     : 0 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:05:17.006  INFO 17116 --- [http-nio-7777-exec-5] c.s.agent.websockets.AndroidWSServer     : 0 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:31:03.315  INFO 9140 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 9140 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 10:31:03.327  INFO 9140 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 10:31:06.862  INFO 9140 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 10:31:06.886  INFO 9140 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 10:31:06.888  INFO 9140 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 10:31:07.120  INFO 9140 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 10:31:07.121  INFO 9140 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3633 ms
+2021-10-31 10:31:09.128  INFO 9140 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:31:10.311  INFO 9140 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 10:31:10.332  INFO 9140 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 10:31:11.343  INFO 9140 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 10:31:12.946  INFO 9140 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 10:31:13.129  INFO 9140 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 10:31:13.134  INFO 9140 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 10:31:13.143  INFO 9140 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 10:31:13.329  INFO 9140 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#be46b53:0/SimpleConnection@ae98fd09 [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 60035]
+2021-10-31 10:31:13.489  INFO 9140 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 11.508 seconds (JVM running for 12.335)
+2021-10-31 10:31:19.079  INFO 9140 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 10:31:19.083  INFO 9140 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 10:31:24.107  INFO 9140 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 10:31:24.109  INFO 9140 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 10:31:24.112  INFO 9140 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2021-10-31 10:31:24.243  INFO 9140 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:31:25.467  INFO 9140 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 9789
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:31:28.917  INFO 9140 --- [pool-2-thread-4] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：60158
+2021-10-31 10:31:28.935  INFO 9140 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:31:28.961  INFO 9140 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:31:30.631  INFO 9140 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:31:30.656  INFO 9140 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:31:30","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:31:30.768  INFO 9140 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:31:30","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:31:38.380  INFO 9140 --- [http-nio-7777-exec-3] c.s.agent.websockets.AndroidWSServer     : 1 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:32:43.704  INFO 14068 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 14068 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 10:32:43.714  INFO 14068 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 10:32:46.924  INFO 14068 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 10:32:46.959  INFO 14068 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 10:32:46.960  INFO 14068 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 10:32:47.183  INFO 14068 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 10:32:47.183  INFO 14068 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3328 ms
+2021-10-31 10:32:48.951  INFO 14068 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:32:50.033  INFO 14068 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 10:32:50.061  INFO 14068 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 10:32:51.058  INFO 14068 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 10:32:52.213  INFO 14068 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 10:32:52.383  INFO 14068 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 10:32:52.388  INFO 14068 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 10:32:52.393  INFO 14068 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 10:32:52.542  INFO 14068 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#c9d5de01:0/SimpleConnection@ad781f40 [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 60318]
+2021-10-31 10:32:52.701  INFO 14068 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 10.2 seconds (JVM running for 10.987)
+2021-10-31 10:32:57.613  INFO 14068 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 10:32:57.617  INFO 14068 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 10:33:07.239  INFO 14068 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 10:33:07.240  INFO 14068 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 10:33:07.244  INFO 14068 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2021-10-31 10:33:07.387  INFO 14068 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:33:08.455  INFO 14068 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 10115
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:33:11.902  INFO 14068 --- [pool-2-thread-4] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：60456
+2021-10-31 10:33:11.922  INFO 14068 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:33:11.932  INFO 14068 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:33:13.201  INFO 14068 --- [http-nio-7777-exec-3] c.s.agent.websockets.AndroidWSServer     : 0 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:33:14.734  INFO 14068 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:33:14.767  INFO 14068 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:33:14","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:33:14.871  INFO 14068 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:33:14","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:34:35.110  INFO 8092 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 8092 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 10:34:35.126  INFO 8092 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 10:34:38.433  INFO 8092 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 10:34:38.453  INFO 8092 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 10:34:38.454  INFO 8092 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 10:34:38.641  INFO 8092 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 10:34:38.642  INFO 8092 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3364 ms
+2021-10-31 10:34:40.212  INFO 8092 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:34:41.219  INFO 8092 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 10:34:41.241  INFO 8092 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 10:34:42.245  INFO 8092 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 10:34:43.539  INFO 8092 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 10:34:43.718  INFO 8092 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 10:34:43.722  INFO 8092 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 10:34:43.727  INFO 8092 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 10:34:43.875  INFO 8092 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#34d2cf71:0/SimpleConnection@bd84398a [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 60551]
+2021-10-31 10:34:44.032  INFO 8092 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 10.032 seconds (JVM running for 10.912)
+2021-10-31 10:34:49.160  INFO 8092 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 10:34:49.162  INFO 8092 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 10:34:54.081  INFO 8092 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 10:34:54.082  INFO 8092 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 10:34:54.083  INFO 8092 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2021-10-31 10:34:54.186  INFO 8092 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:34:55.346  INFO 8092 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 10478
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:34:58.790  INFO 8092 --- [pool-2-thread-4] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：60666
+2021-10-31 10:34:58.806  INFO 8092 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:34:58.831  INFO 8092 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:34:59.339  INFO 8092 --- [http-nio-7777-exec-3] c.s.agent.websockets.AndroidWSServer     : 1 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:35:03.756  INFO 8092 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:35:03.788  INFO 8092 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:35:03","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:35:03.904  INFO 8092 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:35:03","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:36:29.281  INFO 8092 --- [http-nio-7777-exec-4] c.s.agent.websockets.AndroidWSServer     : 1 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:37:06.326  INFO 15752 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 15752 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 10:37:06.338  INFO 15752 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 10:37:09.844  INFO 15752 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 10:37:09.874  INFO 15752 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 10:37:09.875  INFO 15752 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 10:37:10.102  INFO 15752 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 10:37:10.102  INFO 15752 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3619 ms
+2021-10-31 10:37:11.860  INFO 15752 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:37:12.855  INFO 15752 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 10:37:12.881  INFO 15752 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 10:37:13.876  INFO 15752 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 10:37:15.054  INFO 15752 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 10:37:15.241  INFO 15752 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 10:37:15.244  INFO 15752 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 10:37:15.248  INFO 15752 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 10:37:15.395  INFO 15752 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#9d7e6fe0:0/SimpleConnection@64700166 [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 60790]
+2021-10-31 10:37:15.570  INFO 15752 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 10.375 seconds (JVM running for 11.161)
+2021-10-31 10:37:19.970  INFO 15752 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 10:37:19.973  INFO 15752 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 10:37:31.556  INFO 15752 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 10:37:31.558  INFO 15752 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 10:37:31.561  INFO 15752 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 3 ms
+2021-10-31 10:37:31.797  INFO 15752 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:37:33.114  INFO 15752 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 13228
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+
+2021-10-31 10:37:33.145  INFO 15752 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:37:36.582  INFO 15752 --- [pool-2-thread-4] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：60907
+2021-10-31 10:37:36.606  INFO 15752 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:37:36.612  INFO 15752 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:37:36.783  INFO 15752 --- [http-nio-7777-exec-3] c.s.agent.websockets.AndroidWSServer     : 1 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:37:39.495  INFO 15752 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:37:39.524  INFO 15752 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:37:39","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:37:39.894  INFO 15752 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:37:39","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:43:20.875  INFO 4456 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 4456 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 10:43:20.887  INFO 4456 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 10:43:24.317  INFO 4456 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 10:43:24.341  INFO 4456 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 10:43:24.341  INFO 4456 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 10:43:24.551  INFO 4456 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 10:43:24.551  INFO 4456 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3509 ms
+2021-10-31 10:43:26.507  INFO 4456 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:43:27.529  INFO 4456 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 10:43:27.544  INFO 4456 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 10:43:28.570  INFO 4456 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 10:43:30.041  INFO 4456 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 10:43:30.242  INFO 4456 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 10:43:30.246  INFO 4456 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 10:43:30.251  INFO 4456 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 10:43:30.385  INFO 4456 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#bd5d7014:0/SimpleConnection@bd842ff3 [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 61243]
+2021-10-31 10:43:30.546  INFO 4456 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 10.917 seconds (JVM running for 12.178)
+2021-10-31 10:43:35.392  INFO 4456 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 10:43:35.395  INFO 4456 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 10:43:42.552  INFO 4456 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 10:43:42.553  INFO 4456 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 10:43:42.555  INFO 4456 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2021-10-31 10:43:42.701  INFO 4456 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:43:43.865  INFO 4456 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 14208
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+
+2021-10-31 10:43:43.895  INFO 4456 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:43:46.615  INFO 4456 --- [http-nio-7777-exec-3] c.s.agent.websockets.TerminalWSServer    : 1 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:43:46.675  INFO 4456 --- [pool-2-thread-4] c.s.agent.websockets.TerminalWSServer    : /
+
+2021-10-31 10:43:47.177  INFO 4456 --- [pool-2-thread-4] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：61420
+2021-10-31 10:43:47.203  INFO 4456 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:43:47.222  INFO 4456 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:43:52.760  INFO 4456 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:43:52.784  INFO 4456 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:43:52","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:43:52.889  INFO 4456 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:43:52","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:44:14.759  INFO 4456 --- [http-nio-7777-exec-4] c.s.agent.websockets.TerminalWSServer    : 1 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:44:14.817  INFO 4456 --- [pool-2-thread-2] c.s.agent.websockets.TerminalWSServer    : ls: ./fstab.zram1024m: Permission denied
+ls: ./fstab.zram1280m: Permission denied
+ls: ./fstab.zram1536m: Permission denied
+ls: ./fstab.zram2240m: Permission denied
+ls: ./fstab.zram256m: Permission denied
+ls: ./fstab.zram2800m: Permission denied
+ls: ./fstab.zram4096m: Permission denied
+ls: ./fstab.zram512m: Permission denied
+ls: ./fstab.zram6144m: Permission denied
+ls: ./fstab.zram768m: Permission denied
+ls: ./fstab.zram8192m: Permission denied
+ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.mygote64.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./metadata: Permission denied
+ls: ./modem_log: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Permission denied
+ls: ./ueventd.rc: Permission denied
+ls: ./verity_key: Permission denied
+3rdmodem       cache         dev        oem      proc             storage 
+3rdmodemnvm    config        eng        patch_hw product          sys     
+3rdmodemnvmbkp cust          etc        preas    product_services system  
+acct           d             hw_product preavs   res              vendor  
+apex           data          log        preload  sbin             version 
+bin            debug_ramdisk mnt        prets    sdcard           
+bugreports     default.prop  odm        pretvs   splash2          
+
+2021-10-31 10:50:19.551  INFO 9332 --- [main] com.sonic.agent.AgentApplication         : Starting AgentApplication using Java 16.0.2 on LAPTOP-B4E5ST9J with PID 9332 (C:\Users\HUANGCHUBING\Desktop\release\sonic-agent\target\classes started by HUANGCHUBING in C:\Users\HUANGCHUBING\Desktop\release\sonic-agent)
+2021-10-31 10:50:19.562  INFO 9332 --- [main] com.sonic.agent.AgentApplication         : The following profiles are active: prod,windows-x86_64
+2021-10-31 10:50:22.992  INFO 9332 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 7777 (http)
+2021-10-31 10:50:23.018  INFO 9332 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2021-10-31 10:50:23.019  INFO 9332 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.53]
+2021-10-31 10:50:23.217  INFO 9332 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2021-10-31 10:50:23.218  INFO 9332 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3514 ms
+2021-10-31 10:50:25.142  INFO 9332 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:50:26.176  INFO 9332 --- [main] c.s.a.b.android.AndroidDeviceBridgeTool  : 安卓设备监听已开启
+2021-10-31 10:50:26.199  INFO 9332 --- [Device List Monitor] c.s.a.b.a.AndroidDeviceStatusListener    : Android设备：MDX0220610012002 ONLINE！
+2021-10-31 10:50:27.209  INFO 9332 --- [main] c.s.a.bridge.ios.LibIMobileDeviceTool    : iOS设备监听已关闭
+2021-10-31 10:50:28.331  INFO 9332 --- [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'
+2021-10-31 10:50:28.485  INFO 9332 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 7777 (http) with context path ''
+2021-10-31 10:50:28.488  INFO 9332 --- [main] com.sonic.agent.tools.GetWebStartPort    : tomcat开启端口： 7777
+2021-10-31 10:50:28.492  INFO 9332 --- [main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [localhost:5672]
+2021-10-31 10:50:28.651  INFO 9332 --- [main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#3bbf5b4a:0/SimpleConnection@abc6b115 [delegate=amqp://sonic@127.0.0.1:5672/sonic, localPort= 61861]
+2021-10-31 10:50:28.867  INFO 9332 --- [main] com.sonic.agent.AgentApplication         : Started AgentApplication in 10.455 seconds (JVM running for 11.234)
+2021-10-31 10:50:33.651  INFO 9332 --- [org.springframework.amqp.rabbit.RabbitListenerEndpointContainer#0-1] com.sonic.agent.receiver.MsgReceiver     : MsgReceiver消费者收到消息  : {"msg":"auth","id":1}
+2021-10-31 10:50:33.653  INFO 9332 --- [pool-2-thread-1] com.sonic.agent.receiver.MsgReceiver     : 当前apex-agent版本为：1.0.0
+2021-10-31 10:50:49.383  INFO 9332 --- [http-nio-7777-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2021-10-31 10:50:49.385  INFO 9332 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2021-10-31 10:50:49.391  INFO 9332 --- [http-nio-7777-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 6 ms
+2021-10-31 10:50:49.582  INFO 9332 --- [pool-2-thread-1] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:50:50.651  INFO 9332 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 16218
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+
+2021-10-31 10:50:50.683  INFO 9332 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:50:54.130  INFO 9332 --- [pool-2-thread-3] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：61988
+2021-10-31 10:50:54.151  INFO 9332 --- [pool-2-thread-4] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:50:54.174  INFO 9332 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:50:56.167  INFO 9332 --- [http-nio-7777-exec-3] c.s.agent.websockets.TerminalWSServer    : 0 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:50:56.206  INFO 9332 --- [pool-2-thread-5] c.s.agent.websockets.TerminalWSServer    : /
+
+2021-10-31 10:50:59.328  INFO 9332 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:50:59.351  INFO 9332 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:50:59","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:50:59.469  INFO 9332 --- [pool-2-thread-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:50:59","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:51:03.911  INFO 9332 --- [http-nio-7777-exec-4] c.s.agent.websockets.TerminalWSServer    : 0 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:51:03.973  INFO 9332 --- [pool-2-thread-2] c.s.agent.websockets.TerminalWSServer    : ls: ./fstab.zram1024m: Permission denied
+ls: ./fstab.zram1280m: Permission denied
+ls: ./fstab.zram1536m: Permission denied
+ls: ./fstab.zram2240m: Permission denied
+ls: ./fstab.zram256m: Permission denied
+ls: ./fstab.zram2800m: Permission denied
+ls: ./fstab.zram4096m: Permission denied
+ls: ./fstab.zram512m: Permission denied
+ls: ./fstab.zram6144m: Permission denied
+ls: ./fstab.zram768m: Permission denied
+ls: ./fstab.zram8192m: Permission denied
+ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.mygote64.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./metadata: Permission denied
+ls: ./modem_log: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Permission denied
+ls: ./ueventd.rc: Permission denied
+ls: ./verity_key: Permission denied
+3rdmodem       cache         dev        oem      proc             storage 
+3rdmodemnvm    config        eng        patch_hw product          sys     
+3rdmodemnvmbkp cust          etc        preas    product_services system  
+acct           d             hw_product preavs   res              vendor  
+apex           data          log        preload  sbin             version 
+bin            debug_ramdisk mnt        prets    sdcard           
+bugreports     default.prop  odm        pretvs   splash2          
+
+2021-10-31 10:52:02.200  INFO 9332 --- [http-nio-7777-exec-6] c.s.agent.websockets.TerminalWSServer    : 0退出
+2021-10-31 10:52:02.457 ERROR 9332 --- [http-nio-7777-exec-5] com.sonic.agent.tools.LogTool            : Message will not be sent because the WebSocket session has been closed
+2021-10-31 10:52:02.458  INFO 9332 --- [http-nio-7777-exec-5] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"退出连接设备","log":"","time":"10:52:02","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:52:02.465 ERROR 9332 --- [pool-2-thread-4] com.sonic.agent.tools.MiniCapTool        : socket发送失败!连接已关闭！
+2021-10-31 10:52:02.527 ERROR 9332 --- [pool-2-thread-4] com.sonic.agent.tools.MiniCapTool        : socket发送失败!连接已关闭！
+2021-10-31 10:52:02.617 ERROR 9332 --- [pool-2-thread-4] com.sonic.agent.tools.MiniCapTool        : socket发送失败!连接已关闭！
+2021-10-31 10:52:02.968  INFO 9332 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备miniCap启动异常！
+2021-10-31 10:52:02.968 ERROR 9332 --- [pool-2-thread-1] c.s.a.b.android.AndroidDeviceBridgeTool  : executeRemoteCommand interrupted with immediate timeout via interruption.
+2021-10-31 10:52:02.969  INFO 9332 --- [http-nio-7777-exec-5] c.s.agent.websockets.AndroidWSServer     : 1退出
+2021-10-31 10:52:03.062  INFO 9332 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : miniCap socket已关闭
+2021-10-31 10:52:03.063  INFO 9332 --- [pool-2-thread-3] com.sonic.agent.tools.MiniCapTool        : miniCap input流已关闭
+2021-10-31 10:52:03.063  INFO 9332 --- [pool-2-thread-3] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口取消转发到：61988
+2021-10-31 10:54:14.723  INFO 9332 --- [pool-2-thread-7] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:54:15.815  INFO 9332 --- [pool-2-thread-7] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 17107
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:54:18.639  INFO 9332 --- [http-nio-7777-exec-9] c.s.agent.websockets.TerminalWSServer    : 3 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:54:18.697  INFO 9332 --- [pool-2-thread-9] c.s.agent.websockets.TerminalWSServer    : ls: ./fstab.zram1024m: Permission denied
+ls: ./fstab.zram1280m: Permission denied
+ls: ./fstab.zram1536m: Permission denied
+ls: ./fstab.zram2240m: Permission denied
+ls: ./fstab.zram256m: Permission denied
+ls: ./fstab.zram2800m: Permission denied
+ls: ./fstab.zram4096m: Permission denied
+ls: ./fstab.zram512m: Permission denied
+ls: ./fstab.zram6144m: Permission denied
+ls: ./fstab.zram768m: Permission denied
+ls: ./fstab.zram8192m: Permission denied
+ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.mygote64.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./metadata: Permission denied
+ls: ./modem_log: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Permission denied
+ls: ./ueventd.rc: Permission denied
+ls: ./verity_key: Permission denied
+3rdmodem       cache         dev        oem      proc             storage 
+3rdmodemnvm    config        eng        patch_hw product          sys     
+3rdmodemnvmbkp cust          etc        preas    product_services system  
+acct           d             hw_product preavs   res              vendor  
+apex           data          log        preload  sbin             version 
+bin            debug_ramdisk mnt        prets    sdcard           
+bugreports     default.prop  odm        pretvs   splash2          
+
+2021-10-31 10:54:19.266  INFO 9332 --- [pool-2-thread-9] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：62373
+2021-10-31 10:54:19.287  INFO 9332 --- [pool-2-thread-8] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:54:19.297  INFO 9332 --- [pool-2-thread-7] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:54:22.257  INFO 9332 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:54:22.273  INFO 9332 --- [pool-2-thread-6] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:54:22","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:54:22.391  INFO 9332 --- [pool-2-thread-6] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:54:22","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:54:30.339  INFO 9332 --- [http-nio-7777-exec-10] c.s.agent.websockets.TerminalWSServer    : 3 发送 {"detail":"pws","type":"command"}
+2021-10-31 10:54:30.394  INFO 9332 --- [pool-2-thread-6] c.s.agent.websockets.TerminalWSServer    : /system/bin/sh: pws: inaccessible or not found
+
+2021-10-31 10:54:38.664  INFO 9332 --- [http-nio-7777-exec-2] c.s.agent.websockets.TerminalWSServer    : 3 发送 {"detail":"pws","type":"command"}
+2021-10-31 10:54:38.695  INFO 9332 --- [pool-2-thread-6] c.s.agent.websockets.TerminalWSServer    : /system/bin/sh: pws: inaccessible or not found
+
+2021-10-31 10:54:40.179  INFO 9332 --- [http-nio-7777-exec-1] c.s.agent.websockets.TerminalWSServer    : 3 发送 {"detail":"pws","type":"command"}
+2021-10-31 10:54:40.233  INFO 9332 --- [pool-2-thread-6] c.s.agent.websockets.TerminalWSServer    : /system/bin/sh: pws: inaccessible or not found
+
+2021-10-31 10:54:41.341  INFO 9332 --- [http-nio-7777-exec-3] c.s.agent.websockets.TerminalWSServer    : 3 发送 {"detail":"pws","type":"command"}
+2021-10-31 10:54:41.410  INFO 9332 --- [pool-2-thread-6] c.s.agent.websockets.TerminalWSServer    : /system/bin/sh: pws: inaccessible or not found
+
+2021-10-31 10:54:44.101  INFO 9332 --- [http-nio-7777-exec-4] c.s.agent.websockets.TerminalWSServer    : 3 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:54:44.129  INFO 9332 --- [pool-2-thread-6] c.s.agent.websockets.TerminalWSServer    : /
+
+2021-10-31 10:55:06.391  INFO 9332 --- [http-nio-7777-exec-5] c.s.agent.websockets.TerminalWSServer    : 3退出
+2021-10-31 10:55:06.638 ERROR 9332 --- [pool-2-thread-8] com.sonic.agent.tools.MiniCapTool        : socket发送失败!连接已关闭！
+2021-10-31 10:55:06.652 ERROR 9332 --- [http-nio-7777-exec-6] com.sonic.agent.tools.LogTool            : The remote endpoint was in state [BINARY_FULL_WRITING] which is an invalid state for called method
+2021-10-31 10:55:06.652  INFO 9332 --- [http-nio-7777-exec-6] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"退出连接设备","log":"","time":"10:55:06","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:55:06.707 ERROR 9332 --- [pool-2-thread-8] com.sonic.agent.tools.MiniCapTool        : socket发送失败!连接已关闭！
+2021-10-31 10:55:07.159  INFO 9332 --- [http-nio-7777-exec-6] c.s.agent.websockets.AndroidWSServer     : 2退出
+2021-10-31 10:55:07.159  INFO 9332 --- [pool-2-thread-7] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备miniCap启动异常！
+2021-10-31 10:55:07.159 ERROR 9332 --- [pool-2-thread-7] c.s.a.b.android.AndroidDeviceBridgeTool  : executeRemoteCommand interrupted with immediate timeout via interruption.
+2021-10-31 10:55:07.184  INFO 9332 --- [pool-2-thread-9] com.sonic.agent.tools.MiniCapTool        : miniCap socket已关闭
+2021-10-31 10:55:07.185  INFO 9332 --- [pool-2-thread-9] com.sonic.agent.tools.MiniCapTool        : miniCap input流已关闭
+2021-10-31 10:55:07.186  INFO 9332 --- [pool-2-thread-9] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口取消转发到：62373
+2021-10-31 10:55:15.015  INFO 9332 --- [pool-2-thread-8] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 10:55:16.139  INFO 9332 --- [pool-2-thread-8] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 18384
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 10:55:19.585  INFO 9332 --- [pool-2-thread-6] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：62555
+2021-10-31 10:55:19.604  INFO 9332 --- [pool-2-thread-7] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 10:55:19.615  INFO 9332 --- [pool-2-thread-8] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 10:55:22.241  INFO 9332 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 10:55:22.248  INFO 9332 --- [pool-2-thread-9] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"10:55:22","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:55:22.352  INFO 9332 --- [pool-2-thread-9] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"10:55:22","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 10:55:29.388  INFO 9332 --- [http-nio-7777-exec-7] c.s.agent.websockets.TerminalWSServer    : 5 发送 {"detail":"pwd","type":"command"}
+2021-10-31 10:55:29.451  INFO 9332 --- [pool-2-thread-9] c.s.agent.websockets.TerminalWSServer    : /
+
+2021-10-31 10:55:33.821  INFO 9332 --- [http-nio-7777-exec-10] c.s.agent.websockets.TerminalWSServer    : 5 发送 {"detail":"ls","type":"command"}
+2021-10-31 10:55:33.890  INFO 9332 --- [pool-2-thread-9] c.s.agent.websockets.TerminalWSServer    : ls: ./fstab.zram1024m: Permission denied
+ls: ./fstab.zram1280m: Permission denied
+ls: ./fstab.zram1536m: Permission denied
+ls: ./fstab.zram2240m: Permission denied
+ls: ./fstab.zram256m: Permission denied
+ls: ./fstab.zram2800m: Permission denied
+ls: ./fstab.zram4096m: Permission denied
+ls: ./fstab.zram512m: Permission denied
+ls: ./fstab.zram6144m: Permission denied
+ls: ./fstab.zram768m: Permission denied
+ls: ./fstab.zram8192m: Permission denied
+ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.mygote64.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./metadata: Permission denied
+ls: ./modem_log: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Permission denied
+ls: ./ueventd.rc: Permission denied
+ls: ./verity_key: Permission denied
+3rdmodem       cache         dev        oem      proc             storage 
+3rdmodemnvm    config        eng        patch_hw product          sys     
+3rdmodemnvmbkp cust          etc        preas    product_services system  
+acct           d             hw_product preavs   res              vendor  
+apex           data          log        preload  sbin             version 
+bin            debug_ramdisk mnt        prets    sdcard           
+bugreports     default.prop  odm        pretvs   splash2          
+
+2021-10-31 10:55:48.827  INFO 9332 --- [http-nio-7777-exec-1] c.s.agent.websockets.TerminalWSServer    : 5退出
+2021-10-31 10:55:49.061 ERROR 9332 --- [http-nio-7777-exec-2] com.sonic.agent.tools.LogTool            : Message will not be sent because the WebSocket session has been closed
+2021-10-31 10:55:49.063  INFO 9332 --- [http-nio-7777-exec-2] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"退出连接设备","log":"","time":"10:55:49","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 10:55:49.076 ERROR 9332 --- [pool-2-thread-7] com.sonic.agent.tools.MiniCapTool        : socket发送失败!连接已关闭！
+2021-10-31 10:55:49.132 ERROR 9332 --- [pool-2-thread-7] com.sonic.agent.tools.MiniCapTool        : socket发送失败!连接已关闭！
+2021-10-31 10:55:49.568  INFO 9332 --- [http-nio-7777-exec-2] c.s.agent.websockets.AndroidWSServer     : 4退出
+2021-10-31 10:55:49.569  INFO 9332 --- [pool-2-thread-8] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备miniCap启动异常！
+2021-10-31 10:55:49.570 ERROR 9332 --- [pool-2-thread-8] c.s.a.b.android.AndroidDeviceBridgeTool  : executeRemoteCommand interrupted with immediate timeout via interruption.
+2021-10-31 10:55:49.637  INFO 9332 --- [pool-2-thread-6] com.sonic.agent.tools.MiniCapTool        : miniCap socket已关闭
+2021-10-31 10:55:49.637  INFO 9332 --- [pool-2-thread-6] com.sonic.agent.tools.MiniCapTool        : miniCap input流已关闭
+2021-10-31 10:55:49.638  INFO 9332 --- [pool-2-thread-6] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口取消转发到：62555
+2021-10-31 11:08:02.822  INFO 9332 --- [pool-2-thread-11] c.s.agent.websockets.TerminalWSServer    : MDX0220610012002开启terminal
+2021-10-31 11:08:03.950  INFO 9332 --- [pool-2-thread-11] c.s.a.b.android.AndroidDeviceBridgeTool  : PID: 21027
+INFO: Using projection 1200x2640@1200x2640/0
+INFO: (external/MY_minicap/src/minicap_29.cpp:241) Creating SurfaceComposerClient
+INFO: (external/MY_minicap/src/minicap_29.cpp:244) Performing SurfaceComposerClient init check
+INFO: (external/MY_minicap/src/minicap_29.cpp:255) Creating virtual display
+INFO: (external/MY_minicap/src/minicap_29.cpp:261) Creating buffer queue
+INFO: (external/MY_minicap/src/minicap_29.cpp:264) Setting buffer options
+INFO: (external/MY_minicap/src/minicap_29.cpp:268) Creating CPU consumer
+INFO: (external/MY_minicap/src/minicap_29.cpp:272) Creating frame waiter
+INFO: (external/MY_minicap/src/minicap_29.cpp:276) Publishing virtual display
+INFO: (jni/minicap/JpgEncoder.cpp:64) Allocating 9506052 bytes for JPG encoder
+INFO: (jni/minicap/minicap.cpp:489) Server start
+
+2021-10-31 11:08:06.948  INFO 9332 --- [http-nio-7777-exec-5] c.s.agent.websockets.TerminalWSServer    : 7 发送 {"detail":"ls","type":"command"}
+2021-10-31 11:08:07.004  INFO 9332 --- [pool-2-thread-13] c.s.agent.websockets.TerminalWSServer    : ls: ./fstab.zram1024m: Permission denied
+ls: ./fstab.zram1280m: Permission denied
+ls: ./fstab.zram1536m: Permission denied
+ls: ./fstab.zram2240m: Permission denied
+ls: ./fstab.zram256m: Permission denied
+ls: ./fstab.zram2800m: Permission denied
+ls: ./fstab.zram4096m: Permission denied
+ls: ./fstab.zram512m: Permission denied
+ls: ./fstab.zram6144m: Permission denied
+ls: ./fstab.zram768m: Permission denied
+ls: ./fstab.zram8192m: Permission denied
+ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.mygote64.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./metadata: Permission denied
+ls: ./modem_log: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Permission denied
+ls: ./ueventd.rc: Permission denied
+ls: ./verity_key: Permission denied
+3rdmodem       cache         dev        oem      proc             storage 
+3rdmodemnvm    config        eng        patch_hw product          sys     
+3rdmodemnvmbkp cust          etc        preas    product_services system  
+acct           d             hw_product preavs   res              vendor  
+apex           data          log        preload  sbin             version 
+bin            debug_ramdisk mnt        prets    sdcard           
+bugreports     default.prop  odm        pretvs   splash2          
+
+2021-10-31 11:08:07.392  INFO 9332 --- [pool-2-thread-13] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口转发到：63216
+2021-10-31 11:08:07.416  INFO 9332 --- [pool-2-thread-12] com.sonic.agent.tools.MiniCapTool        : banner读取已就绪
+2021-10-31 11:08:07.437  INFO 9332 --- [pool-2-thread-11] c.s.a.b.android.AndroidDeviceBridgeTool  : INFO: (jni/minicap/minicap.cpp:492) New client connection
+
+2021-10-31 11:08:08.007  INFO 9332 --- [Forwarding newSession on session null to remote] o.o.selenium.remote.ProtocolHandshake    : Detected dialect: W3C
+2021-10-31 11:08:08.013  INFO 9332 --- [pool-2-thread-10] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"连接设备驱动成功","log":"","time":"11:08:08","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 11:08:08.116  INFO 9332 --- [pool-2-thread-10] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"","log":"设备操作系统：Android<br>操作系统版本：10<br>设备序列号：MDX0220610012002<br>设备制造商：HUAWEI<br>设备型号：ELS-AN00<br>安卓API等级：29<br>设备分辨率：1200x2640","time":"11:08:08","rid":0,"udId":"MDX0220610012002","status":1,"cid":0}
+2021-10-31 11:08:16.624  INFO 9332 --- [http-nio-7777-exec-6] c.s.agent.websockets.TerminalWSServer    : 7 发送 {"detail":"pwd","type":"command"}
+2021-10-31 11:08:16.685  INFO 9332 --- [pool-2-thread-10] c.s.agent.websockets.TerminalWSServer    : /
+
+2021-10-31 11:08:21.649  INFO 9332 --- [http-nio-7777-exec-9] c.s.agent.websockets.TerminalWSServer    : 7 发送 {"detail":"cd data","type":"command"}
+2021-10-31 11:08:25.414  INFO 9332 --- [http-nio-7777-exec-8] c.s.agent.websockets.TerminalWSServer    : 7 发送 {"detail":"ls","type":"command"}
+2021-10-31 11:08:25.476  INFO 9332 --- [pool-2-thread-10] c.s.agent.websockets.TerminalWSServer    : ls: ./fstab.zram1024m: Permission denied
+ls: ./fstab.zram1280m: Permission denied
+ls: ./fstab.zram1536m: Permission denied
+ls: ./fstab.zram2240m: Permission denied
+ls: ./fstab.zram256m: Permission denied
+ls: ./fstab.zram2800m: Permission denied
+ls: ./fstab.zram4096m: Permission denied
+ls: ./fstab.zram512m: Permission denied
+ls: ./fstab.zram6144m: Permission denied
+ls: ./fstab.zram768m: Permission denied
+ls: ./fstab.zram8192m: Permission denied
+ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.mygote64.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./metadata: Permission denied
+ls: ./modem_log: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Permission denied
+ls: ./ueventd.rc: Permission denied
+ls: ./verity_key: Permission denied
+3rdmodem       cache         dev        oem      proc             storage 
+3rdmodemnvm    config        eng        patch_hw product          sys     
+3rdmodemnvmbkp cust          etc        preas    product_services system  
+acct           d             hw_product preavs   res              vendor  
+apex           data          log        preload  sbin             version 
+bin            debug_ramdisk mnt        prets    sdcard           
+bugreports     default.prop  odm        pretvs   splash2          
+
+2021-10-31 11:08:47.836  INFO 9332 --- [http-nio-7777-exec-10] c.s.agent.websockets.TerminalWSServer    : 7退出
+2021-10-31 11:08:48.066 ERROR 9332 --- [http-nio-7777-exec-7] com.sonic.agent.tools.LogTool            : Message will not be sent because the WebSocket session has been closed
+2021-10-31 11:08:48.067  INFO 9332 --- [http-nio-7777-exec-7] com.sonic.agent.tools.LogTool            : {"msg":"step","des":"退出连接设备","log":"","time":"11:08:48","rid":0,"udId":"MDX0220610012002","status":2,"cid":0}
+2021-10-31 11:08:48.581  INFO 9332 --- [http-nio-7777-exec-7] c.s.agent.websockets.AndroidWSServer     : 6退出
+2021-10-31 11:08:48.581  INFO 9332 --- [pool-2-thread-11] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备miniCap启动异常！
+2021-10-31 11:08:48.582 ERROR 9332 --- [pool-2-thread-11] c.s.a.b.android.AndroidDeviceBridgeTool  : executeRemoteCommand interrupted with immediate timeout via interruption.
+2021-10-31 11:08:48.620  INFO 9332 --- [pool-2-thread-13] com.sonic.agent.tools.MiniCapTool        : miniCap socket已关闭
+2021-10-31 11:08:48.621  INFO 9332 --- [pool-2-thread-13] com.sonic.agent.tools.MiniCapTool        : miniCap input流已关闭
+2021-10-31 11:08:48.621  INFO 9332 --- [pool-2-thread-13] c.s.a.b.android.AndroidDeviceBridgeTool  : MDX0220610012002 设备 minicap 服务端口取消转发到：63216

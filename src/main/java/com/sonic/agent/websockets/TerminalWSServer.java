@@ -4,18 +4,20 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import com.sonic.agent.maps.HandlerMap;
+import com.sonic.agent.maps.WebSocketSessionMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.OnMessage;
-import javax.websocket.OnOpen;
-import javax.websocket.Session;
+import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -56,49 +58,76 @@ public class TerminalWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
             case "stopCmd":
-            Future<?> ter = terminalMap.get(session);
-            if (!ter.isDone()) {
-                ter.cancel(true);
-            }
-            case "command":
-            ter = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-                try {
-                    udIdMap.get(session).executeShellCommand("", new IShellOutputReceiver() {
-                        @Override
-                        public void addOutput(byte[] bytes, int i, int i1) {
-                            String res = new String(bytes, i, i1);
-                            logger.info(res);
-                            JSONObject resp = new JSONObject();
-                            resp.put("msg", "terResp");
-                            resp.put("detail",res);
-                            sendText(session, resp.toJSONString());
-                        }
-
-                        @Override
-                        public void flush() {
-                        }
-
-                        @Override
-                        public boolean isCancelled() {
-                            return false;
-                        }
-                    }, 0, TimeUnit.MILLISECONDS);
-                } catch (TimeoutException e) {
-                    e.printStackTrace();
-                } catch (AdbCommandRejectedException e) {
-                    e.printStackTrace();
-                } catch (ShellCommandUnresponsiveException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                Future<?> ter = terminalMap.get(session);
+                if (!ter.isDone()) {
+                    ter.cancel(true);
                 }
-                JSONObject done = new JSONObject();
-                done.put("msg", "terDone");
-                sendText(session, done.toJSONString());
-            });
-            terminalMap.put(session,ter);
-            break;
+            case "command":
+                ter = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    try {
+                        udIdMap.get(session).executeShellCommand(msg.getString("detail"), new IShellOutputReceiver() {
+                            @Override
+                            public void addOutput(byte[] bytes, int i, int i1) {
+                                String res = new String(bytes, i, i1);
+                                logger.info(res);
+                                JSONObject resp = new JSONObject();
+                                resp.put("msg", "terResp");
+                                resp.put("detail", res);
+                                sendText(session, resp.toJSONString());
+                            }
+
+                            @Override
+                            public void flush() {
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return false;
+                            }
+                        }, 0, TimeUnit.MILLISECONDS);
+                    } catch (TimeoutException e) {
+                        e.printStackTrace();
+                    } catch (AdbCommandRejectedException e) {
+                        e.printStackTrace();
+                    } catch (ShellCommandUnresponsiveException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    JSONObject done = new JSONObject();
+                    done.put("msg", "terDone");
+                    sendText(session, done.toJSONString());
+                });
+                terminalMap.put(session, ter);
+                break;
         }
+    }
+
+    @OnClose
+    public void onClose(Session session) {
+        exit(session);
+    }
+
+    @OnError
+    public void onError(Session session, Throwable error) {
+        logger.error(error.getMessage());
+        JSONObject errMsg = new JSONObject();
+        errMsg.put("msg", "error");
+        sendText(session, errMsg.toJSONString());
+    }
+
+    private void exit(Session session) {
+        Future<?> cmd = terminalMap.get(session);
+        if (!cmd.isDone()) {
+            cmd.cancel(true);
+        }
+        terminalMap.remove(session);
+        try {
+            session.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        logger.info(session.getId() + "退出");
     }
 
     private void sendText(Session session, String message) {
