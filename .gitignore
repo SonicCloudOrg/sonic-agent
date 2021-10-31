@@ -2,5 +2,6 @@
 /test-output/
 /target/
 /.gradle/
+/logs/
 */.DS_Store
 .DS_Store
