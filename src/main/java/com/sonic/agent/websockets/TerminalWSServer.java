@@ -4,10 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import com.sonic.agent.maps.HandlerMap;
-import com.sonic.agent.maps.WebSocketSessionMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +14,6 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -40,6 +36,10 @@ public class TerminalWSServer {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key))) {
+            logger.info("拦截访问！");
+            return;
+        }
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         udIdMap.put(session, iDevice);
         String username = iDevice.getProperty("ro.product.device");
@@ -54,7 +54,6 @@ public class TerminalWSServer {
             logger.info(udId + "开启logcat");
             JSONObject ter = new JSONObject();
             ter.put("msg", "logcat");
-            ter.put("user", username);
             sendText(session, ter.toJSONString());
         });
         terminalMap.put(session, terminal);
@@ -173,6 +172,15 @@ public class TerminalWSServer {
             }
         }
         terminalMap.remove(session);
+        Future<?> logcat = logcatMap.get(session);
+        if (!logcat.isDone() || !logcat.isCancelled()) {
+            try {
+                logcat.cancel(true);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+            }
+        }
+        logcatMap.remove(session);
         try {
             session.close();
         } catch (IOException e) {
