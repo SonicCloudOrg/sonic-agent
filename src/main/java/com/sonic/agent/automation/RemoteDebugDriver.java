@@ -7,11 +7,13 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.Servlet;
 import java.util.Map;
 
@@ -22,8 +24,16 @@ import java.util.Map;
  */
 @Configuration
 public class RemoteDebugDriver {
+    private static String chromePath;
     public static int port = 0;
     public static WebDriver webDriver;
+    @Value("${sonic.chrome.path}")
+    private String path;
+
+    @Bean
+    public void setChromePath() {
+        chromePath = path;
+    }
 
     @Bean
     public Servlet baiduProxyServlet() {
@@ -36,16 +46,17 @@ public class RemoteDebugDriver {
         ServletRegistrationBean registrationBean = new ServletRegistrationBean(baiduProxyServlet(), "/agent/*");
         Map<String, String> params = ImmutableMap.of(
                 "targetUri", "http://localhost:" + port + "/devtools",
-                "log", "true");
+                "log", "false");
         registrationBean.setInitParameters(params);
         return registrationBean;
     }
 
     @Bean
+    @DependsOn(value = "setChromePath")
     public static void startChromeDriver() {
         DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
         ChromeOptions chromeOptions = new ChromeOptions();
-        System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", chromePath);
         if (port == 0) {
             int debugPort = PortTool.getPort();
             port = debugPort;

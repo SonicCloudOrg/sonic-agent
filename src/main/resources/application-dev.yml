@@ -25,6 +25,8 @@ logging:
       max-history: 3
 
 sonic:
+  chrome:
+    path: C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe
   folder:
     url: http://localhost:8094/api/folder
   agent:

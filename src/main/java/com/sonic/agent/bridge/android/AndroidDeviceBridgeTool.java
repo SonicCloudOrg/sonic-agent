@@ -1,9 +1,7 @@
 package com.sonic.agent.bridge.android;
 
-import com.android.ddmlib.AndroidDebugBridge;
-import com.android.ddmlib.CollectingOutputReceiver;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.IShellOutputReceiver;
+import com.android.ddmlib.*;
+import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
@@ -326,6 +324,43 @@ public class AndroidDeviceBridgeTool {
             filePath = "minitouch";
         }
         return filePath;
+    }
+
+    public static void pushYadb(IDevice iDevice) {
+        String yadbFile = executeCommand(iDevice, " ls /data/local/tmp | grep yadb");
+        if (yadbFile != null && yadbFile.contains("yadb")) {
+            return;
+        } else {
+            File yadbLocalFile = new File("plugins" + File.separator + "yadb");
+            pushLocalFile(iDevice, yadbLocalFile.getPath(), "/data/local/tmp/yadb");
+            boolean yadbFileExist = false;
+            //轮训目录，直到推送文件结束
+            while (!yadbFileExist) {
+                String yadbDeviceFile = executeCommand(iDevice, " ls /data/local/tmp | grep yadb");
+                if (yadbDeviceFile != null && yadbDeviceFile.contains("yadb")) {
+                    yadbFileExist = true;
+                }
+            }
+            executeCommand(iDevice, "chmod 777 /data/local/tmp/yadb");
+        }
+    }
+
+    public static void pushToCamera(IDevice iDevice, String url) {
+        try {
+            File image = DownImageTool.download(url);
+            pushLocalFile(iDevice, image.getPath(), "/sdcard/DCIM/Camera/" + image.getName());
+            boolean fileExist = false;
+            //轮训目录，直到推送文件结束
+            while (!fileExist) {
+                String files = executeCommand(iDevice, " ls /sdcard/DCIM/Camera | grep " + image.getName());
+                if (files != null && files.contains(image.getName())) {
+                    fileExist = true;
+                }
+            }
+            executeCommand(iDevice, "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/" + image.getName());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

@@ -441,7 +441,7 @@ public class AndroidStepHandler {
         }
     }
 
-    public void install(HandleDes handleDes, String path, String packName) {
+    public void install(HandleDes handleDes, String path) {
         handleDes.setStepDes("安装应用");
         handleDes.setDetail("App安装路径： " + path);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
@@ -465,7 +465,10 @@ public class AndroidStepHandler {
         //单独适配一下oppo
         if (manufacturer.equals("OPPO")) {
             try {
-                androidDriver.installApp(path, new AndroidInstallApplicationOptions().withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+                androidDriver.installApp(path, new AndroidInstallApplicationOptions()
+                        .withAllowTestPackagesEnabled().withReplaceEnabled()
+                        .withUseSdcardEnabled()
+                        .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
             } catch (Exception e) {
             }
             //单独再适配colorOs
@@ -535,16 +538,14 @@ public class AndroidStepHandler {
             }
         } else {
             try {
-                androidDriver.installApp(path, new AndroidInstallApplicationOptions().withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+                androidDriver.installApp(path, new AndroidInstallApplicationOptions()
+                        .withAllowTestPackagesEnabled().withReplaceEnabled()
+                        .withUseSdcardEnabled()
+                        .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
             } catch (Exception e) {
                 handleDes.setE(e);
                 return;
             }
-        }
-        try {
-            androidDriver.activateApp(packName);
-        } catch (Exception e) {
-            handleDes.setE(e);
         }
     }
 
@@ -1510,7 +1511,7 @@ public class AndroidStepHandler {
                 terminate(handleDes, step.getString("text"));
                 break;
             case "install":
-                install(handleDes, step.getString("text"), step.getString("content"));
+                install(handleDes, step.getString("text"));
                 break;
             case "uninstall":
                 uninstall(handleDes, step.getString("text"));

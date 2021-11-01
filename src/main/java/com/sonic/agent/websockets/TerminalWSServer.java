@@ -74,7 +74,16 @@ public class TerminalWSServer {
                         logger.error(e.getMessage());
                     }
                 }
+                break;
             case "command":
+                if (msg.getString("detail").contains("reboot")
+                        || msg.getString("detail").contains("rm")
+                        || msg.getString("detail").contains("su ")) {
+                    JSONObject done = new JSONObject();
+                    done.put("msg", "terDone");
+                    sendText(session, done.toJSONString());
+                    return;
+                }
                 ter = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
                     try {
                         udIdMap.get(session).executeShellCommand(msg.getString("detail"), new IShellOutputReceiver() {
@@ -105,7 +114,7 @@ public class TerminalWSServer {
                 });
                 terminalMap.put(session, ter);
                 break;
-            case "stopLogcat":
+            case "stopLogcat": {
                 Future<?> logcat = logcatMap.get(session);
                 if (!logcat.isDone() || !logcat.isCancelled()) {
                     try {
@@ -114,7 +123,17 @@ public class TerminalWSServer {
                         logger.error(e.getMessage());
                     }
                 }
+                break;
+            }
             case "logcat": {
+                Future<?> logcat = logcatMap.get(session);
+                if (!logcat.isDone() || !logcat.isCancelled()) {
+                    try {
+                        logcat.cancel(true);
+                    } catch (Exception e) {
+                        logger.error(e.getMessage());
+                    }
+                }
                 logcat = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
                     try {
                         udIdMap.get(session).executeShellCommand("logcat *:"

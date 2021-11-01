@@ -16,6 +16,7 @@ import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.tools.MiniCapTool;
 import com.sonic.agent.tools.PortTool;
+import com.sonic.agent.tools.ProcessCommandTool;
 import com.sonic.agent.tools.UploadTools;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.WebDriver;
@@ -245,8 +246,13 @@ public class AndroidWSServer {
                 sendText(session, forwardView.toJSONString());
                 break;
             }
+            case "scan":
+                AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
+                break;
             case "text":
-                AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input text " + msg.getString("detail"));
+                AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session));
+                ProcessCommandTool.getProcessLocalCommand("adb -s " + udIdMap.get(session).getSerialNumber()
+                        + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
                 break;
             case "pic": {
                 Future<?> old = miniCapMap.get(session);
@@ -329,7 +335,7 @@ public class AndroidWSServer {
                         JSONObject result = new JSONObject();
                         result.put("msg", "installFinish");
                         HandleDes handleDes = new HandleDes();
-                        finalAndroidStepHandler.install(handleDes, msg.getString("apk"), msg.getString("pkg"));
+                        finalAndroidStepHandler.install(handleDes, msg.getString("apk"));
                         if (handleDes.getE() == null) {
                             result.put("status", "success");
                         } else {
