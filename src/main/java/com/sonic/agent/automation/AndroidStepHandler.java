@@ -467,7 +467,6 @@ public class AndroidStepHandler {
             try {
                 androidDriver.installApp(path, new AndroidInstallApplicationOptions()
                         .withAllowTestPackagesEnabled().withReplaceEnabled()
-                        .withUseSdcardEnabled()
                         .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
             } catch (Exception e) {
             }
@@ -540,7 +539,6 @@ public class AndroidStepHandler {
             try {
                 androidDriver.installApp(path, new AndroidInstallApplicationOptions()
                         .withAllowTestPackagesEnabled().withReplaceEnabled()
-                        .withUseSdcardEnabled()
                         .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
             } catch (Exception e) {
                 handleDes.setE(e);

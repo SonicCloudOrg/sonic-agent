@@ -339,6 +339,7 @@ public class AndroidWSServer {
                         if (handleDes.getE() == null) {
                             result.put("status", "success");
                         } else {
+                            System.out.println(handleDes.getE());
                             result.put("status", "fail");
                         }
                         sendText(session, result.toJSONString());
