@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MiniCapTool {
     private final Logger logger = LoggerFactory.getLogger(MiniCapTool.class);
 
-    public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, String pic, Session session) {
+    public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, String pic, int tor, Session session) {
         Queue<byte[]> dataQueue = new LinkedBlockingQueue<>();
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         int qua = 0;
@@ -42,7 +42,12 @@ public class MiniCapTool {
                 qua = 50;
                 break;
         }
-        int s = AndroidDeviceBridgeTool.getScreen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId));
+        int s;
+        if (tor == -1) {
+            s = AndroidDeviceBridgeTool.getScreen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId));
+        } else {
+            s = tor;
+        }
         int c = 0;
         switch (s) {
             case 0:

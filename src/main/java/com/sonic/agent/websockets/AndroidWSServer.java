@@ -109,7 +109,7 @@ public class AndroidWSServer {
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
         MiniCapTool miniCapTool = new MiniCapTool();
         AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", session);
+        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", -1, session);
         miniCapMap.put(session, miniCapThread);
 
         if (devicePlatformVersion < 9) {
@@ -262,7 +262,7 @@ public class AndroidWSServer {
                 MiniCapTool miniCapTool = new MiniCapTool();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Future<?> miniCapThread = miniCapTool.start(
-                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), session);
+                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
                 miniCapMap.put(session, miniCapThread);
                 JSONObject picFinish = new JSONObject();
                 picFinish.put("msg", "picFinish");
@@ -279,12 +279,27 @@ public class AndroidWSServer {
                     MiniCapTool miniCapTool = new MiniCapTool();
                     AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                     Future<?> miniCapThread = miniCapTool.start(
-                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), session);
+                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
                     miniCapMap.put(session, miniCapThread);
                     JSONObject picFinish = new JSONObject();
                     picFinish.put("msg", "picFinish");
                     sendText(session, picFinish.toJSONString());
                 }
+                break;
+            }
+            case "fixScreen": {
+                Future<?> old = miniCapMap.get(session);
+                old.cancel(true);
+                Thread.sleep(3000);
+                miniCapMap.remove(session);
+                MiniCapTool miniCapTool = new MiniCapTool();
+                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+                Future<?> miniCapThread = miniCapTool.start(
+                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), msg.getInteger("s"), session);
+                miniCapMap.put(session, miniCapThread);
+                JSONObject picFinish = new JSONObject();
+                picFinish.put("msg", "picFinish");
+                sendText(session, picFinish.toJSONString());
                 break;
             }
             case "touch":
