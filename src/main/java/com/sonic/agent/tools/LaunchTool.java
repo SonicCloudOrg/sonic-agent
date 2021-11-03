@@ -2,6 +2,7 @@ package com.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.automation.AppiumServer;
+import com.sonic.agent.automation.RemoteDebugDriver;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +39,7 @@ public class LaunchTool implements ApplicationRunner {
         JSONObject agentOffLine = new JSONObject();
         agentOffLine.put("msg", "offLine");
         RabbitMQThread.send(agentOffLine);
+        RemoteDebugDriver.close();
         AppiumServer.close();
         Thread.sleep(3000);
         while (true) {

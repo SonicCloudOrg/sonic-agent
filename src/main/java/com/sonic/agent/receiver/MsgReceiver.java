@@ -47,7 +47,7 @@ public class MsgReceiver {
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
                 case "auth":
-                    logger.info("当前apex-agent版本为：" + version);
+                    logger.info("当前sonic-agent版本为：" + version);
                     AgentTool.agentId = jsonObject.getInteger("id");
                     RabbitMQThread.isPass = true;
                     JSONObject agentInfo = new JSONObject();

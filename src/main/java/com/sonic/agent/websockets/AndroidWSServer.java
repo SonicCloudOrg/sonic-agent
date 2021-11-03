@@ -1,10 +1,12 @@
 package com.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.HandleDes;
+import com.sonic.agent.automation.RemoteDebugDriver;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
@@ -14,13 +16,21 @@ import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.rabbitmq.RabbitMQThread;
 import com.sonic.agent.tools.MiniCapTool;
 import com.sonic.agent.tools.PortTool;
+import com.sonic.agent.tools.ProcessCommandTool;
 import com.sonic.agent.tools.UploadTools;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
@@ -31,9 +41,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,8 +54,11 @@ public class AndroidWSServer {
     @Value("${sonic.agent.key}")
     private String key;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
+    private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> miniCapMap = new ConcurrentHashMap<>();
+    @Autowired
+    private RestTemplate restTemplate;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
@@ -98,7 +109,7 @@ public class AndroidWSServer {
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
         MiniCapTool miniCapTool = new MiniCapTool();
         AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", session);
+        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", -1, session);
         miniCapMap.put(session, miniCapThread);
 
         if (devicePlatformVersion < 9) {
@@ -171,8 +182,77 @@ public class AndroidWSServer {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
+            case "forwardView": {
+                JSONObject forwardView = new JSONObject();
+                IDevice iDevice = udIdMap.get(session);
+                List<String> webViewList = Arrays.asList(AndroidDeviceBridgeTool
+                        .executeCommand(iDevice, "cat /proc/net/unix | grep webview").split("\n"));
+                Set<String> webSet = new HashSet<>();
+                for (String w : webViewList) {
+                    if (w.contains("@") && w.indexOf("@") + 1 < w.length()) {
+                        webSet.add(w.substring(w.indexOf("@") + 1));
+                    }
+                }
+                List<JSONObject> has = webViewForwardMap.get(iDevice);
+                if (has != null && has.size() > 0) {
+                    for (JSONObject j : has) {
+                        AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
+                    }
+                }
+                has = new ArrayList<>();
+                List<JSONObject> result = new ArrayList<>();
+                if (webViewList.size() > 0) {
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.add("Content-Type", "application/json");
+                    for (String ws : webSet) {
+                        int port = PortTool.getPort();
+                        AndroidDeviceBridgeTool.forward(iDevice, port, ws);
+                        JSONObject j = new JSONObject();
+                        j.put("port", port);
+                        j.put("name", ws);
+                        has.add(j);
+                        JSONObject r = new JSONObject();
+                        r.put("port", port);
+                        ResponseEntity<LinkedHashMap> infoEntity =
+                                restTemplate.exchange("http://localhost:" + port + "/json/version", HttpMethod.GET, new HttpEntity(headers), LinkedHashMap.class);
+                        if (infoEntity.getStatusCode() == HttpStatus.OK) {
+                            r.put("version", infoEntity.getBody().get("Browser"));
+                            r.put("package", infoEntity.getBody().get("Android-Package"));
+                        }
+                        ResponseEntity<JSONArray> responseEntity =
+                                restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
+                        if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                            List<JSONObject> child = new ArrayList<>();
+                            for (Object e : responseEntity.getBody()) {
+                                LinkedHashMap objE = (LinkedHashMap) e;
+                                JSONObject c = new JSONObject();
+                                c.put("favicon", objE.get("faviconUrl"));
+                                c.put("title", objE.get("title"));
+                                c.put("url", objE.get("url"));
+                                c.put("id", objE.get("id"));
+                                child.add(c);
+                            }
+                            r.put("children", child);
+                            result.add(r);
+                        }
+                    }
+                    webViewForwardMap.put(iDevice, has);
+                }
+                forwardView.put("msg", "forwardView");
+                if (RemoteDebugDriver.webDriver == null) {
+                    RemoteDebugDriver.startChromeDriver();
+                }
+                forwardView.put("detail", result);
+                sendText(session, forwardView.toJSONString());
+                break;
+            }
+            case "scan":
+                AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
+                break;
             case "text":
-                AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input text " + msg.getString("detail"));
+                AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session));
+                ProcessCommandTool.getProcessLocalCommand("adb -s " + udIdMap.get(session).getSerialNumber()
+                        + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
                 break;
             case "pic": {
                 Future<?> old = miniCapMap.get(session);
@@ -182,7 +262,7 @@ public class AndroidWSServer {
                 MiniCapTool miniCapTool = new MiniCapTool();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Future<?> miniCapThread = miniCapTool.start(
-                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), session);
+                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
                 miniCapMap.put(session, miniCapThread);
                 JSONObject picFinish = new JSONObject();
                 picFinish.put("msg", "picFinish");
@@ -199,12 +279,27 @@ public class AndroidWSServer {
                     MiniCapTool miniCapTool = new MiniCapTool();
                     AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                     Future<?> miniCapThread = miniCapTool.start(
-                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), session);
+                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
                     miniCapMap.put(session, miniCapThread);
                     JSONObject picFinish = new JSONObject();
                     picFinish.put("msg", "picFinish");
                     sendText(session, picFinish.toJSONString());
                 }
+                break;
+            }
+            case "fixScreen": {
+                Future<?> old = miniCapMap.get(session);
+                old.cancel(true);
+                Thread.sleep(3000);
+                miniCapMap.remove(session);
+                MiniCapTool miniCapTool = new MiniCapTool();
+                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+                Future<?> miniCapThread = miniCapTool.start(
+                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), msg.getInteger("s"), session);
+                miniCapMap.put(session, miniCapThread);
+                JSONObject picFinish = new JSONObject();
+                picFinish.put("msg", "picFinish");
+                sendText(session, picFinish.toJSONString());
                 break;
             }
             case "touch":
@@ -255,10 +350,11 @@ public class AndroidWSServer {
                         JSONObject result = new JSONObject();
                         result.put("msg", "installFinish");
                         HandleDes handleDes = new HandleDes();
-                        finalAndroidStepHandler.install(handleDes, msg.getString("apk"), msg.getString("pkg"));
+                        finalAndroidStepHandler.install(handleDes, msg.getString("apk"));
                         if (handleDes.getE() == null) {
                             result.put("status", "success");
                         } else {
+                            System.out.println(handleDes.getE());
                             result.put("status", "fail");
                         }
                         sendText(session, result.toJSONString());
@@ -273,7 +369,9 @@ public class AndroidWSServer {
                             result.put("msg", "tree");
                             result.put("detail", finalAndroidStepHandler.getResource());
                             HandleDes handleDes = new HandleDes();
-                            result.put("img", finalAndroidStepHandler.stepScreen(handleDes));
+                            if (!msg.getBoolean("hasScreen")) {
+                                result.put("img", finalAndroidStepHandler.stepScreen(handleDes));
+                            }
                             if (handleDes.getE() != null) {
                                 logger.error(handleDes.getE().getMessage());
                                 JSONObject resultFail = new JSONObject();
@@ -339,6 +437,13 @@ public class AndroidWSServer {
             AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
             HandlerMap.getAndroidMap().remove(session.getId());
         }
+        List<JSONObject> has = webViewForwardMap.get(udIdMap.get(session));
+        if (has != null && has.size() > 0) {
+            for (JSONObject j : has) {
+                AndroidDeviceBridgeTool.removeForward(udIdMap.get(session), j.getInteger("port"), j.getString("name"));
+            }
+        }
+        webViewForwardMap.remove(udIdMap.get(session));
         outputMap.remove(session);
         udIdMap.remove(session);
         miniCapMap.get(session).cancel(true);

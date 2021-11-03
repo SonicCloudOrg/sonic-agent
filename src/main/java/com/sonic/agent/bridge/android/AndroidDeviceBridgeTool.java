@@ -1,9 +1,8 @@
 package com.sonic.agent.bridge.android;
 
-import com.android.ddmlib.AndroidDebugBridge;
-import com.android.ddmlib.CollectingOutputReceiver;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.IShellOutputReceiver;
+import com.android.ddmlib.*;
+import com.sonic.agent.exception.SonicException;
+import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author ZhouYiXun
@@ -164,8 +164,8 @@ public class AndroidDeviceBridgeTool {
         try {
             iDevice.executeShellCommand(command, output, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.info(String.format("发送shell指令 {} 给设备 {} 异常！"
-                    , command, iDevice.getSerialNumber()));
+            logger.info("发送shell指令 {} 给设备 {} 异常！"
+                    , command, iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
         return output.getOutput();
@@ -328,6 +328,43 @@ public class AndroidDeviceBridgeTool {
         return filePath;
     }
 
+    public static void pushYadb(IDevice iDevice) {
+        String yadbFile = executeCommand(iDevice, " ls /data/local/tmp | grep yadb");
+        if (yadbFile != null && yadbFile.contains("yadb")) {
+            return;
+        } else {
+            File yadbLocalFile = new File("plugins" + File.separator + "yadb");
+            pushLocalFile(iDevice, yadbLocalFile.getPath(), "/data/local/tmp/yadb");
+            boolean yadbFileExist = false;
+            //轮训目录，直到推送文件结束
+            while (!yadbFileExist) {
+                String yadbDeviceFile = executeCommand(iDevice, " ls /data/local/tmp | grep yadb");
+                if (yadbDeviceFile != null && yadbDeviceFile.contains("yadb")) {
+                    yadbFileExist = true;
+                }
+            }
+            executeCommand(iDevice, "chmod 777 /data/local/tmp/yadb");
+        }
+    }
+
+    public static void pushToCamera(IDevice iDevice, String url) {
+        try {
+            File image = DownImageTool.download(url);
+            pushLocalFile(iDevice, image.getPath(), "/sdcard/DCIM/Camera/" + image.getName());
+            boolean fileExist = false;
+            //轮训目录，直到推送文件结束
+            while (!fileExist) {
+                String files = executeCommand(iDevice, " ls /sdcard/DCIM/Camera | grep " + image.getName());
+                if (files != null && files.contains(image.getName())) {
+                    fileExist = true;
+                }
+            }
+            executeCommand(iDevice, "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/" + image.getName());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * @param iDevice
      * @param quality
@@ -336,7 +373,7 @@ public class AndroidDeviceBridgeTool {
      * @des 开启miniCap服务
      * @date 2021/8/16 20:04
      */
-    public static void startMiniCapServer(IDevice iDevice, int quality, int screen) {
+    public static void startMiniCapServer(IDevice iDevice, int quality, int screen) throws SonicException {
         //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
         executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
         //获取cpu信息
@@ -362,6 +399,7 @@ public class AndroidDeviceBridgeTool {
         //给文件权限
         executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniCapFileName);
         String size = getScreenSize(iDevice);
+        AtomicBoolean isSupport = new AtomicBoolean(true);
         try {
             //开始启动
             iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q " + quality + " -P %s@%s/%d", miniCapFileName, size, size, screen), new IShellOutputReceiver() {
@@ -369,6 +407,11 @@ public class AndroidDeviceBridgeTool {
                 public void addOutput(byte[] bytes, int i, int i1) {
                     String res = new String(bytes, i, i1);
                     logger.info(res);
+                    if (res.contains("Vector<> have different types")) {
+                        isSupport.set(false);
+                        logger.info(iDevice.getSerialNumber() + "设备不兼容投屏！");
+                        return;
+                    }
                 }
 
                 @Override
@@ -384,6 +427,9 @@ public class AndroidDeviceBridgeTool {
             logger.info("{} 设备miniCap启动异常！"
                     , iDevice.getSerialNumber());
             logger.error(e.getMessage());
+        }
+        if (!isSupport.get()) {
+            throw new SonicException("该设备不兼容投屏！");
         }
     }
 

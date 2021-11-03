@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import com.sonic.agent.exception.SonicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,22 +28,27 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MiniCapTool {
     private final Logger logger = LoggerFactory.getLogger(MiniCapTool.class);
 
-    public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, String pic, Session session) {
+    public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, String pic, int tor, Session session) {
         Queue<byte[]> dataQueue = new LinkedBlockingQueue<>();
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         int qua = 0;
         switch (pic) {
             case "low":
-                qua = 20;
+                qua = 5;
                 break;
             case "middle":
-                qua = 50;
+                qua = 10;
                 break;
             case "high":
-                qua = 80;
+                qua = 50;
                 break;
         }
-        int s = AndroidDeviceBridgeTool.getScreen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId));
+        int s;
+        if (tor == -1) {
+            s = AndroidDeviceBridgeTool.getScreen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId));
+        } else {
+            s = tor;
+        }
         int c = 0;
         switch (s) {
             case 0:
@@ -61,7 +67,16 @@ public class MiniCapTool {
         int finalQua = qua;
         int finalC = c;
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC));
+        {
+            try {
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC);
+            } catch (SonicException e) {
+                JSONObject support = new JSONObject();
+                support.put("msg", "support");
+                support.put("text", e.getMessage());
+                sendText(session, support.toJSONString());
+            }
+        });
         try {
             Thread.sleep(4000);
         } catch (InterruptedException e) {

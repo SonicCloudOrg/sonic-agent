@@ -14,6 +14,7 @@ import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.tools.DownImageTool;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.interfaces.PlatformType;
+import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MobileBy;
 import io.appium.java_client.MultiTouchAction;
@@ -128,11 +129,9 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability(MobileCapabilityType.BROWSER_NAME, "");
         //指定设备序列号
         desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
-        //过滤logcat，注意！请将MyCrashTag替换为自己安卓崩溃时的tag，需要跟开发配合约定，有多个的话可以add()多几个
-        List<String> logcatFilter = new ArrayList<>();
-        logcatFilter.add("MyCrashTag:W");
-        logcatFilter.add("*:S");
-        desiredCapabilities.setCapability("logcatFilterSpecs", logcatFilter);
+        //随机systemPort
+        desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT, PortTool.getPort());
+        desiredCapabilities.setCapability("skipLogcatCapture", true);
         try {
             androidDriver = new AndroidDriver(AppiumServer.service.getUrl(), desiredCapabilities);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
@@ -442,7 +441,7 @@ public class AndroidStepHandler {
         }
     }
 
-    public void install(HandleDes handleDes, String path, String packName) {
+    public void install(HandleDes handleDes, String path) {
         handleDes.setStepDes("安装应用");
         handleDes.setDetail("App安装路径： " + path);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
@@ -466,7 +465,9 @@ public class AndroidStepHandler {
         //单独适配一下oppo
         if (manufacturer.equals("OPPO")) {
             try {
-                androidDriver.installApp(path, new AndroidInstallApplicationOptions().withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+                androidDriver.installApp(path, new AndroidInstallApplicationOptions()
+                        .withAllowTestPackagesEnabled().withReplaceEnabled()
+                        .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
             } catch (Exception e) {
             }
             //单独再适配colorOs
@@ -536,16 +537,13 @@ public class AndroidStepHandler {
             }
         } else {
             try {
-                androidDriver.installApp(path, new AndroidInstallApplicationOptions().withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+                androidDriver.installApp(path, new AndroidInstallApplicationOptions()
+                        .withAllowTestPackagesEnabled().withReplaceEnabled()
+                        .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
             } catch (Exception e) {
                 handleDes.setE(e);
                 return;
             }
-        }
-        try {
-            androidDriver.activateApp(packName);
-        } catch (Exception e) {
-            handleDes.setE(e);
         }
     }
 
@@ -1511,7 +1509,7 @@ public class AndroidStepHandler {
                 terminate(handleDes, step.getString("text"));
                 break;
             case "install":
-                install(handleDes, step.getString("text"), step.getString("content"));
+                install(handleDes, step.getString("text"));
                 break;
             case "uninstall":
                 uninstall(handleDes, step.getString("text"));

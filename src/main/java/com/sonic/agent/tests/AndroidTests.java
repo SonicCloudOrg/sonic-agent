@@ -166,7 +166,7 @@ public class AndroidTests {
                     }
                 } else {
                     MiniCapTool miniCapTool = new MiniCapTool();
-                    miniCapPro = miniCapTool.start(udId, banner, imgList, "high", null);
+                    miniCapPro = miniCapTool.start(udId, banner, imgList, "high", -1, null);
                 }
                 //两分钟录一次
                 try {
