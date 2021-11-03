@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: apex-agent
+    name: sonic-agent
   rabbitmq:
     host: localhost
     port: 5672

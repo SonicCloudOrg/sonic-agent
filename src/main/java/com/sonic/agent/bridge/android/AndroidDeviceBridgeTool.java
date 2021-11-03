@@ -1,6 +1,7 @@
 package com.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
+import com.sonic.agent.exception.SonicException;
 import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author ZhouYiXun
@@ -371,7 +373,7 @@ public class AndroidDeviceBridgeTool {
      * @des 开启miniCap服务
      * @date 2021/8/16 20:04
      */
-    public static void startMiniCapServer(IDevice iDevice, int quality, int screen) {
+    public static void startMiniCapServer(IDevice iDevice, int quality, int screen) throws SonicException {
         //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
         executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
         //获取cpu信息
@@ -397,6 +399,7 @@ public class AndroidDeviceBridgeTool {
         //给文件权限
         executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniCapFileName);
         String size = getScreenSize(iDevice);
+        AtomicBoolean isSupport = new AtomicBoolean(true);
         try {
             //开始启动
             iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q " + quality + " -P %s@%s/%d", miniCapFileName, size, size, screen), new IShellOutputReceiver() {
@@ -404,6 +407,11 @@ public class AndroidDeviceBridgeTool {
                 public void addOutput(byte[] bytes, int i, int i1) {
                     String res = new String(bytes, i, i1);
                     logger.info(res);
+                    if (res.contains("Vector<> have different types")) {
+                        isSupport.set(false);
+                        logger.info(iDevice.getSerialNumber() + "设备不兼容投屏！");
+                        return;
+                    }
                 }
 
                 @Override
@@ -419,6 +427,9 @@ public class AndroidDeviceBridgeTool {
             logger.info("{} 设备miniCap启动异常！"
                     , iDevice.getSerialNumber());
             logger.error(e.getMessage());
+        }
+        if (!isSupport.get()) {
+            throw new SonicException("该设备不兼容投屏！");
         }
     }
 

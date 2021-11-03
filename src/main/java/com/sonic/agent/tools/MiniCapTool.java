@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import com.sonic.agent.exception.SonicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +67,16 @@ public class MiniCapTool {
         int finalQua = qua;
         int finalC = c;
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC));
+        {
+            try {
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC);
+            } catch (SonicException e) {
+                JSONObject support = new JSONObject();
+                support.put("msg", "support");
+                support.put("text", e.getMessage());
+                sendText(session, support.toJSONString());
+            }
+        });
         try {
             Thread.sleep(4000);
         } catch (InterruptedException e) {
