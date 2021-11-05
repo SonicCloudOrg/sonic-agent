@@ -120,7 +120,7 @@ public class MiniCapTool {
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
             int readBannerBytes = 0;
-            int bannerLength = 24;
+            int bannerLength = 2;
             int readFrameBytes = 0;
             int frameBodyLength = 0;
             byte[] frameBody = new byte[0];
