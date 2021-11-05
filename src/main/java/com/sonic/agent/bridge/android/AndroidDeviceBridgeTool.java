@@ -1,17 +1,20 @@
 package com.sonic.agent.bridge.android;
 
-import com.android.ddmlib.*;
-import com.sonic.agent.exception.SonicException;
+import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.AndroidDebugBridge;
+import com.android.ddmlib.CollectingOutputReceiver;
+import com.android.ddmlib.IDevice;
+import com.android.ddmlib.IShellOutputReceiver;
 import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
+import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author ZhouYiXun
@@ -373,7 +376,7 @@ public class AndroidDeviceBridgeTool {
      * @des 开启miniCap服务
      * @date 2021/8/16 20:04
      */
-    public static void startMiniCapServer(IDevice iDevice, int quality, int screen) throws SonicException {
+    public static void startMiniCapServer(IDevice iDevice, int quality, int screen, Session session) {
         //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
         executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
         //获取cpu信息
@@ -399,7 +402,6 @@ public class AndroidDeviceBridgeTool {
         //给文件权限
         executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniCapFileName);
         String size = getScreenSize(iDevice);
-        AtomicBoolean isSupport = new AtomicBoolean(true);
         try {
             //开始启动
             iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q " + quality + " -P %s@%s/%d", miniCapFileName, size, size, screen), new IShellOutputReceiver() {
@@ -408,9 +410,13 @@ public class AndroidDeviceBridgeTool {
                     String res = new String(bytes, i, i1);
                     logger.info(res);
                     if (res.contains("Vector<> have different types")) {
-                        isSupport.set(false);
                         logger.info(iDevice.getSerialNumber() + "设备不兼容投屏！");
-                        return;
+                        if (session != null) {
+                            JSONObject support = new JSONObject();
+                            support.put("msg", "support");
+                            support.put("text", "该设备不兼容MiniCap投屏！");
+                            sendText(session, support.toJSONString());
+                        }
                     }
                 }
 
@@ -428,8 +434,15 @@ public class AndroidDeviceBridgeTool {
                     , iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
-        if (!isSupport.get()) {
-            throw new SonicException("该设备不兼容投屏！");
+    }
+
+    private static void sendText(Session session, String message) {
+        synchronized (session) {
+            try {
+                session.getBasicRemote().sendText(message);
+            } catch (IllegalStateException | IOException e) {
+                logger.error("socket发送失败!连接已关闭！");
+            }
         }
     }
 

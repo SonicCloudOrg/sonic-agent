@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import com.sonic.agent.exception.SonicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,16 +66,7 @@ public class MiniCapTool {
         int finalQua = qua;
         int finalC = c;
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
-        {
-            try {
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC);
-            } catch (SonicException e) {
-                JSONObject support = new JSONObject();
-                support.put("msg", "support");
-                support.put("text", e.getMessage());
-                sendText(session, support.toJSONString());
-            }
-        });
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC, session));
         try {
             Thread.sleep(4000);
         } catch (InterruptedException e) {
@@ -91,21 +81,15 @@ public class MiniCapTool {
             try {
                 capSocket = new Socket("localhost", finalMiniCapPort);
                 inputStream = capSocket.getInputStream();
-                int len = 4096;
                 while (!finalMiniCapPro.isDone()) {
-                    byte[] buffer = new byte[len];
-                    int realLen = 0;
-                    try {
-                        realLen = inputStream.read(buffer);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    byte[] buffer;
+                    int len = 0;
+                    while (len == 0) {
+                        len = inputStream.available();
                     }
-                    if (buffer.length != realLen && realLen >= 0) {
-                        buffer = subByteArray(buffer, 0, realLen);
-                    }
-                    if (realLen >= 0) {
-                        dataQueue.offer(buffer);
-                    }
+                    buffer = new byte[len];
+                    inputStream.read(buffer);
+                    dataQueue.add(buffer);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -208,6 +192,8 @@ public class MiniCapTool {
                                 size.put("msg", "size");
                                 size.put("width", banner.get()[9]);
                                 size.put("height", banner.get()[13]);
+                                size.put("vWidth", banner.get()[17]);
+                                size.put("vHeight", banner.get()[21]);
                                 sendText(session, size.toJSONString());
                             }
                         }
