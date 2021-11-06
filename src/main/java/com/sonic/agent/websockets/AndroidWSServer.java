@@ -3,7 +3,10 @@ package com.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.SyncException;
+import com.android.ddmlib.TimeoutException;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.HandleDes;
 import com.sonic.agent.automation.RemoteDebugDriver;
@@ -114,7 +117,19 @@ public class AndroidWSServer {
 
         if (devicePlatformVersion < 9) {
             int finalMiniTouchPort = PortTool.getPort();
-            Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> AndroidDeviceBridgeTool.miniTouchStart(iDevice));
+            Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+                try {
+                    AndroidDeviceBridgeTool.miniTouchStart(iDevice);
+                } catch (AdbCommandRejectedException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (SyncException e) {
+                    e.printStackTrace();
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
+                }
+            });
             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                 try {
                     Thread.sleep(3000);
@@ -338,7 +353,7 @@ public class AndroidWSServer {
                         int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
                         int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
                         int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-                        AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 300");
+                        AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 200");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

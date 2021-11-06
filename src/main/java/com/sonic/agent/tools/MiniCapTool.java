@@ -1,7 +1,10 @@
 package com.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.SyncException;
+import com.android.ddmlib.TimeoutException;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.slf4j.Logger;
@@ -33,13 +36,13 @@ public class MiniCapTool {
         int qua = 0;
         switch (pic) {
             case "low":
-                qua = 5;
-                break;
-            case "middle":
                 qua = 10;
                 break;
-            case "high":
+            case "middle":
                 qua = 50;
+                break;
+            case "high":
+                qua = 80;
                 break;
         }
         int s;
@@ -66,7 +69,19 @@ public class MiniCapTool {
         int finalQua = qua;
         int finalC = c;
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC, session));
+        {
+            try {
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC, session);
+            } catch (AdbCommandRejectedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SyncException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                e.printStackTrace();
+            }
+        });
         try {
             Thread.sleep(4000);
         } catch (InterruptedException e) {
@@ -192,8 +207,6 @@ public class MiniCapTool {
                                 size.put("msg", "size");
                                 size.put("width", banner.get()[9]);
                                 size.put("height", banner.get()[13]);
-                                size.put("vWidth", banner.get()[17]);
-                                size.put("vHeight", banner.get()[21]);
                                 sendText(session, size.toJSONString());
                             }
                         }

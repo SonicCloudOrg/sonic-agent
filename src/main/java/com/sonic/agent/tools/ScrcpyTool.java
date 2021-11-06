@@ -7,8 +7,8 @@ import java.net.Socket;
 
 public class ScrcpyTool {
     public static void main(String[] args) throws IOException {
-        Socket capSocket = null;
-        OutputStream outputStream = null;
+        Socket capSocket;
+        OutputStream outputStream;
         capSocket = new Socket("localhost", 8666);
         outputStream = capSocket.getOutputStream();
         while (capSocket.isConnected()) {
