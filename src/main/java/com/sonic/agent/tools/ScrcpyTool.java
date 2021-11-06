@@ -2,23 +2,17 @@ package com.sonic.agent.tools;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 
 public class ScrcpyTool {
     public static void main(String[] args) throws IOException {
         Socket capSocket = null;
-        InputStream inputStream = null;
+        OutputStream outputStream = null;
         capSocket = new Socket("localhost", 8666);
-        inputStream = capSocket.getInputStream();
+        outputStream = capSocket.getOutputStream();
         while (capSocket.isConnected()) {
-            byte[] buffer;
-            int len = 0;
-            while (len == 0) {
-                len = inputStream.available();
-            }
-            buffer = new byte[len];
-            inputStream.read(buffer);
-            System.out.println(buffer);
+            outputStream.write(0);
         }
         System.out.println(1);
     }
