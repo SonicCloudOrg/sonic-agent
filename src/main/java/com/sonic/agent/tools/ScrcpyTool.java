@@ -9,10 +9,13 @@ public class ScrcpyTool {
     public static void main(String[] args) throws IOException {
         Socket capSocket;
         OutputStream outputStream;
+        InputStream inputStream;
         capSocket = new Socket("localhost", 8666);
         outputStream = capSocket.getOutputStream();
+        inputStream = capSocket.getInputStream();
+        outputStream.write(0);
         while (capSocket.isConnected()) {
-            outputStream.write(0);
+            System.out.println(inputStream.read());
         }
         System.out.println(1);
     }
