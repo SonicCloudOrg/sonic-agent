@@ -484,15 +484,15 @@ public class AndroidDeviceBridgeTool {
      * @des 获取app版本信息
      * @date 2021/8/16 15:29
      */
-    public static String getAppOnlyVersion(String udId, String packageName) {
-        IDevice iDevice = getIDeviceByUdId(udId);
-        //实质是获取安卓开发在gradle定义的versionName来定义版本号
-        String version = executeCommand(iDevice, String.format("pm dump %s | grep 'versionName'", packageName));
-        version = version.substring(version.indexOf("=") + 1, version.length() - 1);
-        if (version.length() > 50) {
-            version = version.substring(0, version.indexOf(" ") + 1);
-        }
-        //因为不同设备获取的信息不一样，所以需要去掉\r、\n
-        return version.replace("\r", "").replace("\n", "");
-    }
+//    public static String getAppOnlyVersion(String udId, String packageName) {
+//        IDevice iDevice = getIDeviceByUdId(udId);
+//        //实质是获取安卓开发在gradle定义的versionName来定义版本号
+//        String version = executeCommand(iDevice, String.format("pm dump %s | grep 'versionName'", packageName));
+//        version = version.substring(version.indexOf("=") + 1, version.length() - 1);
+//        if (version.length() > 50) {
+//            version = version.substring(0, version.indexOf(" ") + 1);
+//        }
+//        //因为不同设备获取的信息不一样，所以需要去掉\r、\n
+//        return version.replace("\r", "").replace("\n", "");
+//    }
 }

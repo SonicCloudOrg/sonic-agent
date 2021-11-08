@@ -62,7 +62,7 @@ public class AndroidStepHandler {
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
     //包版本
-    private String version = "";
+//    private String version = "";
     //测试起始时间
     private long startTime;
     //测试的包名
@@ -1378,10 +1378,10 @@ public class AndroidStepHandler {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (version.length() == 0) {
-            version = AndroidDeviceBridgeTool.getAppOnlyVersion(udId, packageName);
-        }
-        log.sendStepLog(StepType.INFO, "", packageName + "包版本：" + version +
+//        if (version.length() == 0) {
+//            version = AndroidDeviceBridgeTool.getAppOnlyVersion(udId, packageName);
+//        }
+        log.sendStepLog(StepType.INFO, "", "测试目标包：" + packageName +
                 (isOpenPackageListener ? "<br>应用包名监听器已开启..." : "") +
                 (isOpenH5Listener ? "<br>H5页面监听器已开启..." : "") +
                 (isOpenActivityListener ? "<br>黑名单Activity监听器..." : "") +
