@@ -200,8 +200,12 @@ public class AndroidWSServer {
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
                 IDevice iDevice = udIdMap.get(session);
-                List<String> webViewList = Arrays.asList(AndroidDeviceBridgeTool
-                        .executeCommand(iDevice, "cat /proc/net/unix | grep webview").split("\n"));
+                List<String> wList = Arrays.asList("webview", "WebView");
+                List<String> webViewList = new ArrayList<>();
+                for (String w : wList) {
+                    webViewList.addAll(Arrays.asList(AndroidDeviceBridgeTool
+                            .executeCommand(iDevice, "cat /proc/net/unix | grep " + w).split("\n")));
+                }
                 Set<String> webSet = new HashSet<>();
                 for (String w : webViewList) {
                     if (w.contains("@") && w.indexOf("@") + 1 < w.length()) {
