@@ -1,10 +1,12 @@
 package com.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.SyncException;
+import com.android.ddmlib.TimeoutException;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import com.sonic.agent.exception.SonicException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,13 +36,13 @@ public class MiniCapTool {
         int qua = 0;
         switch (pic) {
             case "low":
-                qua = 5;
-                break;
-            case "middle":
                 qua = 10;
                 break;
+            case "middle":
+                qua = 30;
+                break;
             case "high":
-                qua = 50;
+                qua = 60;
                 break;
         }
         int s;
@@ -69,12 +71,15 @@ public class MiniCapTool {
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
         {
             try {
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC);
-            } catch (SonicException e) {
-                JSONObject support = new JSONObject();
-                support.put("msg", "support");
-                support.put("text", e.getMessage());
-                sendText(session, support.toJSONString());
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC, session);
+            } catch (AdbCommandRejectedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SyncException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                e.printStackTrace();
             }
         });
         try {
@@ -91,21 +96,15 @@ public class MiniCapTool {
             try {
                 capSocket = new Socket("localhost", finalMiniCapPort);
                 inputStream = capSocket.getInputStream();
-                int len = 4096;
                 while (!finalMiniCapPro.isDone()) {
-                    byte[] buffer = new byte[len];
-                    int realLen = 0;
-                    try {
-                        realLen = inputStream.read(buffer);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    byte[] buffer;
+                    int len = 0;
+                    while (len == 0) {
+                        len = inputStream.available();
                     }
-                    if (buffer.length != realLen && realLen >= 0) {
-                        buffer = subByteArray(buffer, 0, realLen);
-                    }
-                    if (realLen >= 0) {
-                        dataQueue.offer(buffer);
-                    }
+                    buffer = new byte[len];
+                    inputStream.read(buffer);
+                    dataQueue.add(buffer);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -136,7 +135,7 @@ public class MiniCapTool {
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
             int readBannerBytes = 0;
-            int bannerLength = 24;
+            int bannerLength = 2;
             int readFrameBytes = 0;
             int frameBodyLength = 0;
             byte[] frameBody = new byte[0];

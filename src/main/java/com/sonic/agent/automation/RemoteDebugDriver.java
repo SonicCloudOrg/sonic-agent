@@ -2,11 +2,14 @@ package com.sonic.agent.automation;
 
 import com.google.common.collect.ImmutableMap;
 import com.sonic.agent.tools.PortTool;
+import com.sonic.agent.websockets.WebViewWSServer;
 import org.mitre.dsmiley.httpproxy.ProxyServlet;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +27,7 @@ import java.util.Map;
  */
 @Configuration
 public class RemoteDebugDriver {
+    private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
     private static String chromePath;
     public static int port = 0;
     public static WebDriver webDriver;
@@ -54,19 +58,26 @@ public class RemoteDebugDriver {
     @Bean
     @DependsOn(value = "setChromePath")
     public static void startChromeDriver() {
-        DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-        ChromeOptions chromeOptions = new ChromeOptions();
-        System.setProperty("webdriver.chrome.driver", chromePath);
-        if (port == 0) {
-            int debugPort = PortTool.getPort();
-            port = debugPort;
-            chromeOptions.addArguments("--remote-debugging-port=" + debugPort);
-        } else {
-            chromeOptions.addArguments("--remote-debugging-port=" + port);
+        try {
+            DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
+            ChromeOptions chromeOptions = new ChromeOptions();
+            System.setProperty("webdriver.chrome.driver", chromePath);
+            if (port == 0) {
+                int debugPort = PortTool.getPort();
+                port = debugPort;
+                chromeOptions.addArguments("--remote-debugging-port=" + debugPort);
+            } else {
+                chromeOptions.addArguments("--remote-debugging-port=" + port);
+            }
+            chromeOptions.addArguments("--headless");
+            chromeOptions.addArguments("--no-sandbox");
+            chromeOptions.addArguments("--disable-gpu");
+            chromeOptions.addArguments("--disable-dev-shm-usage");
+            desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
+            webDriver = new ChromeDriver(desiredCapabilities);
+        } catch (Exception e) {
+            logger.info("chromeDriver启动失败！");
         }
-        chromeOptions.addArguments("--headless");
-        desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-        webDriver = new ChromeDriver(desiredCapabilities);
     }
 
     public static void close() {

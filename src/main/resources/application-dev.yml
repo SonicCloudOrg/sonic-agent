@@ -7,8 +7,8 @@ spring:
   rabbitmq:
     host: localhost
     port: 5672
-    username: guest
-    password: guest
+    username: sonic
+    password: sonic
     virtual-host: sonic
     listener:
       simple:
@@ -26,9 +26,9 @@ logging:
 
 sonic:
   chrome:
-    path: C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe
+    path: C:\Program Files\Google\Chrome\Application\chromedriver.exe
   folder:
     url: http://localhost:8094/api/folder
   agent:
     host: 127.0.0.1
-    key: 1
+    key: 29002272-4659-4808-a804-08ce3388b136

@@ -16,9 +16,7 @@ import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.UploadTools;
-import io.appium.java_client.MobileBy;
-import io.appium.java_client.MultiTouchAction;
-import io.appium.java_client.TouchAction;
+import io.appium.java_client.*;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
 import io.appium.java_client.android.appmanagement.AndroidInstallApplicationOptions;
@@ -48,6 +46,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.testng.Assert.*;
@@ -62,7 +61,7 @@ public class AndroidStepHandler {
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
     //包版本
-    private String version = "";
+//    private String version = "";
     //测试起始时间
     private long startTime;
     //测试的包名
@@ -134,6 +133,7 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability("skipLogcatCapture", true);
         try {
             androidDriver = new AndroidDriver(AppiumServer.service.getUrl(), desiredCapabilities);
+            androidDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
@@ -1378,10 +1378,10 @@ public class AndroidStepHandler {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        if (version.length() == 0) {
-            version = AndroidDeviceBridgeTool.getAppOnlyVersion(udId, packageName);
-        }
-        log.sendStepLog(StepType.INFO, "", packageName + "包版本：" + version +
+//        if (version.length() == 0) {
+//            version = AndroidDeviceBridgeTool.getAppOnlyVersion(udId, packageName);
+//        }
+        log.sendStepLog(StepType.INFO, "", "测试目标包：" + packageName +
                 (isOpenPackageListener ? "<br>应用包名监听器已开启..." : "") +
                 (isOpenH5Listener ? "<br>H5页面监听器已开启..." : "") +
                 (isOpenActivityListener ? "<br>黑名单Activity监听器..." : "") +
@@ -1406,32 +1406,31 @@ public class AndroidStepHandler {
     }
 
     public WebElement findEle(String selector, String pathValue) {
-        WebDriverWait wait = new WebDriverWait(androidDriver, 10);//显式等待
         WebElement we = null;
         switch (selector) {
             case "id":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.id(pathValue)));
+                we = androidDriver.findElementById(pathValue);
                 break;
             case "name":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.name(pathValue)));
+                we = androidDriver.findElementByName(pathValue);
                 break;
             case "xpath":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.xpath(pathValue)));
+                we = androidDriver.findElementByXPath(pathValue);
                 break;
             case "cssSelector":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.cssSelector(pathValue)));
+                we = androidDriver.findElementByCssSelector(pathValue);
                 break;
             case "className":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.className(pathValue)));
+                we = androidDriver.findElementByClassName(pathValue);
                 break;
             case "tagName":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.tagName(pathValue)));
+                we = androidDriver.findElementByTagName(pathValue);
                 break;
             case "linkText":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.linkText(pathValue)));
+                we = androidDriver.findElementByLinkText(pathValue);
                 break;
             case "partialLinkText":
-                we = wait.until(ExpectedConditions.presenceOfElementLocated(MobileBy.partialLinkText(pathValue)));
+                we = androidDriver.findElementByPartialLinkText(pathValue);
                 break;
             default:
                 log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
