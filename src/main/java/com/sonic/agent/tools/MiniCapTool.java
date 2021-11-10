@@ -39,10 +39,10 @@ public class MiniCapTool {
                 qua = 10;
                 break;
             case "middle":
-                qua = 50;
+                qua = 30;
                 break;
             case "high":
-                qua = 80;
+                qua = 60;
                 break;
         }
         int s;

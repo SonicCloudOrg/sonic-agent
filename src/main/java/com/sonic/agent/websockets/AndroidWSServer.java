@@ -232,11 +232,15 @@ public class AndroidWSServer {
                         has.add(j);
                         JSONObject r = new JSONObject();
                         r.put("port", port);
-                        ResponseEntity<LinkedHashMap> infoEntity =
-                                restTemplate.exchange("http://localhost:" + port + "/json/version", HttpMethod.GET, new HttpEntity(headers), LinkedHashMap.class);
-                        if (infoEntity.getStatusCode() == HttpStatus.OK) {
-                            r.put("version", infoEntity.getBody().get("Browser"));
-                            r.put("package", infoEntity.getBody().get("Android-Package"));
+                        try {
+                            ResponseEntity<LinkedHashMap> infoEntity =
+                                    restTemplate.exchange("http://localhost:" + port + "/json/version", HttpMethod.GET, new HttpEntity(headers), LinkedHashMap.class);
+                            if (infoEntity.getStatusCode() == HttpStatus.OK) {
+                                r.put("version", infoEntity.getBody().get("Browser"));
+                                r.put("package", infoEntity.getBody().get("Android-Package"));
+                            }
+                        } catch (Exception e) {
+                            continue;
                         }
                         ResponseEntity<JSONArray> responseEntity =
                                 restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
