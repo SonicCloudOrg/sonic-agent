@@ -17,7 +17,6 @@ public class ScrcpyTool {
         while (capSocket.isConnected()) {
             System.out.println(inputStream.read());
         }
-        System.out.println(1);
     }
 
     public void startScrcpyServer() {

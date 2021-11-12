@@ -31,6 +31,9 @@ logging:
       max-history: 3
 
 sonic:
+  modules:
+    android: true
+    ios: true
   chrome:
     # Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
     path: C:\Program Files\Google\Chrome\Application\chromedriver.exe

@@ -25,6 +25,9 @@ logging:
       max-history: 3
 
 sonic:
+  modules:
+    android: true
+    ios: true
   chrome:
     path: C:\Program Files\Google\Chrome\Application\chromedriver.exe
   folder:
