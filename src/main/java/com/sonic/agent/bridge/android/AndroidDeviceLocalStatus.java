@@ -25,7 +25,11 @@ public class AndroidDeviceLocalStatus {
         JSONObject deviceDetail = new JSONObject();
         deviceDetail.put("msg", "deviceDetail");
         deviceDetail.put("udId", udId);
-        deviceDetail.put("status", status);
+        if (AndroidDeviceManagerMap.getMap().get(udId) == null) {
+            deviceDetail.put("status", status);
+        } else {
+            deviceDetail.put("status", AndroidDeviceManagerMap.getMap().get(udId));
+        }
         RabbitMQThread.send(deviceDetail);
     }
 
