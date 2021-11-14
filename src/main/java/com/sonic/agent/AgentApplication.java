@@ -2,6 +2,8 @@ package com.sonic.agent;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.context.annotation.Bean;
 
 /**
  * @author ZhouYiXun
@@ -12,5 +14,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class AgentApplication {
     public static void main(String[] args) {
         SpringApplication.run(AgentApplication.class, args);
+    }
+
+    @Bean
+    public TomcatServletWebServerFactory servletContainer(){
+        return new TomcatServletWebServerFactory(8081) ;
     }
 }

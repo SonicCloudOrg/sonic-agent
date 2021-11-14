@@ -1,27 +1,39 @@
-server:
-  #Agent服务的端口，可以自行更改
-  port: 7777
+sonic:
+  agent:
+    # 替换为部署Agent机器的ipv4
+    host: localhost
+    # 替换为Agent服务的端口，可以自行更改
+    port: 7777
+    # 替换为前端新增Agent生成的key
+    key: 29002272-4659-4808-a804-08ce3388b136
+  server:
+    # 如果跨网段，这个host改成后端的port
+    host: localhost
+    # 如果跨网段，这个port改成后端文件中心的port（一般不变）
+    folder-port: 8094
+    # 如果跨网段，这个port改成后端传输中心的port（一般不变）
+    transport-port: 8095
 
+modules:
+  # 安卓模块配置
+  android:
+    enable: true
+  # iOS模块配置
+  ios:
+    enable: true
+  # 在线webView调试模块配置
+  webview:
+    enable: true
+    # Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
+    chrome-driver-path: C:\Program Files\Google\Chrome\Application\chromedriver.exe
+
+# Agent日志管理，一般不需要更改，可根据自己需要配置
 logging:
   file:
-    name: logs/${spring.application.name}.log
+    #日志路径
+    name: logs/sonic-agent.log
   logback:
     rollingpolicy:
       clean-history-on-start: true
+      #保留天数
       max-history: 3
-
-sonic:
-  modules:
-    android: true
-    ios: true
-  chrome:
-    # Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
-    path: C:\Program Files\Google\Chrome\Application\chromedriver.exe
-  folder:
-    # 如果跨网段，这个host和port改成后端的host和port
-    url: http://localhost:8094/api/folder
-  agent:
-    # 替换为部署Agent机器的ipv4
-    host: 127.0.0.1
-    # 替换为前端新增Agent生成的key
-    key: 29002272-4659-4808-a804-08ce3388b136
