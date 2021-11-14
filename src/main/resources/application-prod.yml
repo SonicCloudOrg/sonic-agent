@@ -2,26 +2,6 @@ server:
   #Agent服务的端口，可以自行更改
   port: 7777
 
-spring:
-  application:
-    name: apex-agent
-  rabbitmq:
-    #rabbitMQ的host地址（如果用体验版的mq，这个host改为部署体验版机器的ip）
-    host: localhost
-    #如果用体验版的mq，这里是5673
-    port: 5673
-    #MQ的用户名
-    username: guest
-    #MQ的密码
-    password: guest
-    #MQ的vHost
-    virtual-host: /
-    listener:
-      simple:
-        acknowledge-mode: manual
-    publisher-confirm-type: correlated
-    publisher-returns: true
-
 logging:
   file:
     name: logs/${spring.application.name}.log
