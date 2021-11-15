@@ -39,7 +39,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         JSONObject jsonMsg = JSON.parseObject((String) msg);
         logger.info("Agent:{} 收到服务器 {} 返回验证消息: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonMsg);
-        if (jsonMsg.getString("msg") != null && jsonMsg.getString("msg").equals("auth")) {
+        if (jsonMsg.getString("msg") != null && jsonMsg.getString("msg").equals("auth") && jsonMsg.getString("result").equals("pass")) {
             logger.info("服务器认证通过！");
             logger.info("当前sonic-agent版本为：" + version);
             AgentTool.agentId = jsonMsg.getInteger("id");
@@ -47,6 +47,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
             channel = ctx.channel();
             JSONObject agentInfo = new JSONObject();
             agentInfo.put("msg", "agentInfo");
+            agentInfo.put("agentId", jsonMsg.getInteger("id"));
             agentInfo.put("port", port);
             agentInfo.put("version", version);
             agentInfo.put("systemType", System.getProperty("os.name"));

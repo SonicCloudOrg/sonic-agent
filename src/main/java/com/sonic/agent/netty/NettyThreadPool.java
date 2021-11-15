@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Configuration
 public class NettyThreadPool {
     private final Logger logger = LoggerFactory.getLogger(NettyThreadPool.class);
-    private static LinkedBlockingQueue<String> dataQueue;
+    private static LinkedBlockingQueue<JSONObject> dataQueue;
     public static ExecutorService cachedThreadPool;
     public static boolean isPassSecurity = false;
     private static Future<?> read = null;
@@ -27,8 +27,7 @@ public class NettyThreadPool {
     }
 
     public static void send(JSONObject jsonObject) {
-        jsonObject.put("agentId", AgentTool.agentId);
-        dataQueue.offer(jsonObject.toJSONString());
+        dataQueue.offer(jsonObject);
     }
 
     public static void readQueue() {
@@ -48,7 +47,9 @@ public class NettyThreadPool {
                 try {
                     if (NettyClientHandler.channel != null) {
                         if (!dataQueue.isEmpty()) {
-                            NettyClientHandler.channel.writeAndFlush(dataQueue.poll());
+                            JSONObject m = dataQueue.poll();
+                            m.put("agentId", AgentTool.agentId);
+                            NettyClientHandler.channel.writeAndFlush(m);
                         }
                     } else {
                         Thread.sleep(10000);
