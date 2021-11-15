@@ -28,8 +28,10 @@ import java.util.UUID;
 @Component
 public class UploadTools {
     private final static Logger logger = LoggerFactory.getLogger(UploadTools.class);
-    @Value("${sonic.folder.url}")
-    private String url;
+    @Value("${sonic.server.host}")
+    private String host;
+    @Value("${sonic.server.folder-port}")
+    private String port;
     private static String baseUrl;
 
     private static RestTemplate restTemplate;
@@ -37,7 +39,7 @@ public class UploadTools {
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate) {
         UploadTools.restTemplate = restTemplate;
-        baseUrl = url;
+        baseUrl = "http://" + host + ":" + port + "/api/folder";
     }
 
     public static String upload(File uploadFile, String type) {

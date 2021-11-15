@@ -5,6 +5,7 @@ import com.android.ddmlib.*;
 import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,8 @@ import java.util.concurrent.TimeUnit;
  * @des ADB工具类
  * @date 2021/08/16 19:26
  */
-@DependsOn({"androidThreadPoolInit", "rabbitMsgInit"})
+@ConditionalOnProperty(value = "modules.android.enable", havingValue = "true")
+@DependsOn({"androidThreadPoolInit", "nettyMsgInit"})
 @Component
 public class AndroidDeviceBridgeTool {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
@@ -26,6 +28,7 @@ public class AndroidDeviceBridgeTool {
     private static AndroidDeviceStatusListener androidDeviceStatusListener = new AndroidDeviceStatusListener();
 
     public AndroidDeviceBridgeTool() {
+        logger.info("开启安卓相关功能");
         init();
     }
 

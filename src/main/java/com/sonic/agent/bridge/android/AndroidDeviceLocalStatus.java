@@ -3,8 +3,7 @@ package com.sonic.agent.bridge.android;
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.maps.AndroidDeviceManagerMap;
-import com.sonic.agent.rabbitmq.RabbitMQThread;
-import com.sonic.agent.tools.AgentTool;
+import com.sonic.agent.netty.NettyThreadPool;
 
 /**
  * @author ZhouYiXun
@@ -30,7 +29,7 @@ public class AndroidDeviceLocalStatus {
         } else {
             deviceDetail.put("status", AndroidDeviceManagerMap.getMap().get(udId));
         }
-        RabbitMQThread.send(deviceDetail);
+        NettyThreadPool.send(deviceDetail);
     }
 
     /**

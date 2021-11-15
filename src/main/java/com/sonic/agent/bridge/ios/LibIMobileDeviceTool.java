@@ -2,7 +2,7 @@ package com.sonic.agent.bridge.ios;
 
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.maps.IOSDeviceManagerMap;
-import com.sonic.agent.rabbitmq.RabbitMQThread;
+import com.sonic.agent.netty.NettyThreadPool;
 import com.sonic.agent.tools.ProcessCommandTool;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -17,7 +17,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.List;
 
-@DependsOn({"iOSThreadPoolInit", "rabbitMsgInit"})
+@DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
 @Component
 public class LibIMobileDeviceTool {
     private static final Logger logger = LoggerFactory.getLogger(LibIMobileDeviceTool.class);
@@ -67,7 +67,7 @@ public class LibIMobileDeviceTool {
         deviceStatus.put("serialNum", udId);
         deviceStatus.put("status", "DISCONNECTED");
         logger.info("iOS设备：" + udId + " 下线！");
-        RabbitMQThread.send(deviceStatus);
+        NettyThreadPool.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(udId);
 //        wdaKill(udid);
 //        relayKill(udid);
@@ -87,7 +87,7 @@ public class LibIMobileDeviceTool {
         deviceStatus.put("cpu", getCpuByUdId(udId));
         deviceStatus.put("manufacturer", "APPLE");
         logger.info("iOS设备：" + udId + " 上线！");
-        RabbitMQThread.send(deviceStatus);
+        NettyThreadPool.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(udId);
     }
 

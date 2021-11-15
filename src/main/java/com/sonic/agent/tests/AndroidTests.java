@@ -2,7 +2,6 @@ package com.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import com.rabbitmq.client.Channel;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
@@ -13,8 +12,6 @@ import com.sonic.agent.tools.MiniCapTool;
 import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -31,12 +28,10 @@ import java.util.concurrent.atomic.AtomicReference;
 @Component
 public class AndroidTests {
     private final Logger logger = LoggerFactory.getLogger(AndroidTests.class);
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
     @Value("${sonic.agent.key}")
     private String key;
 
-    public void run(Channel channel, long tag, JSONObject jsonObject) throws IOException {
+    public void run(JSONObject jsonObject) throws IOException {
         AndroidStepHandler androidStepHandler = new AndroidStepHandler();
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
         int rid = jsonObject.getInteger("rid");
@@ -45,7 +40,6 @@ public class AndroidTests {
         JSONObject gp = jsonObject.getJSONObject("gp");
         androidStepHandler.setGlobalParams(gp);
         androidStepHandler.setTestMode(cid, rid, udId, DeviceStatus.TESTING, "");
-        channel.basicAck(tag, true);
         int wait = jsonObject.getInteger("wait");
         if (!AndroidDeviceLocalStatus.startTest(udId)) {
             androidStepHandler.waitDevice(wait + 1);
@@ -56,7 +50,7 @@ public class AndroidTests {
             } else {
                 //延时队列
                 jsonObject.put("wait", wait);
-                rabbitTemplate.convertAndSend("TaskDirectExchange", key, jsonObject);
+//                rabbitTemplate.convertAndSend("TaskDirectExchange", key, jsonObject);
                 logger.info("进入延时队列:" + jsonObject);
             }
             return;
