@@ -33,18 +33,6 @@ public class MiniCapTool {
     public Future<?> start(String udId, AtomicReference<String[]> banner, AtomicReference<List<byte[]>> imgList, String pic, int tor, Session session) {
         Queue<byte[]> dataQueue = new LinkedBlockingQueue<>();
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        int qua = 0;
-        switch (pic) {
-            case "low":
-                qua = 10;
-                break;
-            case "middle":
-                qua = 30;
-                break;
-            case "high":
-                qua = 60;
-                break;
-        }
         int s;
         if (tor == -1) {
             s = AndroidDeviceBridgeTool.getScreen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId));
@@ -66,12 +54,12 @@ public class MiniCapTool {
                 c = 270;
                 break;
         }
-        int finalQua = qua;
+//        int finalQua = qua;
         int finalC = c;
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
         {
             try {
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, finalQua, finalC, session);
+                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, pic, finalC, session);
             } catch (AdbCommandRejectedException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -231,6 +219,7 @@ public class MiniCapTool {
                                             count++;
                                             break;
                                         case "middle":
+                                        case "fixed":
                                             count += 2;
                                             break;
                                         case "high":

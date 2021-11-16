@@ -30,11 +30,6 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("udId", device.getSerialNumber());
         deviceDetail.put("name", device.getProperty("ro.product.name"));
         deviceDetail.put("model", device.getProperty(IDevice.PROP_DEVICE_MODEL));
-        if (AndroidDeviceManagerMap.getMap().get(device.getSerialNumber()) == null) {
-            deviceDetail.put("status", device.getState());
-        } else {
-            deviceDetail.put("status", AndroidDeviceManagerMap.getMap().get(device.getSerialNumber()));
-        }
         deviceDetail.put("status", device.getState());
         deviceDetail.put("platform", PlatformType.ANDROID);
         deviceDetail.put("version", device.getProperty(IDevice.PROP_BUILD_VERSION));

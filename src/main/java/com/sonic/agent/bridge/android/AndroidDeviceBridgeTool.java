@@ -372,7 +372,7 @@ public class AndroidDeviceBridgeTool {
      * @des 开启miniCap服务
      * @date 2021/8/16 20:04
      */
-    public static void startMiniCapServer(IDevice iDevice, int quality, int screen, Session session) throws AdbCommandRejectedException, IOException, SyncException, TimeoutException {
+    public static void startMiniCapServer(IDevice iDevice, String quality, int screen, Session session) throws AdbCommandRejectedException, IOException, SyncException, TimeoutException {
         //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
         executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
         //获取cpu信息
@@ -389,11 +389,18 @@ public class AndroidDeviceBridgeTool {
         //给文件权限
         executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniCapFileName);
         String size = getScreenSize(iDevice);
-        String vSize = Integer.parseInt(size.substring(0, size.indexOf("x"))) / 2 + "x" + Integer.parseInt(size.substring(size.indexOf("x") + 1)) / 2;
+        String vSize;
+        int q = 80;
+        if (quality.equals("fixed")) {
+            vSize = size;
+            q = 40;
+        } else {
+            vSize = "800x800";
+        }
         try {
             //开始启动
-            iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q " + quality + " -P %s@%s/%d",
-                    miniCapFileName, size, vSize, screen), new IShellOutputReceiver() {
+            iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q %d -S -P %s@%s/%d",
+                    miniCapFileName, q, size, vSize, screen), new IShellOutputReceiver() {
                 @Override
                 public void addOutput(byte[] bytes, int i, int i1) {
                     String res = new String(bytes, i, i1);

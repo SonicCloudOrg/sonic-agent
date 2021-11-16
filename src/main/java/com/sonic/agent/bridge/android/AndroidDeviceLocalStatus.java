@@ -24,11 +24,7 @@ public class AndroidDeviceLocalStatus {
         JSONObject deviceDetail = new JSONObject();
         deviceDetail.put("msg", "deviceDetail");
         deviceDetail.put("udId", udId);
-        if (AndroidDeviceManagerMap.getMap().get(udId) == null) {
-            deviceDetail.put("status", status);
-        } else {
-            deviceDetail.put("status", AndroidDeviceManagerMap.getMap().get(udId));
-        }
+        deviceDetail.put("status", status);
         NettyThreadPool.send(deviceDetail);
     }
 

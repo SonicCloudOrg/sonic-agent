@@ -443,12 +443,12 @@ public class AndroidWSServer {
     }
 
     private void exit(Session session) {
+        AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
             HandlerMap.getAndroidMap().remove(session.getId());
         }
         List<JSONObject> has = webViewForwardMap.get(udIdMap.get(session));
