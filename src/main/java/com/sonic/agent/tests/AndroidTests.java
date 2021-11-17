@@ -125,29 +125,6 @@ public class AndroidTests {
                     }
                     continue;
                 }
-//                File logDec = new File("test-output/log");
-//                if (!logDec.exists()) {
-//                    logDec.mkdirs();
-//                }
-                //写入logcat
-//                File logcatFile = new File(logDec + File.separator + Calendar.getInstance().getTimeInMillis() + "_" + udId + ".log");
-//                FileOutputStream logFileOut = null;
-//                try {
-//                    logFileOut = new FileOutputStream(logcatFile);
-//                } catch (FileNotFoundException e) {
-//                    logger.error(e.getMessage());
-//                }
-//                FileOutputStream finalLogFileOut = logFileOut;
-                //添加监听
-//                androidStepHandler.getAndroidDriver().addLogcatMessagesListener((msg) -> {
-//                    try {
-//                        finalLogFileOut.write((msg + "\n").getBytes(StandardCharsets.UTF_8));
-//                    } catch (IOException e) {
-//                        logger.error(e.getMessage());
-//                    }
-//                });
-                //开始广播
-//                androidStepHandler.getAndroidDriver().startLogcatBroadcast("localhost", AppiumServer.service.getUrl().getPort());
                 Future<?> miniCapPro = null;
                 AtomicReference<List<byte[]>> imgList = new AtomicReference<>(new ArrayList<>());
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
@@ -162,30 +139,15 @@ public class AndroidTests {
                     MiniCapTool miniCapTool = new MiniCapTool();
                     miniCapPro = miniCapTool.start(udId, banner, imgList, "high", -1, null);
                 }
-                //两分钟录一次
-                try {
-                    Thread.sleep(120000);
-                } catch (InterruptedException e) {
-                    logger.error(e.getMessage());
+                int w = 0;
+                while (w < 10 && (!runStep.isDone())) {
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        logger.error(e.getMessage());
+                    }
+                    w++;
                 }
-                //移除监听
-//                androidStepHandler.getAndroidDriver().removeAllLogcatListeners();
-                //移除logcat广播
-//                androidStepHandler.getAndroidDriver().stopLogcatBroadcast();
-                //关闭流
-//                if (logFileOut != null) {
-//                    try {
-//                        logFileOut.close();
-//                    } catch (IOException e) {
-//                        logger.error(e.getMessage());
-//                    }
-//                }
-                //处理logcat日志
-//                if (isFail.get()) {
-//                    androidStepHandler.log.sendSelfLog(logcatFile.getName(), UploadTools.upload(logcatFile, "logFiles"));
-//                } else {
-//                    logcatFile.delete();
-//                }
                 //处理录像
                 if (isSupportRecord) {
                     if (androidStepHandler.getStatus() == 3) {
