@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.maps.WebSocketSessionMap;
-import com.sonic.agent.rabbitmq.RabbitMQThread;
+import com.sonic.agent.netty.NettyThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public class LogTool {
      */
     private void sendToServer(JSONObject message) {
         message.put("time", new Date());
-        RabbitMQThread.send(message);
+        NettyThreadPool.send(message);
     }
 
     /**

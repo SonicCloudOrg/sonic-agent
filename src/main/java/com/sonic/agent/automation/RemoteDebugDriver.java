@@ -11,6 +11,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,13 +26,14 @@ import java.util.Map;
  * @des
  * @date 2021/10/29 0:28
  */
+@ConditionalOnProperty(value = "modules.webview.enable", havingValue = "true")
 @Configuration
 public class RemoteDebugDriver {
     private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
     private static String chromePath;
     public static int port = 0;
     public static WebDriver webDriver;
-    @Value("${sonic.chrome.path}")
+    @Value("${modules.webview.chrome-driver-path}")
     private String path;
 
     @Bean
@@ -58,6 +60,7 @@ public class RemoteDebugDriver {
     @Bean
     @DependsOn(value = "setChromePath")
     public static void startChromeDriver() {
+        logger.info("开启webview相关功能");
         try {
             DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
             ChromeOptions chromeOptions = new ChromeOptions();
