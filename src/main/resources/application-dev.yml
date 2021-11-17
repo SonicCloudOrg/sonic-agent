@@ -1,10 +1,10 @@
 sonic:
   agent:
-    host: 192.168.88.81
+    host: localhost
     port: 7777
     key: 29002272-4659-4808-a804-08ce3388b136
   server:
-    host: 192.168.88.81
+    host: localhost
     folder-port: 8094
     transport-port: 8095
 
