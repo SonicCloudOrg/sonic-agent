@@ -135,11 +135,6 @@ public class AndroidWSServer {
                     outputStream = touchSocket.getOutputStream();
                     outputMap.put(session, outputStream);
                     while (outputMap.get(session) != null && (!miniTouchPro.isDone())) {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -318,13 +313,15 @@ public class AndroidWSServer {
             }
             case "touch":
                 OutputStream outputStream = outputMap.get(session);
-                try {
-                    outputStream.write(msg.getString("detail").getBytes());
-                    outputStream.flush();
-                    outputStream.write("c\n".getBytes());
-                    outputStream.flush();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (outputStream != null) {
+                    try {
+                        outputStream.write(msg.getString("detail").getBytes());
+                        outputStream.flush();
+                        outputStream.write("c\n".getBytes());
+                        outputStream.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
                 break;
             case "keyEvent":
