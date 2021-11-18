@@ -79,7 +79,6 @@ public class RemoteDebugDriver {
             desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
             webDriver = new ChromeDriver(desiredCapabilities);
         } catch (Exception e) {
-            e.printStackTrace();
             logger.info("chromeDriver启动失败！");
         }
     }
