@@ -2,7 +2,7 @@ sonic:
   agent:
     host: localhost
     port: 7777
-    key: 7bbc50da-1c7b-43e7-9d5d-4e8a86fa896a
+    key: 29002272-4659-4808-a804-08ce3388b136
   server:
     host: localhost
     folder-port: 8094
@@ -15,7 +15,7 @@ modules:
     enable: true
   webview:
     enable: true
-    chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
+    chrome-driver-path: C:\Program Files\Google\Chrome\Application\chromedriver.exe
 
 logging:
   file:
