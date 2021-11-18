@@ -174,6 +174,12 @@ public class AndroidDeviceBridgeTool {
         return output.getOutput();
     }
 
+//    public static String executeCommandExp(IDevice iDevice, String command) throws ShellCommandUnresponsiveException, AdbCommandRejectedException, IOException, TimeoutException {
+//        CollectingOutputReceiver output = new CollectingOutputReceiver();
+//        iDevice.executeShellCommand(command, output, 0, TimeUnit.MILLISECONDS);
+//        return output.getOutput();
+//    }
+
     /**
      * @param iDevice
      * @param port
@@ -219,19 +225,19 @@ public class AndroidDeviceBridgeTool {
      * @des 推送文件
      * @date 2021/8/16 19:59
      */
-//    public static void pushLocalFile(IDevice iDevice, String localPath, String remotePath) {
-//        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-//            //使用iDevice的pushFile方法好像有bug，暂时用命令行去推送
-//            ProcessBuilder pb = new ProcessBuilder(new String[]{getADBPathFromSystemEnv(), "-s", iDevice.getSerialNumber(), "push", localPath, remotePath});
-//            pb.redirectErrorStream(true);
-//            try {
-//                pb.start();
-//            } catch (IOException e) {
-//                logger.error(e.getMessage());
-//                return;
-//            }
-//        });
-//    }
+    public static void pushLocalFile(IDevice iDevice, String localPath, String remotePath) {
+        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+            //使用iDevice的pushFile方法好像有bug，暂时用命令行去推送
+            ProcessBuilder pb = new ProcessBuilder(new String[]{getADBPathFromSystemEnv(), "-s", iDevice.getSerialNumber(), "push", localPath, remotePath});
+            pb.redirectErrorStream(true);
+            try {
+                pb.start();
+            } catch (IOException e) {
+                logger.error(e.getMessage());
+                return;
+            }
+        });
+    }
 
     /**
      * @param iDevice
@@ -334,16 +340,14 @@ public class AndroidDeviceBridgeTool {
     public static void pushYadb(IDevice iDevice) {
         executeCommand(iDevice, "rm -rf /data/local/tmp/yadb");
         File yadbLocalFile = new File("plugins" + File.separator + "yadb");
-        try {
-            iDevice.pushFile(yadbLocalFile.getAbsolutePath(), "/data/local/tmp/yadb");
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AdbCommandRejectedException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        } catch (SyncException e) {
-            e.printStackTrace();
+        pushLocalFile(iDevice, yadbLocalFile.getPath(), "/data/local/tmp/yadb");
+        boolean yadbFileExist = false;
+        //轮训目录，直到推送文件结束
+        while (!yadbFileExist) {
+            String yadbDeviceFile = executeCommand(iDevice, " ls /data/local/tmp");
+            if (yadbDeviceFile != null && yadbDeviceFile.contains("yadb")) {
+                yadbFileExist = true;
+            }
         }
         executeCommand(iDevice, "chmod 777 /data/local/tmp/yadb");
     }
@@ -351,15 +355,17 @@ public class AndroidDeviceBridgeTool {
     public static void pushToCamera(IDevice iDevice, String url) {
         try {
             File image = DownImageTool.download(url);
-            iDevice.pushFile(image.getAbsolutePath(), "/sdcard/DCIM/Camera/" + image.getName());
+            pushLocalFile(iDevice, image.getPath(), "/sdcard/DCIM/Camera/" + image.getName());
+            boolean fileExist = false;
+            //轮训目录，直到推送文件结束
+            while (!fileExist) {
+                String files = executeCommand(iDevice, " ls /sdcard/DCIM/Camera");
+                if (files != null && files.contains(image.getName())) {
+                    fileExist = true;
+                }
+            }
             executeCommand(iDevice, "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/" + image.getName());
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AdbCommandRejectedException e) {
-            e.printStackTrace();
-        } catch (SyncException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
             e.printStackTrace();
         }
     }
@@ -384,8 +390,16 @@ public class AndroidDeviceBridgeTool {
         File miniCapFile = new File("mini" + File.separator + cpuAbi + File.separator + miniCapFileName);
         File miniCapSoFile = new File("mini/minicap-shared/aosp/libs/android-" + androidSdkVersion
                 + File.separator + cpuAbi + File.separator + "minicap.so");
-        iDevice.pushFile(miniCapFile.getAbsolutePath(), "/data/local/tmp/" + miniCapFileName);
-        iDevice.pushFile(miniCapSoFile.getAbsolutePath(), "/data/local/tmp/minicap.so");
+        pushLocalFile(iDevice, miniCapFile.getPath(), "/data/local/tmp/" + miniCapFileName);
+        pushLocalFile(iDevice, miniCapSoFile.getPath(), "/data/local/tmp/minicap.so");
+        boolean miniCapFileExist = false;
+        //轮训目录，直到推送文件结束
+        while (!miniCapFileExist) {
+            String miniCapBin = executeCommand(iDevice, " ls /data/local/tmp");
+            if (miniCapBin != null && miniCapBin.contains(miniCapFileName) && miniCapBin.contains("minicap.so")) {
+                miniCapFileExist = true;
+            }
+        }
         //给文件权限
         executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniCapFileName);
         String size = getScreenSize(iDevice);
@@ -458,7 +472,15 @@ public class AndroidDeviceBridgeTool {
         String androidSdkVersion = getProperties(iDevice, "ro.build.version.sdk");
         String miniTouchFileName = matchMiniTouchFile(androidSdkVersion);
         File miniTouchFile = new File("mini" + File.separator + cpuAbi + File.separator + miniTouchFileName);
-        iDevice.pushFile(miniTouchFile.getAbsolutePath(), "/data/local/tmp/" + miniTouchFileName);
+        pushLocalFile(iDevice, miniTouchFile.getAbsolutePath(), "/data/local/tmp/" + miniTouchFileName);
+        boolean miniTouchFileExist = false;
+        //轮训目录，直到推送文件结束
+        while (!miniTouchFileExist) {
+            String miniTouchBin = executeCommand(iDevice, " ls /data/local/tmp");
+            if (miniTouchBin != null && miniTouchBin.contains(miniTouchFileName)) {
+                miniTouchFileExist = true;
+            }
+        }
         //给文件权限
         executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniTouchFileName);
         try {

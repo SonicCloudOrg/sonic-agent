@@ -106,7 +106,7 @@ public class AndroidWSServer {
         Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", -1, session);
         miniCapMap.put(session, miniCapThread);
 
-        if (devicePlatformVersion < 9) {
+        if (devicePlatformVersion < 10) {
             int finalMiniTouchPort = PortTool.getPort();
             Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
                 try {
