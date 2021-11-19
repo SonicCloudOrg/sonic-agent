@@ -106,21 +106,21 @@ public class AndroidWSServer {
         Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", -1, session);
         miniCapMap.put(session, miniCapThread);
 
-//        if (devicePlatformVersion < 10) {
+        if (devicePlatformVersion < 10) {
             int finalMiniTouchPort = PortTool.getPort();
             Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-//                try {
-//                    AndroidDeviceBridgeTool.miniTouchStart(iDevice);
-//                } catch (AdbCommandRejectedException e) {
-//                    e.printStackTrace();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                } catch (SyncException e) {
-//                    e.printStackTrace();
-//                } catch (TimeoutException e) {
-//                    e.printStackTrace();
-//                }
-                while (true){}
+                try {
+                    AndroidDeviceBridgeTool.miniTouchStart(iDevice);
+                } catch (AdbCommandRejectedException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (SyncException e) {
+                    e.printStackTrace();
+                } catch (TimeoutException e) {
+                    e.printStackTrace();
+                }
+//                while (true){}
             });
             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                 try {
@@ -128,7 +128,7 @@ public class AndroidWSServer {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "minitouchagent");
+                AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "minitouch");
                 Socket touchSocket = null;
                 OutputStream outputStream = null;
                 try {
@@ -162,9 +162,9 @@ public class AndroidWSServer {
                         }
                     }
                 }
-                AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "minitouchagent");
+                AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "minitouch");
             });
-//        }
+        }
     }
 
     @OnClose
