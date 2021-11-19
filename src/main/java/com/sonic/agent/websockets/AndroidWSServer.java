@@ -135,8 +135,9 @@ public class AndroidWSServer {
                     outputStream = touchSocket.getOutputStream();
                     outputMap.put(session, outputStream);
                     while (outputMap.get(session) != null && (!miniTouchPro.isDone())) {
+                        Thread.sleep(1000);
                     }
-                } catch (IOException e) {
+                } catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 } finally {
                     if (!miniTouchPro.isDone()) {
@@ -430,13 +431,7 @@ public class AndroidWSServer {
     }
 
     private void sendText(Session session, String message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IllegalStateException | IOException e) {
-                logger.error("socket发送失败!连接已关闭！");
-            }
-        }
+        session.getAsyncRemote().sendText(message);
     }
 
     private void exit(Session session) {

@@ -209,12 +209,6 @@ public class TerminalWSServer {
     }
 
     private void sendText(Session session, String message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IllegalStateException | IOException e) {
-                logger.error("socket发送失败!连接已关闭！");
-            }
-        }
+        session.getAsyncRemote().sendText(message);
     }
 }

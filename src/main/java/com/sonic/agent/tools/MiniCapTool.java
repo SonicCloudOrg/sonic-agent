@@ -54,7 +54,6 @@ public class MiniCapTool {
                 c = 270;
                 break;
         }
-//        int finalQua = qua;
         int finalC = c;
         Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
         {
@@ -84,15 +83,17 @@ public class MiniCapTool {
             try {
                 capSocket = new Socket("localhost", finalMiniCapPort);
                 inputStream = capSocket.getInputStream();
+                int len = 1024;
                 while (!finalMiniCapPro.isDone()) {
-                    byte[] buffer;
-                    int len = 0;
-                    while (len == 0) {
-                        len = inputStream.available();
+                    byte[] buffer = new byte[len];
+                    int realLen;
+                    realLen = inputStream.read(buffer);
+                    if (buffer.length != realLen && realLen >= 0) {
+                        buffer = subByteArray(buffer, 0, realLen);
                     }
-                    buffer = new byte[len];
-                    inputStream.read(buffer);
-                    dataQueue.add(buffer);
+                    if (realLen >= 0) {
+                        dataQueue.offer(buffer);
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -269,33 +270,17 @@ public class MiniCapTool {
     }
 
     private byte[] subByteArray(byte[] byte1, int start, int end) {
-        byte[] byte2 = new byte[0];
-        try {
-            byte2 = new byte[end - start];
-        } catch (NegativeArraySizeException e) {
-            e.printStackTrace();
-        }
+        byte[] byte2;
+        byte2 = new byte[end - start];
         System.arraycopy(byte1, start, byte2, 0, end - start);
         return byte2;
     }
 
     private void sendByte(Session session, byte[] message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendBinary(ByteBuffer.wrap(message));
-            } catch (IllegalStateException | IOException e) {
-                logger.error("socket发送失败!连接已关闭！");
-            }
-        }
+        session.getAsyncRemote().sendBinary(ByteBuffer.wrap(message));
     }
 
     private void sendText(Session session, String message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IllegalStateException | IOException e) {
-                logger.error("socket发送失败!连接已关闭！");
-            }
-        }
+        session.getAsyncRemote().sendText(message);
     }
 }
