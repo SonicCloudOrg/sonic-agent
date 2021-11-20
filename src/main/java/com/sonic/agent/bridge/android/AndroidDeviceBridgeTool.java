@@ -405,6 +405,9 @@ public class AndroidDeviceBridgeTool {
                 public void addOutput(byte[] bytes, int i, int i1) {
                     String res = new String(bytes, i, i1);
                     logger.info(res);
+                    if(res.contains("Server start")){
+
+                    }
                     if (res.contains("Vector<> have different types")) {
                         logger.info(iDevice.getSerialNumber() + "设备不兼容投屏！");
                         if (session != null) {
@@ -468,6 +471,9 @@ public class AndroidDeviceBridgeTool {
                 public void addOutput(byte[] bytes, int i, int i1) {
                     String res = new String(bytes, i, i1);
                     logger.info(res);
+                    if(res.contains("detected on /dev/input/event3")){
+
+                    }
                 }
 
                 @Override
