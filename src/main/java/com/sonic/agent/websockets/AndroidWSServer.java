@@ -120,7 +120,9 @@ public class AndroidWSServer {
                 } catch (TimeoutException e) {
                     e.printStackTrace();
                 }
-                while (true){}
+                while (true){
+                    Thread.sleep(3000);
+                }
             });
             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                 try {
@@ -128,7 +130,7 @@ public class AndroidWSServer {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "minitouchagent");
+                AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "minitouchsonic");
                 Socket touchSocket = null;
                 OutputStream outputStream = null;
                 try {
@@ -162,7 +164,7 @@ public class AndroidWSServer {
                         }
                     }
                 }
-                AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "minitouchagent");
+                AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "minitouchsonic");
             });
 //        }
     }
