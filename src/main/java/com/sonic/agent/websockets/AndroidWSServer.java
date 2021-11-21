@@ -75,6 +75,8 @@ public class AndroidWSServer {
         }
         udIdMap.put(session, iDevice);
 
+        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session)));
+
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
             AndroidStepHandler androidStepHandler = new AndroidStepHandler();
             androidStepHandler.setTestMode(0, 0, udId, DeviceStatus.DEBUGGING, session.getId());
@@ -107,65 +109,65 @@ public class AndroidWSServer {
         miniCapMap.put(session, miniCapThread);
 
 //        if (devicePlatformVersion < 10) {
-            int finalMiniTouchPort = PortTool.getPort();
-            Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-                try {
-                    AndroidDeviceBridgeTool.miniTouchStart(iDevice);
-                } catch (AdbCommandRejectedException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (SyncException e) {
-                    e.printStackTrace();
-                } catch (TimeoutException e) {
-                    e.printStackTrace();
+        int finalMiniTouchPort = PortTool.getPort();
+        Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+            try {
+                AndroidDeviceBridgeTool.miniTouchStart(iDevice);
+            } catch (AdbCommandRejectedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SyncException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                e.printStackTrace();
+            }
+            while (true) {
+                Thread.sleep(3000);
+            }
+        });
+        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "minitouchsonic");
+            Socket touchSocket = null;
+            OutputStream outputStream = null;
+            try {
+                touchSocket = new Socket("localhost", finalMiniTouchPort);
+                outputStream = touchSocket.getOutputStream();
+                outputMap.put(session, outputStream);
+                while (outputMap.get(session) != null && (!miniTouchPro.isDone())) {
+                    Thread.sleep(1000);
                 }
-                while (true){
-                    Thread.sleep(3000);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                if (!miniTouchPro.isDone()) {
+                    miniTouchPro.cancel(true);
+                    logger.info("miniTouch thread已关闭");
                 }
-            });
-            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "minitouchsonic");
-                Socket touchSocket = null;
-                OutputStream outputStream = null;
-                try {
-                    touchSocket = new Socket("localhost", finalMiniTouchPort);
-                    outputStream = touchSocket.getOutputStream();
-                    outputMap.put(session, outputStream);
-                    while (outputMap.get(session) != null && (!miniTouchPro.isDone())) {
-                        Thread.sleep(1000);
-                    }
-                } catch (IOException | InterruptedException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (!miniTouchPro.isDone()) {
-                        miniTouchPro.cancel(true);
-                        logger.info("miniTouch thread已关闭");
-                    }
-                    if (touchSocket != null && touchSocket.isConnected()) {
-                        try {
-                            touchSocket.close();
-                            logger.info("miniTouch socket已关闭");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (outputStream != null) {
-                        try {
-                            outputStream.close();
-                            logger.info("miniTouch output流已关闭");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                if (touchSocket != null && touchSocket.isConnected()) {
+                    try {
+                        touchSocket.close();
+                        logger.info("miniTouch socket已关闭");
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
-                AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "minitouchsonic");
-            });
+                if (outputStream != null) {
+                    try {
+                        outputStream.close();
+                        logger.info("miniTouch output流已关闭");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "minitouchsonic");
+        });
 //        }
     }
 
@@ -263,7 +265,6 @@ public class AndroidWSServer {
                 AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
                 break;
             case "text":
-                AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session));
                 ProcessCommandTool.getProcessLocalCommand("adb -s " + udIdMap.get(session).getSerialNumber()
                         + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
                 break;
