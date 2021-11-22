@@ -60,20 +60,34 @@ public class AndroidWSServer {
             logger.info("拦截访问！");
             return;
         }
-        int devicePlatformVersion;
+//        int devicePlatformVersion;
         WebSocketSessionMap.getMap().put(session.getId(), session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        String platformVersion = iDevice.getProperty(IDevice.PROP_BUILD_VERSION);
-        if (platformVersion.indexOf(".") == -1) {
-            devicePlatformVersion = Integer.parseInt(platformVersion.replace(" ", ""));
-        } else {
-            devicePlatformVersion = Integer.parseInt(platformVersion.substring(0, platformVersion.indexOf(".")));
-        }
+//        String platformVersion = iDevice.getProperty(IDevice.PROP_BUILD_VERSION);
+//        if (platformVersion.indexOf(".") == -1) {
+//            devicePlatformVersion = Integer.parseInt(platformVersion.replace(" ", ""));
+//        } else {
+//            devicePlatformVersion = Integer.parseInt(platformVersion.substring(0, platformVersion.indexOf(".")));
+//        }
         if (iDevice == null) {
             logger.info("设备未连接，请检查！");
             return;
         }
         udIdMap.put(session, iDevice);
+
+        Future<?> touchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+            try {
+                AndroidDeviceBridgeTool.sonicPluginStart(iDevice);
+            } catch (AdbCommandRejectedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (SyncException e) {
+                e.printStackTrace();
+            } catch (TimeoutException e) {
+                e.printStackTrace();
+            }
+        });
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session)));
 
@@ -110,43 +124,43 @@ public class AndroidWSServer {
 
 //        if (devicePlatformVersion < 10) {
         int finalMiniTouchPort = PortTool.getPort();
-        Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            try {
-                AndroidDeviceBridgeTool.miniTouchStart(iDevice);
-            } catch (AdbCommandRejectedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (SyncException e) {
-                e.printStackTrace();
-            } catch (TimeoutException e) {
-                e.printStackTrace();
-            }
-            while (true) {
-                Thread.sleep(3000);
-            }
-        });
+//        Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+//            try {
+//                AndroidDeviceBridgeTool.miniTouchStart(iDevice);
+//            } catch (AdbCommandRejectedException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (SyncException e) {
+//                e.printStackTrace();
+//            } catch (TimeoutException e) {
+//                e.printStackTrace();
+//            }
+//            while (true) {
+//                Thread.sleep(3000);
+//            }
+//        });
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
             try {
                 Thread.sleep(3000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "minitouchsonic");
+            AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "sonictouchservice");
             Socket touchSocket = null;
             OutputStream outputStream = null;
             try {
                 touchSocket = new Socket("localhost", finalMiniTouchPort);
                 outputStream = touchSocket.getOutputStream();
                 outputMap.put(session, outputStream);
-                while (outputMap.get(session) != null && (!miniTouchPro.isDone())) {
+                while (outputMap.get(session) != null && (!touchPro.isDone())) {
                     Thread.sleep(1000);
                 }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                if (!miniTouchPro.isDone()) {
-                    miniTouchPro.cancel(true);
+                if (!touchPro.isDone()) {
+                    touchPro.cancel(true);
                     logger.info("miniTouch thread已关闭");
                 }
                 if (touchSocket != null && touchSocket.isConnected()) {
@@ -166,7 +180,7 @@ public class AndroidWSServer {
                     }
                 }
             }
-            AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "minitouchsonic");
+            AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "sonictouchservice");
         });
 //        }
     }

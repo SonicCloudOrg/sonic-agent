@@ -452,26 +452,33 @@ public class AndroidDeviceBridgeTool {
      * @des 开启miniTouch服务
      * @date 2021/8/16 20:26
      */
-    public static void miniTouchStart(IDevice iDevice) throws AdbCommandRejectedException, IOException, SyncException, TimeoutException {
-        //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
-        executeCommand(iDevice, "rm -rf /data/local/tmp/minitouch*");
-        //获取cpu信息
-        String cpuAbi = getProperties(iDevice, "ro.product.cpu.abi");
-        //获取安卓sdk版本
-        String androidSdkVersion = getProperties(iDevice, "ro.build.version.sdk");
-        String miniTouchFileName = matchMiniTouchFile(androidSdkVersion);
-        File miniTouchFile = new File("mini" + File.separator + cpuAbi + File.separator + miniTouchFileName);
-        iDevice.pushFile(miniTouchFile.getAbsolutePath(), "/data/local/tmp/" + miniTouchFileName);
-        //给文件权限
-        executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniTouchFileName);
+    public static void sonicPluginStart(IDevice iDevice) throws AdbCommandRejectedException, IOException, SyncException, TimeoutException {
+        String path = executeCommand(iDevice,"pm path com.sonic.plugins.assist").trim()
+                .replaceAll("package:","")
+                .replaceAll("\n", "")
+                .replaceAll("\t", "");
+        if(path.length()>0){
+            logger.info("已安装Sonic插件");
+        }else{
+            try {
+                iDevice.installPackage("plugins/sonic-plugin.apk",true,"-t");
+            } catch (InstallException e) {
+                e.printStackTrace();
+            }
+            path = executeCommand(iDevice,"pm path com.sonic.plugins.assist").trim()
+                    .replaceAll("package:","")
+                    .replaceAll("\n", "")
+                    .replaceAll("\t", "");
+        }
         try {
             //开始启动
-            iDevice.executeShellCommand(String.format("/data/local/tmp/%s", miniTouchFileName), new IShellOutputReceiver() {
+            iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin com.sonic.plugins.assist.SonicTouchService", path)
+                    , new IShellOutputReceiver() {
                 @Override
                 public void addOutput(byte[] bytes, int i, int i1) {
                     String res = new String(bytes, i, i1);
                     logger.info(res);
-                    if(res.contains("detected on /dev/input/event3")){
+                    if(res.contains("Server start")){
 
                     }
                 }
@@ -486,7 +493,7 @@ public class AndroidDeviceBridgeTool {
                 }
             }, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.info("{} 设备miniTouch启动异常！"
+            logger.info("{} 设备touch服务启动异常！"
                     , iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
