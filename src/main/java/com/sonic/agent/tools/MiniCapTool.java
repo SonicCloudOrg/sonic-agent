@@ -1,16 +1,14 @@
 package com.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.AdbCommandRejectedException;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.SyncException;
-import com.android.ddmlib.TimeoutException;
+import com.android.ddmlib.*;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
@@ -20,6 +18,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -55,24 +55,84 @@ public class MiniCapTool {
                 break;
         }
         int finalC = c;
-        Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->
-        {
+        AtomicBoolean isFinish = new AtomicBoolean(false);
+        Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->{
+            //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
+            //获取cpu信息
+            String cpuAbi = AndroidDeviceBridgeTool.getProperties(iDevice, "ro.product.cpu.abi");
+            //获取安卓sdk版本
+            String androidSdkVersion = AndroidDeviceBridgeTool.getProperties(iDevice, "ro.build.version.sdk");
+            //查找对应文件并推送
+            String miniCapFileName = AndroidDeviceBridgeTool.matchMiniCapFile(androidSdkVersion);
+            File miniCapFile = new File("mini" + File.separator + cpuAbi + File.separator + miniCapFileName);
+            File miniCapSoFile = new File("mini/minicap-shared/aosp/libs/android-" + androidSdkVersion
+                    + File.separator + cpuAbi + File.separator + "minicap.so");
             try {
-                AndroidDeviceBridgeTool.startMiniCapServer(iDevice, pic, finalC, session);
-            } catch (AdbCommandRejectedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (SyncException e) {
-                e.printStackTrace();
-            } catch (TimeoutException e) {
+                iDevice.pushFile(miniCapFile.getAbsolutePath(), "/data/local/tmp/" + miniCapFileName);
+                iDevice.pushFile(miniCapSoFile.getAbsolutePath(), "/data/local/tmp/minicap.so");
+            }catch (Exception e){
                 e.printStackTrace();
             }
+            //给文件权限
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "chmod 777 /data/local/tmp/" + miniCapFileName);
+            String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
+            String vSize;
+            int q = 80;
+            if (pic.equals("fixed")) {
+                vSize = size;
+                q = 40;
+            } else {
+                vSize = "800x800";
+            }
+            try {
+                //开始启动
+                iDevice.executeShellCommand(String.format("LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/%s -Q %d -S -P %s@%s/%d",
+                        miniCapFileName, q, size, vSize, finalC), new IShellOutputReceiver() {
+                    @Override
+                    public void addOutput(byte[] bytes, int i, int i1) {
+                        String res = new String(bytes, i, i1);
+                        logger.info(res);
+                        if(res.contains("Server start")){
+                            isFinish.set(true);
+                        }
+                        if (res.contains("Vector<> have different types")) {
+                            logger.info(iDevice.getSerialNumber() + "设备不兼容投屏！");
+                            if (session != null) {
+                                JSONObject support = new JSONObject();
+                                support.put("msg", "support");
+                                support.put("text", "该设备不兼容MiniCap投屏！");
+                                sendText(session, support.toJSONString());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void flush() {
+                    }
+
+                    @Override
+                    public boolean isCancelled() {
+                        return false;
+                    }
+                }, 0, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                logger.info("{} 设备miniCap启动异常！"
+                        , iDevice.getSerialNumber());
+                logger.error(e.getMessage());
+            }
         });
-        try {
-            Thread.sleep(4000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        int wait = 0;
+        while (!isFinish.get()){
+            wait++;
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            if(wait>8){
+                break;
+            }
         }
         int finalMiniCapPort = PortTool.getPort();
         Future<?> finalMiniCapPro = miniCapPro;

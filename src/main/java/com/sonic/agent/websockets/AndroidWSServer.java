@@ -3,10 +3,7 @@ package com.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.AdbCommandRejectedException;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.SyncException;
-import com.android.ddmlib.TimeoutException;
+import com.android.ddmlib.*;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.HandleDes;
 import com.sonic.agent.automation.RemoteDebugDriver;
@@ -39,6 +36,8 @@ import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -60,33 +59,113 @@ public class AndroidWSServer {
             logger.info("拦截访问！");
             return;
         }
-//        int devicePlatformVersion;
         WebSocketSessionMap.getMap().put(session.getId(), session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-//        String platformVersion = iDevice.getProperty(IDevice.PROP_BUILD_VERSION);
-//        if (platformVersion.indexOf(".") == -1) {
-//            devicePlatformVersion = Integer.parseInt(platformVersion.replace(" ", ""));
-//        } else {
-//            devicePlatformVersion = Integer.parseInt(platformVersion.substring(0, platformVersion.indexOf(".")));
-//        }
         if (iDevice == null) {
             logger.info("设备未连接，请检查！");
             return;
         }
         udIdMap.put(session, iDevice);
 
+        AtomicBoolean isTouchFinish = new AtomicBoolean(false);
         Future<?> touchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            try {
-                AndroidDeviceBridgeTool.sonicPluginStart(iDevice);
-            } catch (AdbCommandRejectedException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (SyncException e) {
-                e.printStackTrace();
-            } catch (TimeoutException e) {
-                e.printStackTrace();
+            String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
+                    .replaceAll("package:", "")
+                    .replaceAll("\n", "")
+                    .replaceAll("\t", "");
+            if (path.length() > 0) {
+                logger.info("已安装Sonic插件");
+            } else {
+                try {
+                    iDevice.installPackage("plugins/sonic-plugin.apk", true, "-t");
+                } catch (InstallException e) {
+                    e.printStackTrace();
+                    logger.info("Sonic插件安装失败！");
+                    return;
+                }
+                path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
+                        .replaceAll("package:", "")
+                        .replaceAll("\n", "")
+                        .replaceAll("\t", "");
             }
+            try {
+                //开始启动
+                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin com.sonic.plugins.assist.SonicTouchService", path)
+                        , new IShellOutputReceiver() {
+                            @Override
+                            public void addOutput(byte[] bytes, int i, int i1) {
+                                String res = new String(bytes, i, i1);
+                                logger.info(res);
+                                if (res.contains("Server start")) {
+                                    isTouchFinish.set(true);
+                                }
+                            }
+
+                            @Override
+                            public void flush() {
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return false;
+                            }
+                        }, 0, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                logger.info("{} 设备touch服务启动异常！"
+                        , iDevice.getSerialNumber());
+                logger.error(e.getMessage());
+            }
+        });
+
+        int finalTouchPort = PortTool.getPort();
+        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+            int wait = 0;
+            while (!isTouchFinish.get()) {
+                wait++;
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (wait > 6) {
+                    return;
+                }
+            }
+            AndroidDeviceBridgeTool.forward(iDevice, finalTouchPort, "sonictouchservice");
+            Socket touchSocket = null;
+            OutputStream outputStream = null;
+            try {
+                touchSocket = new Socket("localhost", finalTouchPort);
+                outputStream = touchSocket.getOutputStream();
+                outputMap.put(session, outputStream);
+                while (outputMap.get(session) != null && (!touchPro.isDone())) {
+                    Thread.sleep(1000);
+                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                if (!touchPro.isDone()) {
+                    touchPro.cancel(true);
+                    logger.info("touch thread已关闭");
+                }
+                if (touchSocket != null && touchSocket.isConnected()) {
+                    try {
+                        touchSocket.close();
+                        logger.info("touch socket已关闭");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (outputStream != null) {
+                    try {
+                        outputStream.close();
+                        logger.info("touch output流已关闭");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            AndroidDeviceBridgeTool.removeForward(iDevice, finalTouchPort, "sonictouchservice");
         });
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session)));
@@ -122,67 +201,6 @@ public class AndroidWSServer {
         Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", -1, session);
         miniCapMap.put(session, miniCapThread);
 
-//        if (devicePlatformVersion < 10) {
-        int finalMiniTouchPort = PortTool.getPort();
-//        Future<?> miniTouchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-//            try {
-//                AndroidDeviceBridgeTool.miniTouchStart(iDevice);
-//            } catch (AdbCommandRejectedException e) {
-//                e.printStackTrace();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            } catch (SyncException e) {
-//                e.printStackTrace();
-//            } catch (TimeoutException e) {
-//                e.printStackTrace();
-//            }
-//            while (true) {
-//                Thread.sleep(3000);
-//            }
-//        });
-        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            AndroidDeviceBridgeTool.forward(iDevice, finalMiniTouchPort, "sonictouchservice");
-            Socket touchSocket = null;
-            OutputStream outputStream = null;
-            try {
-                touchSocket = new Socket("localhost", finalMiniTouchPort);
-                outputStream = touchSocket.getOutputStream();
-                outputMap.put(session, outputStream);
-                while (outputMap.get(session) != null && (!touchPro.isDone())) {
-                    Thread.sleep(1000);
-                }
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                if (!touchPro.isDone()) {
-                    touchPro.cancel(true);
-                    logger.info("miniTouch thread已关闭");
-                }
-                if (touchSocket != null && touchSocket.isConnected()) {
-                    try {
-                        touchSocket.close();
-                        logger.info("miniTouch socket已关闭");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (outputStream != null) {
-                    try {
-                        outputStream.close();
-                        logger.info("miniTouch output流已关闭");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniTouchPort, "sonictouchservice");
-        });
-//        }
     }
 
     @OnClose
@@ -275,6 +293,9 @@ public class AndroidWSServer {
                 sendText(session, forwardView.toJSONString());
                 break;
             }
+            case "find":
+                AndroidDeviceBridgeTool.searchDevice(udIdMap.get(session));
+                break;
             case "scan":
                 AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
                 break;
