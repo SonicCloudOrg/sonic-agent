@@ -2,7 +2,6 @@ package com.sonic.agent.automation;
 
 import com.google.common.collect.ImmutableMap;
 import com.sonic.agent.tools.PortTool;
-import com.sonic.agent.websockets.WebViewWSServer;
 import org.mitre.dsmiley.httpproxy.ProxyServlet;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -17,7 +16,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.Servlet;
 import java.util.Map;
 
@@ -41,21 +39,21 @@ public class RemoteDebugDriver {
         chromePath = path;
     }
 
-    @Bean
-    public Servlet baiduProxyServlet() {
-        return new ProxyServlet();
-    }
-
-    @Bean
-    @DependsOn(value = "startChromeDriver")
-    public ServletRegistrationBean proxyServletRegistration() {
-        ServletRegistrationBean registrationBean = new ServletRegistrationBean(baiduProxyServlet(), "/agent/*");
-        Map<String, String> params = ImmutableMap.of(
-                "targetUri", "http://localhost:" + port + "/devtools",
-                "log", "false");
-        registrationBean.setInitParameters(params);
-        return registrationBean;
-    }
+//    @Bean
+//    public Servlet setProxyServlet() {
+//        return new ProxyServlet();
+//    }
+//
+//    @Bean
+//    @DependsOn(value = "startChromeDriver")
+//    public ServletRegistrationBean proxyServletRegistration() {
+//        ServletRegistrationBean registrationBean = new ServletRegistrationBean(setProxyServlet(), "/agent/*");
+//        Map<String, String> params = ImmutableMap.of(
+//                "targetUri", "http://localhost:" + port + "/devtools",
+//                "log", "false");
+//        registrationBean.setInitParameters(params);
+//        return registrationBean;
+//    }
 
     @Bean
     @DependsOn(value = "setChromePath")
