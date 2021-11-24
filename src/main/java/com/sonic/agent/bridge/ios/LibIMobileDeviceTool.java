@@ -18,9 +18,9 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.List;
 
-@ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
-@DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
-@Component
+//@ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
+//@DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
+//@Component
 public class LibIMobileDeviceTool {
     private static final Logger logger = LoggerFactory.getLogger(LibIMobileDeviceTool.class);
 
