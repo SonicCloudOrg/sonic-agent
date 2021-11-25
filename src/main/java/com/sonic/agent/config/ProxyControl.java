@@ -10,13 +10,13 @@ import java.util.Map;
 
 @Component
 public class ProxyControl {
-//    @Bean
-//    public ServletRegistrationBean proxyServletRegistration() {
-//        ServletRegistrationBean registrationBean = new ServletRegistrationBean(new URITemplateProxyServlet(), "/iosScreen/*");
-//        Map<String, String> params = ImmutableMap.of(
-//                "targetUri", "http://localhost:{_port}",
-//                "log", "false");
-//        registrationBean.setInitParameters(params);
-//        return registrationBean;
-//    }
+    @Bean
+    public ServletRegistrationBean proxyServletRegistration() {
+        ServletRegistrationBean registrationBean = new ServletRegistrationBean(new URITemplateProxyServlet(), "/iosScreen/*");
+        Map<String, String> params = ImmutableMap.of(
+                "targetUri", "http://localhost:{_port}",
+                "log", "false");
+        registrationBean.setInitParameters(params);
+        return registrationBean;
+    }
 }
