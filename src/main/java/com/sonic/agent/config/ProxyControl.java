@@ -14,7 +14,7 @@ public class ProxyControl {
     public ServletRegistrationBean proxyServletRegistration() {
         ServletRegistrationBean registrationBean = new ServletRegistrationBean(new URITemplateProxyServlet(), "/iosScreen/*");
         Map<String, String> params = ImmutableMap.of(
-                "targetUri", "http://localhost:{_port}",
+                "targetUri", "http://localhost:{s_id}",
                 "log", "false");
         registrationBean.setInitParameters(params);
         return registrationBean;
