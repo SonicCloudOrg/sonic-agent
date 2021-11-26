@@ -27,7 +27,7 @@ public class IOSStepHandler {
     //测试状态
     private int status = 1;
 
-    public void startIOSDriver(String udId, String bundleId, String name) throws InterruptedException, IOException {
+    public void startIOSDriver(String udId, String name) throws InterruptedException, IOException {
         this.udId = udId;
         int wdaPort = TIDeviceTool.startWda(udId);
         int imgPort = TIDeviceTool.relayImg(udId);

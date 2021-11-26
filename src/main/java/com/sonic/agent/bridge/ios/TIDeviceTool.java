@@ -44,9 +44,9 @@ public class TIDeviceTool {
 
     public static void init() {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-            List<String> aDevice = ProcessCommandTool.getProcessLocalCommand("tidevice list --json");
-            for (String json : aDevice) {
-//                sendOnlineStatus(udId);
+            List<String> aDevice = ProcessCommandTool.getProcessLocalCommand("tidevice list");
+            for (String udId : aDevice) {
+                sendOnlineStatus(udId.substring(0, udId.indexOf(" ")));
             }
             while (true) {
                 try {
@@ -54,16 +54,16 @@ public class TIDeviceTool {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                List<String> newList = ProcessCommandTool.getProcessLocalCommand("tidevice list --json");
+                List<String> newList = ProcessCommandTool.getProcessLocalCommand("tidevice list");
                 if (!aDevice.equals(newList)) {
                     for (String udId : newList) {
-                        if (!aDevice.contains(udId)) {
-                            sendOnlineStatus(udId);
+                        if (!aDevice.contains(udId.substring(0, udId.indexOf(" ")))) {
+                            sendOnlineStatus(udId.substring(0, udId.indexOf(" ")));
                         }
                     }
                     for (String udId : aDevice) {
-                        if (!newList.contains(udId)) {
-                            sendDisConnectStatus(udId);
+                        if (!newList.contains(udId.substring(0, udId.indexOf(" ")))) {
+                            sendDisConnectStatus(udId.substring(0, udId.indexOf(" ")));
                         }
                     }
                     aDevice = newList;
