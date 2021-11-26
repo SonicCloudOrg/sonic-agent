@@ -1,7 +1,12 @@
 package com.sonic.agent.bridge.ios;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.interfaces.PlatformType;
+import com.sonic.agent.maps.IOSDeviceManagerMap;
 import com.sonic.agent.maps.IOSProcessMap;
+import com.sonic.agent.netty.NettyThreadPool;
 import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.ProcessCommandTool;
 import org.slf4j.Logger;
@@ -39,33 +44,82 @@ public class TIDeviceTool {
 
     public static void init() {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-//            List<String> aDevice = ProcessCommandTool.getProcessLocalCommand("tidevice list --json");
-//            for (String json : aDevice) {
+            List<String> aDevice = ProcessCommandTool.getProcessLocalCommand("tidevice list --json");
+            for (String json : aDevice) {
 //                sendOnlineStatus(udId);
-//            }
-//            while (true) {
-//                try {
-//                    Thread.sleep(3000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                List<String> newList = ProcessCommandTool.getProcessLocalCommand("tidevice list --json");
-//                if (!aDevice.equals(newList)) {
-//                    for (String udId : newList) {
-//                        if (!aDevice.contains(udId)) {
-//                            sendOnlineStatus(udId);
-//                        }
-//                    }
-//                    for (String udId : aDevice) {
-//                        if (!newList.contains(udId)) {
-//                            sendDisConnectStatus(udId);
-//                        }
-//                    }
-//                    aDevice = newList;
-//                }
-//            }
+            }
+            while (true) {
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                List<String> newList = ProcessCommandTool.getProcessLocalCommand("tidevice list --json");
+                if (!aDevice.equals(newList)) {
+                    for (String udId : newList) {
+                        if (!aDevice.contains(udId)) {
+                            sendOnlineStatus(udId);
+                        }
+                    }
+                    for (String udId : aDevice) {
+                        if (!newList.contains(udId)) {
+                            sendDisConnectStatus(udId);
+                        }
+                    }
+                    aDevice = newList;
+                }
+            }
         });
         logger.info("iOS设备监听已开启");
+    }
+
+    public static void sendDisConnectStatus(String udId) {
+        JSONObject deviceStatus = new JSONObject();
+        deviceStatus.put("msg", "deviceDetail");
+        deviceStatus.put("udId", udId);
+        deviceStatus.put("status", "DISCONNECTED");
+        logger.info("iOS设备：" + udId + " 下线！");
+        NettyThreadPool.send(deviceStatus);
+        IOSDeviceManagerMap.getMap().remove(udId);
+    }
+
+    public static void sendOnlineStatus(String udId) {
+        JSONObject info = getInfo(udId);
+        JSONObject deviceStatus = new JSONObject();
+        deviceStatus.put("msg", "deviceDetail");
+        deviceStatus.put("udId", udId);
+        deviceStatus.put("name", info.getString("name"));
+        deviceStatus.put("model", info.getString("model"));
+        deviceStatus.put("status", "ONLINE");
+        deviceStatus.put("platform", PlatformType.IOS);
+        deviceStatus.put("version", info.getString("version"));
+        deviceStatus.put("size", "未知");
+        deviceStatus.put("cpu", info.getString("cpu"));
+        deviceStatus.put("manufacturer", "APPLE");
+        logger.info("iOS设备：" + udId + " 上线！");
+        NettyThreadPool.send(deviceStatus);
+        IOSDeviceManagerMap.getMap().remove(udId);
+    }
+
+    public static JSONObject getInfo(String udId) {
+        JSONObject result = new JSONObject();
+        List<String> s = ProcessCommandTool.getProcessLocalCommand("tidevice -u " + udId + " info");
+        for (String json : s) {
+            String j = json.replaceAll(" ", "").replaceAll("\n", "").replaceAll("\r", "").trim();
+            if (j.contains("MarketName:")) {
+                result.put("model", j.replaceAll("MarketName:", ""));
+            }
+            if (j.contains("DeviceName:")) {
+                result.put("name", j.replaceAll("DeviceName:", ""));
+            }
+            if (j.contains("ProductVersion:")) {
+                result.put("version", j.replaceAll("ProductVersion:", ""));
+            }
+            if (j.contains("CPUArchitecture:")) {
+                result.put("cpu", j.replaceAll("CPUArchitecture:", ""));
+            }
+        }
+        return result;
     }
 
     public static int startWda(String udId) throws IOException, InterruptedException {
