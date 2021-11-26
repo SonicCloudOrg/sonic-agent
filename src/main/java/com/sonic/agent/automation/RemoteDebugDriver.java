@@ -40,17 +40,6 @@ public class RemoteDebugDriver {
         debugHost = agentHost;
     }
 
-//    @Bean
-//    @DependsOn(value = "startChromeDriver")
-//    public ServletRegistrationBean proxyServletRegistration() {
-//        ServletRegistrationBean registrationBean = new ServletRegistrationBean(new ProxyServlet(), "/agent/*");
-//        Map<String, String> params = ImmutableMap.of(
-//                "targetUri", "http://localhost:" + port + "/devtools",
-//                "log", "false");
-//        registrationBean.setInitParameters(params);
-//        return registrationBean;
-//    }
-
     @Bean
     @DependsOn(value = "setChromePath")
     public static void startChromeDriver() {
