@@ -169,5 +169,4 @@ public class TIDeviceTool {
         IOSProcessMap.getMap().put(udId, processList);
         return port;
     }
-
 }
