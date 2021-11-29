@@ -1,10 +1,10 @@
 sonic:
   agent:
-    host: 192.168.0.2
+    host: 192.168.78.56
     port: 7777
     key: 29002272-4659-4808-a804-08ce3388b136
   server:
-    host: 192.168.0.2
+    host: 192.168.78.56
     folder-port: 8094
     transport-port: 8095
 
@@ -12,11 +12,11 @@ modules:
   android:
     enable: true
   ios:
-    enable: true
+    enable: false
     wda-bundle-id: com.sonic.wda
     wda-ipa-name: sonic-wda.ipa
   webview:
-    enable: true
+    enable: false
     chrome-driver-debug-port: 7778
     chrome-driver-path: C:\Program Files\Google\Chrome\Application\chromedriver.exe
 

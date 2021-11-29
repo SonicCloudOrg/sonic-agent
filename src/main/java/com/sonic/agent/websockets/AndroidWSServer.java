@@ -38,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -52,6 +53,7 @@ public class AndroidWSServer {
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> miniCapMap = new ConcurrentHashMap<>();
+    private Map<Session, Future<?>> rotationMap = new ConcurrentHashMap<>();
     @Autowired
     private RestTemplate restTemplate;
 
@@ -69,30 +71,86 @@ public class AndroidWSServer {
         }
         udIdMap.put(session, iDevice);
 
-        AtomicBoolean isTouchFinish = new AtomicBoolean(false);
-        Future<?> touchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
+        String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
+                .replaceAll("package:", "")
+                .replaceAll("\n", "")
+                .replaceAll("\t", "");
+        if (path.length() > 0) {
+            logger.info("已安装Sonic插件");
+        } else {
+            try {
+                iDevice.installPackage("plugins/sonic-plugin.apk", true, "-t");
+            } catch (InstallException e) {
+                e.printStackTrace();
+                logger.info("Sonic插件安装失败！");
+                return;
+            }
+            path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
                     .replaceAll("package:", "")
                     .replaceAll("\n", "")
                     .replaceAll("\t", "");
-            if (path.length() > 0) {
-                logger.info("已安装Sonic插件");
-            } else {
-                try {
-                    iDevice.installPackage("plugins/sonic-plugin.apk", true, "-t");
-                } catch (InstallException e) {
-                    e.printStackTrace();
-                    logger.info("Sonic插件安装失败！");
-                    return;
-                }
-                path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
-                        .replaceAll("package:", "")
-                        .replaceAll("\n", "")
-                        .replaceAll("\t", "");
-            }
+        }
+
+        AtomicBoolean isTouchFinish = new AtomicBoolean(false);
+        String finalPath = path;
+//        AtomicInteger rotation = new AtomicInteger(-1);
+        Future<?> rotationPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
             try {
                 //开始启动
-                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin com.sonic.plugins.assist.SonicTouchService", path)
+                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin com.sonic.plugins.assist.RotationMonitorService", finalPath)
+                        , new IShellOutputReceiver() {
+                            @Override
+                            public void addOutput(byte[] bytes, int i, int i1) {
+                                String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
+                                logger.info(res);
+                                JSONObject rotationJson = new JSONObject();
+                                rotationJson.put("msg", "rotation");
+                                rotationJson.put("value", Integer.parseInt(res)*90);
+                                sendText(session, rotationJson.toJSONString());
+//                                if (rotation.get() == -1) {
+//                                    rotation.set(Integer.parseInt(res));
+//                                }
+                                Future<?> old = miniCapMap.get(session);
+                                if (old != null) {
+                                    old.cancel(true);
+                                    try {
+                                        Thread.sleep(1000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    miniCapMap.remove(session);
+                                }
+                                MiniCapTool miniCapTool = new MiniCapTool();
+                                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+                                Future<?> miniCapThread = miniCapTool.start(
+                                        udIdMap.get(session).getSerialNumber(), banner, null, "middle", Integer.parseInt(res), session);
+                                miniCapMap.put(session, miniCapThread);
+                                JSONObject picFinish = new JSONObject();
+                                picFinish.put("msg", "picFinish");
+                                sendText(session, picFinish.toJSONString());
+                            }
+
+                            @Override
+                            public void flush() {
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return false;
+                            }
+                        }, 0, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                logger.info("{} 设备方向监听启动异常！"
+                        , iDevice.getSerialNumber());
+                logger.error(e.getMessage());
+            }
+        });
+        rotationMap.put(session, rotationPro);
+
+        Future<?> touchPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+            try {
+                //开始启动
+                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin com.sonic.plugins.assist.SonicTouchService", finalPath)
                         , new IShellOutputReceiver() {
                             @Override
                             public void addOutput(byte[] bytes, int i, int i1) {
@@ -197,12 +255,19 @@ public class AndroidWSServer {
             }
         });
 
-        AndroidDeviceBridgeTool.screen(iDevice, "abort");
-        MiniCapTool miniCapTool = new MiniCapTool();
-        AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", -1, session);
-        miniCapMap.put(session, miniCapThread);
-
+//        AndroidDeviceBridgeTool.screen(iDevice, "abort");
+//        MiniCapTool miniCapTool = new MiniCapTool();
+//        AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+//        int wait = 0;
+//        while (rotation.get() == -1) {
+//            wait++;
+//            Thread.sleep(300);
+//            if (wait > 300) {
+//                break;
+//            }
+//        }
+//        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", rotation.get(), session);
+//        miniCapMap.put(session, miniCapThread);
     }
 
     @OnClose
@@ -291,7 +356,7 @@ public class AndroidWSServer {
                 if (RemoteDebugDriver.webDriver == null) {
                     RemoteDebugDriver.startChromeDriver();
                 }
-                forwardView.put("chromePort",chromePort);
+                forwardView.put("chromePort", chromePort);
                 forwardView.put("detail", result);
                 sendText(session, forwardView.toJSONString());
                 break;
@@ -321,24 +386,24 @@ public class AndroidWSServer {
                 sendText(session, picFinish.toJSONString());
                 break;
             }
-            case "screen": {
-                AndroidDeviceBridgeTool.screen(udIdMap.get(session), msg.getString("s"));
-                if (!msg.getString("s").equals("abort")) {
-                    Future<?> old = miniCapMap.get(session);
-                    old.cancel(true);
-                    Thread.sleep(3000);
-                    miniCapMap.remove(session);
-                    MiniCapTool miniCapTool = new MiniCapTool();
-                    AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                    Future<?> miniCapThread = miniCapTool.start(
-                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
-                    miniCapMap.put(session, miniCapThread);
-                    JSONObject picFinish = new JSONObject();
-                    picFinish.put("msg", "picFinish");
-                    sendText(session, picFinish.toJSONString());
-                }
-                break;
-            }
+//            case "screen": {
+//                AndroidDeviceBridgeTool.screen(udIdMap.get(session), msg.getString("s"));
+//                if (!msg.getString("s").equals("abort")) {
+//                    Future<?> old = miniCapMap.get(session);
+//                    old.cancel(true);
+//                    Thread.sleep(3000);
+//                    miniCapMap.remove(session);
+//                    MiniCapTool miniCapTool = new MiniCapTool();
+//                    AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+//                    Future<?> miniCapThread = miniCapTool.start(
+//                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
+//                    miniCapMap.put(session, miniCapThread);
+//                    JSONObject picFinish = new JSONObject();
+//                    picFinish.put("msg", "picFinish");
+//                    sendText(session, picFinish.toJSONString());
+//                }
+//                break;
+//            }
             case "fixScreen": {
                 Future<?> old = miniCapMap.get(session);
                 old.cancel(true);
@@ -500,6 +565,8 @@ public class AndroidWSServer {
         webViewForwardMap.remove(udIdMap.get(session));
         outputMap.remove(session);
         udIdMap.remove(session);
+        rotationMap.get(session).cancel(true);
+        rotationMap.remove(session);
         miniCapMap.get(session).cancel(true);
         miniCapMap.remove(session);
         WebSocketSessionMap.getMap().remove(session.getId());
