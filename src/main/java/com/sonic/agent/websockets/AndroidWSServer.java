@@ -223,8 +223,6 @@ public class AndroidWSServer {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
-            //
-            case "":
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
                 IDevice iDevice = udIdMap.get(session);
