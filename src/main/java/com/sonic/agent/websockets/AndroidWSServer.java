@@ -12,6 +12,7 @@ import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.maps.HandlerMap;
+import com.sonic.agent.maps.MiniCapMap;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.netty.NettyThreadPool;
 import com.sonic.agent.tools.MiniCapTool;
@@ -52,7 +53,6 @@ public class AndroidWSServer {
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
-    private Map<Session, Future<?>> miniCapMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> rotationMap = new ConcurrentHashMap<>();
     @Autowired
     private RestTemplate restTemplate;
@@ -69,6 +69,8 @@ public class AndroidWSServer {
             logger.info("设备未连接，请检查！");
             return;
         }
+        AndroidDeviceBridgeTool.screen(iDevice, "abort");
+        AndroidDeviceBridgeTool.pressKey(iDevice, 3);
         udIdMap.put(session, iDevice);
 
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
@@ -93,7 +95,6 @@ public class AndroidWSServer {
 
         AtomicBoolean isTouchFinish = new AtomicBoolean(false);
         String finalPath = path;
-//        AtomicInteger rotation = new AtomicInteger(-1);
         Future<?> rotationPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
             try {
                 //开始启动
@@ -105,26 +106,25 @@ public class AndroidWSServer {
                                 logger.info(res);
                                 JSONObject rotationJson = new JSONObject();
                                 rotationJson.put("msg", "rotation");
-                                rotationJson.put("value", Integer.parseInt(res)*90);
+                                rotationJson.put("value", Integer.parseInt(res) * 90);
                                 sendText(session, rotationJson.toJSONString());
-//                                if (rotation.get() == -1) {
-//                                    rotation.set(Integer.parseInt(res));
-//                                }
-                                Future<?> old = miniCapMap.get(session);
+                                Future<?> old = MiniCapMap.getMap().get(session);
                                 if (old != null) {
                                     old.cancel(true);
-                                    try {
-                                        Thread.sleep(1000);
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
+                                    do {
+                                        try {
+                                            Thread.sleep(1000);
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
                                     }
-                                    miniCapMap.remove(session);
+                                    while (MiniCapMap.getMap().get(session) != null);
                                 }
                                 MiniCapTool miniCapTool = new MiniCapTool();
                                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                                 Future<?> miniCapThread = miniCapTool.start(
                                         udIdMap.get(session).getSerialNumber(), banner, null, "middle", Integer.parseInt(res), session);
-                                miniCapMap.put(session, miniCapThread);
+                                MiniCapMap.getMap().put(session, miniCapThread);
                                 JSONObject picFinish = new JSONObject();
                                 picFinish.put("msg", "picFinish");
                                 sendText(session, picFinish.toJSONString());
@@ -254,20 +254,6 @@ public class AndroidWSServer {
                 sendText(session, result.toJSONString());
             }
         });
-
-//        AndroidDeviceBridgeTool.screen(iDevice, "abort");
-//        MiniCapTool miniCapTool = new MiniCapTool();
-//        AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-//        int wait = 0;
-//        while (rotation.get() == -1) {
-//            wait++;
-//            Thread.sleep(300);
-//            if (wait > 300) {
-//                break;
-//            }
-//        }
-//        Future<?> miniCapThread = miniCapTool.start(udId, banner, null, "middle", rotation.get(), session);
-//        miniCapMap.put(session, miniCapThread);
     }
 
     @OnClose
@@ -372,48 +358,42 @@ public class AndroidWSServer {
                         + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
                 break;
             case "pic": {
-                Future<?> old = miniCapMap.get(session);
+                Future<?> old = MiniCapMap.getMap().get(session);
                 old.cancel(true);
-                Thread.sleep(3000);
-                miniCapMap.remove(session);
+                do {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                while (MiniCapMap.getMap().get(session) != null);
                 MiniCapTool miniCapTool = new MiniCapTool();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Future<?> miniCapThread = miniCapTool.start(
                         udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
-                miniCapMap.put(session, miniCapThread);
+                MiniCapMap.getMap().put(session, miniCapThread);
                 JSONObject picFinish = new JSONObject();
                 picFinish.put("msg", "picFinish");
                 sendText(session, picFinish.toJSONString());
                 break;
             }
-//            case "screen": {
-//                AndroidDeviceBridgeTool.screen(udIdMap.get(session), msg.getString("s"));
-//                if (!msg.getString("s").equals("abort")) {
-//                    Future<?> old = miniCapMap.get(session);
-//                    old.cancel(true);
-//                    Thread.sleep(3000);
-//                    miniCapMap.remove(session);
-//                    MiniCapTool miniCapTool = new MiniCapTool();
-//                    AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-//                    Future<?> miniCapThread = miniCapTool.start(
-//                            udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session);
-//                    miniCapMap.put(session, miniCapThread);
-//                    JSONObject picFinish = new JSONObject();
-//                    picFinish.put("msg", "picFinish");
-//                    sendText(session, picFinish.toJSONString());
-//                }
-//                break;
-//            }
             case "fixScreen": {
-                Future<?> old = miniCapMap.get(session);
+                Future<?> old = MiniCapMap.getMap().get(session);
                 old.cancel(true);
-                Thread.sleep(3000);
-                miniCapMap.remove(session);
+                do {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                while (MiniCapMap.getMap().get(session) != null);
                 MiniCapTool miniCapTool = new MiniCapTool();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Future<?> miniCapThread = miniCapTool.start(
                         udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), msg.getInteger("s"), session);
-                miniCapMap.put(session, miniCapThread);
+                MiniCapMap.getMap().put(session, miniCapThread);
                 JSONObject picFinish = new JSONObject();
                 picFinish.put("msg", "picFinish");
                 sendText(session, picFinish.toJSONString());
@@ -567,8 +547,8 @@ public class AndroidWSServer {
         udIdMap.remove(session);
         rotationMap.get(session).cancel(true);
         rotationMap.remove(session);
-        miniCapMap.get(session).cancel(true);
-        miniCapMap.remove(session);
+        MiniCapMap.getMap().get(session).cancel(true);
+//        MiniCapMap.getMap().remove(session);
         WebSocketSessionMap.getMap().remove(session.getId());
         try {
             session.close();

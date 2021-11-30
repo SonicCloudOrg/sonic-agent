@@ -314,23 +314,6 @@ public class AndroidDeviceBridgeTool {
         }
     }
 
-    /**
-     * @param sdk
-     * @return java.lang.String
-     * @author ZhouYiXun
-     * @des 根据sdk匹配对应的文件
-     * @date 2021/8/16 20:01
-     */
-    public static String matchMiniTouchFile(String sdk) {
-        String filePath;
-        if (Integer.valueOf(sdk) < 16) {
-            filePath = "minitouch-nopie";
-        } else {
-            filePath = "minitouch";
-        }
-        return filePath;
-    }
-
     public static void pushYadb(IDevice iDevice) {
         executeCommand(iDevice, "rm -rf /data/local/tmp/yadb");
         File yadbLocalFile = new File("plugins" + File.separator + "yadb");

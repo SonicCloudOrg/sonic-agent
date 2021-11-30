@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import com.sonic.agent.maps.MiniCapMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,7 @@ public class MiniCapTool {
         }
         int finalC = c;
         AtomicBoolean isFinish = new AtomicBoolean(false);
-        Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() ->{
+        Future<?> miniCapPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
             //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
             AndroidDeviceBridgeTool.executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
             //获取cpu信息
@@ -71,7 +72,7 @@ public class MiniCapTool {
             try {
                 iDevice.pushFile(miniCapFile.getAbsolutePath(), "/data/local/tmp/" + miniCapFileName);
                 iDevice.pushFile(miniCapSoFile.getAbsolutePath(), "/data/local/tmp/minicap.so");
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             //给文件权限
@@ -93,7 +94,7 @@ public class MiniCapTool {
                     public void addOutput(byte[] bytes, int i, int i1) {
                         String res = new String(bytes, i, i1);
                         logger.info(res);
-                        if(res.contains("Server start")){
+                        if (res.contains("Server start")) {
                             isFinish.set(true);
                         }
                         if (res.contains("Vector<> have different types")) {
@@ -123,14 +124,14 @@ public class MiniCapTool {
             }
         });
         int wait = 0;
-        while (!isFinish.get()){
+        while (!isFinish.get()) {
             wait++;
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if(wait>8){
+            if (wait > 8) {
                 break;
             }
         }
@@ -180,6 +181,9 @@ public class MiniCapTool {
                 }
             }
             AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniCapPort, "minicap");
+            if (session != null) {
+                MiniCapMap.getMap().remove(session);
+            }
         });
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
