@@ -4,6 +4,7 @@ import com.sonic.agent.tools.SpringTool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -24,7 +25,9 @@ public class AgentApplication {
     }
 
     @Bean
-    public TomcatServletWebServerFactory servletContainer(){
-        return new TomcatServletWebServerFactory(port) ;
+    public TomcatServletWebServerFactory servletContainer() {
+        TomcatServletWebServerFactory factory = new TomcatServletWebServerFactory(port);
+        factory.addConnectorCustomizers((TomcatConnectorCustomizer) connector -> connector.setProperty("relaxedQueryChars", "|{}[]\\"));
+        return factory;
     }
 }
