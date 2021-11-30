@@ -5,7 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import com.sonic.agent.bridge.ios.LibIMobileDeviceTool;
+import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
@@ -53,8 +53,8 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         }
                     }
                     if (jsonObject.getInteger("platform") == PlatformType.IOS) {
-                        if (LibIMobileDeviceTool.getDeviceList().contains(jsonObject.getString("udId"))) {
-                            LibIMobileDeviceTool.reboot(jsonObject.getString("udId"));
+                        if (TIDeviceTool.getDeviceList().contains(jsonObject.getString("udId"))) {
+                            TIDeviceTool.reboot(jsonObject.getString("udId"));
                         }
                     }
                     break;

@@ -1,8 +1,6 @@
 package com.sonic.agent.bridge.ios;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.IOSDeviceManagerMap;
 import com.sonic.agent.maps.IOSProcessMap;
@@ -71,6 +69,10 @@ public class TIDeviceTool {
             }
         });
         logger.info("iOS设备监听已开启");
+    }
+
+    public static List<String> getDeviceList() {
+        return ProcessCommandTool.getProcessLocalCommand("tidevice list");
     }
 
     public static void sendDisConnectStatus(String udId) {
@@ -168,5 +170,9 @@ public class TIDeviceTool {
         processList.add(relayProcess);
         IOSProcessMap.getMap().put(udId, processList);
         return port;
+    }
+
+    public static void reboot(String udId) {
+        ProcessCommandTool.getProcessLocalCommand("tidevice -u " + udId + " reboot");
     }
 }

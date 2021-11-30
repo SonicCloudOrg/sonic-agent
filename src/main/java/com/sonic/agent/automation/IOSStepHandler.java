@@ -5,7 +5,6 @@ import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.maps.IOSProcessMap;
 import com.sonic.agent.tools.LogTool;
-import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
 import io.appium.java_client.ios.IOSDriver;
 import io.appium.java_client.remote.AutomationName;
