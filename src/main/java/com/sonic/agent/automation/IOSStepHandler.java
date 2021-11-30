@@ -153,12 +153,12 @@ public class IOSStepHandler {
             ele.put("id", xpathId);
             xpathId++;
             ele.put("label", "<" + elements.get(i).attr("type") + ">");
-            JSONObject eleDetail = new JSONObject();
-            eleDetail.put("xpath", indexXpath);
+            JSONObject detail = new JSONObject();
+            detail.put("xpath", indexXpath);
             for (Attribute attr : elements.get(i).attributes()) {
-                eleDetail.put(attr.getKey(), attr.getValue());
+                detail.put(attr.getKey(), attr.getValue());
             }
-            ele.put("eleDetail", eleDetail);
+            ele.put("detail", detail);
             if (elements.get(i).children().size() > 0) {
                 ele.put("children", getChild(elements.get(i).children(), indexXpath));
             }
