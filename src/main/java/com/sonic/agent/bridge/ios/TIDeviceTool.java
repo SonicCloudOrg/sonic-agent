@@ -29,10 +29,14 @@ public class TIDeviceTool {
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
     private static String bundleId;
+    @Value("${modules.ios.wda-ipa-name}")
+    private String getIpa;
+    private static String ipa;
 
     @Bean
     public void setEnv() {
         bundleId = getBundleId;
+        ipa = getIpa;
     }
 
     public TIDeviceTool() {
@@ -142,6 +146,10 @@ public class TIDeviceTool {
 
     public static int startWda(String udId) throws IOException, InterruptedException {
         synchronized (TIDeviceTool.class) {
+            Runtime.getRuntime().exec("tidevice -u " + udId + " uninstall " + bundleId);
+            Thread.sleep(500);
+            Runtime.getRuntime().exec("tidevice -u " + udId + " install plugins/" + ipa);
+            Thread.sleep(1000);
             int port = PortTool.getPort();
             Process wdaProcess = Runtime.getRuntime().exec("tidevice -u " + udId +
                     " wdaproxy" + " -B " + bundleId +
