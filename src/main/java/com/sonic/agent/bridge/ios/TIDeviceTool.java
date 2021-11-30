@@ -72,7 +72,12 @@ public class TIDeviceTool {
     }
 
     public static List<String> getDeviceList() {
-        return ProcessCommandTool.getProcessLocalCommand("tidevice list");
+        List<String> result = new ArrayList<>();
+        List<String> data = ProcessCommandTool.getProcessLocalCommand("tidevice list");
+        for (String a : data) {
+            result.add(a.substring(0, a.indexOf(" ")));
+        }
+        return result;
     }
 
     public static void sendDisConnectStatus(String udId) {
@@ -122,6 +127,17 @@ public class TIDeviceTool {
             }
         }
         return result;
+    }
+
+    public static String getName(String udId) {
+        List<String> s = ProcessCommandTool.getProcessLocalCommand("tidevice -u " + udId + " info");
+        for (String json : s) {
+            String j = json.replaceAll(" ", "").replaceAll("\n", "").replaceAll("\r", "").trim();
+            if (j.contains("DeviceName:")) {
+                return j.replaceAll("DeviceName:", "");
+            }
+        }
+        return "";
     }
 
     public static int startWda(String udId) throws IOException, InterruptedException {

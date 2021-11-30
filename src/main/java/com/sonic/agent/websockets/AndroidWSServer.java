@@ -548,7 +548,6 @@ public class AndroidWSServer {
         rotationMap.get(session).cancel(true);
         rotationMap.remove(session);
         MiniCapMap.getMap().get(session).cancel(true);
-//        MiniCapMap.getMap().remove(session);
         WebSocketSessionMap.getMap().remove(session.getId());
         try {
             session.close();
