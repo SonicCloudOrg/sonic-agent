@@ -1,6 +1,7 @@
 package com.sonic.agent.netty;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
@@ -16,10 +17,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.TestNG;
+import org.testng.xml.XmlClass;
+import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
 
 import javax.websocket.Session;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NettyClientHandler extends ChannelInboundHandlerAdapter {
@@ -27,7 +31,6 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     private static Map<String, Session> sessionMap = new ConcurrentHashMap<String, Session>();
     private NettyClient nettyClient;
     public static Channel channel = null;
-    private AndroidTests androidTests = SpringTool.getBean(AndroidTests.class);
 
     public NettyClientHandler(NettyClient nettyClient, Channel channel) {
         this.nettyClient = nettyClient;
@@ -83,21 +86,22 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     }
                     break;
                 case "suite":
-                    JSONObject device = jsonObject.getJSONObject("device");
-                    if (AndroidDeviceBridgeTool.getIDeviceByUdId(device.getString("udId")) != null) {
-                        AndroidPasswordMap.getMap().put(device.getString("udId")
-                                , device.getString("password"));
-                        try {
-                            androidTests.run(jsonObject);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        //取消本次测试
-                        JSONObject subResultCount = new JSONObject();
-                        subResultCount.put("rid", jsonObject.getInteger("rid"));
-                        NettyThreadPool.send(subResultCount);
+                    List<JSONObject> cases = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
+                    TestNG tng = new TestNG();
+                    List<XmlSuite> suiteList = new ArrayList<>();
+                    XmlSuite xmlSuite = new XmlSuite();
+                    for (JSONObject dataInfo : cases) {
+                        XmlTest xmlTest = new XmlTest(xmlSuite);
+                        Map<String, String> parameters = new HashMap<>();
+                        parameters.put("dataInfo", dataInfo.toJSONString());
+                        xmlTest.setParameters(parameters);
+                        List<XmlClass> classes = new ArrayList<>();
+                        classes.add(new XmlClass(AndroidTests.class));
+                        xmlTest.setXmlClasses(classes);
                     }
+                    suiteList.add(xmlSuite);
+                    tng.setXmlSuites(suiteList);
+                    tng.run();
                     break;
             }
         });

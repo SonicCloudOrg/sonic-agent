@@ -179,12 +179,10 @@ public class AndroidStepHandler {
     }
 
     public void waitDevice(int waitCount) {
-        if (waitCount % 3 == 0) {
-            log.sendStepLog(StepType.INFO, "设备非空闲状态！第" + waitCount + "次等待连接...", "");
-        }
+        log.sendStepLog(StepType.INFO, "设备非空闲状态！第" + waitCount + "次等待连接...", "");
     }
 
-    public void waitDeviceTimeOut(String udId) {
+    public void waitDeviceTimeOut() {
         log.sendStepLog(StepType.ERROR, "等待设备超时！测试跳过！", "");
         //测试标记为异常
         setResultDetailStatus(ResultDetailStatus.WARN);
@@ -527,14 +525,14 @@ public class AndroidStepHandler {
 //                }
 //            }
 //        } else {
-            try {
-                androidDriver.installApp(path, new AndroidInstallApplicationOptions()
-                        .withAllowTestPackagesEnabled().withReplaceEnabled()
-                        .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
-            } catch (Exception e) {
-                handleDes.setE(e);
-                return;
-            }
+        try {
+            androidDriver.installApp(path, new AndroidInstallApplicationOptions()
+                    .withAllowTestPackagesEnabled().withReplaceEnabled()
+                    .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+        } catch (Exception e) {
+            handleDes.setE(e);
+            return;
+        }
 //        }
     }
 
