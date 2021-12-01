@@ -7,10 +7,13 @@ import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.ios.TIDeviceTool;
+import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.interfaces.PlatformType;
+import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.tests.AndroidTests;
+import com.sonic.agent.tests.TaskManager;
 import com.sonic.agent.tools.SpringTool;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -102,6 +105,19 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     suiteList.add(xmlSuite);
                     tng.setXmlSuites(suiteList);
                     tng.run();
+                    break;
+                case "force_stop_suite":
+                    List<JSONObject> caseList = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
+                    for (JSONObject aCase : caseList) {
+                        int resultId = (int) aCase.get("rid");
+                        int caseId = (int) aCase.get("cid");
+                        JSONArray devices = (JSONArray) aCase.get("device");
+                        List<JSONObject> deviceList = devices.toJavaList(JSONObject.class);
+                        for (JSONObject device : deviceList) {
+                            String udId = (String) device.get("udId");
+                            TaskManager.forceStopSuite(resultId, caseId, udId);
+                        }
+                    }
                     break;
             }
         });

@@ -125,6 +125,17 @@
             <artifactId>leptonica</artifactId>
             <version>1.79.0-1.5.3</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.22</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-core</artifactId>
+            <version>5.7.16</version>
+        </dependency>
     </dependencies>
 
     <!--  通过这个配置来决定打包使用哪一个环境  -->
