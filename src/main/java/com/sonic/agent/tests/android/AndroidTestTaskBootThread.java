@@ -14,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.Semaphore;
 
 /**
- * @author chenwenjie.star
+ * android启动各个子任务的线程
+ *
+ * @author Eason(main) & JayWenStar(slave)
  * @date 2021/12/2 12:33 上午
  */
 @Slf4j

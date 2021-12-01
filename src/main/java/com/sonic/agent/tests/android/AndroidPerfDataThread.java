@@ -8,7 +8,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author JayWenStar
+ * android性能数据获取线程
+ *
+ * @author Eason(main) & JayWenStar(slave)
  * @date 2021/12/2 12:29 上午
  */
 @EqualsAndHashCode(callSuper = true)

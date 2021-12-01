@@ -19,7 +19,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * @author JayWenStar
+ * android 录像线程
+ *
+ * @author Eason(main) & JayWenStar(slave)
  * @date 2021/12/2 12:29 上午
  */
 @EqualsAndHashCode(callSuper = true)

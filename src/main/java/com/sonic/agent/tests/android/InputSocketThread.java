@@ -22,7 +22,7 @@ import static com.sonic.agent.tools.AgentTool.subByteArray;
  * mincap socket线程
  * 通过端口转发，将设备视频流转发到此Socket
  *
- * @author JayWenStar
+ * @author Eason(main) & JayWenStar(slave)
  * @date 2021/12/02 00:52 下午
  */
 @Data

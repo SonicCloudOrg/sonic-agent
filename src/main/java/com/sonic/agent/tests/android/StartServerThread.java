@@ -17,7 +17,9 @@ import java.util.concurrent.TimeUnit;
 import static com.sonic.agent.tools.AgentTool.sendText;
 
 /**
- * @author JayWenStar
+ * 启动mincap等服务的线程
+ *
+ * @author Eason(main) & JayWenStar(slave)
  * @date 2021/12/2 12:40 上午
  */
 @Data

@@ -15,7 +15,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.sonic.agent.tools.AgentTool.*;
 
 /**
- * @author JayWenStar
+ * 视频流输出线程
+ *
+ * @author Eason(main) & JayWenStar(slave)
  * @date 2021/12/2 12:12 上午
  */
 @Data

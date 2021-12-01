@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
- * @author JayWenStar
+ * android测试任务步骤运行线程
+ *
+ * @author Eason(main) & JayWenStar(slave)
  * @date 2021/12/2 12:30 上午
  */
 @EqualsAndHashCode(callSuper = true)
