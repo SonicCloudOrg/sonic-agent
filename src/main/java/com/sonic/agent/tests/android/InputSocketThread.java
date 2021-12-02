@@ -48,8 +48,8 @@ public class InputSocketThread extends Thread {
         this.session = session;
         this.androidTestTaskBootThread = miniCapPro.getAndroidTestTaskBootThread();
 
-
-        this.setDaemon(true);
+        // 让资源合理关闭
+        this.setDaemon(false);
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_INPUT_SOCKET_PRE));
     }
 
