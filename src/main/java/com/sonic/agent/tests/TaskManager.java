@@ -1,19 +1,20 @@
 package com.sonic.agent.tests;
 
-import cn.hutool.core.collection.ConcurrentHashSet;
 import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
  * @author JayWenStar
  * @date 2021/12/2 12:31 上午
  */
-@Slf4j
 public class TaskManager {
 
     /**
@@ -25,7 +26,9 @@ public class TaskManager {
     /**
      * key是boot的线程名，value是boot线程启动的线程，因为是守护线程，所以当boot被停止后，child线程也会停止
      */
-    private static ConcurrentHashMap<String, ConcurrentHashSet<Thread>> childThreadsMap = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<String, Set<Thread>> childThreadsMap = new ConcurrentHashMap<>();
+
+    private static final Lock lock = new ReentrantLock();
 
     /**
      * 启动boot线程
@@ -85,11 +88,12 @@ public class TaskManager {
      * @param childThread 线程
      */
     public static void addChildThread(String key, Thread childThread) {
+        lock.lock();
         clearTerminatedThread();
         if (childThreadsMap.containsKey(key)) {
-            ConcurrentHashSet<Thread> threadsSet = childThreadsMap.get(key);
+            Set<Thread> threadsSet = childThreadsMap.get(key);
             if (CollectionUtils.isEmpty(threadsSet)) {
-                threadsSet = new ConcurrentHashSet<>();
+                threadsSet = new HashSet<>();
                 threadsSet.add(childThread);
                 childThreadsMap.put(key, threadsSet);
                 return;
@@ -97,9 +101,10 @@ public class TaskManager {
             threadsSet.add(childThread);
             return;
         }
-        ConcurrentHashSet<Thread> threadsSet = new ConcurrentHashSet<>();
+        Set<Thread> threadsSet = new HashSet<>();
         threadsSet.add(childThread);
         childThreadsMap.put(key, threadsSet);
+        lock.unlock();
     }
 
     /**
@@ -108,10 +113,11 @@ public class TaskManager {
      * @param key 用boot线程名作为key
      * @param set 线程set
      */
-    public static void addChildThreadBatch(String key, ConcurrentHashSet<Thread> set) {
+    public static void addChildThreadBatch(String key, HashSet<Thread> set) {
+        lock.lock();
         clearTerminatedThread();
         if (childThreadsMap.containsKey(key)) {
-            ConcurrentHashSet<Thread> threadsSet = childThreadsMap.get(key);
+            Set<Thread> threadsSet = childThreadsMap.get(key);
             if (CollectionUtils.isEmpty(threadsSet)) {
                 childThreadsMap.put(key, set);
                 return;
@@ -120,6 +126,7 @@ public class TaskManager {
             return;
         }
         childThreadsMap.put(key, set);
+        lock.unlock();
     }
 
     /**

@@ -4,10 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.io.File;
@@ -19,17 +17,16 @@ import static com.sonic.agent.tools.AgentTool.sendText;
 /**
  * 启动mincap等服务的线程
  *
- * @author Eason(main) & JayWenStar(slave)
+ * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:40 上午
  */
-@Data
-@Slf4j
 public class StartServerThread extends Thread {
+
+    private final Logger log = LoggerFactory.getLogger(StartServerThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    @Setter(value = AccessLevel.NONE)
     public final static String ANDROID_START_MINCAP_SERVER_PRE = "android-start-mincap-server-task-%s-%s-%s";
 
     private IDevice iDevice;
@@ -58,6 +55,34 @@ public class StartServerThread extends Thread {
 
         this.setDaemon(true);
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_START_MINCAP_SERVER_PRE));
+    }
+
+    public IDevice getiDevice() {
+        return iDevice;
+    }
+
+    public String getPic() {
+        return pic;
+    }
+
+    public int getFinalC() {
+        return finalC;
+    }
+
+    public Session getSession() {
+        return session;
+    }
+
+    public String getUdId() {
+        return udId;
+    }
+
+    public AndroidTestTaskBootThread getAndroidTestTaskBootThread() {
+        return androidTestTaskBootThread;
+    }
+
+    public Semaphore getIsFinish() {
+        return isFinish;
     }
 
     @Override

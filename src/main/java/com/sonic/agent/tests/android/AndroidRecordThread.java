@@ -5,12 +5,9 @@ import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.cv.RecordHandler;
 import com.sonic.agent.tools.MiniCapTool;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacv.FrameRecorder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,18 +18,16 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * android 录像线程
  *
- * @author Eason(main) & JayWenStar(slave)
+ * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:29 上午
  */
-@EqualsAndHashCode(callSuper = true)
-@Slf4j
-@Data
 public class AndroidRecordThread extends Thread {
+
+    private final Logger log = LoggerFactory.getLogger(AndroidRecordThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    @Setter(value = AccessLevel.NONE)
     public final static String ANDROID_RECORD_TASK_PRE = "android-record-task-%s-%s-%s";
 
     private final AndroidTestTaskBootThread androidTestTaskBootThread;
@@ -44,6 +39,9 @@ public class AndroidRecordThread extends Thread {
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_RECORD_TASK_PRE));
     }
 
+    public AndroidTestTaskBootThread getAndroidTestTaskBootThread() {
+        return androidTestTaskBootThread;
+    }
 
     @Override
     public void run() {

@@ -1,27 +1,22 @@
 package com.sonic.agent.tests.android;
 
 import com.sonic.agent.automation.AndroidStepHandler;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * android性能数据获取线程
  *
- * @author Eason(main) & JayWenStar(slave)
+ * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:29 上午
  */
-@EqualsAndHashCode(callSuper = true)
-@Data
-@Slf4j
 public class AndroidPerfDataThread extends Thread {
+
+    private final Logger log = LoggerFactory.getLogger(AndroidPerfDataThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    @Setter(value = AccessLevel.NONE)
     public final static String ANDROID_PERF_DATA_TASK_PRE = "android-perf-data-task-%s-%s-%s";
 
     private final AndroidTestTaskBootThread androidTestTaskBootThread;
@@ -31,6 +26,10 @@ public class AndroidPerfDataThread extends Thread {
 
         this.setDaemon(true);
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_PERF_DATA_TASK_PRE));
+    }
+
+    public AndroidTestTaskBootThread getAndroidTestTaskBootThread() {
+        return androidTestTaskBootThread;
     }
 
     @Override

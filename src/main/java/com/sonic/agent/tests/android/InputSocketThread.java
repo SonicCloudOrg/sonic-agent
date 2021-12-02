@@ -3,12 +3,9 @@ package com.sonic.agent.tests.android;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.maps.MiniCapMap;
-import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import com.sonic.agent.tools.PortTool;
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.io.IOException;
@@ -22,17 +19,16 @@ import static com.sonic.agent.tools.AgentTool.subByteArray;
  * mincap socket线程
  * 通过端口转发，将设备视频流转发到此Socket
  *
- * @author Eason(main) & JayWenStar(slave)
+ * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/02 00:52 下午
  */
-@Data
-@Slf4j
 public class InputSocketThread extends Thread {
+
+    private final Logger log = LoggerFactory.getLogger(InputSocketThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    @Setter(value = AccessLevel.NONE)
     public final static String ANDROID_INPUT_SOCKET_PRE = "android-input-socket-task-%s-%s-%s";
 
     private IDevice iDevice;
@@ -57,6 +53,25 @@ public class InputSocketThread extends Thread {
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_INPUT_SOCKET_PRE));
     }
 
+    public IDevice getiDevice() {
+        return iDevice;
+    }
+
+    public Queue<byte[]> getDataQueue() {
+        return dataQueue;
+    }
+
+    public StartServerThread getMiniCapPro() {
+        return miniCapPro;
+    }
+
+    public AndroidTestTaskBootThread getAndroidTestTaskBootThread() {
+        return androidTestTaskBootThread;
+    }
+
+    public Session getSession() {
+        return session;
+    }
 
     @Override
     public void run() {

@@ -1,6 +1,7 @@
 package com.sonic.agent.tools;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.io.IOException;
@@ -11,8 +12,9 @@ import java.nio.ByteBuffer;
  * @des 获取id
  * @date 2021/8/26 22:23
  */
-@Slf4j
 public class AgentTool {
+    private static final Logger log = LoggerFactory.getLogger(AgentTool.class);
+
     public static int agentId = 0;
 
     public static byte[] subByteArray(byte[] byte1, int start, int end) {
