@@ -28,7 +28,7 @@ public class AndroidRecordThread extends Thread {
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_RECORD_TASK_PRE = "android_record_task_%s_%s_%s";
+    public final static String ANDROID_RECORD_TASK_PRE = "android-record-task-%s-%s-%s";
 
     private final AndroidTestTaskBootThread androidTestTaskBootThread;
 

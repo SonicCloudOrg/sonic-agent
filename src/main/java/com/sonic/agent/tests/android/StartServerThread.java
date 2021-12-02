@@ -27,7 +27,7 @@ public class StartServerThread extends Thread {
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_START_MINCAP_SERVER_PRE = "android_start_mincap_server_task_%s_%s_%s";
+    public final static String ANDROID_START_MINCAP_SERVER_PRE = "android-start-mincap-server-task-%s-%s-%s";
 
     private IDevice iDevice;
 

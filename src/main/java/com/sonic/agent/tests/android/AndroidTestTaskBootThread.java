@@ -23,7 +23,7 @@ public class AndroidTestTaskBootThread extends Thread {
     /**
      * android-test-task-boot-{resultId}-{caseId}-{udid}
      */
-    public final static String ANDROID_TEST_TASK_BOOT_PRE = "android_test_task_boot_%s_%s_%s";
+    public final static String ANDROID_TEST_TASK_BOOT_PRE = "android-test-task-boot-%s-%s-%s";
 
     /**
      * 控制不同线程执行的信号量
