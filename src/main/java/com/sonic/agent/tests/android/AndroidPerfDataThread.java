@@ -17,7 +17,7 @@ public class AndroidPerfDataThread extends Thread {
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_PERF_DATA_TASK_PRE = "android-perf-data-task-%s-%s-%s";
+    public final static String ANDROID_PERF_DATA_TASK_PRE = "android_perf_data_task_%s_%s_%s";
 
     private final AndroidTestTaskBootThread androidTestTaskBootThread;
 
