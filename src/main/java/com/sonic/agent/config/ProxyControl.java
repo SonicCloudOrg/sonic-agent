@@ -13,6 +13,7 @@ import java.util.Map;
 @Configuration
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 public class ProxyControl {
+    //bug
     @Bean
     public ServletRegistrationBean proxyServletRegistration() {
         ServletRegistrationBean registrationBean = new ServletRegistrationBean(new URITemplateProxyServlet(), "/iosScreen/*");
