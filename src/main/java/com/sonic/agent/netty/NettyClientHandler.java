@@ -106,7 +106,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     tng.setXmlSuites(suiteList);
                     tng.run();
                     break;
-                case "force_stop_suite":
+                case "forceStopSuite":
                     List<JSONObject> caseList = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
                     for (JSONObject aCase : caseList) {
                         int resultId = (int) aCase.get("rid");
