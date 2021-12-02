@@ -88,17 +88,19 @@ public class TaskManager {
      * @param childThread 线程
      */
     public static void addChildThread(String key, Thread childThread) {
-        lock.lock();
         clearTerminatedThread();
+        lock.lock();
         if (childThreadsMap.containsKey(key)) {
             Set<Thread> threadsSet = childThreadsMap.get(key);
             if (CollectionUtils.isEmpty(threadsSet)) {
                 threadsSet = new HashSet<>();
                 threadsSet.add(childThread);
                 childThreadsMap.put(key, threadsSet);
+                lock.unlock();
                 return;
             }
             threadsSet.add(childThread);
+            lock.unlock();
             return;
         }
         Set<Thread> threadsSet = new HashSet<>();
@@ -114,15 +116,17 @@ public class TaskManager {
      * @param set 线程set
      */
     public static void addChildThreadBatch(String key, HashSet<Thread> set) {
-        lock.lock();
         clearTerminatedThread();
+        lock.lock();
         if (childThreadsMap.containsKey(key)) {
             Set<Thread> threadsSet = childThreadsMap.get(key);
             if (CollectionUtils.isEmpty(threadsSet)) {
                 childThreadsMap.put(key, set);
+                lock.unlock();
                 return;
             }
             childThreadsMap.get(key).addAll(set);
+            lock.unlock();
             return;
         }
         childThreadsMap.put(key, set);
