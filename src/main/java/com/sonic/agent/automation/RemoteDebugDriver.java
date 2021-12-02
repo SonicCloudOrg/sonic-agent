@@ -61,7 +61,6 @@ public class RemoteDebugDriver {
         } catch (Exception e) {
             logger.info("chromeDriver启动失败！");
         }
-        System.out.println(1);
     }
 
     public static void close() {
