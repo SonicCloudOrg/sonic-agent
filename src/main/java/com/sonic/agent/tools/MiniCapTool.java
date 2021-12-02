@@ -31,6 +31,19 @@ public class MiniCapTool {
             AtomicReference<List<byte[]>> imgList,
             String pic,
             int tor,
+            Session session
+    ) {
+        // 这里的AndroidTestTaskBootThread仅作为data bean使用，不会启动
+        return start(udId, banner, imgList, pic, tor, session, new AndroidTestTaskBootThread().setUdId(udId));
+    }
+
+
+    public Thread start(
+            String udId,
+            AtomicReference<String[]> banner,
+            AtomicReference<List<byte[]>> imgList,
+            String pic,
+            int tor,
             Session session,
             AndroidTestTaskBootThread androidTestTaskBootThread
     ) {

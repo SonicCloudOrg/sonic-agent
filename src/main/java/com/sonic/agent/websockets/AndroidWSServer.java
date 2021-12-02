@@ -17,7 +17,6 @@ import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.maps.MiniCapMap;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.netty.NettyThreadPool;
-import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import com.sonic.agent.tools.MiniCapTool;
 import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.ProcessCommandTool;
@@ -127,8 +126,7 @@ public class AndroidWSServer {
                                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                                 Thread miniCapThread = miniCapTool.start(
                                         udIdMap.get(session).getSerialNumber(), banner, null,
-                                        "middle", Integer.parseInt(res), session,
-                                        new AndroidTestTaskBootThread().setUdId(udId)
+                                        "middle", Integer.parseInt(res), session
                                 );
                                 MiniCapMap.getMap().put(session, miniCapThread);
                                 JSONObject picFinish = new JSONObject();
@@ -380,8 +378,8 @@ public class AndroidWSServer {
                 MiniCapTool miniCapTool = new MiniCapTool();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Thread miniCapThread = miniCapTool.start(
-                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"), -1, session,
-                        new AndroidTestTaskBootThread().setUdId(udIdMap.get(session).getSerialNumber())
+                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
+                        -1, session
                 );
                 MiniCapMap.getMap().put(session, miniCapThread);
                 JSONObject picFinish = new JSONObject();
@@ -404,8 +402,7 @@ public class AndroidWSServer {
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Thread miniCapThread = miniCapTool.start(
                         udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
-                        msg.getInteger("s"), session,
-                        new AndroidTestTaskBootThread().setUdId(udIdMap.get(session).getSerialNumber())
+                        msg.getInteger("s"), session
                 );
                 MiniCapMap.getMap().put(session, miniCapThread);
                 JSONObject picFinish = new JSONObject();
