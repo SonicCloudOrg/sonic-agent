@@ -25,7 +25,7 @@ public class OutputSocketThread extends Thread {
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_OUTPUT_SOCKET_PRE = "android-output-socket-task-%s-%s-%s";
+    public final static String ANDROID_OUTPUT_SOCKET_PRE = "android_output_socket_task_%s_%s_%s";
 
     private InputSocketThread sendImg;
 
