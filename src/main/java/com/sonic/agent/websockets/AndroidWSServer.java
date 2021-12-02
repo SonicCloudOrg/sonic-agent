@@ -56,6 +56,7 @@ public class AndroidWSServer {
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
     private Map<Session, Thread> rotationMap = new ConcurrentHashMap<>();
+    private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
     @Autowired
     private RestTemplate restTemplate;
 
@@ -105,7 +106,8 @@ public class AndroidWSServer {
                             @Override
                             public void addOutput(byte[] bytes, int i, int i1) {
                                 String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
-                                logger.info(res);
+                                logger.info(udId + "旋转到：" + res);
+                                rotationStatusMap.put(session, Integer.parseInt(res));
                                 JSONObject rotationJson = new JSONObject();
                                 rotationJson.put("msg", "rotation");
                                 rotationJson.put("value", Integer.parseInt(res) * 90);
@@ -379,30 +381,7 @@ public class AndroidWSServer {
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Thread miniCapThread = miniCapTool.start(
                         udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
-                        -1, session
-                );
-                MiniCapMap.getMap().put(session, miniCapThread);
-                JSONObject picFinish = new JSONObject();
-                picFinish.put("msg", "picFinish");
-                sendText(session, picFinish.toJSONString());
-                break;
-            }
-            case "fixScreen": {
-                Thread old = MiniCapMap.getMap().get(session);
-                old.interrupt();
-                do {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                while (MiniCapMap.getMap().get(session) != null);
-                MiniCapTool miniCapTool = new MiniCapTool();
-                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                Thread miniCapThread = miniCapTool.start(
-                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
-                        msg.getInteger("s"), session
+                        rotationStatusMap.get(session), session
                 );
                 MiniCapMap.getMap().put(session, miniCapThread);
                 JSONObject picFinish = new JSONObject();
@@ -427,7 +406,8 @@ public class AndroidWSServer {
                 AndroidDeviceBridgeTool.pressKey(udIdMap.get(session), msg.getInteger("detail"));
                 break;
             case "debug":
-                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());;
+                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
+                ;
                 try {
                     if (msg.getString("detail").equals("tap")) {
                         String xy = msg.getString("point");

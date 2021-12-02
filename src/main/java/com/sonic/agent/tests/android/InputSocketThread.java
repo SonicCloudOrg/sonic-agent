@@ -16,7 +16,7 @@ import java.util.Queue;
 import static com.sonic.agent.tools.AgentTool.subByteArray;
 
 /**
- * mincap socket线程
+ * minicap socket线程
  * 通过端口转发，将设备视频流转发到此Socket
  *
  * @author Eason(main) JayWenStar(until e1a877b7)
@@ -35,13 +35,13 @@ public class InputSocketThread extends Thread {
 
     private Queue<byte[]> dataQueue;
 
-    private StartServerThread miniCapPro;
+    private SonicLocalThread miniCapPro;
 
     private AndroidTestTaskBootThread androidTestTaskBootThread;
 
     private Session session;
 
-    public InputSocketThread(IDevice iDevice, Queue<byte[]> dataQueue, StartServerThread miniCapPro, Session session) {
+    public InputSocketThread(IDevice iDevice, Queue<byte[]> dataQueue, SonicLocalThread miniCapPro, Session session) {
         this.iDevice = iDevice;
         this.dataQueue = dataQueue;
         this.miniCapPro = miniCapPro;
@@ -61,7 +61,7 @@ public class InputSocketThread extends Thread {
         return dataQueue;
     }
 
-    public StartServerThread getMiniCapPro() {
+    public SonicLocalThread getMiniCapPro() {
         return miniCapPro;
     }
 

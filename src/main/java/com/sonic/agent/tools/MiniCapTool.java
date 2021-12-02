@@ -6,7 +6,7 @@ import com.sonic.agent.tests.TaskManager;
 import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import com.sonic.agent.tests.android.InputSocketThread;
 import com.sonic.agent.tests.android.OutputSocketThread;
-import com.sonic.agent.tests.android.StartServerThread;
+import com.sonic.agent.tests.android.SonicLocalThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,24 +55,8 @@ public class MiniCapTool {
         } else {
             s = tor;
         }
-        int c = 0;
-        switch (s) {
-            case 0:
-                c = 0;
-                break;
-            case 1:
-                c = 90;
-                break;
-            case 2:
-                c = 180;
-                break;
-            case 3:
-                c = 270;
-                break;
-        }
-        int finalC = c;
-        // 启动mincap服务
-        StartServerThread miniCapPro = new StartServerThread(iDevice, pic, finalC, session, androidTestTaskBootThread);
+        // 启动minicap服务
+        SonicLocalThread miniCapPro = new SonicLocalThread(iDevice, pic, s * 90, session, androidTestTaskBootThread);
         TaskManager.startChildThread(key, miniCapPro);
 
         // 等待启动

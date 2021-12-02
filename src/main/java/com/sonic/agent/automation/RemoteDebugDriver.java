@@ -23,21 +23,17 @@ import org.springframework.context.annotation.DependsOn;
 public class RemoteDebugDriver {
     private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
     private static String chromePath;
-    private static String debugHost;
     private static int chromePort;
     public static WebDriver webDriver;
     @Value("${modules.webview.chrome-driver-path}")
     private String path;
     @Value("${modules.webview.chrome-driver-debug-port}")
     private int port;
-    @Value("${sonic.agent.host}")
-    private String agentHost;
 
     @Bean
     public void setChromePath() {
         chromePath = path;
         chromePort = port;
-        debugHost = agentHost;
     }
 
     @Bean
@@ -55,7 +51,7 @@ public class RemoteDebugDriver {
             } else {
                 chromeOptions.addArguments("--remote-debugging-port=" + chromePort);
             }
-            chromeOptions.addArguments("--remote-debugging-address=" + debugHost);
+            chromeOptions.addArguments("--remote-debugging-address=0.0.0.0");
             chromeOptions.addArguments("--headless");
             chromeOptions.addArguments("--no-sandbox");
             chromeOptions.addArguments("--disable-gpu");
@@ -65,6 +61,7 @@ public class RemoteDebugDriver {
         } catch (Exception e) {
             logger.info("chromeDriver启动失败！");
         }
+        System.out.println(1);
     }
 
     public static void close() {

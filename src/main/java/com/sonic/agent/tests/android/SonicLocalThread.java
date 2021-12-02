@@ -15,19 +15,19 @@ import java.util.concurrent.TimeUnit;
 import static com.sonic.agent.tools.AgentTool.sendText;
 
 /**
- * 启动mincap等服务的线程
+ * 启动minicap等服务的线程
  *
  * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:40 上午
  */
-public class StartServerThread extends Thread {
+public class SonicLocalThread extends Thread {
 
-    private final Logger log = LoggerFactory.getLogger(StartServerThread.class);
+    private final Logger log = LoggerFactory.getLogger(SonicLocalThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_START_MINCAP_SERVER_PRE = "android-start-mincap-server-task-%s-%s-%s";
+    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-start-minicap-server-task-%s-%s-%s";
 
     private IDevice iDevice;
 
@@ -44,8 +44,8 @@ public class StartServerThread extends Thread {
     private Semaphore isFinish = new Semaphore(0);
 
 
-    public StartServerThread(IDevice iDevice, String pic, int finalC, Session session,
-                             AndroidTestTaskBootThread androidTestTaskBootThread) {
+    public SonicLocalThread(IDevice iDevice, String pic, int finalC, Session session,
+                            AndroidTestTaskBootThread androidTestTaskBootThread) {
         this.iDevice = iDevice;
         this.pic = pic;
         this.finalC = finalC;
@@ -54,7 +54,7 @@ public class StartServerThread extends Thread {
         this.androidTestTaskBootThread = androidTestTaskBootThread;
 
         this.setDaemon(true);
-        this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_START_MINCAP_SERVER_PRE));
+        this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_START_MINICAP_SERVER_PRE));
     }
 
     public IDevice getiDevice() {
