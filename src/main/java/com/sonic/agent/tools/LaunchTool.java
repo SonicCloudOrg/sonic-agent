@@ -25,10 +25,11 @@ public class LaunchTool implements ApplicationRunner {
     public void destroy() throws InterruptedException {
         RemoteDebugDriver.close();
         AppiumServer.close();
-        Thread.sleep(3000);
-        while (true) {
+        while (AppiumServer.service != null) {
             if (!AppiumServer.service.isRunning()) {
                 break;
+            } else {
+                Thread.sleep(1000);
             }
         }
     }
