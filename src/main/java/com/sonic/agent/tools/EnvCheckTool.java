@@ -70,8 +70,11 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      */
     public void checkChromeDriver() throws IOException, InterruptedException {
         log.info("开始检查chrome driver环境");
-
-        chromeDriverPath = StringUtils.replace(chromeDriverPath, " ", "\\ ");
+        if (system.contains("win")) {
+            chromeDriverPath = "\"" + chromeDriverPath + "\"";
+        } else {
+            chromeDriverPath = StringUtils.replace(chromeDriverPath, " ", "\\ ");
+        }
         String commandStr = chromeDriverPath + " -v";
         chromeDriverVersion = exeCmd(false, commandStr);
         if (!StringUtils.hasText(chromeDriverVersion)) {
