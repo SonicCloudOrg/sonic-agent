@@ -19,7 +19,7 @@ import java.nio.charset.Charset;
  * 检查环境
  *
  * @author JayWenStar
- * @date 2021/12/4 10:52 下午
+ * @date 2021/12/5 02:36 上午
  */
 @Component
 public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> {
@@ -119,8 +119,7 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         String path = "";
         if (system.contains("win")) {
             path = exeCmd(false, "cmd", "/c", "where " +  command);
-        }
-        if (system.contains("linux") || system.contains("mac")) {
+        } else if (system.contains("linux") || system.contains("mac")) {
             path = exeCmd(false, "sh", "-c", "which " + command);
         } else {
             throw new RuntimeException("匹配系统失败，请联系开发者支持，当前系统为：" + system);
