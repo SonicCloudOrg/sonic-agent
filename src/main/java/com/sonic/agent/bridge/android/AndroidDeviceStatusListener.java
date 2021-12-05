@@ -8,12 +8,14 @@ import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.netty.NettyThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * @author ZhouYiXun
  * @des adb上下线监听，发送对应给server
  * @date 2021/08/16 19:26
  */
+@Component
 public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceChangeListener {
     private final Logger logger = LoggerFactory.getLogger(AndroidDeviceStatusListener.class);
 

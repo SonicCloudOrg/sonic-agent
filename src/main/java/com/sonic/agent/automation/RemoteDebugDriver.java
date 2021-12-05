@@ -9,9 +9,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.lang.NonNull;
 
 /**
  * @author ZhouYiXun
@@ -20,7 +23,7 @@ import org.springframework.context.annotation.DependsOn;
  */
 @ConditionalOnProperty(value = "modules.webview.enable", havingValue = "true")
 @Configuration
-public class RemoteDebugDriver {
+public class RemoteDebugDriver implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
     private static String chromePath;
     private static int chromePort;
@@ -36,8 +39,11 @@ public class RemoteDebugDriver {
         chromePort = port;
     }
 
-    @Bean
-    @DependsOn(value = "setChromePath")
+    @Override
+    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
+        startChromeDriver();
+    }
+
     public static void startChromeDriver() {
         logger.info("开启webview相关功能");
         System.setProperty("webdriver.chrome.silentOutput", "true");
