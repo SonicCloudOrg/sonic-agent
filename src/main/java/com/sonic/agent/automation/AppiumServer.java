@@ -26,8 +26,8 @@ public class AppiumServer {
         service.start();
     }
 
-    public static void close(){
-        if (service.isRunning()) {
+    public static void close() {
+        if (service != null && service.isRunning()) {
             service.stop();
         }
     }

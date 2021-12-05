@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -22,7 +23,7 @@ import java.util.List;
  * @date 2021/12/5 15:00
  */
 @Component
-public class EnvCheckTool  {
+public class EnvCheckTool {
 
     /**
      * 全局环境变量的JAVA_HOME，被appium使用，绝大多数情况下路径都能反映版本
@@ -94,6 +95,7 @@ public class EnvCheckTool  {
             if (webviewEnAble) {
                 checkChromeDriver();
             }
+            checkFiles();
         } catch (Exception e) {
             System.out.println(printInfo(e.getMessage()));
             System.out.println("===================== 配置环境检查结束 =====================");
@@ -104,6 +106,28 @@ public class EnvCheckTool  {
         System.out.println(this);
         System.out.println("===================== 配置环境检查结束 =====================");
         return true;
+    }
+
+    /**
+     * 检查本地文件
+     */
+    public void checkFiles() {
+        String type = "校验 本地文件夹 ";
+        File chromeDriver = new File("chromeDriver");
+        File config = new File("config/application-prod.yml");
+        File language = new File("language");
+        File mini = new File("mini");
+        File plugins = new File("plugins");
+        if (chromeDriver.exists()
+                && config.exists()
+                && language.exists()
+                && mini.exists()
+                && plugins.exists()) {
+            printPass(type);
+        } else {
+            printFail(type);
+            throw new RuntimeException("提示：请确保当前目录下有chromeDriver、config(内含application-prod.yml)、language、mini、plugins文件夹");
+        }
     }
 
     /**
@@ -197,7 +221,7 @@ public class EnvCheckTool  {
      */
     public void checkAdbKit() throws IOException, InterruptedException {
         String type = "检查 adbkit 环境";
-        String commandStr = "adbkit -v";
+        String commandStr = "adbkit -V";
         try {
             adbKitPath = findCommandPath("adbkit");
             adbKitVersion = exeCmd(false, commandStr);

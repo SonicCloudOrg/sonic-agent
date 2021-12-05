@@ -11,7 +11,7 @@ sonic:
 modules:
   android:
     enable: true
-    use-adbkit: false
+    use-adbkit: true
   ios:
     enable: false
     wda-bundle-id: com.sonic.wda
