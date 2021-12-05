@@ -109,8 +109,8 @@ public class EnvCheckTool  {
     /**
      * 检查java环境
      */
-    public void checkJavaHome() throws IOException, InterruptedException {
-        String type = "👉 检查 JAVA_HOME 环境变量";
+    public void checkJavaHome() {
+        String type = "检查 JAVA_HOME 环境变量";
         javaPath = System.getenv("JAVA_HOME");
         javaVersion = System.getProperty("java.version");
         if (!StringUtils.hasText(javaPath)) {
@@ -125,7 +125,7 @@ public class EnvCheckTool  {
      * 检查chromedriver环境
      */
     public void checkChromeDriver() throws IOException, InterruptedException {
-        String type = "👉 检查 chromeDriver 环境";
+        String type = "检查 chromeDriver 环境";
         if (system.contains("win")) {
             chromeDriverPath = "\"" + chromeDriverPath + "\"";
         } else {
@@ -147,7 +147,7 @@ public class EnvCheckTool  {
      * 检查sdk环境
      */
     public void checkSDK() {
-        String type = "👉 检查 ANDROID_HOME 环境变量";
+        String type = "检查 ANDROID_HOME 环境变量";
         sdkPath = System.getenv("ANDROID_HOME");
         if (!StringUtils.hasText(sdkPath)) {
             System.out.println("系统变量【ANDROID_HOME】返回值为空！");
@@ -162,7 +162,7 @@ public class EnvCheckTool  {
      * 检查adb环境
      */
     public void checkAdb() throws IOException, InterruptedException {
-        String type = "👉 检查 ADB 环境";
+        String type = "检查 ADB 环境";
         String commandStr = "adb version";
         try {
             adbPath = findCommandPath("adb");
@@ -179,7 +179,7 @@ public class EnvCheckTool  {
      * 检查tidevice环境
      */
     public void checkTIDevice() throws IOException, InterruptedException {
-        String type = "👉 检查 tidevice 环境";
+        String type = "检查 tidevice 环境";
         String commandStr = "tidevice -v";
         try {
             tidevicePath = findCommandPath("tidevice");
@@ -196,7 +196,7 @@ public class EnvCheckTool  {
      * 检查adbkit环境
      */
     public void checkAdbKit() throws IOException, InterruptedException {
-        String type = "👉 检查 adbkit 环境";
+        String type = "检查 adbkit 环境";
         String commandStr = "adbkit -v";
         try {
             adbKitPath = findCommandPath("adbkit");
@@ -213,7 +213,7 @@ public class EnvCheckTool  {
      * 检查node环境
      */
     public void checkNode() throws IOException, InterruptedException {
-        String type = "👉 检查 Node 环境";
+        String type = "检查 Node 环境";
         String commandStr = "node -v";
         try {
             nodePath = findCommandPath("node");
@@ -230,7 +230,7 @@ public class EnvCheckTool  {
      * 检查npm环境
      */
     public void checkNpm() throws IOException, InterruptedException {
-        String type = "👉 检查 npm 环境";
+        String type = "检查 npm 环境";
         String commandStr = "npm -v";
         try {
             npmPath = findCommandPath("npm");
@@ -247,7 +247,7 @@ public class EnvCheckTool  {
      * 检查appium环境
      */
     public void checkAppium() throws IOException, InterruptedException {
-        String type = "👉 检查 Appium 环境";
+        String type = "检查 Appium 环境";
         String commandStr = "appium -v";
         try {
             appiumPath = findCommandPath("appium");
@@ -279,15 +279,27 @@ public class EnvCheckTool  {
     }
 
     public void printPass(String s) {
-        System.out.println("\33[32;1m" + s + "通过 ✔\033[0m");
+        if (system.contains("win")) {
+            System.out.println("→ " + s + "通过 √");
+        } else {
+            System.out.println("\33[32;1m👉 " + s + "通过 ✔\033[0m");
+        }
     }
 
     public void printFail(String s) {
-        System.out.println("\33[31;1m" + s + "不通过 ❌\033[0m");
+        if (system.contains("win")) {
+            System.out.println("→ " + s + "不通过 ×");
+        } else {
+            System.out.println("\33[31;1m👉 " + s + "不通过 ❌\033[0m");
+        }
     }
 
     public String printInfo(String s) {
-        return "\33[34;1m" + s + "\033[0m";
+        if (system.contains("win")) {
+            return "· " + s;
+        } else {
+            return "\33[34;1m" + s + "\033[0m";
+        }
     }
 
     public static String exeCmd(boolean getError, String commandStr) throws IOException, InterruptedException {
