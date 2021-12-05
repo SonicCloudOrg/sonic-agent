@@ -1,7 +1,5 @@
 package com.sonic.agent.tools;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -26,7 +24,6 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
 
     public static String system;
     public static String javaPath;
-    public static String javaVersion;
     public static String sdkPath;
     public static String adbPath;
     public static String adbVersion;
@@ -89,21 +86,13 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
     /**
      * 检查java环境
      */
-    public void checkJavaHome() throws IOException, InterruptedException {
+    public void checkJavaHome() {
         String type = "检查 JAVA_HOME 环境变量";
-        String commandStr = "java -version";
-        javaPath = findLocalEnvPath("JAVA_HOME");
+        javaPath = System.getenv("JAVA_HOME");
         if (!StringUtils.hasText(javaPath)) {
             printFail(type);
-            throw new RuntimeException(String.format("系统变量【%s】返回值为空，" +
-                    "可前往https://www.oracle.com/java/technologies/downloads/下载jdk并设置JAVA_HOME系统变量", commandStr));
-        }
-        javaVersion = exeCmd(true, commandStr);
-        if (!StringUtils.hasText(javaVersion) ||
-                (!javaVersion.contains("Java(TM) SE Runtime Environment") && !javaVersion.contains("java version"))) {
-            printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，" +
-                    "可前往https://www.oracle.com/java/technologies/downloads/下载jdk并设置JAVA_HOME系统变量", commandStr));
+            throw new RuntimeException("系统变量【JAVA_HOME】返回值为空，" +
+                    "可前往https://www.oracle.com/java/technologies/downloads/下载jdk并设置JAVA_HOME系统变量");
         }
         printPass(type);
     }
@@ -280,7 +269,6 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
     @Override
     public String toString() {
         return printInfo("JAVA_HOME: ") + javaPath +
-                printInfo("java version: ") + javaVersion +
                 printInfo("ANDROID_HOME: ") + sdkPath +
                 printInfo("ADB path: ") + adbPath +
                 printInfo("ADB version: ") + adbVersion +
