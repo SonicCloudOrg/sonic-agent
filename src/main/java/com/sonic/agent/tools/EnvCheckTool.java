@@ -1,8 +1,10 @@
 package com.sonic.agent.tools;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -67,8 +69,7 @@ public class EnvCheckTool  {
     }
 
     @Bean
-    public void checkEnv() {
-        ConfigurableApplicationContext context = (ConfigurableApplicationContext) SpringTool.getApplicationContext();
+    public boolean checkEnv(ConfigurableApplicationContext context) {
         System.out.println("===================== 开始检查配置环境 =====================");
         try {
             if (androidEnAble) {
@@ -102,6 +103,7 @@ public class EnvCheckTool  {
         System.out.println("===================== 配置环境检查结果 =====================");
         System.out.println(this);
         System.out.println("===================== 配置环境检查结束 =====================");
+        return true;
     }
 
     /**
