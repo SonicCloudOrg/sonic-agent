@@ -1,10 +1,10 @@
 package com.sonic.agent.tools;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationListener;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.lang.NonNull;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -22,7 +22,7 @@ import java.util.List;
  * @date 2021/12/5 15:00
  */
 @Component
-public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> {
+public class EnvCheckTool  {
 
     /**
      * 全局环境变量的JAVA_HOME，被appium使用，绝大多数情况下路径都能反映版本
@@ -68,9 +68,8 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         system = System.getProperty("os.name").toLowerCase();
     }
 
-    @Override
-    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
-        ConfigurableApplicationContext context = (ConfigurableApplicationContext) event.getApplicationContext();
+    @Bean
+    public boolean checkEnv(ConfigurableApplicationContext context) {
         System.out.println("===================== 开始检查配置环境 =====================");
         try {
             if (androidEnAble) {
@@ -104,6 +103,7 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         System.out.println("===================== 配置环境检查结果 =====================");
         System.out.println(this);
         System.out.println("===================== 配置环境检查结束 =====================");
+        return true;
     }
 
     /**

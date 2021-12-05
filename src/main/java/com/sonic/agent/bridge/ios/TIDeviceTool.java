@@ -11,8 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -24,7 +27,7 @@ import java.util.List;
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 @DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
 @Component
-public class TIDeviceTool {
+public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(TIDeviceTool.class);
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
@@ -39,10 +42,12 @@ public class TIDeviceTool {
         ipa = getIpa;
     }
 
-    public TIDeviceTool() {
+    @Override
+    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         logger.info("开启iOS相关功能");
         init();
     }
+
 
     public static void init() {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
