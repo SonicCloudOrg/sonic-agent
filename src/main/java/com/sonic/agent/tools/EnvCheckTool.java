@@ -1,7 +1,5 @@
 package com.sonic.agent.tools;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -45,6 +43,10 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
     public static String npmVersion;
     public static String appiumPath;
     public static String appiumVersion;
+    public static String adbKitPath;
+    public static String adbKitVersion;
+    public static String tidevicePath;
+    public static String tideviceVersion;
 
     @Value("${modules.webview.chrome-driver-path}")
     public String chromeDriverPath;
@@ -73,13 +75,20 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
                 checkSDK();
                 checkAdb();
             }
+            if (iosEnAble) {
+                checkTIDevice();
+            }
+            //adbkit和appium依赖node服务
+            if (adbkitEnAble || appiumEnAble) {
+                checkNode();
+                checkNpm();
+            }
             if (appiumEnAble) {
                 checkJavaHome();
                 checkAppium();
             }
-            if (adbkitEnAble || appiumEnAble) {
-                checkNode();
-                checkNpm();
+            if (adbkitEnAble) {
+                checkAdbKit();
             }
             if (webviewEnAble) {
                 checkChromeDriver();
@@ -138,8 +147,8 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         sdkPath = System.getenv("ANDROID_HOME");
         if (!StringUtils.hasText(sdkPath)) {
             printFail(type);
-            throw new RuntimeException(String.format("系统变量【%s】返回值为空，可参考https://www.cnblogs.com/nebie/p/9145627.html" +
-                    "下载安卓SDK并设置ANDROID_HOME环境变量", sdkPath));
+            throw new RuntimeException(String.format("系统变量【ANDROID_HOME】返回值为空，可参考https://www.cnblogs.com/nebie/p/9145627.html" +
+                    "下载安卓SDK并设置ANDROID_HOME环境变量"));
         }
         printPass(type);
     }
@@ -155,6 +164,36 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         if (!StringUtils.hasText(adbVersion)) {
             printFail(type);
             throw new RuntimeException(String.format("执行命令【%s】返回值为空，请确保安卓SDK目录下的platform-tools有adb工具", commandStr));
+        }
+        printPass(type);
+    }
+
+    /**
+     * 检查tidevice环境
+     */
+    public void checkTIDevice() throws IOException, InterruptedException {
+        String type = "检查 tidevice 环境";
+        String commandStr = "tidevice -v";
+        tidevicePath = findCommandPath("tidevice");
+        tideviceVersion = exeCmd(false, commandStr);
+        if (!StringUtils.hasText(tideviceVersion)) {
+            printFail(type);
+            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可前往https://github.com/alibaba/taobao-iphone-device查看安装方式", commandStr));
+        }
+        printPass(type);
+    }
+
+    /**
+     * 检查adbkit环境
+     */
+    public void checkAdbKit() throws IOException, InterruptedException {
+        String type = "检查 adbkit 环境";
+        String commandStr = "adbkit -v";
+        adbKitPath = findCommandPath("adbkit");
+        adbKitVersion = exeCmd(false, commandStr);
+        if (!StringUtils.hasText(adbKitVersion)) {
+            printFail(type);
+            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可使用npm i -g adbkit安装", commandStr));
         }
         printPass(type);
     }
@@ -216,7 +255,7 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         }
 
         if (!StringUtils.hasText(path)) {
-            throw new RuntimeException(String.format("获取【%s】命令路径失败，请检查环境配置，当前系统为%s", command, system));
+            throw new RuntimeException(String.format("获取【%s】命令路径失败，请检查环境配置", command));
         }
 
         return path;
@@ -267,9 +306,9 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
 
     @Override
     public String toString() {
-        return printInfo("JAVA_HOME（系统全局）: ") + javaPath + "\n" +
-                printInfo("java version（实际运行jar的）: ") + javaVersion + "\n" +
-                printInfo("ANDROID_HOME: ") + sdkPath + "\n" +
+        return printInfo("JAVA_HOME（系统PATH环境变量）: ") + javaPath + "\n" +
+                printInfo("java version（运行当前jar的java版本）: ") + javaVersion + "\n" +
+                printInfo("ANDROID_HOME（系统PATH环境变量）: ") + sdkPath + "\n" +
                 printInfo("ADB path: ") + adbPath +
                 printInfo("ADB version: ") + adbVersion +
                 printInfo("chromeDriver path: ") + chromeDriverPath + "\n" +
@@ -278,8 +317,12 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
                 printInfo("Node version: ") + nodeVersion +
                 printInfo("npm path: ") + npmPath +
                 printInfo("npm version: ") + npmVersion +
+                printInfo("adbkit path: ") + adbKitPath +
+                printInfo("adbkit version: ") + adbKitVersion +
                 printInfo("Appium path: ") + appiumPath +
                 printInfo("Appium version: ") + appiumVersion +
+                printInfo("tidevice path: ") + tidevicePath +
+                printInfo("tidevice version: ") + tideviceVersion +
                 printInfo("System: ") + system;
     }
 }
