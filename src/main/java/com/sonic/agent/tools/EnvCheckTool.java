@@ -133,9 +133,9 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
     /**
      * 检查sdk环境
      */
-    public void checkSDK() throws IOException, InterruptedException {
+    public void checkSDK() {
         String type = "检查 ANDROID_HOME 环境变量";
-        sdkPath = findLocalEnvPath("ANDROID_HOME");
+        sdkPath = System.getenv("ANDROID_HOME");
         if (!StringUtils.hasText(sdkPath)) {
             printFail(type);
             throw new RuntimeException(String.format("系统变量【%s】返回值为空，可参考https://www.cnblogs.com/nebie/p/9145627.html" +
@@ -204,20 +204,6 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         printPass(type);
     }
 
-    public String findLocalEnvPath(String name) throws IOException, InterruptedException {
-
-        String path = "";
-        if (system.contains("win")) {
-            path = exeCmd(false, "cmd", "/c", "echo %" + name + "%");
-        } else if (system.contains("linux") || system.contains("mac")) {
-            path = exeCmd(false, "sh", "-c", "echo $" + name);
-        } else {
-            throw new RuntimeException("匹配系统失败，请联系开发者支持，当前系统为：" + system);
-        }
-
-        return path;
-    }
-
     public String findCommandPath(String command) throws IOException, InterruptedException {
 
         String path = "";
@@ -283,7 +269,7 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
     public String toString() {
         return printInfo("JAVA_HOME（系统全局）: ") + javaPath + "\n" +
                 printInfo("java version（实际运行jar的）: ") + javaVersion + "\n" +
-                printInfo("ANDROID_HOME: ") + sdkPath +
+                printInfo("ANDROID_HOME: ") + sdkPath + "\n" +
                 printInfo("ADB path: ") + adbPath +
                 printInfo("ADB version: ") + adbVersion +
                 printInfo("chromeDriver path: ") + chromeDriverPath + "\n" +
