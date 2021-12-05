@@ -12,6 +12,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * 检查环境
@@ -25,28 +27,28 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
     /**
      * 全局环境变量的JAVA_HOME，被appium使用，绝大多数情况下路径都能反映版本
      */
-    public static String javaPath;
+    public static String javaPath = "unknown \n";
 
     /**
      * 运行时的Java Version，假如上面的JAVA_HOME指向JDK 16，而启动的时候用 /{path}/JDK 17/java -jar 启动agent
      * 则此处javaVersion=JDK 17
      */
-    public static String javaVersion;
+    public static String javaVersion = "unknown \n";
 
     public static String system;
-    public static String sdkPath;
-    public static String adbPath;
-    public static String adbVersion;
-    public static String nodePath;
-    public static String nodeVersion;
-    public static String npmPath;
-    public static String npmVersion;
-    public static String appiumPath;
-    public static String appiumVersion;
-    public static String adbKitPath;
-    public static String adbKitVersion;
-    public static String tidevicePath;
-    public static String tideviceVersion;
+    public static String sdkPath = "unknown \n";
+    public static String adbPath = "unknown \n";
+    public static String adbVersion = "unknown \n";
+    public static String nodePath = "unknown \n";
+    public static String nodeVersion = "unknown \n";
+    public static String npmPath = "unknown \n";
+    public static String npmVersion = "unknown \n";
+    public static String appiumPath = "unknown \n";
+    public static String appiumVersion = "unknown \n";
+    public static String adbKitPath = "unknown \n";
+    public static String adbKitVersion = "unknown \n";
+    public static String tidevicePath = "unknown \n";
+    public static String tideviceVersion = "unknown \n";
 
     @Value("${modules.webview.chrome-driver-path}")
     public String chromeDriverPath;
@@ -94,7 +96,7 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
                 checkChromeDriver();
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println(printInfo(e.getMessage()));
             System.out.println("===================== 配置环境检查结束 =====================");
             context.close();
             System.exit(0);
@@ -108,13 +110,13 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查java环境
      */
     public void checkJavaHome() throws IOException, InterruptedException {
-        String type = "检查 JAVA_HOME 环境变量";
+        String type = "👉 检查 JAVA_HOME 环境变量";
         javaPath = System.getenv("JAVA_HOME");
         javaVersion = System.getProperty("java.version");
         if (!StringUtils.hasText(javaPath)) {
+            System.out.println("系统变量【JAVA_HOME】返回值为空！");
             printFail(type);
-            throw new RuntimeException("系统变量【JAVA_HOME】返回值为空，" +
-                    "可前往https://www.oracle.com/java/technologies/downloads/下载jdk并设置JAVA_HOME系统变量");
+            throw new RuntimeException("提示：可前往https://www.oracle.com/java/technologies/downloads/下载jdk并设置JAVA_HOME系统变量");
         }
         printPass(type);
     }
@@ -123,18 +125,20 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查chromedriver环境
      */
     public void checkChromeDriver() throws IOException, InterruptedException {
-        String type = "检查 chromeDriver 环境";
+        String type = "👉 检查 chromeDriver 环境";
         if (system.contains("win")) {
             chromeDriverPath = "\"" + chromeDriverPath + "\"";
         } else {
             chromeDriverPath = StringUtils.replace(chromeDriverPath, " ", "\\ ");
         }
         String commandStr = chromeDriverPath + " -v";
-        chromeDriverVersion = exeCmd(false, commandStr);
-        if (!StringUtils.hasText(chromeDriverVersion)) {
+        try {
+            chromeDriverVersion = exeCmd(false, commandStr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可前往http://npm.taobao.org/mirrors/chromedriver/下载" +
-                    "与Agent的谷歌浏览器版本对应的driver到谷歌浏览器安装目录下（谷歌浏览器地址栏输入chrome://version可看到安装目录）", commandStr));
+            throw new RuntimeException(String.format("提示：可前往http://npm.taobao.org/mirrors/chromedriver/下载" +
+                    "与Agent的谷歌浏览器版本对应的driver到谷歌浏览器安装目录下（谷歌浏览器地址栏输入chrome://version可看到安装目录）"));
         }
         printPass(type);
     }
@@ -143,11 +147,12 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查sdk环境
      */
     public void checkSDK() {
-        String type = "检查 ANDROID_HOME 环境变量";
+        String type = "👉 检查 ANDROID_HOME 环境变量";
         sdkPath = System.getenv("ANDROID_HOME");
         if (!StringUtils.hasText(sdkPath)) {
+            System.out.println("系统变量【ANDROID_HOME】返回值为空！");
             printFail(type);
-            throw new RuntimeException(String.format("系统变量【ANDROID_HOME】返回值为空，可参考https://www.cnblogs.com/nebie/p/9145627.html" +
+            throw new RuntimeException(String.format("提示：可参考https://www.cnblogs.com/nebie/p/9145627.html" +
                     "下载安卓SDK并设置ANDROID_HOME环境变量"));
         }
         printPass(type);
@@ -157,13 +162,15 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查adb环境
      */
     public void checkAdb() throws IOException, InterruptedException {
-        String type = "检查 ADB 环境";
+        String type = "👉 检查 ADB 环境";
         String commandStr = "adb version";
-        adbPath = findCommandPath("adb");
-        adbVersion = exeCmd(false, commandStr);
-        if (!StringUtils.hasText(adbVersion)) {
+        try {
+            adbPath = findCommandPath("adb");
+            adbVersion = exeCmd(false, commandStr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，请确保安卓SDK目录下的platform-tools有adb工具", commandStr));
+            throw new RuntimeException(String.format("提示：请确保安卓SDK目录下的platform-tools有adb工具"));
         }
         printPass(type);
     }
@@ -172,13 +179,15 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查tidevice环境
      */
     public void checkTIDevice() throws IOException, InterruptedException {
-        String type = "检查 tidevice 环境";
+        String type = "👉 检查 tidevice 环境";
         String commandStr = "tidevice -v";
-        tidevicePath = findCommandPath("tidevice");
-        tideviceVersion = exeCmd(false, commandStr);
-        if (!StringUtils.hasText(tideviceVersion)) {
+        try {
+            tidevicePath = findCommandPath("tidevice");
+            tideviceVersion = exeCmd(false, commandStr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可前往https://github.com/alibaba/taobao-iphone-device查看安装方式", commandStr));
+            throw new RuntimeException(String.format("提示：可前往https://github.com/alibaba/taobao-iphone-device查看安装方式"));
         }
         printPass(type);
     }
@@ -187,13 +196,15 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查adbkit环境
      */
     public void checkAdbKit() throws IOException, InterruptedException {
-        String type = "检查 adbkit 环境";
+        String type = "👉 检查 adbkit 环境";
         String commandStr = "adbkit -v";
-        adbKitPath = findCommandPath("adbkit");
-        adbKitVersion = exeCmd(false, commandStr);
-        if (!StringUtils.hasText(adbKitVersion)) {
+        try {
+            adbKitPath = findCommandPath("adbkit");
+            adbKitVersion = exeCmd(false, commandStr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可使用npm i -g adbkit安装", commandStr));
+            throw new RuntimeException(String.format("提示：可使用npm i -g adbkit安装"));
         }
         printPass(type);
     }
@@ -202,13 +213,15 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查node环境
      */
     public void checkNode() throws IOException, InterruptedException {
-        String type = "检查 Node 环境";
+        String type = "👉 检查 Node 环境";
         String commandStr = "node -v";
-        nodePath = findCommandPath("node");
-        nodeVersion = exeCmd(false, commandStr);
-        if (!StringUtils.hasText(nodeVersion)) {
+        try {
+            nodePath = findCommandPath("node");
+            nodeVersion = exeCmd(false, commandStr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可前往https://nodejs.org/zh-cn/下载", commandStr));
+            throw new RuntimeException(String.format("提示：可前往https://nodejs.org/zh-cn/下载"));
         }
         printPass(type);
     }
@@ -217,13 +230,15 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查npm环境
      */
     public void checkNpm() throws IOException, InterruptedException {
-        String type = "检查 npm 环境";
+        String type = "👉 检查 npm 环境";
         String commandStr = "npm -v";
-        npmPath = findCommandPath("npm");
-        npmVersion = exeCmd(false, commandStr);
-        if (!StringUtils.hasText(adbVersion)) {
+        try {
+            npmPath = findCommandPath("npm");
+            npmVersion = exeCmd(false, commandStr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可前往https://nodejs.org/zh-cn/下载", commandStr));
+            throw new RuntimeException(String.format("提示：可前往https://nodejs.org/zh-cn/下载"));
         }
         printPass(type);
     }
@@ -232,13 +247,15 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
      * 检查appium环境
      */
     public void checkAppium() throws IOException, InterruptedException {
-        String type = "检查 Appium 环境";
+        String type = "👉 检查 Appium 环境";
         String commandStr = "appium -v";
-        appiumPath = findCommandPath("appium");
-        appiumVersion = exeCmd(false, commandStr);
-        if (!StringUtils.hasText(appiumVersion)) {
+        try {
+            appiumPath = findCommandPath("appium");
+            appiumVersion = exeCmd(false, commandStr);
+        } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("执行命令【%s】返回值为空，可使用npm i -g appium命令安装", commandStr));
+            throw new RuntimeException(String.format("提示：可使用npm i -g appium命令安装"));
         }
         printPass(type);
     }
@@ -255,7 +272,7 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         }
 
         if (!StringUtils.hasText(path)) {
-            throw new RuntimeException(String.format("获取【%s】命令路径失败，请检查环境配置", command));
+            throw new RuntimeException(String.format("获取【%s】路径出错！", command));
         }
 
         return path;
@@ -301,6 +318,10 @@ public class EnvCheckTool implements ApplicationListener<ContextRefreshedEvent> 
         }
         result = sb.toString();
 
+        if (!StringUtils.hasText(result)) {
+            List<String> c = Arrays.stream(commandStr).toList();
+            throw new RuntimeException(String.format("执行【%s】命令出错！", c.get(c.size() - 1)));
+        }
         return result;
     }
 
