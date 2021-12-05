@@ -40,6 +40,7 @@ public class RemoteDebugDriver {
     @DependsOn(value = "setChromePath")
     public static void startChromeDriver() {
         logger.info("开启webview相关功能");
+        System.setProperty("webdriver.chrome.silentOutput", "true");
         try {
             DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
             ChromeOptions chromeOptions = new ChromeOptions();
@@ -58,6 +59,7 @@ public class RemoteDebugDriver {
             chromeOptions.addArguments("--disable-dev-shm-usage");
             desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
             webDriver = new ChromeDriver(desiredCapabilities);
+            logger.info("chromeDriver启动完毕！");
         } catch (Exception e) {
             logger.info("chromeDriver启动失败！");
         }

@@ -11,10 +11,13 @@ sonic:
 modules:
   android:
     enable: true
+    use-adbkit: true
   ios:
     enable: false
     wda-bundle-id: com.sonic.wda
     wda-ipa-name: sonic-wda.ipa
+  appium:
+    enable: true
   webview:
     enable: true
     chrome-driver-debug-port: 7778
