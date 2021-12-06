@@ -52,6 +52,8 @@ public class AndroidWSServer {
     private String key;
     @Value("${modules.webview.chrome-driver-debug-port}")
     private int chromePort;
+    @Value("${modules.android.use-adbkit}")
+    private boolean isEnableAdbKit;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
@@ -238,6 +240,12 @@ public class AndroidWSServer {
         });
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session)));
+
+        if (isEnableAdbKit) {
+            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+
+            });
+        }
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
             AndroidStepHandler androidStepHandler = new AndroidStepHandler();

@@ -355,8 +355,8 @@ public class EnvCheckTool {
         result = sb.toString();
 
         if (!StringUtils.hasText(result)) {
-            List<String> c = Arrays.stream(commandStr).toList();
-            throw new RuntimeException(String.format("执行【%s】命令出错！", c.get(c.size() - 1)));
+            Object[] c = Arrays.stream(commandStr).toArray();
+            throw new RuntimeException(String.format("执行【%s】命令出错！", c.length > 0 ? c[c.length - 1] : "unknown"));
         }
         return result;
     }
