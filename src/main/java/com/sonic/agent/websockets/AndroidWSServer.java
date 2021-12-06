@@ -242,9 +242,7 @@ public class AndroidWSServer {
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session)));
 
         if (isEnableAdbKit) {
-            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
 
-            });
         }
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
