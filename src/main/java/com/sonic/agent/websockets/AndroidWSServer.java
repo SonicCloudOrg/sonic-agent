@@ -558,6 +558,14 @@ public class AndroidWSServer {
             }
         }
         webViewForwardMap.remove(udIdMap.get(session));
+        if (isEnableAdbKit) {
+            String processName = String.format("process-%s-adbkit", udIdMap.get(session).getSerialNumber());
+            if (GlobalProcessMap.getMap().get(processName) != null) {
+                Process ps = GlobalProcessMap.getMap().get(processName);
+                ps.children().forEach(ProcessHandle::destroy);
+                ps.destroy();
+            }
+        }
         outputMap.remove(session);
         udIdMap.remove(session);
         rotationMap.get(session).interrupt();
