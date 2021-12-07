@@ -26,7 +26,7 @@ import org.springframework.lang.NonNull;
 public class RemoteDebugDriver implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
     private static String chromePath;
-    private static int chromePort;
+    public static int chromePort;
     public static WebDriver webDriver;
     @Value("${modules.webview.chrome-driver-path}")
     private String path;

@@ -2,6 +2,7 @@ package com.sonic.agent.tools;
 
 import com.sonic.agent.automation.AppiumServer;
 import com.sonic.agent.automation.RemoteDebugDriver;
+import com.sonic.agent.maps.GlobalProcessMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -24,6 +25,11 @@ public class LaunchTool implements ApplicationRunner {
     @PreDestroy
     public void destroy() throws InterruptedException {
         RemoteDebugDriver.close();
+        for (String key : GlobalProcessMap.getMap().keySet()) {
+            Process ps = GlobalProcessMap.getMap().get(key);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
         AppiumServer.close();
         while (AppiumServer.service != null) {
             if (!AppiumServer.service.isRunning()) {
