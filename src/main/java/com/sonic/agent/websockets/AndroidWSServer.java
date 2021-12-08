@@ -18,10 +18,7 @@ import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.maps.MiniCapMap;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.netty.NettyThreadPool;
-import com.sonic.agent.tools.MiniCapTool;
-import com.sonic.agent.tools.PortTool;
-import com.sonic.agent.tools.ProcessCommandTool;
-import com.sonic.agent.tools.UploadTools;
+import com.sonic.agent.tools.*;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.sonic.agent.tools.AgentTool.sendText;
 
 @Component
-@ServerEndpoint(value = "/websockets/android/{key}/{udId}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class AndroidWSServer {
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
     @Value("${sonic.agent.key}")
@@ -63,11 +60,17 @@ public class AndroidWSServer {
     private RestTemplate restTemplate;
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
-        if (secretKey.length() == 0 || (!secretKey.equals(key))) {
+    public void onOpen(Session session, @PathParam("key") String secretKey,
+                       @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
             logger.info("拦截访问！");
             return;
         }
+        JSONObject jsonDebug = new JSONObject();
+        jsonDebug.put("msg", "debugUser");
+        jsonDebug.put("token", token);
+        jsonDebug.put("udId", udId);
+        NettyThreadPool.send(jsonDebug);
         WebSocketSessionMap.getMap().put(session.getId(), session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
