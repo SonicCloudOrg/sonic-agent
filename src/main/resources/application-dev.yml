@@ -14,8 +14,7 @@ modules:
     use-adbkit: true
   ios:
     enable: false
-    wda-bundle-id: com.sonic.wda
-    wda-ipa-name: sonic-wda.ipa
+    wda-bundle-id: com.sonic.wda.xctrunner
   appium:
     enable: true
   webview:
