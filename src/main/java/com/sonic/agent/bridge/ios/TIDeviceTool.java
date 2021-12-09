@@ -11,8 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -24,25 +27,23 @@ import java.util.List;
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 @DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
 @Component
-public class TIDeviceTool {
+public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(TIDeviceTool.class);
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
     private static String bundleId;
-    @Value("${modules.ios.wda-ipa-name}")
-    private String getIpa;
-    private static String ipa;
 
     @Bean
     public void setEnv() {
         bundleId = getBundleId;
-        ipa = getIpa;
     }
 
-    public TIDeviceTool() {
+    @Override
+    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         logger.info("开启iOS相关功能");
         init();
     }
+
 
     public static void init() {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -146,34 +147,38 @@ public class TIDeviceTool {
 
     public static int startWda(String udId) throws IOException, InterruptedException {
         synchronized (TIDeviceTool.class) {
-            Runtime.getRuntime().exec("tidevice -u " + udId + " uninstall " + bundleId);
-            Thread.sleep(500);
-            Runtime.getRuntime().exec("tidevice -u " + udId + " install plugins/" + ipa);
-            Thread.sleep(1000);
-            int port = PortTool.getPort();
-            Process wdaProcess = Runtime.getRuntime().exec("tidevice -u " + udId +
-                    " wdaproxy" + " -B " + bundleId +
-                    " --port " + port);
-            BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(wdaProcess.getInputStream()));
-            String s;
-            while ((s = stdInput.readLine()) != null) {
-                if (s.contains("WebDriverAgent start successfully")) {
-                    logger.info(udId + " wda启动完毕！");
-                    break;
-                } else {
-                    Thread.sleep(500);
-                }
-            }
             List<Process> processList;
             if (IOSProcessMap.getMap().get(udId) != null) {
                 processList = IOSProcessMap.getMap().get(udId);
                 for (Process p : processList) {
                     if (p != null) {
+                        p.children().forEach(ProcessHandle::destroy);
                         p.destroy();
                     }
                 }
             }
+            int port = PortTool.getPort();
+            Process wdaProcess;
+            String commandLine = "tidevice -u " + udId +
+                    " wdaproxy" + " -B " + bundleId +
+                    " --port " + port;
+            if (System.getProperty("os.name").contains("Mac")) {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
+            } else {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
+            }
+//            BufferedReader stdInput = new BufferedReader(new
+//                    InputStreamReader(wdaProcess.getInputStream()));
+//            String s;
+//            while ((s = stdInput.readLine()) != null) {
+//                if (s.contains("WebDriverAgent start successfully")) {
+//                    logger.info(udId + " wda启动完毕！");
+//                    break;
+//                } else {
+//                    Thread.sleep(500);
+//                }
+//            }
+            Thread.sleep(3000);
             processList = new ArrayList<>();
             processList.add(wdaProcess);
             IOSProcessMap.getMap().put(udId, processList);
@@ -183,8 +188,14 @@ public class TIDeviceTool {
 
     public static int relayImg(String udId) throws IOException {
         int port = PortTool.getPort();
-        Process relayProcess = Runtime.getRuntime().exec("tidevice -u " + udId +
-                " relay " + port + " " + 9100);
+        Process relayProcess;
+        String commandLine = "tidevice -u " + udId +
+                " relay " + port + " " + 9100;
+        if (System.getProperty("os.name").contains("Mac")) {
+            relayProcess = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
+        } else {
+            relayProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
+        }
         List<Process> processList;
         if (IOSProcessMap.getMap().get(udId) != null) {
             processList = IOSProcessMap.getMap().get(udId);

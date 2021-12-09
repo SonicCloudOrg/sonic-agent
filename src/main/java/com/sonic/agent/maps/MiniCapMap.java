@@ -6,9 +6,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 public class MiniCapMap {
-    private static Map<Session, Future<?>> miniCapMap = new ConcurrentHashMap<>();
+    private static Map<Session, Thread> miniCapMap = new ConcurrentHashMap<>();
 
-    public static Map<Session, Future<?>> getMap() {
+    public static Map<Session, Thread> getMap() {
         return miniCapMap;
     }
 }

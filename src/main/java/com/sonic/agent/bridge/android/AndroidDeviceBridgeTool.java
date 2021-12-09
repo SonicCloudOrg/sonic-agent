@@ -1,15 +1,17 @@
 package com.sonic.agent.bridge.android;
 
-import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -22,12 +24,16 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnProperty(value = "modules.android.enable", havingValue = "true")
 @DependsOn({"androidThreadPoolInit", "nettyMsgInit"})
 @Component
-public class AndroidDeviceBridgeTool {
+public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     private static AndroidDebugBridge androidDebugBridge = null;
-    private static AndroidDeviceStatusListener androidDeviceStatusListener = new AndroidDeviceStatusListener();
 
-    public AndroidDeviceBridgeTool() {
+    @Autowired
+    private AndroidDeviceStatusListener androidDeviceStatusListener;
+
+
+    @Override
+    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         logger.info("开启安卓相关功能");
         init();
     }
@@ -55,7 +61,7 @@ public class AndroidDeviceBridgeTool {
      * @des 定义方法
      * @date 2021/8/16 19:36
      */
-    public static void init() {
+    public void init() {
         //获取系统SDK路径
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
@@ -141,10 +147,19 @@ public class AndroidDeviceBridgeTool {
     public static String getScreenSize(IDevice iDevice) {
         String size = "";
         try {
-            //不同机型获取的结果有偏差，需要去掉空格、/r、/n和异常情况
-            size = executeCommand(iDevice, "wm size").split(":")[1].trim()
-                    .replace("\r", "").replace("\n", "")
-                    .replace("Override size", "");
+            size = executeCommand(iDevice, "wm size");
+            if (size.contains("Override size")) {
+                size = size.substring(size.indexOf("Override size"));
+            } else {
+                size = size.split(":")[1];
+            }
+            //注意顺序问题
+            size = size.trim()
+                    .replace(":", "")
+                    .replace("Override size", "")
+                    .replace("\r", "")
+                    .replace("\n", "")
+                    .replace(" ", "");
             if (size.length() > 20) {
                 size = "未知";
             }
@@ -347,7 +362,7 @@ public class AndroidDeviceBridgeTool {
         }
     }
 
-    public static void searchDevice(IDevice iDevice){
+    public static void searchDevice(IDevice iDevice) {
         executeCommand(iDevice, "am start -n com.sonic.plugins.assist/com.sonic.plugins.assist.SearchActivity");
     }
 
