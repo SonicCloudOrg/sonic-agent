@@ -11,7 +11,7 @@ sonic:
 modules:
   android:
     enable: true
-    use-adbkit: true
+    use-adbkit: false
   ios:
     enable: false
     wda-bundle-id: com.sonic.wda.xctrunner
