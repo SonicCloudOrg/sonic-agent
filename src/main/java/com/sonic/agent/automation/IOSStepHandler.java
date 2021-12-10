@@ -10,6 +10,7 @@ import com.sonic.agent.maps.IOSProcessMap;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MobileBy;
+import io.appium.java_client.Setting;
 import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
 import io.appium.java_client.android.nativekey.AndroidKey;
 import io.appium.java_client.android.nativekey.KeyEvent;
@@ -68,6 +69,7 @@ public class IOSStepHandler {
         try {
             iosDriver = new IOSDriver(AppiumServer.service.getUrl(), desiredCapabilities);
             iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+            iosDriver.setSetting(Setting.MJPEG_SERVER_FRAMERATE, "24");
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
@@ -95,6 +97,7 @@ public class IOSStepHandler {
                     List<Process> processList = IOSProcessMap.getMap().get(udId);
                     for (Process p : processList) {
                         if (p != null) {
+                            p.children().forEach(ProcessHandle::destroy);
                             p.destroy();
                         }
                     }

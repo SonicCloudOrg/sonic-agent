@@ -19,12 +19,12 @@ modules:
   android:
     enable: true
     # 是否开启远程adb调试功能
-    use-adbkit: false
+    use-adbkit: true
   # iOS模块配置
   ios:
     enable: true
-    #替换为wda的bundleId，正常要添加.xctrunner后缀
-    wda-bundle-id: com.sonic.wda.xctrunner
+    #替换为你自己使用的wda的bundleId，正常要添加.xctrunner后缀，建议使用公司的开发者证书
+    wda-bundle-id: com.facebook.WebDriverAgentRunner.xctrunner
   appium:
     enable: true
   # 在线webView调试模块配置
