@@ -44,7 +44,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
-@ServerEndpoint(value = "/websockets/ios/{key}/{udId}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class IOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
     private Map<Session, String> udIdMap = new ConcurrentHashMap<>();
@@ -52,11 +52,17 @@ public class IOSWSServer {
     private String key;
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
-        if (secretKey.length() == 0 || (!secretKey.equals(key))) {
+    public void onOpen(Session session, @PathParam("key") String secretKey,
+                       @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
             logger.info("拦截访问！");
             return;
         }
+        JSONObject jsonDebug = new JSONObject();
+        jsonDebug.put("msg", "debugUser");
+        jsonDebug.put("token", token);
+        jsonDebug.put("udId", udId);
+        NettyThreadPool.send(jsonDebug);
         WebSocketSessionMap.getMap().put(session.getId(), session);
         if (!TIDeviceTool.getDeviceList().contains(udId)) {
             logger.info("设备未连接，请检查！");
@@ -72,6 +78,8 @@ public class IOSWSServer {
                 int imgPort = iosStepHandler.startIOSDriver(udId);
                 result.put("status", "success");
                 result.put("port", imgPort);
+                result.put("width", iosStepHandler.getDriver().manage().window().getSize().width);
+                result.put("height", iosStepHandler.getDriver().manage().window().getSize().height);
                 result.put("detail", "初始化Driver完成！");
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
             } catch (Exception e) {
@@ -252,7 +260,7 @@ public class IOSWSServer {
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("关闭driver异常!");
         } finally {
             HandlerMap.getIOSMap().remove(session.getId());
         }

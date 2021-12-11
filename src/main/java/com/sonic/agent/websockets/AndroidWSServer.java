@@ -550,7 +550,7 @@ public class AndroidWSServer {
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.info("关闭driver异常!");
         } finally {
             HandlerMap.getAndroidMap().remove(session.getId());
         }

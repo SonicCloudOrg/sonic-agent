@@ -1,16 +1,16 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ZhouYixun/sonic-server/main/logo.png">
+  <img src="https://raw.githubusercontent.com/SonicCloudOrg/sonic-server/main/logo.png">
 </p>
 <p align="center">🎉Sonic云真机测试平台Agent端</p>
 <p align="center">
-  <a href="https://github.com/ZhouYixun/sonic-agent/blob/main/README.md">  
+  <a href="https://github.com/SonicCloudOrg/sonic-agent/blob/main/README.md">  
     English
   </a>
   <span>| 简体中文</span>
 </p>
 <p align="center">
   <a href="#">  
-    <img src="https://img.shields.io/badge/release-v1.1.0-orange">
+    <img src="https://img.shields.io/badge/release-v1.2.0-orange">
   </a>
   <a href="#">  
     <img src="https://img.shields.io/badge/platform-windows|macosx|linux-success">
@@ -18,18 +18,18 @@
 </p>
 <p align="center">
   <a href="#">  
-    <img src="https://img.shields.io/github/commit-activity/m/ZhouYixun/sonic-agent">
+    <img src="https://img.shields.io/github/commit-activity/m/SonicCloudOrg/sonic-agent">
   </a>
   <a href="#">  
-    <img src="https://img.shields.io/github/downloads/ZhouYixun/sonic-agent/total">
+    <img src="https://img.shields.io/github/downloads/SonicCloudOrg/sonic-agent/total">
   </a>
-  <a href="https://github.com/ZhouYixun/sonic-server/blob/main/LICENSE">  
-    <img src="https://img.shields.io/github/license/ZhouYiXun/sonic-server?color=green&label=license&logo=license&logoColor=green">
+  <a href="https://github.com/SonicCloudOrg/sonic-server/blob/main/LICENSE">  
+    <img src="https://img.shields.io/github/license/SonicCloudOrg/sonic-server?color=green&label=license&logo=license&logoColor=green">
   </a>
 </p>
 
 ### 官方网站
-[Sonic Official Website](http://zhouyixun.gitee.io/sonic-official-website)
+[Sonic Official Website](http://sonic-cloud.gitee.io)
 ## 背景
 
 #### 什么是Sonic？
@@ -62,7 +62,7 @@ mvn package -Pwindows-x86_64
 
 > 仅Linux和Mac可用！
 >
-> [点击这里!](https://hub.docker.com/repository/docker/zhouyixun/sonic-agent-linux)
+> [点击这里!](https://hub.docker.com/repository/docker/sonicorg)
 
 ### jar模式
 
