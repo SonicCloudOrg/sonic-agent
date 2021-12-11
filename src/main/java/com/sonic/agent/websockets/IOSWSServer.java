@@ -72,6 +72,8 @@ public class IOSWSServer {
                 int imgPort = iosStepHandler.startIOSDriver(udId);
                 result.put("status", "success");
                 result.put("port", imgPort);
+                result.put("width", iosStepHandler.getDriver().manage().window().getSize().width);
+                result.put("height", iosStepHandler.getDriver().manage().window().getSize().height);
                 result.put("detail", "初始化Driver完成！");
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
             } catch (Exception e) {
