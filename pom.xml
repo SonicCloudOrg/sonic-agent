@@ -6,7 +6,7 @@
 
     <groupId>com.sonic</groupId>
     <artifactId>sonic-agent</artifactId>
-    <version>v1.2.0-rc</version>
+    <version>v1.2.0-release</version>
     <packaging>jar</packaging>
 
     <properties>
