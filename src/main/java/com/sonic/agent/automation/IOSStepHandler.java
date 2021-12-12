@@ -65,7 +65,8 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability(IOSMobileCapabilityType.WEB_DRIVER_AGENT_URL, "http://127.0.0.1:" + wdaPort);
         desiredCapabilities.setCapability("useXctestrunFile", false);
         desiredCapabilities.setCapability("mjpegServerPort", imgPort);
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, true);
+        //bug?
+        desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, false);
         try {
             iosDriver = new IOSDriver(AppiumServer.service.getUrl(), desiredCapabilities);
             iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
