@@ -144,6 +144,9 @@ public class AndroidTestTaskBootThread extends Thread {
 
     @Override
     public void run() {
+
+        boolean startTestSuccess = false;
+
         try {
             int wait = 0;
             while (!AndroidDeviceLocalStatus.startTest(udId)) {
@@ -161,6 +164,7 @@ public class AndroidTestTaskBootThread extends Thread {
             //启动测试
             try {
                 androidStepHandler.startAndroidDriver(udId);
+                startTestSuccess = true;
             } catch (Exception e) {
                 log.error(e.getMessage());
                 androidStepHandler.closeAndroidDriver();
@@ -194,9 +198,11 @@ public class AndroidTestTaskBootThread extends Thread {
             log.error("任务异常，中断：{}", e.getMessage());
             androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
         } finally {
-            AndroidDeviceLocalStatus.finish(udId);
-            androidStepHandler.closeAndroidDriver();
-            androidStepHandler.sendStatus();
+            if (startTestSuccess) {
+                AndroidDeviceLocalStatus.finish(udId);
+                androidStepHandler.closeAndroidDriver();
+                androidStepHandler.sendStatus();
+            }
         }
     }
 }
