@@ -201,8 +201,8 @@ public class AndroidTestTaskBootThread extends Thread {
             if (startTestSuccess) {
                 AndroidDeviceLocalStatus.finish(udId);
                 androidStepHandler.closeAndroidDriver();
-                androidStepHandler.sendStatus();
             }
+            androidStepHandler.sendStatus();
         }
     }
 }
