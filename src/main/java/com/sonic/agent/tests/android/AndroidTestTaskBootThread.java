@@ -161,10 +161,10 @@ public class AndroidTestTaskBootThread extends Thread {
                 }
             }
 
+            startTestSuccess = true;
             //启动测试
             try {
                 androidStepHandler.startAndroidDriver(udId);
-                startTestSuccess = true;
             } catch (Exception e) {
                 log.error(e.getMessage());
                 androidStepHandler.closeAndroidDriver();
