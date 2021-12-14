@@ -3,6 +3,7 @@ package com.sonic.agent.bridge.ios;
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.maps.IOSDeviceManagerMap;
+import com.sonic.agent.maps.IOSSizeMap;
 import com.sonic.agent.netty.NettyThreadPool;
 
 public class IOSDeviceLocalStatus {
@@ -10,6 +11,7 @@ public class IOSDeviceLocalStatus {
     public static void send(String udId, String status) {
         JSONObject deviceDetail = new JSONObject();
         deviceDetail.put("msg", "deviceDetail");
+        deviceDetail.put("size", IOSSizeMap.getMap().get(udId));
         deviceDetail.put("udId", udId);
         deviceDetail.put("status", status);
         NettyThreadPool.send(deviceDetail);

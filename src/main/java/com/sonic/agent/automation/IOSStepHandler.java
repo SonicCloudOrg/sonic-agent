@@ -7,6 +7,7 @@ import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.maps.IOSProcessMap;
+import com.sonic.agent.maps.IOSSizeMap;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MobileBy;
@@ -78,6 +79,9 @@ public class IOSStepHandler {
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
+        int width = iosDriver.manage().window().getSize().width;
+        int height = iosDriver.manage().window().getSize().height;
+        IOSSizeMap.getMap().put(udId, width + "x" + height);
         return imgPort;
     }
 
