@@ -10,7 +10,7 @@ public class AndroidTemperThread extends Thread{
     public void run() {
         IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
         for(IDevice iDevice:deviceList){
-
+            AndroidDeviceBridgeTool.executeCommand(iDevice,"dumpsys battery");
         }
     }
 }
