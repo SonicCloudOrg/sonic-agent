@@ -120,6 +120,11 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 60000);
         //UIA2安装超时时间
         desiredCapabilities.setCapability("uiautomator2ServerInstallTimeout", 30000);
+
+        //io.appium.uiautomator2.server io.appium.uiautomator2.server.test //io.appium.settings
+//        desiredCapabilities.setCapability("skipServerInstallation",true);
+//        desiredCapabilities.setCapability("disableWindowAnimation",true);
+//        desiredCapabilities.setCapability("skipDeviceInitialization",true);
         //等待新命令超时时间
         desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 3600);
         //不重置应用
