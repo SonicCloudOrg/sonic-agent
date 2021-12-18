@@ -67,7 +67,8 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability("useXctestrunFile", false);
         desiredCapabilities.setCapability("mjpegServerPort", imgPort);
         //bug?
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, false);
+        desiredCapabilities.setCapability(IOSMobileCapabilityType.SHOW_XCODE_LOG, true);
+        desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, true);
         try {
             iosDriver = new IOSDriver(AppiumServer.service.getUrl(), desiredCapabilities);
             iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);

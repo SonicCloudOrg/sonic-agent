@@ -169,8 +169,20 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
             } else {
                 wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
             }
-//            BufferedReader stdInput = new BufferedReader(new
-//                    InputStreamReader(wdaProcess.getInputStream()));
+
+            new Thread(() -> {
+                BufferedReader stdInput = new BufferedReader(new
+                        InputStreamReader(wdaProcess.getInputStream()));
+                String s = null;
+                while (wdaProcess.isAlive()) {
+                    try {
+                        if (!((s = stdInput.readLine()) != null)) break;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    logger.info(s);
+                }
+            }).start();
 //            String s;
 //            while ((s = stdInput.readLine()) != null) {
 //                if (s.contains("WebDriverAgent start successfully")) {
