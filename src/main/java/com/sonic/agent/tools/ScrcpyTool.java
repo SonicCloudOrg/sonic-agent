@@ -17,7 +17,7 @@ public class ScrcpyTool {
         InputStream inputStream;
         outputStream = capSocket.getOutputStream();
         inputStream = capSocket.getInputStream();
-//        outputStream.write(0);
+        outputStream.write(0);
 
         int readLength;
         int naluIndex = 0;

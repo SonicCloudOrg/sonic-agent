@@ -202,7 +202,7 @@ public class AndroidWSServer {
                     e.printStackTrace();
                 }
                 // 超时就不继续等了，保证其它服务可运行
-                if (wait > 6) {
+                if (wait > 18) {
                     return;
                 }
             }

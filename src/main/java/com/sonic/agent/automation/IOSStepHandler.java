@@ -7,6 +7,7 @@ import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.maps.IOSProcessMap;
+import com.sonic.agent.maps.IOSSizeMap;
 import com.sonic.agent.tools.LogTool;
 import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MobileBy;
@@ -65,6 +66,8 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability(IOSMobileCapabilityType.WEB_DRIVER_AGENT_URL, "http://127.0.0.1:" + wdaPort);
         desiredCapabilities.setCapability("useXctestrunFile", false);
         desiredCapabilities.setCapability("mjpegServerPort", imgPort);
+        //bug?
+        desiredCapabilities.setCapability(IOSMobileCapabilityType.SHOW_XCODE_LOG, true);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, true);
         try {
             iosDriver = new IOSDriver(AppiumServer.service.getUrl(), desiredCapabilities);
@@ -77,6 +80,9 @@ public class IOSStepHandler {
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
+        int width = iosDriver.manage().window().getSize().width;
+        int height = iosDriver.manage().window().getSize().height;
+        IOSSizeMap.getMap().put(udId, width + "x" + height);
         return imgPort;
     }
 

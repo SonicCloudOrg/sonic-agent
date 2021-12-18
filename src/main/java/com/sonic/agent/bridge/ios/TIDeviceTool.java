@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.IOSDeviceManagerMap;
 import com.sonic.agent.maps.IOSProcessMap;
+import com.sonic.agent.maps.IOSSizeMap;
 import com.sonic.agent.netty.NettyThreadPool;
 import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.ProcessCommandTool;
@@ -90,6 +91,7 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", udId);
         deviceStatus.put("status", "DISCONNECTED");
+        deviceStatus.put("size", IOSSizeMap.getMap().get(udId));
         logger.info("iOS设备：" + udId + " 下线！");
         NettyThreadPool.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(udId);
@@ -105,7 +107,7 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         deviceStatus.put("status", "ONLINE");
         deviceStatus.put("platform", PlatformType.IOS);
         deviceStatus.put("version", info.getString("version"));
-        deviceStatus.put("size", "未知");
+        deviceStatus.put("size", IOSSizeMap.getMap().get(udId));
         deviceStatus.put("cpu", info.getString("cpu"));
         deviceStatus.put("manufacturer", "APPLE");
         logger.info("iOS设备：" + udId + " 上线！");
@@ -167,8 +169,20 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
             } else {
                 wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
             }
-//            BufferedReader stdInput = new BufferedReader(new
-//                    InputStreamReader(wdaProcess.getInputStream()));
+
+            new Thread(() -> {
+                BufferedReader stdInput = new BufferedReader(new
+                        InputStreamReader(wdaProcess.getInputStream()));
+                String s = null;
+                while (wdaProcess.isAlive()) {
+                    try {
+                        if (!((s = stdInput.readLine()) != null)) break;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    logger.info(s);
+                }
+            }).start();
 //            String s;
 //            while ((s = stdInput.readLine()) != null) {
 //                if (s.contains("WebDriverAgent start successfully")) {
