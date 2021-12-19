@@ -169,7 +169,11 @@ public class OutputSocketThread extends Thread {
                                 if (count % 4 == 0) {
                                     count = 0;
                                     oldBytes = finalBytes;
-                                    sendByte(session, finalBytes);
+                                    if (session.isOpen()) {
+                                        sendByte(session, finalBytes);
+                                    } else {
+                                        return;
+                                    }
                                 }
                             }
                         }
