@@ -160,23 +160,23 @@ public class IOSWSServer {
                         finalIOSStepHandler.siriCommand(new HandleDes(), msg.getString("command"));
                     });
                 }
-//                if (msg.getString("detail").equals("install")) {
-//                    androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
-//                    AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
-//                    AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-//                        JSONObject result = new JSONObject();
-//                        result.put("msg", "installFinish");
-//                        HandleDes handleDes = new HandleDes();
-//                        finalAndroidStepHandler.install(handleDes, msg.getString("apk"));
-//                        if (handleDes.getE() == null) {
-//                            result.put("status", "success");
-//                        } else {
-//                            System.out.println(handleDes.getE());
-//                            result.put("status", "fail");
-//                        }
-//                        sendText(session, result.toJSONString());
-//                    });
-//                }
+                if (msg.getString("detail").equals("install")) {
+                    iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
+                    IOSStepHandler finalIosStepHandler = iosStepHandler;
+                    IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                        JSONObject result = new JSONObject();
+                        result.put("msg", "installFinish");
+                        HandleDes handleDes = new HandleDes();
+                        finalIosStepHandler.install(handleDes, msg.getString("ipa"));
+                        if (handleDes.getE() == null) {
+                            result.put("status", "success");
+                        } else {
+                            System.out.println(handleDes.getE());
+                            result.put("status", "fail");
+                        }
+                        sendText(session, result.toJSONString());
+                    });
+                }
                 if (msg.getString("detail").equals("tree")) {
                     iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
                     IOSStepHandler finalIOSStepHandler = iosStepHandler;
@@ -217,16 +217,16 @@ public class IOSWSServer {
                         sendText(session, result.toJSONString());
                     });
                 }
-//                if (msg.getString("detail").equals("runStep")) {
-//                    JSONObject jsonDebug = new JSONObject();
-//                    jsonDebug.put("msg", "findSteps");
-//                    jsonDebug.put("key", key);
-//                    jsonDebug.put("udId", udIdMap.get(session).getSerialNumber());
-//                    jsonDebug.put("pwd", msg.getString("pwd"));
-//                    jsonDebug.put("sessionId", session.getId());
-//                    jsonDebug.put("caseId", msg.getInteger("caseId"));
-//                    NettyThreadPool.send(jsonDebug);
-//                }
+                if (msg.getString("detail").equals("runStep")) {
+                    JSONObject jsonDebug = new JSONObject();
+                    jsonDebug.put("msg", "findSteps");
+                    jsonDebug.put("key", key);
+                    jsonDebug.put("udId", udIdMap.get(session));
+                    jsonDebug.put("pwd", msg.getString("pwd"));
+                    jsonDebug.put("sessionId", session.getId());
+                    jsonDebug.put("caseId", msg.getInteger("caseId"));
+                    NettyThreadPool.send(jsonDebug);
+                }
                 break;
         }
     }

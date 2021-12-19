@@ -14,6 +14,7 @@ import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.tests.AndroidTests;
+import com.sonic.agent.tests.IOSTests;
 import com.sonic.agent.tests.TaskManager;
 import com.sonic.agent.tools.SpringTool;
 import io.netty.channel.Channel;
@@ -114,7 +115,12 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         parameters.put("dataInfo", dataInfo.toJSONString());
                         xmlTest.setParameters(parameters);
                         List<XmlClass> classes = new ArrayList<>();
-                        classes.add(new XmlClass(AndroidTests.class));
+                        if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
+                            classes.add(new XmlClass(AndroidTests.class));
+                        }
+                        if (jsonObject.getInteger("pf") == PlatformType.IOS) {
+                            classes.add(new XmlClass(IOSTests.class));
+                        }
                         xmlTest.setXmlClasses(classes);
                     }
                     suiteList.add(xmlSuite);
@@ -130,7 +136,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         List<JSONObject> deviceList = devices.toJavaList(JSONObject.class);
                         for (JSONObject device : deviceList) {
                             String udId = (String) device.get("udId");
-                            TaskManager.forceStopSuite(resultId, caseId, udId);
+                            TaskManager.forceStopSuite(jsonObject.getInteger("pf"), resultId, caseId, udId);
                         }
                     }
                     break;

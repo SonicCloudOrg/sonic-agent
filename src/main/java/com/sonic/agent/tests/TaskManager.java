@@ -1,6 +1,8 @@
 package com.sonic.agent.tests;
 
+import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
+import com.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashSet;
@@ -45,7 +47,7 @@ public class TaskManager {
      *
      * @param bootThreads boot线程
      */
-    public static void startBootThread(Thread...bootThreads) {
+    public static void startBootThread(Thread... bootThreads) {
         for (Thread bootThread : bootThreads) {
             startBootThread(bootThread);
         }
@@ -62,7 +64,7 @@ public class TaskManager {
     /**
      * 启动子线程（批量）
      */
-    public static void startChildThread(String key, Thread...childThreads) {
+    public static void startChildThread(String key, Thread... childThreads) {
         for (Thread childThread : childThreads) {
             startChildThread(key, childThread);
         }
@@ -72,8 +74,8 @@ public class TaskManager {
     /**
      * 添加boot线程
      *
-     * @param key         用boot线程名作为key
-     * @param bootThread  boot线程
+     * @param key        用boot线程名作为key
+     * @param bootThread boot线程
      */
     public static void addBootThread(String key, Thread bootThread) {
         clearTerminatedThread();
@@ -155,12 +157,18 @@ public class TaskManager {
     /**
      * 按照结果id、用例id、设备序列号强制停止手机正在执行的任务
      *
-     * @param resultId    结果id
-     * @param caseId      用例id
-     * @param udid        设备序列号
+     * @param resultId 结果id
+     * @param caseId   用例id
+     * @param udId     设备序列号
      */
-    public static void forceStopSuite(int resultId, int caseId, String udid) {
-        String key = String.format(AndroidTestTaskBootThread.ANDROID_TEST_TASK_BOOT_PRE, resultId, caseId, udid);
+    public static void forceStopSuite(int platform, int resultId, int caseId, String udId) {
+        String key = "";
+        if (platform == PlatformType.ANDROID) {
+            key = String.format(AndroidTestTaskBootThread.ANDROID_TEST_TASK_BOOT_PRE, resultId, caseId, udId);
+        }
+        if (platform == PlatformType.IOS) {
+            key = String.format(IOSTestTaskBootThread.IOS_TEST_TASK_BOOT_PRE, resultId, caseId, udId);
+        }
         // 停止boot线程
         Thread bootThread = bootThreadsMap.get(key);
         if (bootThread != null) {
