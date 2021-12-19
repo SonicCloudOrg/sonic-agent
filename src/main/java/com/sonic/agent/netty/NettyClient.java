@@ -35,6 +35,7 @@ public class NettyClient implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        // todo 根据 https://netty.io/wiki/native-transports.html 可针对不同系统进行优化，server端的netty同理
         group = new NioEventLoopGroup();
         bootstrap = new Bootstrap()
                 .group(group)
