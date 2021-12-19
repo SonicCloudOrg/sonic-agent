@@ -85,7 +85,6 @@ public class AndroidWSServer {
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
             logger.info("设备未连接，请检查！");
-            session.close();
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");

@@ -70,6 +70,9 @@ public class OutputSocketThread extends Thread {
         byte[] oldBytes = new byte[0];
         int count = 0;
         while (sendImg.isAlive()) {
+            if (session == null || !session.isOpen()) {
+                return;
+            }
             Queue<byte[]> dataQueue = sendImg.getDataQueue();
             if (dataQueue.isEmpty()) {
                 continue;
