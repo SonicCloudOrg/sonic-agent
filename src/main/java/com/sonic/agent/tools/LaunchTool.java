@@ -11,6 +11,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
+import java.io.File;
 
 @Component
 @DependsOn("nettyMsgInit")
@@ -19,6 +20,10 @@ public class LaunchTool implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        File testFile = new File("test-output");
+        if (!testFile.exists()) {
+            testFile.mkdirs();
+        }
         AppiumServer.start();
     }
 
