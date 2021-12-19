@@ -13,12 +13,12 @@ import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import com.sonic.agent.interfaces.DeviceStatus;
-import com.sonic.agent.maps.GlobalProcessMap;
-import com.sonic.agent.maps.HandlerMap;
-import com.sonic.agent.maps.MiniCapMap;
-import com.sonic.agent.maps.WebSocketSessionMap;
+import com.sonic.agent.maps.*;
 import com.sonic.agent.netty.NettyThreadPool;
-import com.sonic.agent.tools.*;
+import com.sonic.agent.tools.MiniCapTool;
+import com.sonic.agent.tools.PortTool;
+import com.sonic.agent.tools.ProcessCommandTool;
+import com.sonic.agent.tools.UploadTools;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +45,7 @@ import static com.sonic.agent.tools.AgentTool.sendText;
 @Component
 @ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class AndroidWSServer {
+
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
@@ -66,15 +67,24 @@ public class AndroidWSServer {
             logger.info("拦截访问！");
             return;
         }
+
+        session.getUserProperties().put("udId", udId);
+        boolean lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
+        if (!lockSuccess) {
+            return;
+        }
+        logger.info("上锁udId：{}", udId);
+
         JSONObject jsonDebug = new JSONObject();
         jsonDebug.put("msg", "debugUser");
         jsonDebug.put("token", token);
         jsonDebug.put("udId", udId);
         NettyThreadPool.send(jsonDebug);
-        WebSocketSessionMap.getMap().put(session.getId(), session);
+        WebSocketSessionMap.addSession(session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
             logger.info("设备未连接，请检查！");
+            session.close();
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
@@ -306,7 +316,13 @@ public class AndroidWSServer {
 
     @OnClose
     public void onClose(Session session) {
-        exit(session);
+        String udId = (String) session.getUserProperties().get("udId");
+        try {
+            exit(session);
+        } finally {
+            DevicesLockMap.unlockAndRemoveByUdId(udId);
+            logger.info("解锁udId：{}", udId);
+        }
     }
 
     @OnError
@@ -571,10 +587,12 @@ public class AndroidWSServer {
         }
         outputMap.remove(session);
         udIdMap.remove(session);
-        rotationMap.get(session).interrupt();
+        if (rotationMap.get(session) != null) {
+            rotationMap.get(session).interrupt();
+        }
         rotationMap.remove(session);
         MiniCapMap.getMap().get(session).interrupt();
-        WebSocketSessionMap.getMap().remove(session.getId());
+        WebSocketSessionMap.removeSession(session);
         try {
             session.close();
         } catch (IOException e) {

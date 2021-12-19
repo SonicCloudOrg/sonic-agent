@@ -1,26 +1,16 @@
 package com.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.IDevice;
-import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.HandleDes;
 import com.sonic.agent.automation.IOSStepHandler;
-import com.sonic.agent.automation.RemoteDebugDriver;
-import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import com.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import com.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.maps.HandlerMap;
-import com.sonic.agent.maps.MiniCapMap;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.netty.NettyThreadPool;
-import com.sonic.agent.tools.MiniCapTool;
-import com.sonic.agent.tools.PortTool;
-import com.sonic.agent.tools.ProcessCommandTool;
 import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
@@ -29,19 +19,15 @@ import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 @ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
@@ -63,7 +49,7 @@ public class IOSWSServer {
         jsonDebug.put("token", token);
         jsonDebug.put("udId", udId);
         NettyThreadPool.send(jsonDebug);
-        WebSocketSessionMap.getMap().put(session.getId(), session);
+        WebSocketSessionMap.addSession(session);
         if (!TIDeviceTool.getDeviceList().contains(udId)) {
             logger.info("设备未连接，请检查！");
             return;
@@ -264,7 +250,7 @@ public class IOSWSServer {
         } finally {
             HandlerMap.getIOSMap().remove(session.getId());
         }
-        WebSocketSessionMap.getMap().remove(session.getId());
+        WebSocketSessionMap.removeSession(session);
         try {
             session.close();
         } catch (IOException e) {

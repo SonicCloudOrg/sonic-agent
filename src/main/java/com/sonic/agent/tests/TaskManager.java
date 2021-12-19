@@ -153,9 +153,11 @@ public class TaskManager {
     }
 
     /**
-     * 按照设备序列号强制停止手机正在执行的任务
+     * 按照结果id、用例id、设备序列号强制停止手机正在执行的任务
      *
-     * @param udid  设备序列号
+     * @param resultId    结果id
+     * @param caseId      用例id
+     * @param udid        设备序列号
      */
     public static void forceStopSuite(int resultId, int caseId, String udid) {
         String key = String.format(AndroidTestTaskBootThread.ANDROID_TEST_TASK_BOOT_PRE, resultId, caseId, udid);
