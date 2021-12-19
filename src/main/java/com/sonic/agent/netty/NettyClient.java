@@ -5,6 +5,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +37,8 @@ public class NettyClient implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         // todo 根据 https://netty.io/wiki/native-transports.html 可针对不同系统进行优化，server端的netty同理
-        group = new NioEventLoopGroup();
+        DefaultThreadFactory factory = new DefaultThreadFactory("AgentNettyClient", true);
+        group = new NioEventLoopGroup(factory);
         bootstrap = new Bootstrap()
                 .group(group)
                 .option(ChannelOption.TCP_NODELAY, true)

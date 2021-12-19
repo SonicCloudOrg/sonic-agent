@@ -74,7 +74,7 @@ public class AndroidWSServer {
             logger.info("30s内获取设备锁失败，请确保设备无人使用");
             return;
         }
-        logger.info("上锁udId：{}", udId);
+        logger.info("android上锁udId：{}", udId);
 
         JSONObject jsonDebug = new JSONObject();
         jsonDebug.put("msg", "debugUser");
@@ -321,7 +321,7 @@ public class AndroidWSServer {
             exit(session);
         } finally {
             DevicesLockMap.unlockAndRemoveByUdId(udId);
-            logger.info("解锁udId：{}", udId);
+            logger.info("android解锁udId：{}", udId);
         }
     }
 

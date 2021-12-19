@@ -8,6 +8,7 @@ import com.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import com.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.DeviceStatus;
+import com.sonic.agent.maps.DevicesLockMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.netty.NettyThreadPool;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
@@ -44,6 +46,15 @@ public class IOSWSServer {
             logger.info("拦截访问！");
             return;
         }
+
+        session.getUserProperties().put("udId", udId);
+        boolean lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
+        if (!lockSuccess) {
+            logger.info("30s内获取设备锁失败，请确保设备无人使用");
+            return;
+        }
+        logger.info("ios上锁udId：{}", udId);
+
         JSONObject jsonDebug = new JSONObject();
         jsonDebug.put("msg", "debugUser");
         jsonDebug.put("token", token);
@@ -86,7 +97,13 @@ public class IOSWSServer {
 
     @OnClose
     public void onClose(Session session) {
-        exit(session);
+        String udId = (String) session.getUserProperties().get("udId");
+        try {
+            exit(session);
+        } finally {
+            DevicesLockMap.unlockAndRemoveByUdId(udId);
+            logger.info("ios解锁udId：{}", udId);
+        }
     }
 
     @OnError
