@@ -71,7 +71,6 @@ public class AndroidWSServer {
         session.getUserProperties().put("udId", udId);
         boolean lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
         if (!lockSuccess) {
-            sendText(session, "30s内获取设备锁失败，请确保设备无人使用");
             return;
         }
         logger.info("上锁udId：{}", udId);
