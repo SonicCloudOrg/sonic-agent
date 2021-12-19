@@ -70,6 +70,9 @@ public class OutputSocketThread extends Thread {
         byte[] oldBytes = new byte[0];
         int count = 0;
         while (sendImg.isAlive()) {
+            if (session == null || !session.isOpen()) {
+                return;
+            }
             Queue<byte[]> dataQueue = sendImg.getDataQueue();
             if (dataQueue.isEmpty()) {
                 continue;
@@ -169,11 +172,7 @@ public class OutputSocketThread extends Thread {
                                 if (count % 4 == 0) {
                                     count = 0;
                                     oldBytes = finalBytes;
-                                    if (session.isOpen()) {
-                                        sendByte(session, finalBytes);
-                                    } else {
-                                        return;
-                                    }
+                                    sendByte(session, finalBytes);
                                 }
                             }
                         }
