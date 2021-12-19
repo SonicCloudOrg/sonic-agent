@@ -90,7 +90,7 @@ public class AndroidRecordThread extends Thread {
             //处理录像
             if (isSupportRecord) {
                 if (androidStepHandler.getStatus() == 3) {
-                    androidStepHandler.stopRecord(udId);
+                    androidStepHandler.stopRecord();
                     return;
                 } else {
                     androidStepHandler.getAndroidDriver().stopRecordingScreen();

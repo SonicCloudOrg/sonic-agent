@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
+import com.sonic.agent.automation.IOSStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.DeviceStatus;
@@ -86,6 +87,20 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                             }
                         }
                         androidStepHandler.sendStatus();
+                    }
+                    if (jsonObject.getInteger("pf") == PlatformType.IOS) {
+                        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(jsonObject.getString("sessionId"));
+                        iosStepHandler.resetResultDetailStatus();
+                        iosStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
+                        List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
+                        for (JSONObject step : steps) {
+                            try {
+                                iosStepHandler.runStep(step);
+                            } catch (Throwable e) {
+                                break;
+                            }
+                        }
+                        iosStepHandler.sendStatus();
                     }
                     break;
                 case "suite":

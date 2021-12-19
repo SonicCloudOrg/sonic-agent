@@ -366,13 +366,12 @@ public class AndroidStepHandler {
     }
 
     /**
-     * @param udId
      * @return void
      * @author ZhouYiXun
      * @des 停止录像
      * @date 2021/8/16 23:56
      */
-    public void stopRecord(String udId) {
+    public void stopRecord() {
         File recordDir = new File("test-output/record");
         if (!recordDir.exists()) {
             recordDir.mkdirs();

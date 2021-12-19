@@ -70,6 +70,10 @@ public class IOSStepHandler {
         log.sessionId = sessionId;
     }
 
+    public void setGlobalParams(JSONObject jsonObject) {
+        globalParams = jsonObject;
+    }
+
     public int startIOSDriver(String udId) throws InterruptedException, IOException {
         this.udId = udId;
         int wdaPort = TIDeviceTool.startWda(udId);
