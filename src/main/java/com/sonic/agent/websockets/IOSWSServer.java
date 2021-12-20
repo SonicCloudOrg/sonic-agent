@@ -239,7 +239,6 @@ public class IOSWSServer {
                     jsonDebug.put("msg", "findSteps");
                     jsonDebug.put("key", key);
                     jsonDebug.put("udId", udIdMap.get(session));
-                    jsonDebug.put("pwd", msg.getString("pwd"));
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     NettyThreadPool.send(jsonDebug);
