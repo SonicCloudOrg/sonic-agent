@@ -1,6 +1,7 @@
 package com.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
+import com.sonic.agent.tests.android.AndroidTemperThread;
 import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +86,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 break;
             }
         }
+        new AndroidTemperThread().start();
     }
 
     /**
