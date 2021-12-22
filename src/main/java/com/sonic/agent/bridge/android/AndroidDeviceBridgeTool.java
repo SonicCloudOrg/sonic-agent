@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
-    private static AndroidDebugBridge androidDebugBridge = null;
+    public static AndroidDebugBridge androidDebugBridge = null;
 
     @Autowired
     private AndroidDeviceStatusListener androidDeviceStatusListener;
