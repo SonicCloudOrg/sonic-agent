@@ -160,21 +160,22 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
                 }
             }
             int port = PortTool.getPort();
-            Process wdaProcess;
+            Process wdaProcess = null;
             String commandLine = "tidevice -u " + udId +
                     " wdaproxy" + " -B " + bundleId +
                     " --port " + port;
-            if (System.getProperty("os.name").contains("Mac")) {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
-            } else {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
+            String system = System.getProperty("os.name").toLowerCase();
+            if (system.contains("win")) {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
             }
-
+            Process finalWdaProcess = wdaProcess;
             new Thread(() -> {
                 BufferedReader stdInput = new BufferedReader(new
-                        InputStreamReader(wdaProcess.getInputStream()));
+                        InputStreamReader(finalWdaProcess.getInputStream()));
                 String s = null;
-                while (wdaProcess.isAlive()) {
+                while (finalWdaProcess.isAlive()) {
                     try {
                         if (!((s = stdInput.readLine()) != null)) break;
                     } catch (IOException e) {
@@ -202,13 +203,14 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
 
     public static int relayImg(String udId) throws IOException {
         int port = PortTool.getPort();
-        Process relayProcess;
+        Process relayProcess = null;
         String commandLine = "tidevice -u " + udId +
                 " relay " + port + " " + 9100;
-        if (System.getProperty("os.name").contains("Mac")) {
-            relayProcess = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
-        } else {
-            relayProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
+        String system = System.getProperty("os.name").toLowerCase();
+        if (system.contains("win")) {
+            relayProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
+        } else if (system.contains("linux") || system.contains("mac")) {
+            relayProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
         }
         List<Process> processList;
         if (IOSProcessMap.getMap().get(udId) != null) {

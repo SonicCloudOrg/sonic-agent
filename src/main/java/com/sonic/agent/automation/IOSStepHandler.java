@@ -89,10 +89,10 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability("wdaConnectionTimeout", 60000);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.WEB_DRIVER_AGENT_URL, "http://127.0.0.1:" + wdaPort);
         desiredCapabilities.setCapability("useXctestrunFile", false);
-        desiredCapabilities.setCapability("mjpegServerPort", imgPort);
-        //bug?
+        desiredCapabilities.setCapability(IOSMobileCapabilityType.SHOW_IOS_LOG, false);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.SHOW_XCODE_LOG, false);
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, true);
+        desiredCapabilities.setCapability("skipLogCapture", true);
+        desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, false);
         try {
             iosDriver = new IOSDriver(AppiumServer.service.getUrl(), desiredCapabilities);
             iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);

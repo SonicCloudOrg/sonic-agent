@@ -269,9 +269,8 @@ public class AndroidWSServer {
                 String command = String.format("adbkit usb-device-to-tcp -p %d %s", port, udId);
                 if (system.contains("win")) {
                     ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
-                }
-                if (system.contains("linux") || system.contains("mac")) {
-                    ps = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", command});
+                } else if (system.contains("linux") || system.contains("mac")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
                 }
                 GlobalProcessMap.getMap().put(processName, ps);
                 JSONObject adbkit = new JSONObject();
