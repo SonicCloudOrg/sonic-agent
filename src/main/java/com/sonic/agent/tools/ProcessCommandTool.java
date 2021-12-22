@@ -17,10 +17,11 @@ public class ProcessCommandTool {
         List<String> sdrResult = new ArrayList<String>();
         List<String> sdrErrorResult = new ArrayList<String>();
         try {
-            if (System.getProperty("os.name").contains("Mac")) {
-                process = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
-            } else {
+            String system = System.getProperty("os.name").toLowerCase();
+            if (system.contains("win")) {
                 process = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
+            } else {
+                process = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
             }
             inputStreamReader = new InputStreamReader(process.getInputStream());
             consoleInput = new LineNumberReader(inputStreamReader);

@@ -212,7 +212,7 @@ public class AndroidWSServer {
                     e.printStackTrace();
                 }
                 // 超时就不继续等了，保证其它服务可运行
-                if (wait > 18) {
+                if (wait > 20) {
                     return;
                 }
             }
@@ -266,11 +266,12 @@ public class AndroidWSServer {
                 String system = System.getProperty("os.name").toLowerCase();
                 Process ps = null;
                 int port = PortTool.getPort();
+                String command = String.format("adbkit usb-device-to-tcp -p %d %s", port, udId);
                 if (system.contains("win")) {
-                    ps = Runtime.getRuntime().exec(String.format("cmd /c adbkit usb-device-to-tcp -p %d %s", port, udId));
+                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
                 }
                 if (system.contains("linux") || system.contains("mac")) {
-                    ps = Runtime.getRuntime().exec(String.format("sh -c adbkit usb-device-to-tcp -p %d %s", port, udId));
+                    ps = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", command});
                 }
                 GlobalProcessMap.getMap().put(processName, ps);
                 JSONObject adbkit = new JSONObject();
