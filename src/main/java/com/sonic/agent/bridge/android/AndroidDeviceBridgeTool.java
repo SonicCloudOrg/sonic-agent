@@ -166,7 +166,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 size = "未知";
             }
         } catch (Exception e) {
-            logger.info("获取屏幕尺寸失败！");
+            logger.info("获取屏幕尺寸失败！拔插瞬间可忽略该错误...");
         }
         return size;
     }
