@@ -341,7 +341,7 @@ public class AndroidWSServer {
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
                 IDevice iDevice = udIdMap.get(session);
-                List<String> wList = Arrays.asList("webview", "WebView");
+                List<String> wList = Arrays.asList("webview", "WebView", "chrome_devtools_remote", "Terrace_devtools_remote");
                 List<String> webViewList = new ArrayList<>();
                 for (String w : wList) {
                     webViewList.addAll(Arrays.asList(AndroidDeviceBridgeTool
