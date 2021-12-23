@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
+import com.sonic.agent.automation.IOSStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.DeviceStatus;
@@ -13,6 +14,7 @@ import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.tests.AndroidTests;
+import com.sonic.agent.tests.IOSTests;
 import com.sonic.agent.tests.TaskManager;
 import com.sonic.agent.tools.SpringTool;
 import io.netty.channel.Channel;
@@ -87,6 +89,20 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         }
                         androidStepHandler.sendStatus();
                     }
+                    if (jsonObject.getInteger("pf") == PlatformType.IOS) {
+                        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(jsonObject.getString("sessionId"));
+                        iosStepHandler.resetResultDetailStatus();
+                        iosStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
+                        List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
+                        for (JSONObject step : steps) {
+                            try {
+                                iosStepHandler.runStep(step);
+                            } catch (Throwable e) {
+                                break;
+                            }
+                        }
+                        iosStepHandler.sendStatus();
+                    }
                     break;
                 case "suite":
                     List<JSONObject> cases = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
@@ -99,7 +115,12 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         parameters.put("dataInfo", dataInfo.toJSONString());
                         xmlTest.setParameters(parameters);
                         List<XmlClass> classes = new ArrayList<>();
-                        classes.add(new XmlClass(AndroidTests.class));
+                        if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
+                            classes.add(new XmlClass(AndroidTests.class));
+                        }
+                        if (jsonObject.getInteger("pf") == PlatformType.IOS) {
+                            classes.add(new XmlClass(IOSTests.class));
+                        }
                         xmlTest.setXmlClasses(classes);
                     }
                     suiteList.add(xmlSuite);
@@ -115,7 +136,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         List<JSONObject> deviceList = devices.toJavaList(JSONObject.class);
                         for (JSONObject device : deviceList) {
                             String udId = (String) device.get("udId");
-                            TaskManager.forceStopSuite(resultId, caseId, udId);
+                            TaskManager.forceStopSuite(jsonObject.getInteger("pf"), resultId, caseId, udId);
                         }
                     }
                     break;
@@ -126,7 +147,6 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("服务器: {} 发生异常 {}", ctx.channel().remoteAddress(), cause.fillInStackTrace());
-        ctx.close();
     }
 
     @Override

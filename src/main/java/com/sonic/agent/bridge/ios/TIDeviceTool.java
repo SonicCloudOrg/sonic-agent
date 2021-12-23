@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.IOSDeviceManagerMap;
 import com.sonic.agent.maps.IOSProcessMap;
+import com.sonic.agent.maps.IOSSizeMap;
 import com.sonic.agent.netty.NettyThreadPool;
 import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.ProcessCommandTool;
@@ -90,6 +91,7 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", udId);
         deviceStatus.put("status", "DISCONNECTED");
+        deviceStatus.put("size", IOSSizeMap.getMap().get(udId));
         logger.info("iOS设备：" + udId + " 下线！");
         NettyThreadPool.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(udId);
@@ -105,7 +107,7 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         deviceStatus.put("status", "ONLINE");
         deviceStatus.put("platform", PlatformType.IOS);
         deviceStatus.put("version", info.getString("version"));
-        deviceStatus.put("size", "未知");
+        deviceStatus.put("size", IOSSizeMap.getMap().get(udId));
         deviceStatus.put("cpu", info.getString("cpu"));
         deviceStatus.put("manufacturer", "APPLE");
         logger.info("iOS设备：" + udId + " 上线！");
@@ -158,27 +160,29 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
                 }
             }
             int port = PortTool.getPort();
-            Process wdaProcess;
+            Process wdaProcess = null;
             String commandLine = "tidevice -u " + udId +
                     " wdaproxy" + " -B " + bundleId +
                     " --port " + port;
-            if (System.getProperty("os.name").contains("Mac")) {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
-            } else {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
+            String system = System.getProperty("os.name").toLowerCase();
+            if (system.contains("win")) {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
             }
-//            BufferedReader stdInput = new BufferedReader(new
-//                    InputStreamReader(wdaProcess.getInputStream()));
-//            String s;
-//            while ((s = stdInput.readLine()) != null) {
-//                if (s.contains("WebDriverAgent start successfully")) {
-//                    logger.info(udId + " wda启动完毕！");
-//                    break;
-//                } else {
-//                    Thread.sleep(500);
-//                }
-//            }
-            Thread.sleep(3000);
+            BufferedReader stdInput = new BufferedReader(new
+                    InputStreamReader(wdaProcess.getInputStream()));
+            String s;
+            while (wdaProcess.isAlive()) {
+                if ((s = stdInput.readLine()) != null) {
+                    if (s.contains("WebDriverAgent start successfully")) {
+                        break;
+                    }
+                } else {
+                    Thread.sleep(500);
+                }
+                logger.info(s);
+            }
             processList = new ArrayList<>();
             processList.add(wdaProcess);
             IOSProcessMap.getMap().put(udId, processList);
@@ -186,15 +190,16 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         }
     }
 
-    public static int relayImg(String udId) throws IOException {
+    public static int relayImg(String udId) throws IOException, InterruptedException {
         int port = PortTool.getPort();
-        Process relayProcess;
+        Process relayProcess = null;
         String commandLine = "tidevice -u " + udId +
                 " relay " + port + " " + 9100;
-        if (System.getProperty("os.name").contains("Mac")) {
-            relayProcess = Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", commandLine});
-        } else {
-            relayProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/C", commandLine});
+        String system = System.getProperty("os.name").toLowerCase();
+        if (system.contains("win")) {
+            relayProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
+        } else if (system.contains("linux") || system.contains("mac")) {
+            relayProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
         }
         List<Process> processList;
         if (IOSProcessMap.getMap().get(udId) != null) {
@@ -204,6 +209,7 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         }
         processList.add(relayProcess);
         IOSProcessMap.getMap().put(udId, processList);
+        Thread.sleep(1000);
         return port;
     }
 

@@ -120,6 +120,11 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 60000);
         //UIA2安装超时时间
         desiredCapabilities.setCapability("uiautomator2ServerInstallTimeout", 30000);
+
+        //io.appium.uiautomator2.server io.appium.uiautomator2.server.test //io.appium.settings
+//        desiredCapabilities.setCapability("skipServerInstallation",true);
+//        desiredCapabilities.setCapability("disableWindowAnimation",true);
+//        desiredCapabilities.setCapability("skipDeviceInitialization",true);
         //等待新命令超时时间
         desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 3600);
         //不重置应用
@@ -361,13 +366,12 @@ public class AndroidStepHandler {
     }
 
     /**
-     * @param udId
      * @return void
      * @author ZhouYiXun
      * @des 停止录像
      * @date 2021/8/16 23:56
      */
-    public void stopRecord(String udId) {
+    public void stopRecord() {
         File recordDir = new File("test-output/record");
         if (!recordDir.exists()) {
             recordDir.mkdirs();

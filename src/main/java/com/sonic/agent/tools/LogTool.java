@@ -39,7 +39,7 @@ public class LogTool {
         message.put("rid", resultId);
         message.put("udId", udId);
         if (type.equals(DeviceStatus.DEBUGGING)) {
-            sendToWebSocket(WebSocketSessionMap.getMap().get(sessionId), message);
+            sendToWebSocket(WebSocketSessionMap.getSession(sessionId), message);
         }
         if (type.equals(DeviceStatus.TESTING)) {
             sendToServer(message);

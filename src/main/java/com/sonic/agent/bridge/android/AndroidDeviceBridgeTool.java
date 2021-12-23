@@ -1,6 +1,7 @@
 package com.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
+import com.sonic.agent.tests.android.AndroidTemperThread;
 import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
-    private static AndroidDebugBridge androidDebugBridge = null;
+    public static AndroidDebugBridge androidDebugBridge = null;
 
     @Autowired
     private AndroidDeviceStatusListener androidDeviceStatusListener;
@@ -85,6 +86,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 break;
             }
         }
+        new AndroidTemperThread().start();
     }
 
     /**
@@ -164,7 +166,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 size = "未知";
             }
         } catch (Exception e) {
-            logger.info("获取屏幕尺寸失败！");
+            logger.info("获取屏幕尺寸失败！拔插瞬间可忽略该错误...");
         }
         return size;
     }
@@ -364,6 +366,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
     public static void searchDevice(IDevice iDevice) {
         executeCommand(iDevice, "am start -n com.sonic.plugins.assist/com.sonic.plugins.assist.SearchActivity");
+    }
+
+    public static void controlBattery(IDevice iDevice, int type) {
+        if (type == 0) {
+            executeCommand(iDevice, "dumpsys battery unplug && dumpsys battery set status 1");
+        }
+        if (type == 1) {
+            executeCommand(iDevice, "dumpsys battery reset");
+        }
     }
 
     /**

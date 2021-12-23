@@ -1,8 +1,9 @@
-package com.sonic.agent.tests.android;
+package com.sonic.agent.tests.ios;
 
 import com.alibaba.fastjson.JSONObject;
-import com.sonic.agent.automation.AndroidStepHandler;
-import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
+import com.sonic.agent.automation.IOSStepHandler;
+import com.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
+import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.tests.TaskManager;
 import org.slf4j.Logger;
@@ -10,20 +11,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
 
-/**
- * android启动各个子任务的线程
- *
- * @author Eason(main) JayWenStar(until e1a877b7)
- * @date 2021/12/2 12:33 上午
- */
-public class AndroidTestTaskBootThread extends Thread {
+public class IOSTestTaskBootThread extends Thread {
 
-    private final Logger log = LoggerFactory.getLogger(AndroidTestTaskBootThread.class);
+    private final Logger log = LoggerFactory.getLogger(IOSTestTaskBootThread.class);
 
     /**
-     * android-test-task-boot-{resultId}-{caseId}-{udid}
+     * ios-test-task-boot-{resultId}-{caseId}-{udid}
      */
-    public final static String ANDROID_TEST_TASK_BOOT_PRE = "android-test-task-boot-%s-%s-%s";
+    public final static String IOS_TEST_TASK_BOOT_PRE = "ios-test-task-boot-%s-%s-%s";
 
     /**
      * 控制不同线程执行的信号量
@@ -36,25 +31,22 @@ public class AndroidTestTaskBootThread extends Thread {
      */
     private JSONObject jsonObject;
 
-    /**
-     * Android步骤处理器，包含一些状态信息
-     */
-    private AndroidStepHandler androidStepHandler;
+    private IOSStepHandler iosStepHandler;
 
     /**
      * 测试步骤线程
      */
-    private AndroidRunStepThread runStepThread;
+    private IOSRunStepThread runStepThread;
 
     /**
      * 性能数据采集线程
      */
-    private AndroidPerfDataThread perfDataThread;
+    private IOSPerfDataThread perfDataThread;
 
     /**
      * 录像线程
      */
-    private AndroidRecordThread recordThread;
+    private IOSRecordThread recordThread;
 
     /**
      * 测试结果id 0表示debug线程
@@ -78,26 +70,26 @@ public class AndroidTestTaskBootThread extends Thread {
     /**
      * debug线程构造
      */
-    public AndroidTestTaskBootThread() {
-        this.setName(this.formatThreadName(ANDROID_TEST_TASK_BOOT_PRE));
+    public IOSTestTaskBootThread() {
+        this.setName(this.formatThreadName(IOS_TEST_TASK_BOOT_PRE));
         this.setDaemon(true);
     }
 
     /**
      * 任务线程构造
      *
-     * @param jsonObject          任务数据
-     * @param androidStepHandler  android步骤执行器
+     * @param jsonObject     任务数据
+     * @param iosStepHandler ios步骤执行器
      */
-    public AndroidTestTaskBootThread(JSONObject jsonObject, AndroidStepHandler androidStepHandler) {
-        this.androidStepHandler = androidStepHandler;
+    public IOSTestTaskBootThread(JSONObject jsonObject, IOSStepHandler iosStepHandler) {
+        this.iosStepHandler = iosStepHandler;
         this.jsonObject = jsonObject;
         this.resultId = jsonObject.getInteger("rid");
         this.caseId = jsonObject.getInteger("cid");
         this.udId = jsonObject.getJSONObject("device").getString("udId");
 
         // 比如：test-task-thread-af80d1e4
-        this.setName(String.format(ANDROID_TEST_TASK_BOOT_PRE, resultId, caseId, udId));
+        this.setName(String.format(IOS_TEST_TASK_BOOT_PRE, resultId, caseId, udId));
         this.setDaemon(true);
     }
 
@@ -109,19 +101,19 @@ public class AndroidTestTaskBootThread extends Thread {
         return jsonObject;
     }
 
-    public AndroidStepHandler getAndroidStepHandler() {
-        return androidStepHandler;
+    public IOSStepHandler getIosStepHandler() {
+        return iosStepHandler;
     }
 
-    public AndroidRunStepThread getRunStepThread() {
+    public IOSRunStepThread getRunStepThread() {
         return runStepThread;
     }
 
-    public AndroidPerfDataThread getPerfDataThread() {
+    public IOSPerfDataThread getPerfDataThread() {
         return perfDataThread;
     }
 
-    public AndroidRecordThread getRecordThread() {
+    public IOSRecordThread getRecordThread() {
         return recordThread;
     }
 
@@ -137,7 +129,7 @@ public class AndroidTestTaskBootThread extends Thread {
         return udId;
     }
 
-    public AndroidTestTaskBootThread setUdId(String udId) {
+    public IOSTestTaskBootThread setUdId(String udId) {
         this.udId = udId;
         return this;
     }
@@ -149,12 +141,12 @@ public class AndroidTestTaskBootThread extends Thread {
 
         try {
             int wait = 0;
-            while (!AndroidDeviceLocalStatus.startTest(udId)) {
+            while (!IOSDeviceLocalStatus.startTest(udId)) {
                 wait++;
-                androidStepHandler.waitDevice(wait);
+                iosStepHandler.waitDevice(wait);
                 if (wait >= 6 * 10) {
-                    androidStepHandler.waitDeviceTimeOut();
-                    androidStepHandler.sendStatus();
+                    iosStepHandler.waitDeviceTimeOut();
+                    iosStepHandler.sendStatus();
                     return;
                 } else {
                     Thread.sleep(10000);
@@ -164,29 +156,30 @@ public class AndroidTestTaskBootThread extends Thread {
             startTestSuccess = true;
             //启动测试
             try {
-                androidStepHandler.startAndroidDriver(udId);
+                int wdaPort = TIDeviceTool.startWda(udId);
+                iosStepHandler.startIOSDriver(udId, wdaPort);
             } catch (Exception e) {
                 log.error(e.getMessage());
-                androidStepHandler.closeAndroidDriver();
-                androidStepHandler.sendStatus();
-                AndroidDeviceLocalStatus.finishError(udId);
+                iosStepHandler.closeIOSDriver();
+                iosStepHandler.sendStatus();
+                IOSDeviceLocalStatus.finishError(udId);
                 return;
             }
 
             //电量过低退出测试
-            if (androidStepHandler.getBattery()) {
-                androidStepHandler.closeAndroidDriver();
-                androidStepHandler.sendStatus();
-                AndroidDeviceLocalStatus.finish(udId);
+            if (iosStepHandler.getBattery()) {
+                iosStepHandler.closeIOSDriver();
+                iosStepHandler.sendStatus();
+                IOSDeviceLocalStatus.finish(udId);
                 return;
             }
 
             //正常运行步骤的线程
-            runStepThread = new AndroidRunStepThread(this);
+            runStepThread = new IOSRunStepThread(this);
             //性能数据获取线程
-            perfDataThread = new AndroidPerfDataThread(this);
+            perfDataThread = new IOSPerfDataThread(this);
             //录像线程
-            recordThread = new AndroidRecordThread(this);
+            recordThread = new IOSRecordThread(this);
             TaskManager.startChildThread(this.getName(), runStepThread, perfDataThread, recordThread);
 
 
@@ -196,13 +189,13 @@ public class AndroidTestTaskBootThread extends Thread {
             }
         } catch (InterruptedException e) {
             log.error("任务异常，中断：{}", e.getMessage());
-            androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
+            iosStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
         } finally {
             if (startTestSuccess) {
-                AndroidDeviceLocalStatus.finish(udId);
-                androidStepHandler.closeAndroidDriver();
+                IOSDeviceLocalStatus.finish(udId);
+                iosStepHandler.closeIOSDriver();
             }
-            androidStepHandler.sendStatus();
+            iosStepHandler.sendStatus();
         }
     }
 }
