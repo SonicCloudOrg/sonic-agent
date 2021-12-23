@@ -368,6 +368,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         executeCommand(iDevice, "am start -n com.sonic.plugins.assist/com.sonic.plugins.assist.SearchActivity");
     }
 
+    public static void controlBattery(IDevice iDevice, int type) {
+        if (type == 0) {
+            executeCommand(iDevice, "dumpsys battery unplug && dumpsys battery set status 1");
+        }
+        if (type == 1) {
+            executeCommand(iDevice, "dumpsys battery reset");
+        }
+    }
+
     /**
      * @param udId
      * @param packageName
