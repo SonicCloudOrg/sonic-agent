@@ -170,30 +170,19 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
             } else if (system.contains("linux") || system.contains("mac")) {
                 wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
             }
-            Process finalWdaProcess = wdaProcess;
-            new Thread(() -> {
-                BufferedReader stdInput = new BufferedReader(new
-                        InputStreamReader(finalWdaProcess.getInputStream()));
-                String s = null;
-                while (finalWdaProcess.isAlive()) {
-                    try {
-                        if (!((s = stdInput.readLine()) != null)) break;
-                    } catch (IOException e) {
-                        e.printStackTrace();
+            BufferedReader stdInput = new BufferedReader(new
+                    InputStreamReader(wdaProcess.getInputStream()));
+            String s;
+            while (wdaProcess.isAlive()) {
+                if ((s = stdInput.readLine()) != null) {
+                    if (s.contains("WebDriverAgent start successfully")) {
+                        break;
                     }
-                    logger.info(s);
+                } else {
+                    Thread.sleep(500);
                 }
-            }).start();
-//            String s;
-//            while ((s = stdInput.readLine()) != null) {
-//                if (s.contains("WebDriverAgent start successfully")) {
-//                    logger.info(udId + " wda启动完毕！");
-//                    break;
-//                } else {
-//                    Thread.sleep(500);
-//                }
-//            }
-            Thread.sleep(3000);
+                logger.info(s);
+            }
             processList = new ArrayList<>();
             processList.add(wdaProcess);
             IOSProcessMap.getMap().put(udId, processList);
@@ -201,7 +190,7 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         }
     }
 
-    public static int relayImg(String udId) throws IOException {
+    public static int relayImg(String udId) throws IOException, InterruptedException {
         int port = PortTool.getPort();
         Process relayProcess = null;
         String commandLine = "tidevice -u " + udId +
@@ -220,6 +209,7 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         }
         processList.add(relayProcess);
         IOSProcessMap.getMap().put(udId, processList);
+        Thread.sleep(1000);
         return port;
     }
 

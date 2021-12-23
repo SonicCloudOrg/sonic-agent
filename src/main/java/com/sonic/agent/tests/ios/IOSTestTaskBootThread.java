@@ -3,6 +3,7 @@ package com.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.automation.IOSStepHandler;
 import com.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
+import com.sonic.agent.bridge.ios.TIDeviceTool;
 import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.tests.TaskManager;
 import org.slf4j.Logger;
@@ -77,8 +78,8 @@ public class IOSTestTaskBootThread extends Thread {
     /**
      * 任务线程构造
      *
-     * @param jsonObject          任务数据
-     * @param iosStepHandler  ios步骤执行器
+     * @param jsonObject     任务数据
+     * @param iosStepHandler ios步骤执行器
      */
     public IOSTestTaskBootThread(JSONObject jsonObject, IOSStepHandler iosStepHandler) {
         this.iosStepHandler = iosStepHandler;
@@ -155,7 +156,8 @@ public class IOSTestTaskBootThread extends Thread {
             startTestSuccess = true;
             //启动测试
             try {
-                iosStepHandler.startIOSDriver(udId);
+                int wdaPort = TIDeviceTool.startWda(udId);
+                iosStepHandler.startIOSDriver(udId, wdaPort);
             } catch (Exception e) {
                 log.error(e.getMessage());
                 iosStepHandler.closeIOSDriver();

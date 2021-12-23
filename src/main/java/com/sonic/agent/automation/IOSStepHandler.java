@@ -74,10 +74,8 @@ public class IOSStepHandler {
         globalParams = jsonObject;
     }
 
-    public int startIOSDriver(String udId) throws InterruptedException, IOException {
+    public void startIOSDriver(String udId, int wdaPort) throws InterruptedException, IOException {
         this.udId = udId;
-        int wdaPort = TIDeviceTool.startWda(udId);
-        int imgPort = TIDeviceTool.relayImg(udId);
         Thread.sleep(2000);
         DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
         desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_NAME, Platform.IOS);
@@ -107,7 +105,6 @@ public class IOSStepHandler {
         int width = iosDriver.manage().window().getSize().width;
         int height = iosDriver.manage().window().getSize().height;
         IOSSizeMap.getMap().put(udId, width + "x" + height);
-        return imgPort;
     }
 
     public void closeIOSDriver() {
