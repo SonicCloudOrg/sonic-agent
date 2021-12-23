@@ -20,7 +20,7 @@ public class AppiumServer {
      */
     public static void start() {
         service = AppiumDriverLocalService.buildService(new AppiumServiceBuilder().usingAnyFreePort()
-//                .withArgument(GeneralServerFlag.LOG_LEVEL, "error")
+                .withArgument(GeneralServerFlag.LOG_LEVEL, "error")
                 .withArgument(GeneralServerFlag.ALLOW_INSECURE, "chromedriver_autodownload")
                 .withArgument(GeneralServerFlag.SESSION_OVERRIDE));
         service.start();
