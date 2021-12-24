@@ -28,7 +28,7 @@ import java.util.List;
 
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 @DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
-@Component("tiDeviceTool")
+@Component()
 public class TIDeviceTool {
     private static final Logger logger = LoggerFactory.getLogger(TIDeviceTool.class);
     @Value("${modules.ios.wda-bundle-id}")
