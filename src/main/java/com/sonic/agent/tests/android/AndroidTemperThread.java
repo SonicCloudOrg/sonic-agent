@@ -13,8 +13,16 @@ import java.util.List;
 public class AndroidTemperThread extends Thread {
     @Override
     public void run() {
-        while (AndroidDeviceBridgeTool.androidDebugBridge != null && NettyClientHandler.serverOnline) {
+        while (NettyClientHandler.serverOnline) {
             IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
+            if(deviceList==null){
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                break;
+            }
             List<JSONObject> detail = new ArrayList<>();
             for (IDevice iDevice : deviceList) {
                 JSONObject jsonObject = new JSONObject();
