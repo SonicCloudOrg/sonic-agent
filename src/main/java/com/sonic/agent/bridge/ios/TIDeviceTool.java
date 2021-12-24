@@ -5,6 +5,7 @@ import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.maps.IOSDeviceManagerMap;
 import com.sonic.agent.maps.IOSProcessMap;
 import com.sonic.agent.maps.IOSSizeMap;
+import com.sonic.agent.netty.NettyClientHandler;
 import com.sonic.agent.netty.NettyThreadPool;
 import com.sonic.agent.tools.PortTool;
 import com.sonic.agent.tools.ProcessCommandTool;
@@ -27,8 +28,8 @@ import java.util.List;
 
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 @DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
-@Component
-public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> {
+@Component("tiDeviceTool")
+public class TIDeviceTool {
     private static final Logger logger = LoggerFactory.getLogger(TIDeviceTool.class);
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
@@ -39,20 +40,13 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
         bundleId = getBundleId;
     }
 
-    @Override
-    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
-        logger.info("开启iOS相关功能");
-        init();
-    }
-
-
-    public static void init() {
+    public void init() {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             List<String> aDevice = ProcessCommandTool.getProcessLocalCommand("tidevice list");
             for (String udId : aDevice) {
                 sendOnlineStatus(udId.substring(0, udId.indexOf(" ")));
             }
-            while (true) {
+            while (NettyClientHandler.serverOnline) {
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
