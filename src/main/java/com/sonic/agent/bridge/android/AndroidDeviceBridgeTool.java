@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
+    private AndroidTemperThread androidTemperThread = new AndroidTemperThread();
 
     @Autowired
     private AndroidDeviceStatusListener androidDeviceStatusListener;
@@ -86,7 +87,9 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 break;
             }
         }
-        new AndroidTemperThread().start();
+        if (!androidTemperThread.isAlive()) {
+            androidTemperThread.start();
+        }
     }
 
     /**
