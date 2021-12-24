@@ -3,6 +3,7 @@ package com.sonic.agent.tests.android;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.netty.NettyClientHandler;
 import com.sonic.agent.netty.NettyThreadPool;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.List;
 public class AndroidTemperThread extends Thread {
     @Override
     public void run() {
-        while (AndroidDeviceBridgeTool.androidDebugBridge != null) {
+        while (AndroidDeviceBridgeTool.androidDebugBridge != null && NettyClientHandler.serverOnline) {
             IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
             List<JSONObject> detail = new ArrayList<>();
             for (IDevice iDevice : deviceList) {
