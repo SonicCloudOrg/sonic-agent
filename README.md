@@ -56,32 +56,14 @@ For Example
 mvn package -Pwindows-x86_64
 ```
 
-## Deployment mode
+## Sponsors
 
-### Docker Mode
+---
+Thank you to all our sponsors!
 
-> Can only be used on Linux or Mac！
->
-> [Click Here!](https://hub.docker.com/repository/docker/sonicorg)
+[< img src="https://ceshiren.com/uploads/default/original/3X/7/0/70299922296e93e2dcab223153a928c4bfb27df9.jpeg" alt="霍格沃兹测试开发学社" width="500">](https://qrcode.testing-studio.com/f?from=sonic&url=https://ceshiren.com)
 
-### jar Mode
-
-|  ENV Name   | Description  |
-|  ----  | ----  |
-| RABBITMQ_HOST  | RabbitMQ service host,default **localhost** |
-| RABBITMQ_PORT  | RabbitMQ service port,default **5672** |
-| RABBITMQ_USERNAME  | RabbitMQ service username,default **sonic** |
-| RABBITMQ_PASSWORD  | RabbitMQ service password,default **sonic** |
-| RABBITMQ_VHOST  | RabbitMQ service virtual-host,default **sonic** |
-| SONIC_FOLDER_URL  | Sonic-server-folder url,default **http://localhost:8094/api/folder** |
-| SONIC_AGENT_HOST  | IPv4 running locally,default **127.0.0.1** |
-| SONIC_AGENT_KEY  | Agent's key for sonic-server,default random key |
-
-Folder: mini,chromeDriver and language
-
-```
-java -jar -D{your_env1} -D{your_env2} sonic-agent-linux_86.jar
-```
+> [霍格沃兹测试开发学社](https://qrcode.testing-studio.com/f?from=sonic&url=https://ceshiren.com)是业界领先的测试开发技术高端教育品牌，隶属于[测吧（北京）科技有限公司](http://qrcode.testing-studio.com/f?from=sonic&url=https://www.testing-studio.com) 。学院课程由一线大厂测试经理与资深测试开发专家参与研发，实战驱动。课程涵盖 web/app 自动化测试、接口测试、性能测试、安全测试、持续集成/持续交付/DevOps，测试左移&右移、精准测试、测试平台开发、测试管理等内容，帮助测试工程师实现测试开发技术转型。通过优秀的学社制度（奖学金、内推返学费、行业竞赛等多种方式）来实现学员、学社及用人企业的三方共赢。[进入测试开发技术能力测评!](https://qrcode.testing-studio.com/f?from=sonic&url=https://ceshiren.com/t/topic/14940)
 
 ## LICENSE
 

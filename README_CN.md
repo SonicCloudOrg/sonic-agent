@@ -56,32 +56,14 @@ mvn package -P{你的平台}
 mvn package -Pwindows-x86_64
 ```
 
-## 部署方式
+## 赞助商
 
-### Docker模式
+---
+感谢所有赞助商！
 
-> 仅Linux和Mac可用！
->
-> [点击这里!](https://hub.docker.com/repository/docker/sonicorg)
+[< img src="https://ceshiren.com/uploads/default/original/3X/7/0/70299922296e93e2dcab223153a928c4bfb27df9.jpeg" alt="霍格沃兹测试开发学社" width="500">](https://qrcode.testing-studio.com/f?from=sonic&url=https://ceshiren.com)
 
-### jar模式
-
-|  变量名   | 描述  |
-|  ----  | ----  |
-| RABBITMQ_HOST  | RabbitMQ 服务host,默认 **localhost** |
-| RABBITMQ_PORT  | RabbitMQ 服务port,默认 **5672** |
-| RABBITMQ_USERNAME  | RabbitMQ 服务用户名,默认 **sonic** |
-| RABBITMQ_PASSWORD  | RabbitMQ 服务用户密码,默认 **sonic** |
-| RABBITMQ_VHOST  | RabbitMQ service 虚拟host,默认 **sonic** |
-| SONIC_FOLDER_URL  | Sonic-server-folder 经gateway反向代理后url,默认 **http://localhost:8094/api/folder** |
-| SONIC_AGENT_HOST  | Agent本地运行IPv4,默认 **127.0.0.1** |
-| SONIC_AGENT_KEY  | 创建的已知Agent key,默认随机生成一个key（当然这个key不可用） |
-
-文件夹: mini,chromeDriver and language
-
-```
-java -jar -D{变量1} -D{变量2} sonic-agent-linux_86.jar
-```
+> [霍格沃兹测试开发学社](https://qrcode.testing-studio.com/f?from=sonic&url=https://ceshiren.com)是业界领先的测试开发技术高端教育品牌，隶属于[测吧（北京）科技有限公司](http://qrcode.testing-studio.com/f?from=sonic&url=https://www.testing-studio.com) 。学院课程由一线大厂测试经理与资深测试开发专家参与研发，实战驱动。课程涵盖 web/app 自动化测试、接口测试、性能测试、安全测试、持续集成/持续交付/DevOps，测试左移&右移、精准测试、测试平台开发、测试管理等内容，帮助测试工程师实现测试开发技术转型。通过优秀的学社制度（奖学金、内推返学费、行业竞赛等多种方式）来实现学员、学社及用人企业的三方共赢。[进入测试开发技术能力测评!](https://qrcode.testing-studio.com/f?from=sonic&url=https://ceshiren.com/t/topic/14940)
 
 ## 开源许可协议
 
