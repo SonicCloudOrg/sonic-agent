@@ -170,19 +170,20 @@ public class TIDeviceTool implements ApplicationListener<ContextRefreshedEvent> 
             } else if (system.contains("linux") || system.contains("mac")) {
                 wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
             }
-            BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(wdaProcess.getInputStream()));
-            String s;
-            while (wdaProcess.isAlive()) {
-                if ((s = stdInput.readLine()) != null) {
-                    if (s.contains("WebDriverAgent start successfully")) {
-                        break;
-                    }
-                } else {
-                    Thread.sleep(500);
-                }
-                logger.info(s);
-            }
+//            BufferedReader stdInput = new BufferedReader(new
+//                    InputStreamReader(wdaProcess.getInputStream()));
+//            String s;
+//            while (wdaProcess.isAlive()) {
+//                if ((s = stdInput.readLine()) != null) {
+//                    if (s.contains("WebDriverAgent start successfully")) {
+//                        break;
+//                    }
+//                } else {
+//                    Thread.sleep(500);
+//                }
+//                logger.info(s);
+//            }
+            Thread.sleep(4000);
             processList = new ArrayList<>();
             processList.add(wdaProcess);
             IOSProcessMap.getMap().put(udId, processList);
