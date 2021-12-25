@@ -2,28 +2,19 @@ package com.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import com.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
-import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import com.sonic.agent.cv.RecordHandler;
 import com.sonic.agent.interfaces.DeviceStatus;
-import com.sonic.agent.interfaces.ResultDetailStatus;
-import com.sonic.agent.maps.AndroidDeviceManagerMap;
 import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import com.sonic.agent.tools.MiniCapTool;
-import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author ZhouYiXun

@@ -113,6 +113,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     TestNG tng = new TestNG();
                     List<XmlSuite> suiteList = new ArrayList<>();
                     XmlSuite xmlSuite = new XmlSuite();
+                    //bug?
                     for (JSONObject dataInfo : cases) {
                         XmlTest xmlTest = new XmlTest(xmlSuite);
                         Map<String, String> parameters = new HashMap<>();
