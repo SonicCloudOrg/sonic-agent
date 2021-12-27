@@ -117,7 +117,7 @@ public class AndroidStepHandler {
         //关闭运行时阻塞其他Accessibility服务，开启的话其他不能使用了
         desiredCapabilities.setCapability("disableSuppressAccessibilityService", true);
         //adb指令超时时间
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 60000);
+        desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 3600000);
         //UIA2安装超时时间
         desiredCapabilities.setCapability("uiautomator2ServerInstallTimeout", 30000);
 

@@ -304,7 +304,7 @@ public class AndroidWSServer {
                 result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
             } finally {
                 try {
-                    Thread.sleep(2000);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -476,6 +476,30 @@ public class AndroidWSServer {
                 } else {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
+                        if (msg.getString("detail").equals("reopenDriver")) {
+                            androidStepHandler = new AndroidStepHandler();
+                            androidStepHandler.setTestMode(0, 0, udIdMap.get(session).getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+                            JSONObject result = new JSONObject();
+                            try {
+                                AndroidDeviceLocalStatus.startDebug(udIdMap.get(session).getSerialNumber());
+                                androidStepHandler.startAndroidDriver(udIdMap.get(session).getSerialNumber());
+                                result.put("status", "success");
+                                result.put("detail", "初始化Driver完成！");
+                                HandlerMap.getAndroidMap().put(session.getId(), androidStepHandler);
+                            } catch (Exception e) {
+                                logger.error(e.getMessage());
+                                result.put("status", "error");
+                                result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+                            } finally {
+                                try {
+                                    Thread.sleep(1000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                result.put("msg", "openDriver");
+                                sendText(session, result.toJSONString());
+                            }
+                        }
                         break;
                     }
                     try {
