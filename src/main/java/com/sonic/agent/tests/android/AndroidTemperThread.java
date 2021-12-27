@@ -21,7 +21,7 @@ public class AndroidTemperThread extends Thread {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                break;
+                continue;
             }
             List<JSONObject> detail = new ArrayList<>();
             for (IDevice iDevice : deviceList) {
