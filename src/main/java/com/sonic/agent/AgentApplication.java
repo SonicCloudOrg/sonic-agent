@@ -8,6 +8,8 @@ import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * @author ZhouYiXun
@@ -16,6 +18,8 @@ import org.springframework.context.annotation.Import;
  */
 @Import(SpringTool.class)
 @SpringBootApplication
+@EnableAsync
+@EnableScheduling
 public class AgentApplication {
     @Value("${sonic.agent.port}")
     private int port;
