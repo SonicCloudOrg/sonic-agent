@@ -35,7 +35,9 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger(NettyClientHandler.class);
     private static Map<String, Session> sessionMap = new ConcurrentHashMap<String, Session>();
     private NettyClient nettyClient;
-    public static Channel channel = null;
+    public volatile static Channel channel = null;
+
+
 
     public NettyClientHandler(NettyClient nettyClient, Channel channel) {
         this.nettyClient = nettyClient;
@@ -152,7 +154,6 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("服务器: {} 连接断开", ctx.channel().remoteAddress());
-        NettyThreadPool.isPassSecurity = false;
         if (channel != null) {
             channel.close();
         }

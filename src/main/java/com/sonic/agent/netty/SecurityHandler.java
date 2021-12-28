@@ -53,11 +53,9 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
             agentInfo.put("systemType", System.getProperty("os.name"));
             agentInfo.put("host", host);
             channel.writeAndFlush(agentInfo.toJSONString());
-            NettyThreadPool.readQueue();
             ctx.pipeline().addLast(new NettyClientHandler(nettyClient, channel));
         } else {
             logger.info("服务器认证不通过！");
-            NettyThreadPool.isPassSecurity = false;
             ctx.close();
         }
     }
@@ -70,7 +68,6 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("Agent: {} 连接断开", ctx.channel().remoteAddress());
-        NettyThreadPool.isPassSecurity = false;
         ctx.close();
     }
 }
