@@ -59,6 +59,10 @@ public class OutputSocketThread extends Thread {
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_OUTPUT_SOCKET_PRE));
     }
 
+    public boolean sessionOpen() {
+        return session != null && session.isOpen();
+    }
+
     @Override
     public void run() {
 
@@ -70,9 +74,6 @@ public class OutputSocketThread extends Thread {
         byte[] oldBytes = new byte[0];
         int count = 0;
         while (sendImg.isAlive()) {
-            if (session == null || !session.isOpen()) {
-                return;
-            }
             Queue<byte[]> dataQueue = sendImg.getDataQueue();
             if (dataQueue.isEmpty()) {
                 continue;
@@ -134,7 +135,7 @@ public class OutputSocketThread extends Thread {
                     readBannerBytes += 1;
                     if (readBannerBytes == bannerLength) {
                         log.info("banner读取已就绪");
-                        if (session != null) {
+                        if (sessionOpen()) {
                             JSONObject size = new JSONObject();
                             size.put("msg", "size");
                             size.put("width", banner.get()[9]);
@@ -156,7 +157,7 @@ public class OutputSocketThread extends Thread {
                         }
                         final byte[] finalBytes = subByteArray(frameBody,
                                 0, frameBody.length);
-                        if (session != null) {
+                        if (sessionOpen()) {
                             if (!Arrays.equals(oldBytes, finalBytes)) {
                                 switch (pic) {
                                     case "low":
