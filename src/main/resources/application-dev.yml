@@ -13,8 +13,8 @@ modules:
     enable: true
     use-adbkit: true
   ios:
-    enable: false
-    wda-bundle-id: com.sonic.wda.xctrunner
+    enable: true
+    wda-bundle-id: com.sonic.WebDriverAgentRunner.xctrunner
   appium:
     enable: true
   webview:
