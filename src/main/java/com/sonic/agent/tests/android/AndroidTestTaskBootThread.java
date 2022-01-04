@@ -203,6 +203,7 @@ public class AndroidTestTaskBootThread extends Thread {
                 androidStepHandler.closeAndroidDriver();
             }
             androidStepHandler.sendStatus();
+            TaskManager.clearTerminatedThreadByKey(this.getName());
         }
     }
 }
