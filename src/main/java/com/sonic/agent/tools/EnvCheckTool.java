@@ -158,7 +158,8 @@ public class EnvCheckTool {
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("提示：可前往http://npm.taobao.org/mirrors/chromedriver/下载" +
+            throw new RuntimeException(String.format("提示：如果需要修改路径，可以修改config文件夹里application-prod.yml文件里的对应内容。" +
+                    "如果未安装，可前往http://npm.taobao.org/mirrors/chromedriver/下载" +
                     "与Agent的谷歌浏览器版本对应的driver到谷歌浏览器安装目录下（谷歌浏览器地址栏输入chrome://version可看到安装目录）"));
         }
         printPass(type);

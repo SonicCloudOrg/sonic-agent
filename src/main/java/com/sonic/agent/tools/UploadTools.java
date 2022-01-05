@@ -17,7 +17,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -73,6 +75,44 @@ public class UploadTools {
             logger.info("发送失败！" + responseEntity.getBody());
         }
         return responseEntity.getBody().getString("data");
+    }
+
+    public static String uploadPatchRecord(List<byte[]> imgList, String uuid, int width, int height) {
+        if (imgList.size() == 0) {
+            return null;
+        }
+        long size = 1024 * 1024 * 2;
+        int len = 0;
+        List<byte[]> chunks = new ArrayList<>();
+        List<List<byte[]>> chunksList = new ArrayList<>();
+        String url = "";
+        for (int i = 0; i < imgList.size(); i++) {
+            len += imgList.get(i).length;
+            chunks.add(imgList.get(i));
+            if (len > size || i == imgList.size() - 1) {
+                len = 0;
+                chunksList.add(chunks);
+                chunks.clear();
+            }
+        }
+        for(int i = 0; i < chunksList.size(); i++){
+            //发送
+                MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
+                param.add("bytes", chunksList.get(i));
+                param.add("uuid", uuid);
+                param.add("width", width + "");
+                param.add("height", height + "");
+                param.add("index", i + "");
+                param.add("total", chunksList.size() + "");
+                ResponseEntity<JSONObject> responseEntity = restTemplate.postForEntity(baseUrl + "/upload/recordFiles", param, JSONObject.class);
+                if (responseEntity.getBody().getInteger("code") == 2000) {
+                    logger.info("发送片段");
+                }
+                if (responseEntity.getBody().getString("data") != null) {
+                    url = responseEntity.getBody().getString("data");
+                }
+        }
+        return url;
     }
 
     public static String uploadPatchRecord(File uploadFile) {
