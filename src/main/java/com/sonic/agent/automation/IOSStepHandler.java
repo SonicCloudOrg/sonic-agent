@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sonic.agent.bridge.ios.TIDeviceTool;
-import com.sonic.agent.cv.*;
 import com.sonic.agent.interfaces.ErrorType;
 import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.StepType;
@@ -556,82 +555,82 @@ public class IOSStepHandler {
     }
 
     public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
-        handleDes.setStepDes("点击图片" + des);
-        handleDes.setDetail(pathValue);
-        File file = null;
-        if (pathValue.startsWith("http")) {
-            try {
-                file = DownImageTool.download(pathValue);
-            } catch (Exception e) {
-                handleDes.setE(e);
-                return;
-            }
-        }
-        FindResult findResult = null;
-        try {
-            SIFTFinder siftFinder = new SIFTFinder();
-            findResult = siftFinder.getSIFTFindResult(file, getScreenToLocal());
-        } catch (Exception e) {
-            log.sendStepLog(StepType.WARN, "SIFT图像算法出错，切换算法中...",
-                    "");
-        }
-        if (findResult != null) {
-            log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-                    findResult.getUrl());
-        } else {
-            log.sendStepLog(StepType.INFO, "SIFT算法无法定位图片，切换AKAZE算法中...",
-                    "");
-            try {
-                AKAZEFinder akazeFinder = new AKAZEFinder();
-                findResult = akazeFinder.getAKAZEFindResult(file, getScreenToLocal());
-            } catch (Exception e) {
-                log.sendStepLog(StepType.WARN, "AKAZE图像算法出错，切换模版匹配算法中...",
-                        "");
-            }
-            if (findResult != null) {
-                log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-                        findResult.getUrl());
-            } else {
-                log.sendStepLog(StepType.INFO, "AKAZE算法无法定位图片，切换模版匹配算法中...",
-                        "");
-                try {
-                    TemMatcher temMatcher = new TemMatcher();
-                    findResult = temMatcher.getTemMatchResult(file, getScreenToLocal());
-                } catch (Exception e) {
-                    log.sendStepLog(StepType.WARN, "模版匹配算法出错",
-                            "");
-                }
-                if (findResult != null) {
-                    log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-                            findResult.getUrl());
-                } else {
-                    handleDes.setE(new Exception("图片定位失败！"));
-                }
-            }
-        }
-        if (findResult != null) {
-            try {
-                TouchAction ta = new TouchAction(iosDriver);
-                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
-            } catch (Exception e) {
-                log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
-                handleDes.setE(e);
-            }
-        }
+//        handleDes.setStepDes("点击图片" + des);
+//        handleDes.setDetail(pathValue);
+//        File file = null;
+//        if (pathValue.startsWith("http")) {
+//            try {
+//                file = DownImageTool.download(pathValue);
+//            } catch (Exception e) {
+//                handleDes.setE(e);
+//                return;
+//            }
+//        }
+//        FindResult findResult = null;
+//        try {
+//            SIFTFinder siftFinder = new SIFTFinder();
+//            findResult = siftFinder.getSIFTFindResult(file, getScreenToLocal());
+//        } catch (Exception e) {
+//            log.sendStepLog(StepType.WARN, "SIFT图像算法出错，切换算法中...",
+//                    "");
+//        }
+//        if (findResult != null) {
+//            log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+//                    findResult.getUrl());
+//        } else {
+//            log.sendStepLog(StepType.INFO, "SIFT算法无法定位图片，切换AKAZE算法中...",
+//                    "");
+//            try {
+//                AKAZEFinder akazeFinder = new AKAZEFinder();
+//                findResult = akazeFinder.getAKAZEFindResult(file, getScreenToLocal());
+//            } catch (Exception e) {
+//                log.sendStepLog(StepType.WARN, "AKAZE图像算法出错，切换模版匹配算法中...",
+//                        "");
+//            }
+//            if (findResult != null) {
+//                log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+//                        findResult.getUrl());
+//            } else {
+//                log.sendStepLog(StepType.INFO, "AKAZE算法无法定位图片，切换模版匹配算法中...",
+//                        "");
+//                try {
+//                    TemMatcher temMatcher = new TemMatcher();
+//                    findResult = temMatcher.getTemMatchResult(file, getScreenToLocal());
+//                } catch (Exception e) {
+//                    log.sendStepLog(StepType.WARN, "模版匹配算法出错",
+//                            "");
+//                }
+//                if (findResult != null) {
+//                    log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+//                            findResult.getUrl());
+//                } else {
+//                    handleDes.setE(new Exception("图片定位失败！"));
+//                }
+//            }
+//        }
+//        if (findResult != null) {
+//            try {
+//                TouchAction ta = new TouchAction(iosDriver);
+//                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
+//            } catch (Exception e) {
+//                log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
+//                handleDes.setE(e);
+//            }
+//        }
     }
 
 
     public void readText(HandleDes handleDes, String language, String text) throws Exception {
-        TextReader textReader = new TextReader();
-        String result = textReader.getTessResult(getScreenToLocal(), language);
-        log.sendStepLog(StepType.INFO, "",
-                "图像文字识别结果：<br>" + result);
-        String filter = result.replaceAll(" ", "");
-        handleDes.setStepDes("图像文字识别");
-        handleDes.setDetail("期望包含文本：" + text);
-        if (!filter.contains(text)) {
-            handleDes.setE(new Exception("图像文字识别不通过！"));
-        }
+//        TextReader textReader = new TextReader();
+//        String result = textReader.getTessResult(getScreenToLocal(), language);
+//        log.sendStepLog(StepType.INFO, "",
+//                "图像文字识别结果：<br>" + result);
+//        String filter = result.replaceAll(" ", "");
+//        handleDes.setStepDes("图像文字识别");
+//        handleDes.setDetail("期望包含文本：" + text);
+//        if (!filter.contains(text)) {
+//            handleDes.setE(new Exception("图像文字识别不通过！"));
+//        }
     }
 
     public File getScreenToLocal() {
@@ -667,14 +666,14 @@ public class IOSStepHandler {
         if (pathValue.startsWith("http")) {
             file = DownImageTool.download(pathValue);
         }
-        double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
-        handleDes.setStepDes("检测" + des + "图片相似度");
-        handleDes.setDetail("相似度为" + score * 100 + "%");
-        if (score == 0) {
-            handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
-        } else if (score < (matchThreshold / 100)) {
-            handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
-        }
+//        double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
+//        handleDes.setStepDes("检测" + des + "图片相似度");
+//        handleDes.setDetail("相似度为" + score * 100 + "%");
+//        if (score == 0) {
+//            handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
+//        } else if (score < (matchThreshold / 100)) {
+//            handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
+//        }
     }
 
     public void siriCommand(HandleDes handleDes, String command) {

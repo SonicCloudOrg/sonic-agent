@@ -110,20 +110,18 @@ public class EnvCheckTool {
      */
     public void checkFiles() {
         String type = "校验 本地文件夹 ";
-        File chromeDriver = new File("chromeDriver");
+        File chromeDriver = new File("webview");
         File config = new File("config/application-prod.yml");
-        File language = new File("language");
         File mini = new File("mini");
         File plugins = new File("plugins");
         if (chromeDriver.exists()
                 && config.exists()
-                && language.exists()
                 && mini.exists()
                 && plugins.exists()) {
             printPass(type);
         } else {
             printFail(type);
-            throw new RuntimeException("提示：请确保当前目录下有chromeDriver、config(内含application-prod.yml)、language、mini、plugins文件夹");
+            throw new RuntimeException("提示：请确保当前目录下有webview、config(内含application-prod.yml)、mini、plugins文件夹");
         }
     }
 

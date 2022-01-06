@@ -476,7 +476,7 @@ public class AndroidWSServer {
                 } else {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
-                        if (msg.getString("detail").equals("reopenDriver")) {
+                        if (msg.getString("detail").equals("openDriver")) {
                             androidStepHandler = new AndroidStepHandler();
                             androidStepHandler.setTestMode(0, 0, udIdMap.get(session).getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
                             JSONObject result = new JSONObject();
