@@ -108,8 +108,8 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
         //webView通用配置，自动下载匹配的driver
         desiredCapabilities.setCapability(AndroidMobileCapabilityType.RECREATE_CHROME_DRIVER_SESSIONS, true);
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_EXECUTABLE_DIR, "chromeDriver");
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_CHROME_MAPPING_FILE, "chromeDriver/version.json");
+        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_EXECUTABLE_DIR, "webview");
+        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_CHROME_MAPPING_FILE, "webview/version.json");
         //平台
         desiredCapabilities.setCapability(AndroidMobileCapabilityType.PLATFORM_NAME, Platform.ANDROID);
         //选用的自动化框架
@@ -117,16 +117,16 @@ public class AndroidStepHandler {
         //关闭运行时阻塞其他Accessibility服务，开启的话其他不能使用了
         desiredCapabilities.setCapability("disableSuppressAccessibilityService", true);
         //adb指令超时时间
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 3600000);
+        desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 7200000);
         //UIA2安装超时时间
-        desiredCapabilities.setCapability("uiautomator2ServerInstallTimeout", 30000);
+        desiredCapabilities.setCapability("uiautomator2ServerInstallTimeout", 600000);
 
         //io.appium.uiautomator2.server io.appium.uiautomator2.server.test //io.appium.settings
 //        desiredCapabilities.setCapability("skipServerInstallation",true);
 //        desiredCapabilities.setCapability("disableWindowAnimation",true);
 //        desiredCapabilities.setCapability("skipDeviceInitialization",true);
         //等待新命令超时时间
-        desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 3600);
+        desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 7200);
         //不重置应用
         desiredCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
         //单独唤起应用的话，这个需要设置空字符串

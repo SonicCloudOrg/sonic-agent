@@ -3,14 +3,16 @@ package com.sonic.agent.tests.android;
 import com.android.ddmlib.IDevice;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.tools.RecordHandler;
 import com.sonic.agent.tools.MiniCapTool;
-import com.sonic.agent.tools.UploadTools;
+import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -96,10 +98,20 @@ public class AndroidRecordThread extends Thread {
             } else {
                 miniCapPro.interrupt();
                 if (androidStepHandler.getStatus() == 3) {
-                    String uuid = UUID.randomUUID().toString();
-                    androidStepHandler.log.sendRecordLog(true, uuid + ".mp4",
-                            UploadTools.uploadPatchRecord(imgList.get(), uuid
-                                    , Integer.parseInt(banner.get()[9]), Integer.parseInt(banner.get()[13])));
+                    File recordByRmvb = new File("test-output/record");
+                    if (!recordByRmvb.exists()) {
+                        recordByRmvb.mkdirs();
+                    }
+                    long timeMillis = Calendar.getInstance().getTimeInMillis();
+                    String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
+                    File uploadFile = new File(recordByRmvb + File.separator + fileName);
+                    try {
+                        androidStepHandler.log.sendRecordLog(true, fileName,
+                                RecordHandler.record(uploadFile, imgList.get()
+                                        , Integer.parseInt(banner.get()[9]), Integer.parseInt(banner.get()[13])));
+                    } catch (FrameRecorder.Exception e) {
+                        e.printStackTrace();
+                    }
                     return;
                 }
             }
