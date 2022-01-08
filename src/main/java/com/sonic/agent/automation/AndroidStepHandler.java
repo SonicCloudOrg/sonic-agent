@@ -10,11 +10,8 @@ import com.sonic.agent.interfaces.ErrorType;
 import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.interfaces.StepType;
 import com.sonic.agent.maps.AndroidPasswordMap;
-import com.sonic.agent.tools.DownImageTool;
-import com.sonic.agent.tools.LogTool;
+import com.sonic.agent.tools.*;
 import com.sonic.agent.interfaces.PlatformType;
-import com.sonic.agent.tools.PortTool;
-import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.*;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
@@ -36,8 +33,14 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.FileCopyUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -57,6 +60,10 @@ import static org.testng.Assert.*;
  */
 public class AndroidStepHandler {
     public LogTool log = new LogTool();
+    private RestTemplate restTemplate = SpringTool.getBean(RestTemplate.class);
+    private Environment environment = SpringTool.getBean(Environment.class);
+    private String baseUrl = "http://" + environment.getProperty("sonic.server.host")
+            + ":" + environment.getProperty("folder-port") + "/api/folder";
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
     //包版本
@@ -872,68 +879,44 @@ public class AndroidStepHandler {
     }
 
     public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
-//        handleDes.setStepDes("点击图片" + des);
-//        handleDes.setDetail(pathValue);
-//        File file = null;
-//        if (pathValue.startsWith("http")) {
-//            try {
-//                file = DownImageTool.download(pathValue);
-//            } catch (Exception e) {
-//                handleDes.setE(e);
-//                return;
-//            }
-//        }
-//        FindResult findResult = null;
-//        try {
-//            SIFTFinder siftFinder = new SIFTFinder();
-//            findResult = siftFinder.getSIFTFindResult(file, getScreenToLocal());
-//        } catch (Exception e) {
-//            log.sendStepLog(StepType.WARN, "SIFT图像算法出错，切换算法中...",
-//                    "");
-//        }
-//        if (findResult != null) {
-//            log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-//                    findResult.getUrl());
-//        } else {
-//            log.sendStepLog(StepType.INFO, "SIFT算法无法定位图片，切换AKAZE算法中...",
-//                    "");
-//            try {
-//                AKAZEFinder akazeFinder = new AKAZEFinder();
-//                findResult = akazeFinder.getAKAZEFindResult(file, getScreenToLocal());
-//            } catch (Exception e) {
-//                log.sendStepLog(StepType.WARN, "AKAZE图像算法出错，切换模版匹配算法中...",
-//                        "");
-//            }
-//            if (findResult != null) {
-//                log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-//                        findResult.getUrl());
-//            } else {
-//                log.sendStepLog(StepType.INFO, "AKAZE算法无法定位图片，切换模版匹配算法中...",
-//                        "");
-//                try {
-//                    TemMatcher temMatcher = new TemMatcher();
-//                    findResult = temMatcher.getTemMatchResult(file, getScreenToLocal());
-//                } catch (Exception e) {
-//                    log.sendStepLog(StepType.WARN, "模版匹配算法出错",
-//                            "");
-//                }
-//                if (findResult != null) {
-//                    log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-//                            findResult.getUrl());
-//                } else {
-//                    handleDes.setE(new Exception("图片定位失败！"));
-//                }
-//            }
-//        }
-//        if (findResult != null) {
-//            try {
-//                TouchAction ta = new TouchAction(androidDriver);
-//                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
-//            } catch (Exception e) {
-//                log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
-//                handleDes.setE(e);
-//            }
-//        }
+        handleDes.setStepDes("点击图片" + des);
+        handleDes.setDetail(pathValue);
+        File file = null;
+        if (pathValue.startsWith("http")) {
+            try {
+                file = DownImageTool.download(pathValue);
+            } catch (Exception e) {
+                handleDes.setE(e);
+                return;
+            }
+        }
+        FindResult findResult;
+        FileSystemResource resource1 = new FileSystemResource(file);
+        FileSystemResource resource2 = new FileSystemResource(getScreenToLocal());
+        MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
+        param.add("file1", resource1);
+        param.add("file2", resource2);
+        param.add("type", "checker");
+        try {
+            ResponseEntity<JSONObject> responseEntity =
+                    restTemplate.postForEntity(baseUrl + "/upload/cv", param, JSONObject.class);
+            if (responseEntity.getBody().getInteger("code") == 2000) {
+                findResult = responseEntity.getBody().getJSONObject("data").toJavaObject(FindResult.class);
+                if (findResult != null) {
+                    try {
+                        TouchAction ta = new TouchAction(androidDriver);
+                        ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
+                    } catch (Exception e) {
+                        log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
+                        handleDes.setE(e);
+                    }
+                }
+            } else {
+                handleDes.setE(new Exception("点击失败！cv服务出错！"));
+            }
+        } catch (Exception e) {
+            handleDes.setE(new Exception("点击失败！cv服务访问出错！"));
+        }
     }
 
     public void readText(HandleDes handleDes, String language, String text) throws Exception {
@@ -942,8 +925,8 @@ public class AndroidStepHandler {
 //        log.sendStepLog(StepType.INFO, "",
 //                "图像文字识别结果：<br>" + result);
 //        String filter = result.replaceAll(" ", "");
-//        handleDes.setStepDes("图像文字识别");
-//        handleDes.setDetail("期望包含文本：" + text);
+        handleDes.setStepDes("图像文字识别");
+        handleDes.setDetail("（该功能暂时关闭）期望包含文本：" + text);
 //        if (!filter.contains(text)) {
 //            handleDes.setE(new Exception("图像文字识别不通过！"));
 //        }
@@ -1001,14 +984,30 @@ public class AndroidStepHandler {
         if (pathValue.startsWith("http")) {
             file = DownImageTool.download(pathValue);
         }
-//        double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
-//        handleDes.setStepDes("检测" + des + "图片相似度");
-//        handleDes.setDetail("相似度为" + score * 100 + "%");
-//        if (score == 0) {
-//            handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
-//        } else if (score < (matchThreshold / 100)) {
-//            handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
-//        }
+        FileSystemResource resource1 = new FileSystemResource(file);
+        FileSystemResource resource2 = new FileSystemResource(getScreenToLocal());
+        MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
+        param.add("file1", resource1);
+        param.add("file2", resource2);
+        param.add("type", "checker");
+        try {
+            ResponseEntity<JSONObject> responseEntity =
+                    restTemplate.postForEntity(baseUrl + "/upload/cv", param, JSONObject.class);
+            if (responseEntity.getBody().getInteger("code") == 2000) {
+                double score = responseEntity.getBody().getDouble("score");
+                handleDes.setStepDes("检测" + des + "图片相似度");
+                handleDes.setDetail("相似度为" + score * 100 + "%");
+                if (score == 0) {
+                    handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
+                } else if (score < (matchThreshold / 100)) {
+                    handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
+                }
+            } else {
+                handleDes.setE(new Exception("图片相似度检测出错！cv服务出错！"));
+            }
+        } catch (Exception e) {
+            handleDes.setE(new Exception("图片相似度检测出错！cv服务访问出错！"));
+        }
     }
 
     public void exceptionLog(Throwable e) {
@@ -1082,7 +1081,6 @@ public class AndroidStepHandler {
         boolean isOpenPackageListener = false;
         boolean isOpenActivityListener = false;
         boolean isOpenNetworkListener = false;
-        boolean isOpenImageListener = false;
         if (!options.isEmpty()) {
             for (int i = options.size() - 1; i >= 0; i--) {
                 JSONObject jsonOption = (JSONObject) options.get(i);
@@ -1118,9 +1116,6 @@ public class AndroidStepHandler {
                 }
                 if (jsonOption.getString("name").equals("isOpenNetworkListener")) {
                     isOpenNetworkListener = jsonOption.getBoolean("value");
-                }
-                if (jsonOption.getString("name").equals("isOpenImageListener")) {
-                    isOpenImageListener = jsonOption.getBoolean("value");
                 }
                 options.remove(options.get(i));
             }
@@ -1331,40 +1326,6 @@ public class AndroidStepHandler {
                     }
                 }
         );
-        boolean finalIsOpenImageListener = isOpenImageListener;
-        Future<?> imageListener = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-                    if (finalIsOpenImageListener) {
-                        int matchTime = 0;
-                        File first = getScreenToLocal();
-                        while (!randomThread.isDone()) {
-                            try {
-                                Thread.sleep(8000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            File second = getScreenToLocal();
-                            try {
-//                                if (SimilarityChecker.getSimilarMSSIMScore(first, second, false) >= 0.94) {
-//                                    matchTime++;
-//                                } else {
-//                                    matchTime = 0;
-//                                }
-                                if (matchTime >= 12) {
-                                    androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
-                                    matchTime = 0;
-                                }
-                            } catch (Throwable e) {
-                                e.printStackTrace();
-                            } finally {
-                                File third = first;
-                                first = second;
-                                third.delete();
-                            }
-                        }
-                        first.delete();
-                    }
-                }
-        );
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
@@ -1377,9 +1338,8 @@ public class AndroidStepHandler {
                 (isOpenPackageListener ? "<br>应用包名监听器已开启..." : "") +
                 (isOpenH5Listener ? "<br>H5页面监听器已开启..." : "") +
                 (isOpenActivityListener ? "<br>黑名单Activity监听器..." : "") +
-                (isOpenNetworkListener ? "<br>网络状态监听器已开启..." : "") +
-                (isOpenImageListener ? "<br>图像静止监听器已开启..." : ""));
-        while (!randomThread.isDone() || (!packageListener.isDone()) || (!activityListener.isDone()) || (!networkListener.isDone()) || (!imageListener.isDone()) || (!H5Listener.isDone())) {
+                (isOpenNetworkListener ? "<br>网络状态监听器已开启..." : ""));
+        while (!randomThread.isDone() || (!packageListener.isDone()) || (!activityListener.isDone()) || (!networkListener.isDone()) || (!H5Listener.isDone())) {
         }
     }
 
