@@ -63,7 +63,7 @@ public class AndroidStepHandler {
     private RestTemplate restTemplate = SpringTool.getBean(RestTemplate.class);
     private Environment environment = SpringTool.getBean(Environment.class);
     private String baseUrl = "http://" + environment.getProperty("sonic.server.host")
-            + ":" + environment.getProperty("folder-port") + "/api/folder";
+            + ":" + environment.getProperty("sonic.server.folder-port") + "/api/folder";
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
     //包版本
@@ -896,7 +896,7 @@ public class AndroidStepHandler {
         MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
         param.add("file1", resource1);
         param.add("file2", resource2);
-        param.add("type", "checker");
+        param.add("type", "finder");
         try {
             ResponseEntity<JSONObject> responseEntity =
                     restTemplate.postForEntity(baseUrl + "/upload/cv", param, JSONObject.class);
@@ -911,7 +911,9 @@ public class AndroidStepHandler {
                         handleDes.setE(e);
                     }
                 }
-            } else {
+            } else if(responseEntity.getBody().getInteger("code") == 4003){
+                handleDes.setE(new Exception("图像匹配失败！"));
+            }else{
                 handleDes.setE(new Exception("点击失败！cv服务出错！"));
             }
         } catch (Exception e) {
