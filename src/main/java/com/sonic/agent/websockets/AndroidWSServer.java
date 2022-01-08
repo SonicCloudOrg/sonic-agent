@@ -15,10 +15,7 @@ import com.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.maps.*;
 import com.sonic.agent.netty.NettyThreadPool;
-import com.sonic.agent.tools.MiniCapTool;
-import com.sonic.agent.tools.PortTool;
-import com.sonic.agent.tools.ProcessCommandTool;
-import com.sonic.agent.tools.UploadTools;
+import com.sonic.agent.tools.*;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +28,7 @@ import org.springframework.web.client.RestTemplate;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -528,17 +526,16 @@ public class AndroidWSServer {
                         e.printStackTrace();
                     }
                     if (msg.getString("detail").equals("install")) {
-                        AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
-                            HandleDes handleDes = new HandleDes();
-                            finalAndroidStepHandler.install(handleDes, msg.getString("apk"));
-                            if (handleDes.getE() == null) {
+                            try {
+                                File localFile = DownImageTool.download(msg.getString("apk"));
+                                udIdMap.get(session).installPackage(localFile.getAbsolutePath(), true, "-t");
                                 result.put("status", "success");
-                            } else {
-                                System.out.println(handleDes.getE());
+                            } catch (IOException | InstallException e) {
                                 result.put("status", "fail");
+                                e.printStackTrace();
                             }
                             sendText(session, result.toJSONString());
                         });

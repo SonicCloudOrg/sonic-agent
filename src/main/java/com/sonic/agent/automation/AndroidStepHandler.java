@@ -890,9 +890,10 @@ public class AndroidStepHandler {
                 return;
             }
         }
+        File localCap = getScreenToLocal();
         FindResult findResult;
         FileSystemResource resource1 = new FileSystemResource(file);
-        FileSystemResource resource2 = new FileSystemResource(getScreenToLocal());
+        FileSystemResource resource2 = new FileSystemResource(localCap);
         MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
         param.add("file1", resource1);
         param.add("file2", resource2);
@@ -904,6 +905,8 @@ public class AndroidStepHandler {
                 findResult = responseEntity.getBody().getJSONObject("data").toJavaObject(FindResult.class);
                 if (findResult != null) {
                     try {
+                        log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+                                findResult.getUrl());
                         TouchAction ta = new TouchAction(androidDriver);
                         ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
                     } catch (Exception e) {
@@ -911,13 +914,16 @@ public class AndroidStepHandler {
                         handleDes.setE(e);
                     }
                 }
-            } else if(responseEntity.getBody().getInteger("code") == 4003){
+            } else if (responseEntity.getBody().getInteger("code") == 4003) {
                 handleDes.setE(new Exception("图像匹配失败！"));
-            }else{
+            } else {
                 handleDes.setE(new Exception("点击失败！cv服务出错！"));
             }
         } catch (Exception e) {
             handleDes.setE(new Exception("点击失败！cv服务访问出错！"));
+        } finally {
+            file.delete();
+            localCap.delete();
         }
     }
 
@@ -986,8 +992,9 @@ public class AndroidStepHandler {
         if (pathValue.startsWith("http")) {
             file = DownImageTool.download(pathValue);
         }
+        File localCap = getScreenToLocal();
         FileSystemResource resource1 = new FileSystemResource(file);
-        FileSystemResource resource2 = new FileSystemResource(getScreenToLocal());
+        FileSystemResource resource2 = new FileSystemResource(localCap);
         MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
         param.add("file1", resource1);
         param.add("file2", resource2);
@@ -1009,6 +1016,9 @@ public class AndroidStepHandler {
             }
         } catch (Exception e) {
             handleDes.setE(new Exception("图片相似度检测出错！cv服务访问出错！"));
+        } finally {
+            file.delete();
+            localCap.delete();
         }
     }
 
