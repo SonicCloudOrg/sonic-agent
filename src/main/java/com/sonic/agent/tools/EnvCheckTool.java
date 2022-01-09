@@ -110,11 +110,11 @@ public class EnvCheckTool {
      */
     public void checkFiles() {
         String type = "校验 本地文件夹 ";
-        File chromeDriver = new File("webview");
+        File webview = new File("webview");
         File config = new File("config/application-prod.yml");
         File mini = new File("mini");
         File plugins = new File("plugins");
-        if (chromeDriver.exists()
+        if (webview.exists()
                 && config.exists()
                 && mini.exists()
                 && plugins.exists()) {
