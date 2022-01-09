@@ -1,5 +1,8 @@
 package com.sonic.agent.netty;
 
+import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import com.sonic.agent.bridge.ios.TIDeviceTool;
+import com.sonic.agent.tools.SpringTool;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -11,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
@@ -33,6 +37,10 @@ public class NettyClient implements ApplicationRunner {
     private String key;
     @Value("${spring.version}")
     private String version;
+    @Value("${modules.android.enable}")
+    private boolean androidEnable;
+    @Value("${modules.ios.enable}")
+    private boolean iosEnable;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -62,9 +70,17 @@ public class NettyClient implements ApplicationRunner {
         future.addListener((ChannelFutureListener) futureListener -> {
             if (futureListener.isSuccess()) {
                 channel = futureListener.channel();
+                // 设备上线
+                NettyClientHandler.serverOnline = true;
+                if (androidEnable) {
+                    SpringTool.getBean(AndroidDeviceBridgeTool.class).init();
+                }
+                if (iosEnable) {
+                    SpringTool.getBean(TIDeviceTool.class).init();
+                }
             } else {
                 logger.info("连接到服务器{}:{}失败！10s后重连...", serverHost, serverPort);
-                futureListener.channel().eventLoop().schedule(() -> doConnect(), 10, TimeUnit.SECONDS);
+                futureListener.channel().eventLoop().schedule(this::doConnect, 10, TimeUnit.SECONDS);
             }
         });
     }

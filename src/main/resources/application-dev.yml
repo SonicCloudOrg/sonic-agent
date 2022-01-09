@@ -13,8 +13,8 @@ modules:
     enable: true
     use-adbkit: true
   ios:
-    enable: false
-    wda-bundle-id: com.sonic.wda.xctrunner
+    enable: true
+    wda-bundle-id: com.sonic.WebDriverAgentRunner.xctrunner
   appium:
     enable: true
   webview:
@@ -29,3 +29,5 @@ logging:
     rollingpolicy:
       clean-history-on-start: true
       max-history: 3
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"

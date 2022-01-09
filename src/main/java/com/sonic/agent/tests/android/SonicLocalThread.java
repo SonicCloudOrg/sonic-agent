@@ -11,6 +11,7 @@ import javax.websocket.Session;
 import java.io.File;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.sonic.agent.tools.AgentTool.sendText;
 
@@ -85,8 +86,8 @@ public class SonicLocalThread extends Thread {
         return isFinish;
     }
 
-    @Override
-    public void run() {
+    public boolean runMiniCap(String type) {
+        AtomicBoolean isSuc = new AtomicBoolean(true);
         //先删除原有路径下的文件，防止上次出错后停止，再次打开会报错的情况
         AndroidDeviceBridgeTool.executeCommand(iDevice, "rm -rf /data/local/tmp/minicap*");
         //获取cpu信息
@@ -96,8 +97,11 @@ public class SonicLocalThread extends Thread {
         //查找对应文件并推送
         String miniCapFileName = AndroidDeviceBridgeTool.matchMiniCapFile(androidSdkVersion);
         File miniCapFile = new File("mini" + File.separator + cpuAbi + File.separator + miniCapFileName);
-        File miniCapSoFile = new File("mini/minicap-shared/aosp/libs/android-" + androidSdkVersion
+        File miniCapSoFile = new File("mini/minicap-shared/aosp/" + type + "/android-" + androidSdkVersion
                 + File.separator + cpuAbi + File.separator + "minicap.so");
+        if (!miniCapFile.exists() || (!miniCapSoFile.exists())) {
+            return false;
+        }
         try {
             iDevice.pushFile(miniCapFile.getAbsolutePath(), "/data/local/tmp/" + miniCapFileName);
             iDevice.pushFile(miniCapSoFile.getAbsolutePath(), "/data/local/tmp/minicap.so");
@@ -127,13 +131,8 @@ public class SonicLocalThread extends Thread {
                         isFinish.release();
                     }
                     if (res.contains("Vector<> have different types")) {
-                        log.info(iDevice.getSerialNumber() + "设备不兼容投屏！");
-                        if (session != null) {
-                            JSONObject support = new JSONObject();
-                            support.put("msg", "support");
-                            support.put("text", "该设备不兼容MiniCap投屏！");
-                            sendText(session, support.toJSONString());
-                        }
+                        log.info(iDevice.getSerialNumber() + "设备不兼容" + type + "投屏！");
+                        isSuc.set(false);
                     }
                 }
 
@@ -147,9 +146,32 @@ public class SonicLocalThread extends Thread {
                 }
             }, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
+            isSuc.set(false);
             log.info("{} 设备miniCap启动异常！"
                     , iDevice.getSerialNumber());
             log.error(e.getMessage());
+        }
+        return isSuc.get();
+    }
+
+    @Override
+    public void run() {
+        boolean suc;
+        suc = runMiniCap("libs");
+        if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("Xiaomi")) {
+            suc = runMiniCap("Xiaomi");
+        }
+        if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("vivo")) {
+            suc = runMiniCap("vivo");
+        }
+        if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("LGE")) {
+            suc = runMiniCap("LGE");
+        }
+        if (session != null && (!suc)) {
+            JSONObject support = new JSONObject();
+            support.put("msg", "support");
+            support.put("text", "该设备不兼容MiniCap投屏！");
+            sendText(session, support.toJSONString());
         }
     }
 
