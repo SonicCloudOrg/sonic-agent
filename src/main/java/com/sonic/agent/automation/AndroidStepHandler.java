@@ -1003,7 +1003,7 @@ public class AndroidStepHandler {
             ResponseEntity<JSONObject> responseEntity =
                     restTemplate.postForEntity(baseUrl + "/upload/cv", param, JSONObject.class);
             if (responseEntity.getBody().getInteger("code") == 2000) {
-                double score = responseEntity.getBody().getDouble("score");
+                double score = responseEntity.getBody().getDouble("data");
                 handleDes.setStepDes("检测" + des + "图片相似度");
                 handleDes.setDetail("相似度为" + score * 100 + "%");
                 if (score == 0) {
@@ -1015,6 +1015,7 @@ public class AndroidStepHandler {
                 handleDes.setE(new Exception("图片相似度检测出错！cv服务出错！"));
             }
         } catch (Exception e) {
+            e.printStackTrace();
             handleDes.setE(new Exception("图片相似度检测出错！cv服务访问出错！"));
         } finally {
             file.delete();
