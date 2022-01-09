@@ -489,7 +489,7 @@ public class AndroidWSServer {
                                 } catch (Exception e) {
                                     logger.error(e.getMessage());
                                     result.put("status", "error");
-                                    result.put("detail", "初始化Driver失败v！部分功能不可用！请联系管理员");
+                                    result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
                                 } finally {
                                     try {
                                         Thread.sleep(1000);
