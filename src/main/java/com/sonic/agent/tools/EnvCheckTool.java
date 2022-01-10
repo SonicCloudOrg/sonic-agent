@@ -110,20 +110,18 @@ public class EnvCheckTool {
      */
     public void checkFiles() {
         String type = "校验 本地文件夹 ";
-        File chromeDriver = new File("chromeDriver");
+        File webview = new File("webview");
         File config = new File("config/application-prod.yml");
-        File language = new File("language");
         File mini = new File("mini");
         File plugins = new File("plugins");
-        if (chromeDriver.exists()
+        if (webview.exists()
                 && config.exists()
-                && language.exists()
                 && mini.exists()
                 && plugins.exists()) {
             printPass(type);
         } else {
             printFail(type);
-            throw new RuntimeException("提示：请确保当前目录下有chromeDriver、config(内含application-prod.yml)、language、mini、plugins文件夹");
+            throw new RuntimeException("提示：请确保当前目录下有webview、config(内含application-prod.yml)、mini、plugins文件夹");
         }
     }
 
@@ -158,7 +156,8 @@ public class EnvCheckTool {
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("提示：可前往http://npm.taobao.org/mirrors/chromedriver/下载" +
+            throw new RuntimeException(String.format("提示：如果需要修改路径，可以修改config文件夹里application-prod.yml文件里的对应内容。" +
+                    "如果未安装，可前往http://npm.taobao.org/mirrors/chromedriver/下载" +
                     "与Agent的谷歌浏览器版本对应的driver到谷歌浏览器安装目录下（谷歌浏览器地址栏输入chrome://version可看到安装目录）"));
         }
         printPass(type);

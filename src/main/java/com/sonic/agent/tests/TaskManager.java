@@ -3,6 +3,8 @@ package com.sonic.agent.tests;
 import com.sonic.agent.interfaces.PlatformType;
 import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import com.sonic.agent.tests.ios.IOSTestTaskBootThread;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashSet;
@@ -15,15 +17,16 @@ import java.util.stream.Collectors;
 
 /**
  * @author JayWenStar
- * @date 2021/12/2 12:31 上午
+ * @date 2021/12/27 11:42 上午
  */
 public class TaskManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(TaskManager.class);
 
     /**
      * key是boot的线程名，value是boot线程本身
      */
     private static ConcurrentHashMap<String, Thread> bootThreadsMap = new ConcurrentHashMap<>();
-
 
     /**
      * key是boot的线程名，value是boot线程启动的线程，因为是守护线程，所以当boot被停止后，child线程也会停止
@@ -136,9 +139,20 @@ public class TaskManager {
     }
 
     /**
+     * 根据key清除线程（非停止）
+     *
+     * @param key 线程名
+     */
+    public static void clearTerminatedThreadByKey(String key) {
+        bootThreadsMap.remove(key);
+        childThreadsMap.remove(key);
+    }
+
+    /**
      * 清除已经结束的线程，如果boot线程已经结束，若对应child线程未结束，则强制停止child线程
      */
     public static void clearTerminatedThread() {
+        logger.debug("clearTerminatedThread");
         // 过滤出已经结束的boot线程组
         Map<String, Thread> terminatedThread = bootThreadsMap.entrySet().stream()
                 .filter(t -> !t.getValue().isAlive())

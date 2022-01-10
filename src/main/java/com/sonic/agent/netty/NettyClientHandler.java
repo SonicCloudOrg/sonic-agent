@@ -8,27 +8,28 @@ import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.IOSStepHandler;
 import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import com.sonic.agent.bridge.ios.TIDeviceTool;
-import com.sonic.agent.interfaces.DeviceStatus;
 import com.sonic.agent.interfaces.PlatformType;
-import com.sonic.agent.interfaces.ResultDetailStatus;
 import com.sonic.agent.maps.AndroidPasswordMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.tests.AndroidTests;
 import com.sonic.agent.tests.IOSTests;
 import com.sonic.agent.tests.TaskManager;
-import com.sonic.agent.tools.SpringTool;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
 import javax.websocket.Session;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class NettyClientHandler extends ChannelInboundHandlerAdapter {
@@ -37,6 +38,8 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     private NettyClient nettyClient;
     public static Channel channel = null;
 
+    public static volatile boolean serverOnline = false;
+
     public NettyClientHandler(NettyClient nettyClient, Channel channel) {
         this.nettyClient = nettyClient;
         this.channel = channel;
@@ -44,6 +47,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        serverOnline = true;
         logger.info("Agent:{} 连接到服务器 {} 成功!", ctx.channel().localAddress(), ctx.channel().remoteAddress());
     }
 
@@ -109,6 +113,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     TestNG tng = new TestNG();
                     List<XmlSuite> suiteList = new ArrayList<>();
                     XmlSuite xmlSuite = new XmlSuite();
+                    //bug?
                     for (JSONObject dataInfo : cases) {
                         XmlTest xmlTest = new XmlTest(xmlSuite);
                         Map<String, String> parameters = new HashMap<>();
@@ -153,6 +158,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         logger.info("服务器: {} 连接断开", ctx.channel().remoteAddress());
         NettyThreadPool.isPassSecurity = false;
+        serverOnline = false;
         if (channel != null) {
             channel.close();
         }

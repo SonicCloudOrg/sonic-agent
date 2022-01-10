@@ -1,22 +1,9 @@
 package com.sonic.agent.tests.ios;
 
-import com.android.ddmlib.IDevice;
-import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.IOSStepHandler;
-import com.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import com.sonic.agent.cv.RecordHandler;
-import com.sonic.agent.tests.android.AndroidRunStepThread;
-import com.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import com.sonic.agent.tools.MiniCapTool;
 import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class IOSRecordThread extends Thread {
 

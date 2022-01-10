@@ -2,6 +2,7 @@ package com.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.InstallException;
 import com.sonic.agent.automation.HandleDes;
 import com.sonic.agent.automation.IOSStepHandler;
 import com.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
@@ -12,6 +13,7 @@ import com.sonic.agent.maps.DevicesLockMap;
 import com.sonic.agent.maps.HandlerMap;
 import com.sonic.agent.maps.WebSocketSessionMap;
 import com.sonic.agent.netty.NettyThreadPool;
+import com.sonic.agent.tools.DownImageTool;
 import com.sonic.agent.tools.UploadTools;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Component;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
@@ -72,6 +75,7 @@ public class IOSWSServer {
         int imgPort = TIDeviceTool.relayImg(udId);
         JSONObject picFinish = new JSONObject();
         picFinish.put("msg", "picFinish");
+        picFinish.put("wda", wdaPort);
         picFinish.put("port", imgPort);
         sendText(session, picFinish.toJSONString());
 
@@ -193,17 +197,23 @@ public class IOSWSServer {
                         });
                     }
                     if (msg.getString("detail").equals("install")) {
-                        IOSStepHandler finalIosStepHandler = iosStepHandler;
                         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
-                            HandleDes handleDes = new HandleDes();
-                            finalIosStepHandler.install(handleDes, msg.getString("ipa"));
-                            if (handleDes.getE() == null) {
+                            try {
+                                File localFile = DownImageTool.download(msg.getString("ipa"));
+                                String commandLine = "tidevice -u " + udIdMap.get(session) +
+                                        " install " + localFile.getAbsolutePath();
+                                String system = System.getProperty("os.name").toLowerCase();
+                                if (system.contains("win")) {
+                                    Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
+                                } else if (system.contains("linux") || system.contains("mac")) {
+                                    Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
+                                }
                                 result.put("status", "success");
-                            } else {
-                                System.out.println(handleDes.getE());
+                            } catch (IOException e) {
                                 result.put("status", "fail");
+                                e.printStackTrace();
                             }
                             sendText(session, result.toJSONString());
                         });
