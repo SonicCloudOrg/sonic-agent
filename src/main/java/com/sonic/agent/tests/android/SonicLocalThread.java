@@ -130,7 +130,8 @@ public class SonicLocalThread extends Thread {
                     if (res.contains("Server start")) {
                         isFinish.release();
                     }
-                    if (res.contains("Vector<> have different types")) {
+                    if (res.contains("Vector<> have different types")
+                            || res.contains("CANNOT LINK EXECUTABLE")) {
                         log.info(iDevice.getSerialNumber() + "设备不兼容" + type + "投屏！");
                         isSuc.set(false);
                     }
@@ -160,6 +161,12 @@ public class SonicLocalThread extends Thread {
         suc = runMiniCap("libs");
         if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("Xiaomi")) {
             suc = runMiniCap("Xiaomi");
+            if (!suc) {
+                suc = runMiniCap("Xiaomi_NW");
+                if (!suc) {
+                    suc = runMiniCap("Xiaomi_One");
+                }
+            }
         }
         if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("vivo")) {
             suc = runMiniCap("vivo");
