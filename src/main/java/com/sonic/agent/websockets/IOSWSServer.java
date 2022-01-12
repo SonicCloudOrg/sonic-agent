@@ -96,11 +96,6 @@ public class IOSWSServer {
                 result.put("status", "error");
                 result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
             } finally {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 result.put("msg", "openDriver");
                 sendText(session, result.toJSONString());
             }
