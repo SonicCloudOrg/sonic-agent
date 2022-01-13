@@ -91,7 +91,6 @@ public class IOSStepHandler {
 
     public void startIOSDriver(String udId, int wdaPort) throws InterruptedException, IOException {
         this.udId = udId;
-        Thread.sleep(2000);
         DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
         desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_NAME, Platform.IOS);
         desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME, AutomationName.IOS_XCUI_TEST);
