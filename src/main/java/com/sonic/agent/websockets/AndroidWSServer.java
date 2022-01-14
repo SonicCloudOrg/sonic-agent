@@ -409,6 +409,9 @@ public class AndroidWSServer {
             case "battery":
                 AndroidDeviceBridgeTool.controlBattery(udIdMap.get(session), msg.getInteger("detail"));
                 break;
+            case "appList":
+                AndroidDeviceBridgeTool.controlBattery(udIdMap.get(session), msg.getInteger("detail"));
+                break;
             case "scan":
                 AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
                 break;
