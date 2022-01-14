@@ -91,7 +91,6 @@ public class IOSStepHandler {
 
     public void startIOSDriver(String udId, int wdaPort) throws InterruptedException, IOException {
         this.udId = udId;
-        Thread.sleep(2000);
         DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
         desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_NAME, Platform.IOS);
         desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME, AutomationName.IOS_XCUI_TEST);
@@ -112,6 +111,7 @@ public class IOSStepHandler {
             iosDriver.setSetting(Setting.MJPEG_SERVER_FRAMERATE, 50);
             iosDriver.setSetting(Setting.MJPEG_SCALING_FACTOR, 50);
             iosDriver.setSetting(Setting.MJPEG_SERVER_SCREENSHOT_QUALITY, 10);
+            iosDriver.setSetting("snapshotMaxDepth",30);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
