@@ -59,7 +59,7 @@ public class IOSWSServer {
             return;
         }
         logger.info("ios上锁udId：{}", udId);
-
+        IOSDeviceLocalStatus.startDebug(udId);
         JSONObject jsonDebug = new JSONObject();
         jsonDebug.put("msg", "debugUser");
         jsonDebug.put("token", token);
@@ -84,7 +84,6 @@ public class IOSWSServer {
             iosStepHandler.setTestMode(0, 0, udId, DeviceStatus.DEBUGGING, session.getId());
             JSONObject result = new JSONObject();
             try {
-                IOSDeviceLocalStatus.startDebug(udId);
                 iosStepHandler.startIOSDriver(udId, wdaPort);
                 result.put("status", "success");
                 result.put("width", iosStepHandler.getDriver().manage().window().getSize().width);

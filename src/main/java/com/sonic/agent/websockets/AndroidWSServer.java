@@ -73,7 +73,7 @@ public class AndroidWSServer {
             return;
         }
         logger.info("android上锁udId：{}", udId);
-
+        AndroidDeviceLocalStatus.startDebug(udId);
         JSONObject jsonDebug = new JSONObject();
         jsonDebug.put("msg", "debugUser");
         jsonDebug.put("token", token);
@@ -291,7 +291,6 @@ public class AndroidWSServer {
             androidStepHandler.setTestMode(0, 0, udId, DeviceStatus.DEBUGGING, session.getId());
             JSONObject result = new JSONObject();
             try {
-                AndroidDeviceLocalStatus.startDebug(udId);
                 androidStepHandler.startAndroidDriver(udId);
                 result.put("status", "success");
                 result.put("detail", "初始化Driver完成！");
