@@ -6,7 +6,6 @@ import com.sonic.agent.tools.DownImageTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
@@ -68,9 +67,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
         androidDebugBridge.addDeviceChangeListener(androidDeviceStatusListener);
-        AndroidDebugBridge.initIfNeeded(false);
+        try {
+            AndroidDebugBridge.init(false);
+        } catch (IllegalStateException e) {
+            logger.warn("AndroidDebugBridge已经初始化过，无需再初始化");
+        }
         //开始创建ADB
-        androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true);
+        androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         if (androidDebugBridge != null) {
             logger.info("安卓设备监听已开启");
         }

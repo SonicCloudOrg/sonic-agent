@@ -55,8 +55,9 @@
         <dependency>
             <groupId>com.android.tools.ddms</groupId>
             <artifactId>ddmlib</artifactId>
-            <version>25.3.0</version>
+            <version>30.0.4</version>
         </dependency>
+
         <!--    json对象    -->
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -128,6 +129,11 @@
 
     <!-- 镜像加速   -->
     <repositories>
+        <repository>
+            <id>google</id>
+            <name>Google Aliyun Mirror</name>
+            <url>https://maven.aliyun.com/nexus/content/repositories/google</url>
+        </repository>
         <repository>
             <id>alimaven</id>
             <name>Maven Aliyun Mirror</name>
