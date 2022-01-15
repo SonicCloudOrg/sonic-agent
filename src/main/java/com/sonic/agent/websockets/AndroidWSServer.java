@@ -191,6 +191,7 @@ public class AndroidWSServer {
                                     appListDetail.put("detail", res);
                                     sendText(session, appListDetail.toJSONString());
                                 }
+                                System.out.println(res);
                             }
 
                             @Override
