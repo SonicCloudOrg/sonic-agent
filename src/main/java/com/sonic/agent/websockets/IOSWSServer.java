@@ -266,7 +266,7 @@ public class IOSWSServer {
     }
 
     private void exit(Session session) {
-        IOSDeviceLocalStatus.finish(udIdMap.get(session));
+        IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
         } catch (Exception e) {
