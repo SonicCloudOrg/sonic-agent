@@ -8,6 +8,7 @@ import javax.websocket.Session;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.sonic.agent.tools.AgentTool.*;
@@ -73,12 +74,15 @@ public class OutputSocketThread extends Thread {
         byte[] frameBody = new byte[0];
         byte[] oldBytes = new byte[0];
         int count = 0;
+        BlockingQueue<byte[]> dataQueue = sendImg.getDataQueue();
         while (sendImg.isAlive()) {
-            Queue<byte[]> dataQueue = sendImg.getDataQueue();
-            if (dataQueue.isEmpty()) {
-                continue;
+            byte[] buffer = new byte[0];
+            try {
+                buffer = dataQueue.take();
+            } catch (InterruptedException e) {
+                log.error("获取数据流失败：{}", e.getMessage());
+                e.printStackTrace();
             }
-            byte[] buffer = dataQueue.poll();
             int len = buffer.length;
             for (int cursor = 0; cursor < len; ) {
                 int byte10 = buffer[cursor] & 0xff;
