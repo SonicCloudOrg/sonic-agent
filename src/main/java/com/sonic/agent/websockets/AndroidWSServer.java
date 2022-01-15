@@ -580,6 +580,7 @@ public class AndroidWSServer {
     }
 
     private void exit(Session session) {
+        AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
@@ -588,7 +589,6 @@ public class AndroidWSServer {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
         if (udIdMap.get(session) != null) {
-            AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
             List<JSONObject> has = webViewForwardMap.get(udIdMap.get(session));
             if (has != null && has.size() > 0) {
                 for (JSONObject j : has) {
