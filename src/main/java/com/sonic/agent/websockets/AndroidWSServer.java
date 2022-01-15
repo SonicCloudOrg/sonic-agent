@@ -3,9 +3,8 @@ package com.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.IShellOutputReceiver;
-import com.android.ddmlib.InstallException;
+import com.android.ddmlib.*;
+import com.android.ddmlib.log.LogReceiver;
 import com.sonic.agent.automation.AndroidStepHandler;
 import com.sonic.agent.automation.HandleDes;
 import com.sonic.agent.automation.RemoteDebugDriver;
@@ -86,7 +85,6 @@ public class AndroidWSServer {
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
-        AndroidDeviceBridgeTool.pressKey(iDevice, 3);
         udIdMap.put(session, iDevice);
 
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
@@ -167,6 +165,50 @@ public class AndroidWSServer {
         });
         rotationPro.start();
         rotationMap.put(session, rotationPro);
+
+        Thread appListPro = new Thread(() -> {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n com.sonic.plugins.assist/.AppListActivity");
+            AndroidDeviceBridgeTool.pressKey(iDevice, 3);
+            try {
+                iDevice.executeShellCommand("logcat sonicapplistactivity:I *:S -v raw"
+                        , new IShellOutputReceiver() {
+                            @Override
+                            public void addOutput(byte[] bytes, int i, int i1) {
+                                String res = new String(bytes, i, i1);
+                                if (res.equals("created")) {
+                                    logger.info("监听服务已开启");
+                                } else if (res.equals("start")) {
+                                    JSONObject appListClear = new JSONObject();
+                                    appListClear.put("msg", "appListClear");
+                                    sendText(session, appListClear.toJSONString());
+                                } else if (res.equals("end")) {
+                                    JSONObject appListFinish = new JSONObject();
+                                    appListFinish.put("msg", "appListFinish");
+                                    sendText(session, appListFinish.toJSONString());
+                                } else {
+                                    JSONObject appListDetail = new JSONObject();
+                                    appListDetail.put("msg", "appListDetail");
+                                    appListDetail.put("detail", res);
+                                    sendText(session, appListDetail.toJSONString());
+                                }
+                            }
+
+                            @Override
+                            public void flush() {
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return false;
+                            }
+                        }, 0, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                logger.info("{} 设备App列表监听服务启动异常！"
+                        , iDevice.getSerialNumber());
+                logger.error(e.getMessage());
+            }
+        });
+        appListPro.start();
 
         Thread touchPro = new Thread(() -> {
             try {
