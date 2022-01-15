@@ -583,7 +583,7 @@ public class AndroidWSServer {
     }
 
     private void exit(Session session) {
-        AndroidDeviceLocalStatus.finish(udIdMap.get(session).getSerialNumber());
+        AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
@@ -591,19 +591,21 @@ public class AndroidWSServer {
         } finally {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
-        List<JSONObject> has = webViewForwardMap.get(udIdMap.get(session));
-        if (has != null && has.size() > 0) {
-            for (JSONObject j : has) {
-                AndroidDeviceBridgeTool.removeForward(udIdMap.get(session), j.getInteger("port"), j.getString("name"));
+        if (udIdMap.get(session) != null) {
+            List<JSONObject> has = webViewForwardMap.get(udIdMap.get(session));
+            if (has != null && has.size() > 0) {
+                for (JSONObject j : has) {
+                    AndroidDeviceBridgeTool.removeForward(udIdMap.get(session), j.getInteger("port"), j.getString("name"));
+                }
             }
-        }
-        webViewForwardMap.remove(udIdMap.get(session));
-        if (isEnableAdbKit) {
-            String processName = String.format("process-%s-adbkit", udIdMap.get(session).getSerialNumber());
-            if (GlobalProcessMap.getMap().get(processName) != null) {
-                Process ps = GlobalProcessMap.getMap().get(processName);
-                ps.children().forEach(ProcessHandle::destroy);
-                ps.destroy();
+            webViewForwardMap.remove(udIdMap.get(session));
+            if (isEnableAdbKit) {
+                String processName = String.format("process-%s-adbkit", udIdMap.get(session).getSerialNumber());
+                if (GlobalProcessMap.getMap().get(processName) != null) {
+                    Process ps = GlobalProcessMap.getMap().get(processName);
+                    ps.children().forEach(ProcessHandle::destroy);
+                    ps.destroy();
+                }
             }
         }
         outputMap.remove(session);
@@ -612,7 +614,9 @@ public class AndroidWSServer {
             rotationMap.get(session).interrupt();
         }
         rotationMap.remove(session);
-        MiniCapMap.getMap().get(session).interrupt();
+        if (MiniCapMap.getMap().get(session) != null) {
+            MiniCapMap.getMap().get(session).interrupt();
+        }
         WebSocketSessionMap.removeSession(session);
         try {
             session.close();
