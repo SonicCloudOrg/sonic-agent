@@ -188,6 +188,7 @@ public class AndroidWSServer {
                             buffer = subByteArray(buffer, 0, realLen);
                         }
                         if (realLen >= 0) {
+                            System.out.println("==="+new String(buffer));
                             JSONObject appListDetail = new JSONObject();
                             appListDetail.put("msg", "appListDetail");
                             appListDetail.put("detail", JSON.parseObject(new String(buffer)));
