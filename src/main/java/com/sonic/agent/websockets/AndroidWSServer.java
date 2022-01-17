@@ -180,6 +180,7 @@ public class AndroidWSServer {
                     touchSocket = new Socket("localhost", appListPort);
                     inputStream = touchSocket.getInputStream();
                     int len = 1024;
+                    String total = "";
                     while (touchSocket.isConnected()) {
                         byte[] buffer = new byte[len];
                         int realLen;
@@ -188,11 +189,15 @@ public class AndroidWSServer {
                             buffer = subByteArray(buffer, 0, realLen);
                         }
                         if (realLen >= 0) {
-                            System.out.println("==="+new String(buffer));
-                            JSONObject appListDetail = new JSONObject();
-                            appListDetail.put("msg", "appListDetail");
-                            appListDetail.put("detail", JSON.parseObject(new String(buffer)));
-                            sendText(session, appListDetail.toJSONString());
+                            String chunk = new String(buffer);
+                            total += chunk;
+                            if (chunk.contains("}")) {
+                                JSONObject appListDetail = new JSONObject();
+                                appListDetail.put("msg", "appListDetail");
+                                appListDetail.put("detail", JSON.parseObject(total));
+                                sendText(session, appListDetail.toJSONString());
+                                total = "";
+                            }
                         }
                     }
                 } catch (IOException e) {
