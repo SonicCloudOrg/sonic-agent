@@ -41,6 +41,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.cloud.sonic.agent.tools.AgentTool.subByteArray;
+
 @Component
 @ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class AndroidWSServer {
@@ -186,7 +188,7 @@ public class AndroidWSServer {
                         int realLen;
                         realLen = inputStream.read(buffer);
                         if (buffer.length != realLen && realLen >= 0) {
-                            buffer = subByteArray(buffer, 0, realLen);
+                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
                         }
                         if (realLen >= 0) {
                             String chunk = new String(buffer);
@@ -195,7 +197,7 @@ public class AndroidWSServer {
                                 JSONObject appListDetail = new JSONObject();
                                 appListDetail.put("msg", "appListDetail");
                                 appListDetail.put("detail", JSON.parseObject(total));
-                                sendText(session, appListDetail.toJSONString());
+                                AgentTool.sendText(session, appListDetail.toJSONString());
                                 total = "";
                             }
                         }
