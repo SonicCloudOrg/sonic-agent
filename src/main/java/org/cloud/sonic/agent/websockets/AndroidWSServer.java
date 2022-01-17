@@ -89,7 +89,7 @@ public class AndroidWSServer {
         AndroidDeviceBridgeTool.pressKey(iDevice, 3);
         udIdMap.put(session, iDevice);
 
-        String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.plugins.assist").trim()
+        String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path com.sonic.plugins.assist").trim()
                 .replaceAll("package:", "")
                 .replaceAll("\n", "")
                 .replaceAll("\t", "");
