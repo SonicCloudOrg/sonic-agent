@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 import static com.sonic.agent.tools.AgentTool.subByteArray;
 
@@ -33,7 +34,7 @@ public class InputSocketThread extends Thread {
 
     private IDevice iDevice;
 
-    private Queue<byte[]> dataQueue;
+    private BlockingQueue<byte[]> dataQueue;
 
     private SonicLocalThread miniCapPro;
 
@@ -41,7 +42,7 @@ public class InputSocketThread extends Thread {
 
     private Session session;
 
-    public InputSocketThread(IDevice iDevice, Queue<byte[]> dataQueue, SonicLocalThread miniCapPro, Session session) {
+    public InputSocketThread(IDevice iDevice, BlockingQueue<byte[]> dataQueue, SonicLocalThread miniCapPro, Session session) {
         this.iDevice = iDevice;
         this.dataQueue = dataQueue;
         this.miniCapPro = miniCapPro;
@@ -57,7 +58,7 @@ public class InputSocketThread extends Thread {
         return iDevice;
     }
 
-    public Queue<byte[]> getDataQueue() {
+    public BlockingQueue<byte[]> getDataQueue() {
         return dataQueue;
     }
 
