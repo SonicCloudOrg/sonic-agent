@@ -4,6 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
+import org.cloud.sonic.agent.cv.AKAZEFinder;
+import org.cloud.sonic.agent.cv.SIFTFinder;
+import org.cloud.sonic.agent.cv.SimilarityChecker;
+import org.cloud.sonic.agent.cv.TemMatcher;
 import org.cloud.sonic.agent.interfaces.ErrorType;
 import org.cloud.sonic.agent.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.interfaces.StepType;
@@ -62,10 +66,6 @@ import static org.testng.Assert.*;
  */
 public class IOSStepHandler {
     public LogTool log = new LogTool();
-    private RestTemplate restTemplate = SpringTool.getBean(RestTemplate.class);
-    private Environment environment = SpringTool.getBean(Environment.class);
-    private String baseUrl = "http://" + environment.getProperty("sonic.server.host")
-            + ":" + environment.getProperty("sonic.server.folder-port") + "/api/folder";
     private IOSDriver iosDriver;
     private JSONObject globalParams = new JSONObject();
     private String testPackage = "";
@@ -580,40 +580,56 @@ public class IOSStepHandler {
                 return;
             }
         }
-        File localCap = getScreenToLocal();
-        FindResult findResult;
-        FileSystemResource resource1 = new FileSystemResource(file);
-        FileSystemResource resource2 = new FileSystemResource(localCap);
-        MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
-        param.add("file1", resource1);
-        param.add("file2", resource2);
-        param.add("type", "finder");
+        FindResult findResult = null;
         try {
-            ResponseEntity<JSONObject> responseEntity =
-                    restTemplate.postForEntity(baseUrl + "/upload/cv", param, JSONObject.class);
-            if (responseEntity.getBody().getInteger("code") == 2000) {
-                findResult = responseEntity.getBody().getJSONObject("data").toJavaObject(FindResult.class);
-                if (findResult != null) {
-                    try {
-                        log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-                                findResult.getUrl());
-                        TouchAction ta = new TouchAction(iosDriver);
-                        ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
-                    } catch (Exception e) {
-                        log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
-                        handleDes.setE(e);
-                    }
-                }
-            } else if (responseEntity.getBody().getInteger("code") == 4003) {
-                handleDes.setE(new Exception("图像匹配失败！"));
-            } else {
-                handleDes.setE(new Exception("点击失败！cv服务出错！"));
-            }
+            SIFTFinder siftFinder = new SIFTFinder();
+            findResult = siftFinder.getSIFTFindResult(file, getScreenToLocal());
         } catch (Exception e) {
-            handleDes.setE(new Exception("点击失败！cv服务访问出错！"));
-        } finally {
-            file.delete();
-            localCap.delete();
+            log.sendStepLog(StepType.WARN, "SIFT图像算法出错，切换算法中...",
+                    "");
+        }
+        if (findResult != null) {
+            log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+                    findResult.getUrl());
+        } else {
+            log.sendStepLog(StepType.INFO, "SIFT算法无法定位图片，切换AKAZE算法中...",
+                    "");
+            try {
+                AKAZEFinder akazeFinder = new AKAZEFinder();
+                findResult = akazeFinder.getAKAZEFindResult(file, getScreenToLocal());
+            } catch (Exception e) {
+                log.sendStepLog(StepType.WARN, "AKAZE图像算法出错，切换模版匹配算法中...",
+                        "");
+            }
+            if (findResult != null) {
+                log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+                        findResult.getUrl());
+            } else {
+                log.sendStepLog(StepType.INFO, "AKAZE算法无法定位图片，切换模版匹配算法中...",
+                        "");
+                try {
+                    TemMatcher temMatcher = new TemMatcher();
+                    findResult = temMatcher.getTemMatchResult(file, getScreenToLocal());
+                } catch (Exception e) {
+                    log.sendStepLog(StepType.WARN, "模版匹配算法出错",
+                            "");
+                }
+                if (findResult != null) {
+                    log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
+                            findResult.getUrl());
+                } else {
+                    handleDes.setE(new Exception("图片定位失败！"));
+                }
+            }
+        }
+        if (findResult != null) {
+            try {
+                TouchAction ta = new TouchAction(iosDriver);
+                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
+            } catch (Exception e) {
+                log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
+                handleDes.setE(e);
+            }
         }
     }
 
@@ -664,33 +680,13 @@ public class IOSStepHandler {
         if (pathValue.startsWith("http")) {
             file = DownImageTool.download(pathValue);
         }
-        File localCap = getScreenToLocal();
-        FileSystemResource resource1 = new FileSystemResource(file);
-        FileSystemResource resource2 = new FileSystemResource(localCap);
-        MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
-        param.add("file1", resource1);
-        param.add("file2", resource2);
-        param.add("type", "checker");
-        try {
-            ResponseEntity<JSONObject> responseEntity =
-                    restTemplate.postForEntity(baseUrl + "/upload/cv", param, JSONObject.class);
-            if (responseEntity.getBody().getInteger("code") == 2000) {
-                double score = responseEntity.getBody().getDouble("data");
-                handleDes.setStepDes("检测" + des + "图片相似度");
-                handleDes.setDetail("相似度为" + score * 100 + "%");
-                if (score == 0) {
-                    handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
-                } else if (score < (matchThreshold / 100)) {
-                    handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
-                }
-            } else {
-                handleDes.setE(new Exception("图片相似度检测出错！cv服务出错！"));
-            }
-        } catch (Exception e) {
-            handleDes.setE(new Exception("图片相似度检测出错！cv服务访问出错！"));
-        } finally {
-            file.delete();
-            localCap.delete();
+        double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
+        handleDes.setStepDes("检测" + des + "图片相似度");
+        handleDes.setDetail("相似度为" + score * 100 + "%");
+        if (score == 0) {
+            handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
+        } else if (score < (matchThreshold / 100)) {
+            handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
         }
     }
 
