@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.sonic</groupId>
+    <groupId>org.cloud.sonic</groupId>
     <artifactId>sonic-agent</artifactId>
-    <version>v1.3.0-beta1.1</version>
+    <version>v1.3.0-release</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -55,13 +55,14 @@
         <dependency>
             <groupId>com.android.tools.ddms</groupId>
             <artifactId>ddmlib</artifactId>
-            <version>25.3.0</version>
+            <version>30.0.4</version>
         </dependency>
+
         <!--    json对象    -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.41</version>
+            <version>1.2.79</version>
         </dependency>
         <!--  appium java api      -->
         <dependency>
@@ -101,33 +102,302 @@
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>
-            <artifactId>ffmpeg-platform</artifactId>
-            <version>4.2.2-1.5.3</version>
+            <artifactId>openblas</artifactId>
+            <version>0.3.9-1.5.3</version>
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>
-            <artifactId>javacpp-platform</artifactId>
-            <version>1.5.3</version>
+            <artifactId>opencv</artifactId>
+            <version>4.3.0-1.5.3</version>
         </dependency>
     </dependencies>
 
+    <!--  通过这个配置来决定打包使用哪一个环境  -->
     <profiles>
         <profile>
-            <id>dev</id>
+            <id>windows-x86</id>
             <properties>
-                <profileActive>dev</profileActive>
+                <profileActive>windows-x86</profileActive>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>tesseract</artifactId>
+                    <version>4.1.1-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>leptonica</artifactId>
+                    <version>1.79.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
         </profile>
+
         <profile>
-            <id>prod</id>
+            <id>windows-x86_64</id>
             <properties>
-                <profileActive>prod</profileActive>
+                <profileActive>windows-x86_64</profileActive>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-arm64</id>
+            <properties>
+                <profileActive>linux-arm64</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-armhf</id>
+            <properties>
+                <profileActive>linux-armhf</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-ppc64le</id>
+            <properties>
+                <profileActive>linux-ppc64le</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-x86</id>
+            <properties>
+                <profileActive>linux-x86</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>linux-x86_64</id>
+            <properties>
+                <profileActive>linux-x86_64</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>macosx-x86_64</id>
+            <properties>
+                <profileActive>macosx-x86_64</profileActive>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>ffmpeg</artifactId>
+                    <version>4.2.2-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>javacpp</artifactId>
+                    <version>1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>opencv</artifactId>
+                    <version>4.3.0-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId>
+                    <artifactId>openblas</artifactId>
+                    <version>0.3.9-1.5.3</version>
+                    <classifier>${profileActive}</classifier>
+                </dependency>
+            </dependencies>
         </profile>
     </profiles>
 
     <!-- 镜像加速   -->
     <repositories>
+        <repository>
+            <id>google</id>
+            <name>Google Aliyun Mirror</name>
+            <url>https://maven.aliyun.com/nexus/content/repositories/google</url>
+        </repository>
         <repository>
             <id>alimaven</id>
             <name>Maven Aliyun Mirror</name>
