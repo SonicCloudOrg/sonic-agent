@@ -170,8 +170,6 @@ public class AndroidWSServer {
         rotationPro.start();
         rotationMap.put(session, rotationPro);
 
-        getAppList(iDevice, session);
-
         Thread touchPro = new Thread(() -> {
             try {
                 //开始启动
@@ -413,9 +411,6 @@ public class AndroidWSServer {
             case "battery":
                 AndroidDeviceBridgeTool.controlBattery(udIdMap.get(session), msg.getInteger("detail"));
                 break;
-            case "appList":
-                getAppList(udIdMap.get(session), session);
-                break;
             case "uninstallApp":
                 try {
                     udIdMap.get(session).uninstallPackage(msg.getString("detail"));
@@ -641,68 +636,5 @@ public class AndroidWSServer {
             e.printStackTrace();
         }
         logger.info(session.getId() + "退出");
-    }
-
-    public void getAppList(IDevice iDevice, Session session) {
-        Thread appListPro = new Thread(() -> {
-            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AppListActivity");
-            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
-            int appListPort = PortTool.getPort();
-            try {
-                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicapplistservice");
-                Socket touchSocket = null;
-                InputStream inputStream = null;
-                try {
-                    touchSocket = new Socket("localhost", appListPort);
-                    inputStream = touchSocket.getInputStream();
-                    int len = 1024;
-                    String total = "";
-                    while (touchSocket.isConnected()) {
-                        byte[] buffer = new byte[len];
-                        int realLen;
-                        realLen = inputStream.read(buffer);
-                        if (buffer.length != realLen && realLen >= 0) {
-                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
-                        }
-                        if (realLen >= 0) {
-                            String chunk = new String(buffer);
-                            total += chunk;
-                            if (chunk.contains("}")) {
-                                JSONObject appListDetail = new JSONObject();
-                                appListDetail.put("msg", "appListDetail");
-                                appListDetail.put("detail", JSON.parseObject(total));
-                                AgentTool.sendText(session, appListDetail.toJSONString());
-                                total = "";
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (touchSocket != null && touchSocket.isConnected()) {
-                        try {
-                            touchSocket.close();
-                            logger.info("touch socket已关闭");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (inputStream != null) {
-                        try {
-                            inputStream.close();
-                            logger.info("touch output流已关闭");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.info("{} 设备App列表监听服务启动异常！"
-                        , iDevice.getSerialNumber());
-                logger.error(e.getMessage());
-            }
-            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicapplistservice");
-        });
-        appListPro.start();
     }
 }

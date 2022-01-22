@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +16,8 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -58,6 +62,7 @@ public class TerminalWSServer {
         });
         terminalMap.put(session, terminal);
         logcatMap.put(session, logcat);
+        getAppList(iDevice, session);
     }
 
     @OnMessage
@@ -65,6 +70,9 @@ public class TerminalWSServer {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
+            case "appList":
+                getAppList(udIdMap.get(session), session);
+                break;
             case "stopCmd":
                 Future<?> ter = terminalMap.get(session);
                 if (!ter.isDone() || !ter.isCancelled()) {
@@ -216,5 +224,68 @@ public class TerminalWSServer {
                 logger.error("webSocket发送失败!连接已关闭！");
             }
         }
+    }
+
+    public void getAppList(IDevice iDevice, Session session) {
+        Thread appListPro = new Thread(() -> {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AppListActivity");
+            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
+            int appListPort = PortTool.getPort();
+            try {
+                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicapplistservice");
+                Socket touchSocket = null;
+                InputStream inputStream = null;
+                try {
+                    touchSocket = new Socket("localhost", appListPort);
+                    inputStream = touchSocket.getInputStream();
+                    int len = 1024;
+                    String total = "";
+                    while (touchSocket.isConnected()) {
+                        byte[] buffer = new byte[len];
+                        int realLen;
+                        realLen = inputStream.read(buffer);
+                        if (buffer.length != realLen && realLen >= 0) {
+                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
+                        }
+                        if (realLen >= 0) {
+                            String chunk = new String(buffer);
+                            total += chunk;
+                            if (chunk.contains("}")) {
+                                JSONObject appListDetail = new JSONObject();
+                                appListDetail.put("msg", "appListDetail");
+                                appListDetail.put("detail", JSON.parseObject(total));
+                                AgentTool.sendText(session, appListDetail.toJSONString());
+                                total = "";
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (touchSocket != null && touchSocket.isConnected()) {
+                        try {
+                            touchSocket.close();
+                            logger.info("touch socket已关闭");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (inputStream != null) {
+                        try {
+                            inputStream.close();
+                            logger.info("touch output流已关闭");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.info("{} 设备App列表监听服务启动异常！"
+                        , iDevice.getSerialNumber());
+                logger.error(e.getMessage());
+            }
+            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicapplistservice");
+        });
+        appListPro.start();
     }
 }
