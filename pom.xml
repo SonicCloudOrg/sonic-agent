@@ -95,11 +95,6 @@
             <version>1.11.3</version>
         </dependency>
         <!--    视频处理与图像处理    -->
-<!--        <dependency>-->
-<!--            <groupId>org.bytedeco</groupId>-->
-<!--            <artifactId>javacv-platform</artifactId>-->
-<!--            <version>1.5.3</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.bytedeco</groupId>
             <artifactId>javacv</artifactId>
