@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.tools.AgentTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
@@ -36,7 +37,9 @@ public class TerminalWSServer {
     private String key;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> terminalMap = new ConcurrentHashMap<>();
+    private Map<Session, Future<?>> appListMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
+    private Map<Session, Thread> audioMap = new ConcurrentHashMap<>();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
@@ -62,8 +65,22 @@ public class TerminalWSServer {
         });
         terminalMap.put(session, terminal);
         logcatMap.put(session, logcat);
-        getAppList(iDevice, session);
-        getAudio(iDevice);
+        int wait = 0;
+        boolean isInstall = true;
+        while (AndroidAPKMap.getMap().get(udId) == null || (!AndroidAPKMap.getMap().get(udId))) {
+            Thread.sleep(500);
+            wait++;
+            if (wait >= 40) {
+                isInstall = false;
+                break;
+            }
+        }
+        if (isInstall) {
+            getAppList(iDevice, session);
+            getAudio(iDevice, session);
+        } else {
+            logger.info("等待安装超时！");
+        }
     }
 
     @OnMessage
@@ -227,10 +244,13 @@ public class TerminalWSServer {
         }
     }
 
-    public void getAudio(IDevice iDevice) {
-        Thread audioPro = new Thread(() -> {
+    public void getAudio(IDevice iDevice, Session session) {
+        Thread audioPro = audioMap.get(session);
+        if (audioPro != null && audioPro.isAlive()) {
+            audioPro.interrupt();
+        }
+        audioPro = new Thread(() -> {
             AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
-//            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
             int appListPort = PortTool.getPort();
             try {
                 AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
@@ -239,7 +259,6 @@ public class TerminalWSServer {
                 try {
                     touchSocket = new Socket("localhost", appListPort);
                     inputStream = touchSocket.getInputStream();
-                    System.out.println(touchSocket.isConnected());
                     int len = 1024;
                     while (touchSocket.isConnected()) {
                         byte[] buffer = new byte[len];
@@ -280,10 +299,19 @@ public class TerminalWSServer {
             AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
         });
         audioPro.start();
+        audioMap.put(session, audioPro);
     }
 
     public void getAppList(IDevice iDevice, Session session) {
-        Thread appListPro = new Thread(() -> {
+        Future<?> app = appListMap.get(session);
+        if (app != null && (!app.isDone() || !app.isCancelled())) {
+            try {
+                app.cancel(true);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+            }
+        }
+        app = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
             AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AppListActivity");
             AndroidDeviceBridgeTool.pressKey(iDevice, 4);
             int appListPort = PortTool.getPort();
@@ -342,6 +370,6 @@ public class TerminalWSServer {
             }
             AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicapplistservice");
         });
-        appListPro.start();
+        appListMap.put(session, app);
     }
 }

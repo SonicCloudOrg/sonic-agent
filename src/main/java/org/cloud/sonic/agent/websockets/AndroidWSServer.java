@@ -91,6 +91,7 @@ public class AndroidWSServer {
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
         udIdMap.put(session, iDevice);
 
+        AndroidAPKMap.getMap().put(udId, false);
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
                 .replaceAll("package:", "")
                 .replaceAll("\n", "")
@@ -110,6 +111,7 @@ public class AndroidWSServer {
                     .replaceAll("\n", "")
                     .replaceAll("\t", "");
         }
+        AndroidAPKMap.getMap().put(udId, true);
 
         Semaphore isTouchFinish = new Semaphore(0);
         String finalPath = path;
@@ -620,6 +622,7 @@ public class AndroidWSServer {
                 }
             }
         }
+        AndroidAPKMap.getMap().remove(udIdMap.get(session).getSerialNumber());
         outputMap.remove(session);
         udIdMap.remove(session);
         if (rotationMap.get(session) != null) {
