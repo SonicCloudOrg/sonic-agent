@@ -63,6 +63,7 @@ public class TerminalWSServer {
         terminalMap.put(session, terminal);
         logcatMap.put(session, logcat);
         getAppList(iDevice, session);
+        getAudio(iDevice);
     }
 
     @OnMessage
@@ -226,6 +227,61 @@ public class TerminalWSServer {
         }
     }
 
+    public void getAudio(IDevice iDevice) {
+        Thread audioPro = new Thread(() -> {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
+//            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
+            int appListPort = PortTool.getPort();
+            try {
+                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
+                Socket touchSocket = null;
+                InputStream inputStream = null;
+                try {
+                    touchSocket = new Socket("localhost", appListPort);
+                    inputStream = touchSocket.getInputStream();
+                    System.out.println(touchSocket.isConnected());
+                    int len = 1024;
+                    while (touchSocket.isConnected()) {
+                        byte[] buffer = new byte[len];
+                        int realLen;
+                        realLen = inputStream.read(buffer);
+                        if (buffer.length != realLen && realLen >= 0) {
+                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
+                        }
+                        if (realLen >= 0) {
+                            System.out.println(buffer);
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (touchSocket != null && touchSocket.isConnected()) {
+                        try {
+                            touchSocket.close();
+                            logger.info("touch socket已关闭");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (inputStream != null) {
+                        try {
+                            inputStream.close();
+                            logger.info("touch output流已关闭");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.info("{} 设备App列表监听服务启动异常！"
+                        , iDevice.getSerialNumber());
+                logger.error(e.getMessage());
+            }
+            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
+        });
+        audioPro.start();
+    }
+
     public void getAppList(IDevice iDevice, Session session) {
         Thread appListPro = new Thread(() -> {
             AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AppListActivity");
@@ -233,14 +289,14 @@ public class TerminalWSServer {
             int appListPort = PortTool.getPort();
             try {
                 AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicapplistservice");
-                Socket touchSocket = null;
+                Socket appListSocket = null;
                 InputStream inputStream = null;
                 try {
-                    touchSocket = new Socket("localhost", appListPort);
-                    inputStream = touchSocket.getInputStream();
+                    appListSocket = new Socket("localhost", appListPort);
+                    inputStream = appListSocket.getInputStream();
                     int len = 1024;
                     String total = "";
-                    while (touchSocket.isConnected()) {
+                    while (appListSocket.isConnected()) {
                         byte[] buffer = new byte[len];
                         int realLen;
                         realLen = inputStream.read(buffer);
@@ -262,10 +318,10 @@ public class TerminalWSServer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
-                    if (touchSocket != null && touchSocket.isConnected()) {
+                    if (appListSocket != null && appListSocket.isConnected()) {
                         try {
-                            touchSocket.close();
-                            logger.info("touch socket已关闭");
+                            appListSocket.close();
+                            logger.info("appList socket已关闭");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -273,7 +329,7 @@ public class TerminalWSServer {
                     if (inputStream != null) {
                         try {
                             inputStream.close();
-                            logger.info("touch output流已关闭");
+                            logger.info("appList output流已关闭");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

@@ -99,7 +99,7 @@ public class AndroidWSServer {
             logger.info("已安装Sonic插件");
         } else {
             try {
-                iDevice.installPackage("plugins/sonic-android-apk.apk", true, "-t", "-r", "-g");
+                iDevice.installPackage("plugins/sonic-android-apk-debug.apk", true, "-t", "-r", "-g");
             } catch (InstallException e) {
                 e.printStackTrace();
                 logger.info("Sonic插件安装失败！");
