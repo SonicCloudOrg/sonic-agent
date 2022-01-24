@@ -283,7 +283,7 @@ public class TerminalWSServer {
                             buffer = AgentTool.subByteArray(buffer, 0, realLen);
                         }
                         if (realLen >= 0) {
-                            System.out.println(buffer);
+//                            System.out.println(buffer);
                         }
                     }
                 } catch (IOException e) {
