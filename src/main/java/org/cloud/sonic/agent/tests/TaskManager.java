@@ -193,4 +193,17 @@ public class TaskManager {
         childThreadsMap.remove(key);
     }
 
+    /**
+     * 强制停止子线程
+     *
+     * @param key  子线程key
+     */
+    public static void forceStopChildThread(String key) {
+        Set<Thread> threads = childThreadsMap.get(key);
+        for (Thread thread : threads) {
+            thread.stop();
+        }
+        childThreadsMap.remove(key);
+    }
+
 }

@@ -92,9 +92,10 @@ public class AndroidTestTaskBootThread extends Thread {
     public AndroidTestTaskBootThread(JSONObject jsonObject, AndroidStepHandler androidStepHandler) {
         this.androidStepHandler = androidStepHandler;
         this.jsonObject = jsonObject;
-        this.resultId = jsonObject.getInteger("rid");
-        this.caseId = jsonObject.getInteger("cid");
-        this.udId = jsonObject.getJSONObject("device").getString("udId");
+        this.resultId = jsonObject.getInteger("rid") == null ? 0 : jsonObject.getInteger("rid");
+        this.caseId = jsonObject.getInteger("cid") == null ? 0 : jsonObject.getInteger("cid");
+        this.udId = jsonObject.getJSONObject("device") == null? jsonObject.getString("udId") :
+                jsonObject.getJSONObject("device").getString("udId");
 
         // 比如：test-task-thread-af80d1e4
         this.setName(String.format(ANDROID_TEST_TASK_BOOT_PRE, resultId, caseId, udId));
@@ -139,6 +140,16 @@ public class AndroidTestTaskBootThread extends Thread {
 
     public AndroidTestTaskBootThread setUdId(String udId) {
         this.udId = udId;
+        return this;
+    }
+
+    public AndroidTestTaskBootThread setResultId(int resultId) {
+        this.resultId = resultId;
+        return this;
+    }
+
+    public AndroidTestTaskBootThread setCaseId(int caseId) {
+        this.caseId = caseId;
         return this;
     }
 
