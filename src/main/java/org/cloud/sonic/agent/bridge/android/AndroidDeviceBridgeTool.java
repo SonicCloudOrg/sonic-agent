@@ -132,7 +132,11 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public static IDevice getIDeviceByUdId(String udId) {
         IDevice iDevice = null;
-        for (IDevice device : AndroidDeviceBridgeTool.getRealOnLineDevices()) {
+        IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
+        if(iDevices.length==0){
+            return null;
+        }
+        for (IDevice device : iDevices) {
             //如果设备是在线状态并且序列号相等，则就是这个设备
             if (device.getState().equals(IDevice.DeviceState.ONLINE)
                     && device.getSerialNumber().equals(udId)) {
