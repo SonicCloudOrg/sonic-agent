@@ -24,17 +24,17 @@ public class AudioWSServer {
     @OnOpen
     public void onOpen(Session session,@PathParam("udId") String udId) throws Exception {
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-//        AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
-//        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
-//        AndroidDeviceBridgeTool.pressKey(iDevice, 4);
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
+        AndroidDeviceBridgeTool.pressKey(iDevice, 4);
         int appListPort = PortTool.getPort();
         new Thread(()-> {
             try {
-//                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
+                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
                 Socket audioSocket = null;
                 InputStream inputStream = null;
                 try {
-                    audioSocket = new Socket("localhost", 28200);
+                    audioSocket = new Socket("localhost", appListPort);
                     inputStream = audioSocket.getInputStream();
                     int len = 1024;
                     while (audioSocket.isConnected()) {
