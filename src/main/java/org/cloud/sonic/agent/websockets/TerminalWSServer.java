@@ -275,7 +275,7 @@ public class TerminalWSServer {
                     audioSocket = new Socket("localhost", appListPort);
                     inputStream = audioSocket.getInputStream();
                     int len = 1024;
-                    while (audioSocket.isConnected()) {
+                    while (audioSocket.isConnected() && !Thread.interrupted()) {
                         byte[] buffer = new byte[len];
                         int realLen;
                         realLen = inputStream.read(buffer);
