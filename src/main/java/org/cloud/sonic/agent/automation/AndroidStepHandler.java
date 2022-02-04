@@ -190,6 +190,10 @@ public class AndroidStepHandler {
         setResultDetailStatus(ResultDetailStatus.WARN);
     }
 
+    public String getUdId() {
+        return udId;
+    }
+
     public AndroidDriver getAndroidDriver() {
         return androidDriver;
     }

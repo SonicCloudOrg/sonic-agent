@@ -17,6 +17,10 @@ import org.cloud.sonic.agent.tests.TaskManager;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
+import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
+import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
+import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.TestNG;
@@ -77,34 +81,10 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     break;
                 case "runStep":
                     if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
-                        AndroidPasswordMap.getMap().put(jsonObject.getString("udId")
-                                , jsonObject.getString("pwd"));
-                        AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
-                        androidStepHandler.resetResultDetailStatus();
-                        androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
-                        List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
-                        for (JSONObject step : steps) {
-                            try {
-                                androidStepHandler.runStep(step);
-                            } catch (Throwable e) {
-                                break;
-                            }
-                        }
-                        androidStepHandler.sendStatus();
+                        runAndroidStep(jsonObject);
                     }
                     if (jsonObject.getInteger("pf") == PlatformType.IOS) {
-                        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(jsonObject.getString("sessionId"));
-                        iosStepHandler.resetResultDetailStatus();
-                        iosStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
-                        List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
-                        for (JSONObject step : steps) {
-                            try {
-                                iosStepHandler.runStep(step);
-                            } catch (Throwable e) {
-                                break;
-                            }
-                        }
-                        iosStepHandler.sendStatus();
+                        runIOSStep(jsonObject);
                     }
                     break;
                 case "suite":
@@ -167,5 +147,46 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
 
     public static Map<String, Session> getMap() {
         return sessionMap;
+    }
+
+    /**
+     * Android 步骤调试
+     */
+    private void runAndroidStep(JSONObject jsonObject) {
+
+        AndroidPasswordMap.getMap().put(jsonObject.getString("udId"), jsonObject.getString("pwd"));
+        AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
+        androidStepHandler.resetResultDetailStatus();
+        androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
+
+        AndroidTestTaskBootThread dataBean = new AndroidTestTaskBootThread(jsonObject, androidStepHandler);
+        AndroidRunStepThread task = new AndroidRunStepThread(dataBean) {
+            @Override
+            public void run() {
+                super.run();
+                androidStepHandler.sendStatus();
+            }
+        };
+        TaskManager.startChildThread(task.getName(), task);
+    }
+
+    /**
+     * IOS步骤调试
+     */
+    private void runIOSStep(JSONObject jsonObject) {
+        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(jsonObject.getString("sessionId"));
+        iosStepHandler.resetResultDetailStatus();
+        iosStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
+
+        IOSTestTaskBootThread dataBean = new IOSTestTaskBootThread(jsonObject, iosStepHandler);
+
+        IOSRunStepThread task = new IOSRunStepThread(dataBean) {
+            @Override
+            public void run() {
+                super.run();
+                iosStepHandler.sendStatus();
+            }
+        };
+        TaskManager.startChildThread(task.getName(), task);
     }
 }

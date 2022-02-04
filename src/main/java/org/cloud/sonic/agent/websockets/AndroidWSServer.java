@@ -13,10 +13,12 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.interfaces.DeviceStatus;
-import org.cloud.sonic.agent.maps.*;
+import org.cloud.sonic.agent.interfaces.PlatformType;
 import org.cloud.sonic.agent.maps.*;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
-import org.cloud.sonic.agent.tools.*;
+import org.cloud.sonic.agent.tests.TaskManager;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
+import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.*;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
@@ -32,7 +34,6 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.*;
@@ -40,8 +41,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static org.cloud.sonic.agent.tools.AgentTool.subByteArray;
 
 @Component
 @ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
@@ -476,6 +475,21 @@ public class AndroidWSServer {
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     NettyThreadPool.send(jsonDebug);
+                } else if (msg.getString("detail").equals("stopStep")) {
+                    if (msg.getInteger("pf") == PlatformType.ANDROID) {
+                        TaskManager.forceStopChildThread(
+                                AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
+                                        0, msg.getInteger("caseId"), msg.getString("udId")
+                                )
+                        );
+                    }
+                    if (msg.getInteger("pf") == PlatformType.IOS) {
+                        TaskManager.forceStopChildThread(
+                                IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
+                                        0, msg.getInteger("caseId"), msg.getString("udId")
+                                )
+                        );
+                    }
                 } else {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
