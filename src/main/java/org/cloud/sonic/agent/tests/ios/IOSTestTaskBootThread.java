@@ -84,9 +84,10 @@ public class IOSTestTaskBootThread extends Thread {
     public IOSTestTaskBootThread(JSONObject jsonObject, IOSStepHandler iosStepHandler) {
         this.iosStepHandler = iosStepHandler;
         this.jsonObject = jsonObject;
-        this.resultId = jsonObject.getInteger("rid");
-        this.caseId = jsonObject.getInteger("cid");
-        this.udId = jsonObject.getJSONObject("device").getString("udId");
+        this.resultId = jsonObject.getInteger("rid") == null ? 0 : jsonObject.getInteger("rid");
+        this.caseId = jsonObject.getInteger("cid") == null ? 0 : jsonObject.getInteger("cid");
+        this.udId = jsonObject.getJSONObject("device") == null ? jsonObject.getString("udId")
+                : jsonObject.getJSONObject("device").getString("udId");
 
         // 比如：test-task-thread-af80d1e4
         this.setName(String.format(IOS_TEST_TASK_BOOT_PRE, resultId, caseId, udId));
