@@ -62,5 +62,12 @@ public class AndroidTests {
         // 启动任务
         AndroidTestTaskBootThread bootThread = new AndroidTestTaskBootThread(jsonObject, androidStepHandler);
         TaskManager.startBootThread(bootThread);
+        // 用例串行
+        try {
+            bootThread.waitFinished();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        logger.info("任务【{}】完成", bootThread.getName());
     }
 }
