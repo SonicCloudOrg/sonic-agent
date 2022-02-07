@@ -158,19 +158,23 @@ public class SonicLocalThread extends Thread {
     public void run() {
         boolean suc;
         suc = runMiniCap("libs");
-        if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("Xiaomi")) {
+        String man = iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER);
+        if (man == null) {
+            return;
+        }
+        if (!suc && iDevice != null && man.equals("Xiaomi")) {
             suc = runMiniCap("Xiaomi");
-            if (!suc) {
+            if (!suc && iDevice != null) {
                 suc = runMiniCap("Xiaomi_NW");
-                if (!suc) {
+                if (!suc && iDevice != null) {
                     suc = runMiniCap("Xiaomi_One");
                 }
             }
         }
-        if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("vivo")) {
+        if (!suc && iDevice != null && man.equals("vivo")) {
             suc = runMiniCap("vivo");
         }
-        if (!suc && iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER).equals("LGE")) {
+        if (!suc && iDevice != null && man.equals("LGE")) {
             suc = runMiniCap("LGE");
         }
         if (session != null && (!suc)) {
