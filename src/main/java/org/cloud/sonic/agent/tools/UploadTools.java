@@ -108,7 +108,7 @@ public class UploadTools {
                         break;
                 }
                 branch.close();
-                FileSystemResource resource = new FileSystemResource(uploadFile);
+                FileSystemResource resource = new FileSystemResource(branchFile);
                 MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
                 param.add("file", resource);
                 param.add("uuid", uuid);
