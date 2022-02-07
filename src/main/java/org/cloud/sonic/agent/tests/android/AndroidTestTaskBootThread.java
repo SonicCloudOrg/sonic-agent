@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * android启动各个子任务的线程
@@ -26,9 +27,9 @@ public class AndroidTestTaskBootThread extends Thread {
     public final static String ANDROID_TEST_TASK_BOOT_PRE = "android-test-task-boot-%s-%s-%s";
 
     /**
-     * 控制不同线程执行的信号量
+     * 判断线程是否结束
      */
-    private Semaphore runStepSemaphore = new Semaphore(1);
+    private Semaphore finished = new Semaphore(0);
 
 
     /**
@@ -102,8 +103,8 @@ public class AndroidTestTaskBootThread extends Thread {
         this.setDaemon(true);
     }
 
-    public Semaphore getRunStepSemaphore() {
-        return runStepSemaphore;
+    public void waitFinished() throws InterruptedException {
+        finished.acquire();
     }
 
     public JSONObject getJsonObject() {
@@ -214,6 +215,7 @@ public class AndroidTestTaskBootThread extends Thread {
                 androidStepHandler.closeAndroidDriver();
             }
             androidStepHandler.sendStatus();
+            finished.release();
             TaskManager.clearTerminatedThreadByKey(this.getName());
         }
     }

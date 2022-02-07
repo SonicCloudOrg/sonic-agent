@@ -61,5 +61,12 @@ public class IOSTests {
         // 启动任务
         IOSTestTaskBootThread bootThread = new IOSTestTaskBootThread(jsonObject, iosStepHandler);
         TaskManager.startBootThread(bootThread);
+        // 用例串行
+        try {
+            bootThread.waitFinished();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        logger.info("任务【{}】完成", bootThread.getName());
     }
 }

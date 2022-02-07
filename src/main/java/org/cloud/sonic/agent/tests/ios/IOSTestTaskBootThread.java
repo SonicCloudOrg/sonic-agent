@@ -21,9 +21,9 @@ public class IOSTestTaskBootThread extends Thread {
     public final static String IOS_TEST_TASK_BOOT_PRE = "ios-test-task-boot-%s-%s-%s";
 
     /**
-     * 控制不同线程执行的信号量
+     * 判断线程是否结束
      */
-    private Semaphore runStepSemaphore = new Semaphore(1);
+    private Semaphore finished = new Semaphore(0);
 
 
     /**
@@ -94,8 +94,8 @@ public class IOSTestTaskBootThread extends Thread {
         this.setDaemon(true);
     }
 
-    public Semaphore getRunStepSemaphore() {
-        return runStepSemaphore;
+    public void waitFinished() throws InterruptedException {
+        finished.acquire();
     }
 
     public JSONObject getJsonObject() {
@@ -197,6 +197,8 @@ public class IOSTestTaskBootThread extends Thread {
                 iosStepHandler.closeIOSDriver();
             }
             iosStepHandler.sendStatus();
+            finished.release();
+            TaskManager.clearTerminatedThreadByKey(this.getName());
         }
     }
 }
