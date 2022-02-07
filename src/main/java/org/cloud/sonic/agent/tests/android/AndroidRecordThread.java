@@ -55,7 +55,7 @@ public class AndroidRecordThread extends Thread {
             isSupportRecord = false;
         }
 
-        while (runStepThread.isAlive() || androidStepHandler.getStatus() == 3) {
+        while (runStepThread.isAlive()) {
             if (androidStepHandler.getAndroidDriver() == null) {
                 try {
                     Thread.sleep(500);
