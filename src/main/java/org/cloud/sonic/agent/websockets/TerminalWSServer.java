@@ -75,10 +75,7 @@ public class TerminalWSServer {
                 break;
             }
         }
-        if (isInstall) {
-            getAppList(iDevice, session);
-            getAudio(iDevice, session);
-        } else {
+        if (!isInstall) {
             logger.info("等待安装超时！");
         }
     }
@@ -253,68 +250,68 @@ public class TerminalWSServer {
         }
     }
 
-    public void getAudio(IDevice iDevice, Session session) {
-        Future<?> audioPro = audioMap.get(session);
-        if (audioPro != null && (!audioPro.isDone() || !audioPro.isCancelled())) {
-            try {
-                audioPro.cancel(true);
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-            }
-        }
-        audioPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
-            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
-            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
-            int appListPort = PortTool.getPort();
-            try {
-                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
-                Socket audioSocket = null;
-                InputStream inputStream = null;
-                try {
-                    audioSocket = new Socket("localhost", appListPort);
-                    inputStream = audioSocket.getInputStream();
-                    int len = 1024;
-                    while (audioSocket.isConnected() && !Thread.interrupted()) {
-                        byte[] buffer = new byte[len];
-                        int realLen;
-                        realLen = inputStream.read(buffer);
-                        if (buffer.length != realLen && realLen >= 0) {
-                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
-                        }
-                        if (realLen >= 0) {
-//                            System.out.println(buffer);
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (audioSocket != null && audioSocket.isConnected()) {
-                        try {
-                            audioSocket.close();
-                            logger.info("audio socket已关闭");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (inputStream != null) {
-                        try {
-                            inputStream.close();
-                            logger.info("audio output流已关闭");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.info("{} 设备远程音频服务启动异常！"
-                        , iDevice.getSerialNumber());
-                logger.error(e.getMessage());
-            }
-            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
-        });
-        audioMap.put(session, audioPro);
-    }
+//    public void getAudio(IDevice iDevice, Session session) {
+//        Future<?> audioPro = audioMap.get(session);
+//        if (audioPro != null && (!audioPro.isDone() || !audioPro.isCancelled())) {
+//            try {
+//                audioPro.cancel(true);
+//            } catch (Exception e) {
+//                logger.error(e.getMessage());
+//            }
+//        }
+//        audioPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+//            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
+//            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
+//            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
+//            int appListPort = PortTool.getPort();
+//            try {
+//                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
+//                Socket audioSocket = null;
+//                InputStream inputStream = null;
+//                try {
+//                    audioSocket = new Socket("localhost", appListPort);
+//                    inputStream = audioSocket.getInputStream();
+//                    int len = 1024;
+//                    while (audioSocket.isConnected() && !Thread.interrupted()) {
+//                        byte[] buffer = new byte[len];
+//                        int realLen;
+//                        realLen = inputStream.read(buffer);
+//                        if (buffer.length != realLen && realLen >= 0) {
+//                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
+//                        }
+//                        if (realLen >= 0) {
+////                            System.out.println(buffer);
+//                        }
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                } finally {
+//                    if (audioSocket != null && audioSocket.isConnected()) {
+//                        try {
+//                            audioSocket.close();
+//                            logger.info("audio socket已关闭");
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                    if (inputStream != null) {
+//                        try {
+//                            inputStream.close();
+//                            logger.info("audio output流已关闭");
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
+//            } catch (Exception e) {
+//                logger.info("{} 设备远程音频服务启动异常！"
+//                        , iDevice.getSerialNumber());
+//                logger.error(e.getMessage());
+//            }
+//            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
+//        });
+//        audioMap.put(session, audioPro);
+//    }
 
     public void getAppList(IDevice iDevice, Session session) {
         Future<?> app = appListMap.get(session);

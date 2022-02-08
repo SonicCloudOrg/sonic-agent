@@ -476,20 +476,11 @@ public class AndroidWSServer {
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     NettyThreadPool.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
-                    if (msg.getInteger("pf") == PlatformType.ANDROID) {
-                        TaskManager.forceStopChildThread(
-                                AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
-                                        0, msg.getInteger("caseId"), msg.getString("udId")
-                                )
-                        );
-                    }
-                    if (msg.getInteger("pf") == PlatformType.IOS) {
-                        TaskManager.forceStopChildThread(
-                                IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
-                                        0, msg.getInteger("caseId"), msg.getString("udId")
-                                )
-                        );
-                    }
+                    TaskManager.forceStopChildThread(
+                            AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
+                                    0, msg.getInteger("caseId"), msg.getString("udId")
+                            )
+                    );
                 } else {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
