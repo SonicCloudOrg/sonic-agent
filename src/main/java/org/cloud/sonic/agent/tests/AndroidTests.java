@@ -73,6 +73,8 @@ public class AndroidTests {
             bootThread.waitFinished();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+        if (bootThread.getForceStop()) {
             logger.info("任务【{}】中断，跳过", bootThread.getName());
             return;
         }
