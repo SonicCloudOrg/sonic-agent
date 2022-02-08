@@ -13,6 +13,7 @@ import org.cloud.sonic.agent.maps.AndroidPasswordMap;
 import org.cloud.sonic.agent.maps.HandlerMap;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
+import org.cloud.sonic.agent.tests.SuiteListener;
 import org.cloud.sonic.agent.tests.TaskManager;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -23,6 +24,8 @@ import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.ISuite;
+import org.testng.ISuiteListener;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlSuite;
@@ -34,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.cloud.sonic.agent.tests.SuiteListener.runningTestsMap;
 
 public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger(NettyClientHandler.class);
@@ -94,9 +99,14 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     XmlSuite xmlSuite = new XmlSuite();
                     //bug?
                     for (JSONObject dataInfo : cases) {
+                        String rid = dataInfo.getInteger("rid") + "";
                         XmlTest xmlTest = new XmlTest(xmlSuite);
                         Map<String, String> parameters = new HashMap<>();
                         parameters.put("dataInfo", dataInfo.toJSONString());
+                        if (!runningTestsMap.containsKey(rid)) {
+                            parameters.put("rid", rid);
+                            xmlSuite.setParameters(parameters);
+                        }
                         xmlTest.setParameters(parameters);
                         List<XmlClass> classes = new ArrayList<>();
                         if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
@@ -109,6 +119,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     }
                     suiteList.add(xmlSuite);
                     tng.setXmlSuites(suiteList);
+                    tng.addListener(new SuiteListener());
                     tng.run();
                     break;
                 case "forceStopSuite":

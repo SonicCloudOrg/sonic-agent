@@ -8,6 +8,7 @@ import org.cloud.sonic.agent.tools.AgentTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.springframework.stereotype.Component;
 
+import javax.websocket.OnError;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
@@ -24,6 +25,8 @@ public class AudioWSServer {
     @OnOpen
     public void onOpen(Session session,@PathParam("udId") String udId) throws Exception {
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am kill org.cloud.sonic.android");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
         AndroidDeviceBridgeTool.pressKey(iDevice, 4);
@@ -37,7 +40,7 @@ public class AudioWSServer {
                     audioSocket = new Socket("localhost", appListPort);
                     inputStream = audioSocket.getInputStream();
                     int len = 1024;
-                    while (audioSocket.isConnected()) {
+                    while (audioSocket.isConnected() && session.isOpen()) {
                         byte[] buffer = new byte[len];
                         int realLen;
                         realLen = inputStream.read(buffer);
@@ -81,6 +84,7 @@ public class AudioWSServer {
             try {
                 session.getBasicRemote().sendBinary(message);
             } catch (IllegalStateException | IOException e) {
+                e.printStackTrace();
             }
         }
     }

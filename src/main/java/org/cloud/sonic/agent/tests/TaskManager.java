@@ -15,6 +15,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static org.cloud.sonic.agent.tests.SuiteListener.runningTestsMap;
+
 /**
  * @author JayWenStar
  * @date 2021/12/27 11:42 上午
@@ -191,6 +193,7 @@ public class TaskManager {
         // 清理map
         bootThreadsMap.remove(key);
         childThreadsMap.remove(key);
+        runningTestsMap.remove(resultId + "");
     }
 
     /**
