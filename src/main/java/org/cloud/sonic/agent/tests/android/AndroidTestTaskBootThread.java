@@ -31,6 +31,7 @@ public class AndroidTestTaskBootThread extends Thread {
      */
     private Semaphore finished = new Semaphore(0);
 
+    private Boolean forceStop = false;
 
     /**
      * 一些任务信息
@@ -154,6 +155,10 @@ public class AndroidTestTaskBootThread extends Thread {
         return this;
     }
 
+    public Boolean getForceStop() {
+        return forceStop;
+    }
+
     @Override
     public void run() {
 
@@ -209,6 +214,7 @@ public class AndroidTestTaskBootThread extends Thread {
         } catch (InterruptedException e) {
             log.error("任务异常，中断：{}", e.getMessage());
             androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
+            forceStop = true;
         } finally {
             if (startTestSuccess) {
                 AndroidDeviceLocalStatus.finish(udId);

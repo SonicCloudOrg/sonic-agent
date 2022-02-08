@@ -99,12 +99,10 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     XmlSuite xmlSuite = new XmlSuite();
                     //bug?
                     for (JSONObject dataInfo : cases) {
-                        String rid = dataInfo.getInteger("rid") + "";
                         XmlTest xmlTest = new XmlTest(xmlSuite);
                         Map<String, String> parameters = new HashMap<>();
                         parameters.put("dataInfo", dataInfo.toJSONString());
-                        if (!runningTestsMap.containsKey(rid)) {
-                            parameters.put("rid", rid);
+                        if (xmlSuite.getParameter("dataInfo") == null) {
                             xmlSuite.setParameters(parameters);
                         }
                         xmlTest.setParameters(parameters);

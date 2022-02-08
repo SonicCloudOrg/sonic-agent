@@ -1,5 +1,6 @@
 package org.cloud.sonic.agent.tests;
 
+import com.alibaba.fastjson.JSON;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 
@@ -17,13 +18,13 @@ public class SuiteListener implements ISuiteListener {
 
     @Override
     public void onStart(ISuite suite) {
-        String rid = suite.getParameter("rid");
+        String rid = JSON.parseObject(suite.getParameter("dataInfo")).getString("rid");
         runningTestsMap.put(rid, true);
     }
 
     @Override
     public void onFinish(ISuite suite) {
-        String rid = suite.getParameter("rid");
+        String rid = JSON.parseObject(suite.getParameter("dataInfo")).getString("rid");
         runningTestsMap.remove(rid);
     }
 }
