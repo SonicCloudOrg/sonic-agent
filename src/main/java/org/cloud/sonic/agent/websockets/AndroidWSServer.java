@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.InstallException;
+import com.android.ddmlib.InstallReceiver;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
@@ -99,7 +100,9 @@ public class AndroidWSServer {
             logger.info("已安装Sonic插件");
         } else {
             try {
-                iDevice.installPackage("plugins/sonic-android-apk-debug.apk", true, "-t", "-r", "-g");
+                iDevice.installPackage("plugins/sonic-android-apk-debug.apk",
+                        true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                        , "-r", "-t", "-g");
             } catch (InstallException e) {
                 e.printStackTrace();
                 logger.info("Sonic插件安装失败！");
@@ -482,6 +485,11 @@ public class AndroidWSServer {
                                     0, msg.getInteger("caseId"), msg.getString("udId")
                             )
                     );
+                } else if (msg.getString("detail").equals("openApp")) {
+                    AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                        AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
+                                String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
+                    });
                 } else {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
@@ -534,19 +542,15 @@ public class AndroidWSServer {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    if (msg.getString("detail").equals("openApp")) {
-                        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
-                                    String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
-                        });
-                    }
                     if (msg.getString("detail").equals("install")) {
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
                                 File localFile = DownImageTool.download(msg.getString("apk"));
-                                udIdMap.get(session).installPackage(localFile.getAbsolutePath(), true, "-t");
+                                udIdMap.get(session).installPackage(localFile.getAbsolutePath()
+                                        , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                                        , "-r", "-t", "-g");
                                 result.put("status", "success");
                             } catch (IOException | InstallException e) {
                                 result.put("status", "fail");
