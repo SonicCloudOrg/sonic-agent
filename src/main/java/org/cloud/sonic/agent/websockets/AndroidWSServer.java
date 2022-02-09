@@ -533,6 +533,7 @@ public class AndroidWSServer {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                    //tag,remove driver
                     if (msg.getString("detail").equals("openApp")) {
                         AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
