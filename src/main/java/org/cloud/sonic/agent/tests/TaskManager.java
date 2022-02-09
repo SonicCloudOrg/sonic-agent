@@ -203,6 +203,9 @@ public class TaskManager {
      */
     public static void forceStopChildThread(String key) {
         Set<Thread> threads = childThreadsMap.get(key);
+        if (threads == null) {
+            return;
+        }
         for (Thread thread : threads) {
             thread.stop();
         }
