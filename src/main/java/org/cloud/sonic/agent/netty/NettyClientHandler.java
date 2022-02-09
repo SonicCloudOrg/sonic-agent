@@ -165,6 +165,9 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
 
         AndroidPasswordMap.getMap().put(jsonObject.getString("udId"), jsonObject.getString("pwd"));
         AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
+        if (androidStepHandler == null) {
+            return;
+        }
         androidStepHandler.resetResultDetailStatus();
         androidStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
 
@@ -184,6 +187,9 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
      */
     private void runIOSStep(JSONObject jsonObject) {
         IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(jsonObject.getString("sessionId"));
+        if (iosStepHandler == null) {
+            return;
+        }
         iosStepHandler.resetResultDetailStatus();
         iosStepHandler.setGlobalParams(jsonObject.getJSONObject("gp"));
 

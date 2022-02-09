@@ -323,6 +323,7 @@ public class AndroidWSServer {
     @OnError
     public void onError(Session session, Throwable error) {
         logger.error(error.getMessage());
+        error.printStackTrace();
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
         AgentTool.sendText(session, errMsg.toJSONString());
