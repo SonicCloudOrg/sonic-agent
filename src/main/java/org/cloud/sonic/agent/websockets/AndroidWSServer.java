@@ -534,11 +534,10 @@ public class AndroidWSServer {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    //tag,remove driver
                     if (msg.getString("detail").equals("openApp")) {
-                        AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            finalAndroidStepHandler.openApp(new HandleDes(), msg.getString("pkg"));
+                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
+                                    String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
                         });
                     }
                     if (msg.getString("detail").equals("install")) {
