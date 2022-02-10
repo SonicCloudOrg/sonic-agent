@@ -79,7 +79,7 @@ public class LogTool {
                 try {
                     session.getBasicRemote().sendText(message.toJSONString());
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.info("websocket已关闭");
                 }
             });
         }
