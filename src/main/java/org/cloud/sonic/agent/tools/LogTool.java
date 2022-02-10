@@ -7,11 +7,14 @@ import org.cloud.sonic.agent.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.NonNull;
 
 import javax.websocket.Session;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author ZhouYiXun
@@ -25,6 +28,8 @@ public class LogTool {
     public int caseId = 0;
     public int resultId = 0;
     public String udId = "";
+
+    private static ExecutorService threadPool = Executors.newCachedThreadPool();
 
     /**
      * @param message
@@ -69,12 +74,14 @@ public class LogTool {
      */
     private void sendToWebSocket(Session session, JSONObject message) {
         synchronized (session) {
-            try {
-                message.put("time", getDateToString());
-                session.getBasicRemote().sendText(message.toJSONString());
-            } catch (IllegalStateException | IOException e) {
-                logger.error(e.getMessage());
-            }
+            // 套入单线程池
+            threadPool.execute(() -> {
+                try {
+                    session.getBasicRemote().sendText(message.toJSONString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
