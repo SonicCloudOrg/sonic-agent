@@ -1,6 +1,7 @@
 package org.cloud.sonic.agent.tests;
 
 import org.cloud.sonic.agent.interfaces.PlatformType;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.slf4j.Logger;
@@ -201,13 +202,14 @@ public class TaskManager {
      *
      * @param key  子线程key
      */
-    public static void forceStopChildThread(String key) {
+    public static void forceStopDebugStepThread(String key) {
         Set<Thread> threads = childThreadsMap.get(key);
         if (threads == null) {
             return;
         }
         for (Thread thread : threads) {
-            thread.stop();
+            AndroidRunStepThread androidRunStepThread = (AndroidRunStepThread) thread;
+            androidRunStepThread.setStopped(true);
         }
         childThreadsMap.remove(key);
     }

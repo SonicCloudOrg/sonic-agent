@@ -24,6 +24,16 @@ public class AndroidRunStepThread extends Thread {
 
     private final AndroidTestTaskBootThread androidTestTaskBootThread;
 
+    private volatile boolean stopped = false;
+
+    public boolean isStopped() {
+        return stopped;
+    }
+
+    public void setStopped(boolean stopped) {
+        this.stopped = stopped;
+    }
+
     public AndroidRunStepThread(AndroidTestTaskBootThread androidTestTaskBootThread) {
         this.androidTestTaskBootThread = androidTestTaskBootThread;
 
@@ -42,6 +52,9 @@ public class AndroidRunStepThread extends Thread {
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
 
         for (JSONObject step : steps) {
+            if (stopped) {
+                return;
+            }
             try {
                 androidStepHandler.runStep(step);
             } catch (Throwable e) {

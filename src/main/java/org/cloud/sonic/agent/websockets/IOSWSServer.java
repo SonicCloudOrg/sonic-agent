@@ -134,7 +134,7 @@ public class IOSWSServer {
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     NettyThreadPool.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
-                    TaskManager.forceStopChildThread(
+                    TaskManager.forceStopDebugStepThread(
                             IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
                                     0, msg.getInteger("caseId"), msg.getString("udId")
                             )
