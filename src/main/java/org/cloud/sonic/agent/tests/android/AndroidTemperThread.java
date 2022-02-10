@@ -9,13 +9,15 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AndroidTemperThread extends Thread {
     @Override
     public void run() {
         while (NettyClientHandler.serverOnline) {
             IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
-            if(deviceList==null){
+            if (deviceList == null) {
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
@@ -30,7 +32,7 @@ public class AndroidTemperThread extends Thread {
                         .executeCommand(iDevice, "dumpsys battery");
                 if (StringUtils.hasText(temper)) {
                     String real = temper.substring(temper.indexOf("temperature")).trim();
-                    int total = Integer.parseInt(real.substring(13, real.indexOf("\n")));
+                    int total = getInt(real.substring(13, real.indexOf("\n")));
                     jsonObject.put("udId", iDevice.getSerialNumber());
                     jsonObject.put("tem", total);
                     detail.add(jsonObject);
@@ -46,5 +48,12 @@ public class AndroidTemperThread extends Thread {
                 e.printStackTrace();
             }
         }
+    }
+
+    public int getInt(String a) {
+        String regEx = "[^0-9]";
+        Pattern p = Pattern.compile(regEx);
+        Matcher m = p.matcher(a);
+        return Integer.parseInt(m.replaceAll("").trim());
     }
 }

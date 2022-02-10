@@ -416,13 +416,19 @@ public class AndroidWSServer {
             case "battery":
                 AndroidDeviceBridgeTool.controlBattery(udIdMap.get(session), msg.getInteger("detail"));
                 break;
-            case "uninstallApp":
+            case "uninstallApp": {
+                JSONObject result = new JSONObject();
                 try {
                     udIdMap.get(session).uninstallPackage(msg.getString("detail"));
+                    result.put("detail", "success");
                 } catch (InstallException e) {
+                    result.put("detail", "fail");
                     e.printStackTrace();
                 }
+                result.put("msg", "uninstallFinish");
+                AgentTool.sendText(session, result.toJSONString());
                 break;
+            }
             case "scan":
                 AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
                 break;
