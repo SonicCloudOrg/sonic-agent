@@ -2,6 +2,7 @@ package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:30 上午
  */
-public class AndroidRunStepThread extends Thread {
+public class AndroidRunStepThread extends RunStepThread {
 
     private final Logger log = LoggerFactory.getLogger(AndroidRunStepThread.class);
 
@@ -23,16 +24,6 @@ public class AndroidRunStepThread extends Thread {
     public final static String ANDROID_RUN_STEP_TASK_PRE = "android-run-step-task-%s-%s-%s";
 
     private final AndroidTestTaskBootThread androidTestTaskBootThread;
-
-    private volatile boolean stopped = false;
-
-    public boolean isStopped() {
-        return stopped;
-    }
-
-    public void setStopped(boolean stopped) {
-        this.stopped = stopped;
-    }
 
     public AndroidRunStepThread(AndroidTestTaskBootThread androidTestTaskBootThread) {
         this.androidTestTaskBootThread = androidTestTaskBootThread;
@@ -52,7 +43,7 @@ public class AndroidRunStepThread extends Thread {
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
 
         for (JSONObject step : steps) {
-            if (stopped) {
+            if (isStopped()) {
                 return;
             }
             try {
