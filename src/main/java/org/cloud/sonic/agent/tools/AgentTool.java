@@ -40,6 +40,9 @@ public class AgentTool {
     }
 
     public static void sendByte(Session session, byte[] message) {
+        if (session == null || !session.isOpen()) {
+            return;
+        }
         synchronized (session) {
             try {
                 session.getBasicRemote().sendBinary(ByteBuffer.wrap(message));
@@ -50,6 +53,9 @@ public class AgentTool {
     }
 
     public static void sendText(Session session, String message) {
+        if (session == null || !session.isOpen()) {
+            return;
+        }
         synchronized (session) {
             try {
                 session.getBasicRemote().sendText(message);
