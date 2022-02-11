@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * android启动各个子任务的线程
@@ -26,10 +27,11 @@ public class AndroidTestTaskBootThread extends Thread {
     public final static String ANDROID_TEST_TASK_BOOT_PRE = "android-test-task-boot-%s-%s-%s";
 
     /**
-     * 控制不同线程执行的信号量
+     * 判断线程是否结束
      */
-    private Semaphore runStepSemaphore = new Semaphore(1);
+    private Semaphore finished = new Semaphore(0);
 
+    private Boolean forceStop = false;
 
     /**
      * 一些任务信息
@@ -92,17 +94,18 @@ public class AndroidTestTaskBootThread extends Thread {
     public AndroidTestTaskBootThread(JSONObject jsonObject, AndroidStepHandler androidStepHandler) {
         this.androidStepHandler = androidStepHandler;
         this.jsonObject = jsonObject;
-        this.resultId = jsonObject.getInteger("rid");
-        this.caseId = jsonObject.getInteger("cid");
-        this.udId = jsonObject.getJSONObject("device").getString("udId");
+        this.resultId = jsonObject.getInteger("rid") == null ? 0 : jsonObject.getInteger("rid");
+        this.caseId = jsonObject.getInteger("cid") == null ? 0 : jsonObject.getInteger("cid");
+        this.udId = jsonObject.getJSONObject("device") == null? jsonObject.getString("udId") :
+                jsonObject.getJSONObject("device").getString("udId");
 
         // 比如：test-task-thread-af80d1e4
         this.setName(String.format(ANDROID_TEST_TASK_BOOT_PRE, resultId, caseId, udId));
         this.setDaemon(true);
     }
 
-    public Semaphore getRunStepSemaphore() {
-        return runStepSemaphore;
+    public void waitFinished() throws InterruptedException {
+        finished.acquire();
     }
 
     public JSONObject getJsonObject() {
@@ -140,6 +143,20 @@ public class AndroidTestTaskBootThread extends Thread {
     public AndroidTestTaskBootThread setUdId(String udId) {
         this.udId = udId;
         return this;
+    }
+
+    public AndroidTestTaskBootThread setResultId(int resultId) {
+        this.resultId = resultId;
+        return this;
+    }
+
+    public AndroidTestTaskBootThread setCaseId(int caseId) {
+        this.caseId = caseId;
+        return this;
+    }
+
+    public Boolean getForceStop() {
+        return forceStop;
     }
 
     @Override
@@ -197,12 +214,14 @@ public class AndroidTestTaskBootThread extends Thread {
         } catch (InterruptedException e) {
             log.error("任务异常，中断：{}", e.getMessage());
             androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
+            forceStop = true;
         } finally {
             if (startTestSuccess) {
                 AndroidDeviceLocalStatus.finish(udId);
                 androidStepHandler.closeAndroidDriver();
             }
             androidStepHandler.sendStatus();
+            finished.release();
             TaskManager.clearTerminatedThreadByKey(this.getName());
         }
     }

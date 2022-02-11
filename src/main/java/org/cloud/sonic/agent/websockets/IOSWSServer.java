@@ -12,6 +12,8 @@ import org.cloud.sonic.agent.maps.DevicesLockMap;
 import org.cloud.sonic.agent.maps.HandlerMap;
 import org.cloud.sonic.agent.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.tests.TaskManager;
+import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.DownImageTool;
 import org.cloud.sonic.agent.tools.UploadTools;
 import io.appium.java_client.TouchAction;
@@ -131,6 +133,12 @@ public class IOSWSServer {
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     NettyThreadPool.send(jsonDebug);
+                } else if (msg.getString("detail").equals("stopStep")) {
+                    TaskManager.forceStopDebugStepThread(
+                            IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
+                                    0, msg.getInteger("caseId"), msg.getString("udId")
+                            )
+                    );
                 } else {
                     IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
                     if (iosStepHandler == null || iosStepHandler.getDriver() == null) {

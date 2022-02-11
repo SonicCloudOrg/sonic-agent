@@ -68,6 +68,9 @@ public class LogTool {
      * @date 2021/8/16 19:57
      */
     private void sendToWebSocket(Session session, JSONObject message) {
+        if (session == null || !session.isOpen()) {
+            return;
+        }
         synchronized (session) {
             try {
                 message.put("time", getDateToString());

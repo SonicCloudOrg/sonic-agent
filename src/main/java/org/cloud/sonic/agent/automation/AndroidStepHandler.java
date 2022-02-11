@@ -35,10 +35,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.Base64Utils;
-import org.springframework.util.FileCopyUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.util.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -191,6 +188,10 @@ public class AndroidStepHandler {
         log.sendStepLog(StepType.ERROR, "等待设备超时！测试跳过！", "");
         //测试标记为异常
         setResultDetailStatus(ResultDetailStatus.WARN);
+    }
+
+    public String getUdId() {
+        return udId;
     }
 
     public AndroidDriver getAndroidDriver() {
@@ -997,18 +998,22 @@ public class AndroidStepHandler {
     }
 
     public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
-        log.sendStepLog(StepType.INFO, "开始检测" + des + "兼容", "检测与当前设备截图相似度，期望相似度为" + matchThreshold + "%");
-        File file = null;
-        if (pathValue.startsWith("http")) {
-            file = DownImageTool.download(pathValue);
-        }
-        double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
-        handleDes.setStepDes("检测" + des + "图片相似度");
-        handleDes.setDetail("相似度为" + score * 100 + "%");
-        if (score == 0) {
-            handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
-        } else if (score < (matchThreshold / 100)) {
-            handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
+        try {
+            log.sendStepLog(StepType.INFO, "开始检测" + des + "兼容", "检测与当前设备截图相似度，期望相似度为" + matchThreshold + "%");
+            File file = null;
+            if (pathValue.startsWith("http")) {
+                file = DownImageTool.download(pathValue);
+            }
+            double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
+            handleDes.setStepDes("检测" + des + "图片相似度");
+            handleDes.setDetail("相似度为" + score * 100 + "%");
+            if (score == 0) {
+                handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
+            } else if (score < (matchThreshold / 100)) {
+                handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
         }
     }
 

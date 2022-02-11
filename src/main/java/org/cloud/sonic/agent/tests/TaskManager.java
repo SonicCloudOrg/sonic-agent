@@ -1,7 +1,9 @@
 package org.cloud.sonic.agent.tests;
 
 import org.cloud.sonic.agent.interfaces.PlatformType;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import static org.cloud.sonic.agent.tests.SuiteListener.runningTestsMap;
 
 /**
  * @author JayWenStar
@@ -190,6 +194,26 @@ public class TaskManager {
         }
         // 清理map
         bootThreadsMap.remove(key);
+        childThreadsMap.remove(key);
+        runningTestsMap.remove(resultId + "");
+    }
+
+    /**
+     * 停止子线程
+     * 不能使用 {@link Thread#stop()} 、{@link Thread#interrupt()} ，
+     * 因为目前的websocket会用当前所属线程做一些事，强制停止会导致一些问题
+     *
+     * @param key  子线程key
+     */
+    public static void forceStopDebugStepThread(String key) {
+        Set<Thread> threads = childThreadsMap.get(key);
+        if (threads == null) {
+            return;
+        }
+        for (Thread thread : threads) {
+            RunStepThread runStepThread = (RunStepThread) thread;
+            runStepThread.setStopped(true);
+        }
         childThreadsMap.remove(key);
     }
 

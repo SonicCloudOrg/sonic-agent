@@ -15,6 +15,9 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.cloud.sonic.agent.tests.SuiteListener.runningTestsMap;
 
 /**
  * @author ZhouYiXun
@@ -23,6 +26,8 @@ import java.util.List;
  */
 public class IOSTests {
     private final Logger logger = LoggerFactory.getLogger(IOSTests.class);
+
+    public static ConcurrentHashMap<String, Boolean> iosTestsMap = new ConcurrentHashMap<>();
 
     @DataProvider(name = "testData", parallel = true)
     public Object[][] getTestData(ITestContext context) {
@@ -50,9 +55,9 @@ public class IOSTests {
 
     @Test(dataProvider = "testData")
     public void run(JSONObject jsonObject) throws IOException {
-        IOSStepHandler iosStepHandler = new IOSStepHandler();
         int rid = jsonObject.getInteger("rid");
         int cid = jsonObject.getInteger("cid");
+        IOSStepHandler iosStepHandler = new IOSStepHandler();
         String udId = jsonObject.getJSONObject("device").getString("udId");
         JSONObject gp = jsonObject.getJSONObject("gp");
         iosStepHandler.setGlobalParams(gp);
@@ -60,6 +65,21 @@ public class IOSTests {
 
         // 启动任务
         IOSTestTaskBootThread bootThread = new IOSTestTaskBootThread(jsonObject, iosStepHandler);
+        if (!runningTestsMap.containsKey(rid + "")) {
+            logger.info("任务【{}】中断，跳过", bootThread.getName());
+            return;
+        }
         TaskManager.startBootThread(bootThread);
+        // 用例串行
+        try {
+            bootThread.waitFinished();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (bootThread.getForceStop()) {
+            logger.info("任务【{}】中断，跳过", bootThread.getName());
+            return;
+        }
+        logger.info("任务【{}】完成", bootThread.getName());
     }
 }

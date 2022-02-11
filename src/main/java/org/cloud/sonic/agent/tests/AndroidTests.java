@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.cloud.sonic.agent.tests.SuiteListener.runningTestsMap;
+
 /**
  * @author ZhouYiXun
  * @des 安卓测试执行类
@@ -51,9 +53,9 @@ public class AndroidTests {
 
     @Test(dataProvider = "testData")
     public void run(JSONObject jsonObject) throws IOException {
-        AndroidStepHandler androidStepHandler = new AndroidStepHandler();
         int rid = jsonObject.getInteger("rid");
         int cid = jsonObject.getInteger("cid");
+        AndroidStepHandler androidStepHandler = new AndroidStepHandler();
         String udId = jsonObject.getJSONObject("device").getString("udId");
         JSONObject gp = jsonObject.getJSONObject("gp");
         androidStepHandler.setGlobalParams(gp);
@@ -61,6 +63,22 @@ public class AndroidTests {
 
         // 启动任务
         AndroidTestTaskBootThread bootThread = new AndroidTestTaskBootThread(jsonObject, androidStepHandler);
+        if (!runningTestsMap.containsKey(rid + "")) {
+            logger.info("任务【{}】中断，跳过", bootThread.getName());
+            return;
+        }
         TaskManager.startBootThread(bootThread);
+        // 用例串行
+        try {
+            bootThread.waitFinished();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (bootThread.getForceStop()) {
+            logger.info("任务【{}】中断，跳过", bootThread.getName());
+            return;
+        }
+        logger.info("任务【{}】完成", bootThread.getName());
     }
+
 }

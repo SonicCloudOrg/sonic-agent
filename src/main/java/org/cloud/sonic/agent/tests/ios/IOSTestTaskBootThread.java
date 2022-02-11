@@ -21,9 +21,11 @@ public class IOSTestTaskBootThread extends Thread {
     public final static String IOS_TEST_TASK_BOOT_PRE = "ios-test-task-boot-%s-%s-%s";
 
     /**
-     * 控制不同线程执行的信号量
+     * 判断线程是否结束
      */
-    private Semaphore runStepSemaphore = new Semaphore(1);
+    private Semaphore finished = new Semaphore(0);
+
+    private Boolean forceStop = false;
 
 
     /**
@@ -84,17 +86,18 @@ public class IOSTestTaskBootThread extends Thread {
     public IOSTestTaskBootThread(JSONObject jsonObject, IOSStepHandler iosStepHandler) {
         this.iosStepHandler = iosStepHandler;
         this.jsonObject = jsonObject;
-        this.resultId = jsonObject.getInteger("rid");
-        this.caseId = jsonObject.getInteger("cid");
-        this.udId = jsonObject.getJSONObject("device").getString("udId");
+        this.resultId = jsonObject.getInteger("rid") == null ? 0 : jsonObject.getInteger("rid");
+        this.caseId = jsonObject.getInteger("cid") == null ? 0 : jsonObject.getInteger("cid");
+        this.udId = jsonObject.getJSONObject("device") == null ? jsonObject.getString("udId")
+                : jsonObject.getJSONObject("device").getString("udId");
 
         // 比如：test-task-thread-af80d1e4
         this.setName(String.format(IOS_TEST_TASK_BOOT_PRE, resultId, caseId, udId));
         this.setDaemon(true);
     }
 
-    public Semaphore getRunStepSemaphore() {
-        return runStepSemaphore;
+    public void waitFinished() throws InterruptedException {
+        finished.acquire();
     }
 
     public JSONObject getJsonObject() {
@@ -132,6 +135,10 @@ public class IOSTestTaskBootThread extends Thread {
     public IOSTestTaskBootThread setUdId(String udId) {
         this.udId = udId;
         return this;
+    }
+
+    public Boolean getForceStop() {
+        return forceStop;
     }
 
     @Override
@@ -190,12 +197,15 @@ public class IOSTestTaskBootThread extends Thread {
         } catch (InterruptedException e) {
             log.error("任务异常，中断：{}", e.getMessage());
             iosStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
+            forceStop = true;
         } finally {
             if (startTestSuccess) {
                 IOSDeviceLocalStatus.finish(udId);
                 iosStepHandler.closeIOSDriver();
             }
             iosStepHandler.sendStatus();
+            finished.release();
+            TaskManager.clearTerminatedThreadByKey(this.getName());
         }
     }
 }
