@@ -49,7 +49,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
             agentInfo.put("msg", "agentInfo");
             agentInfo.put("agentId", jsonMsg.getInteger("id"));
             agentInfo.put("port", port);
-            agentInfo.put("version", version);
+            agentInfo.put("version", "v" + version);
             agentInfo.put("systemType", System.getProperty("os.name"));
             agentInfo.put("host", host);
             channel.writeAndFlush(agentInfo.toJSONString());
