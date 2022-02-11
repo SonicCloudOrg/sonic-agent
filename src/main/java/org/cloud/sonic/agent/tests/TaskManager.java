@@ -1,7 +1,9 @@
 package org.cloud.sonic.agent.tests;
 
 import org.cloud.sonic.agent.interfaces.PlatformType;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,17 +199,20 @@ public class TaskManager {
     }
 
     /**
-     * 强制停止子线程
+     * 停止子线程
+     * 不能使用 {@link Thread#stop()} 、{@link Thread#interrupt()} ，
+     * 因为目前的websocket会用当前所属线程做一些事，强制停止会导致一些问题
      *
      * @param key  子线程key
      */
-    public static void forceStopChildThread(String key) {
+    public static void forceStopDebugStepThread(String key) {
         Set<Thread> threads = childThreadsMap.get(key);
         if (threads == null) {
             return;
         }
         for (Thread thread : threads) {
-            thread.stop();
+            RunStepThread runStepThread = (RunStepThread) thread;
+            runStepThread.setStopped(true);
         }
         childThreadsMap.remove(key);
     }
