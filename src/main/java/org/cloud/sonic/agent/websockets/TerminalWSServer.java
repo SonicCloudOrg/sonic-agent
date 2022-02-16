@@ -2,7 +2,8 @@ package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.*;
+import com.android.ddmlib.IDevice;
+import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.maps.AndroidAPKMap;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 @ServerEndpoint(value = "/websockets/terminal/{key}/{udId}", configurator = MyEndpointConfigure.class)
 public class TerminalWSServer {
+
     private final Logger logger = LoggerFactory.getLogger(TerminalWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
@@ -333,26 +335,24 @@ public class TerminalWSServer {
                 try {
                     appListSocket = new Socket("localhost", appListPort);
                     inputStream = appListSocket.getInputStream();
-                    int len = 1024;
-                    String total = "";
                     while (appListSocket.isConnected()) {
-                        byte[] buffer = new byte[len];
-                        int realLen;
-                        realLen = inputStream.read(buffer);
-                        if (buffer.length != realLen && realLen >= 0) {
-                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
+                        // 获取长度
+                        byte[] lengthBytes = inputStream.readNBytes(32);
+                        // byte转字符串（二进制），然后再转长度
+                        StringBuffer binStr = new StringBuffer();
+                        for (byte lengthByte : lengthBytes) {
+                            binStr.append(lengthByte);
                         }
-                        if (realLen >= 0) {
-                            String chunk = new String(buffer);
-                            total += chunk;
-                            if (chunk.contains("}")) {
-                                JSONObject appListDetail = new JSONObject();
-                                appListDetail.put("msg", "appListDetail");
-                                appListDetail.put("detail", JSON.parseObject(total));
-                                AgentTool.sendText(session, appListDetail.toJSONString());
-                                total = "";
-                            }
-                        }
+                        Integer readLen = Integer.valueOf(binStr.toString(), 2);
+
+                        // 根据长度读取数据体
+                        byte[] dataBytes = inputStream.readNBytes(readLen);
+                        String dataJson = new String(dataBytes);
+
+                        JSONObject appListDetail = new JSONObject();
+                        appListDetail.put("msg", "appListDetail");
+                        appListDetail.put("detail", JSON.parseObject(dataJson));
+                        AgentTool.sendText(session, appListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
