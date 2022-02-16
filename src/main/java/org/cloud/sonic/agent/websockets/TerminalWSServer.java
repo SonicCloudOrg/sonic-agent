@@ -315,28 +315,6 @@ public class TerminalWSServer {
 //        audioMap.put(session, audioPro);
 //    }
 
-    public static void main(String[] args) {
-        int before = Integer.MAX_VALUE;
-        String s = Integer.toBinaryString(before);
-        byte[] bytes = new byte[32];
-
-        // byte长度存到byte里面
-        String[] bits = s.split("");
-        for (int i = bits.length-1, j = bytes.length-1; i >=0; i--, j--) {
-            bytes[j] = Byte.parseByte(bits[i]);
-        }
-
-        // byte转转字符串（二进制），然后再转长度
-        StringBuffer binStr = new StringBuffer();
-        for (byte aByte : bytes) {
-            binStr.append(aByte);
-        }
-
-        Integer res = Integer.valueOf(binStr.toString(), 2);
-
-        System.out.println(res == before);
-    }
-
     public void getAppList(IDevice iDevice, Session session) {
         Future<?> app = appListMap.get(session);
         if (app != null && (!app.isDone() || !app.isCancelled())) {
