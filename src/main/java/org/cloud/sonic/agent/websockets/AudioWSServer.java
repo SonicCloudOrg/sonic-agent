@@ -20,7 +20,6 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 
 @Component
 @ServerEndpoint(value = "/websockets/audio/{key}/{udId}", configurator = MyEndpointConfigure.class)
@@ -44,20 +43,21 @@ public class AudioWSServer {
 
     private void startAudio(Session session) {
         stopAudio(session);
-        AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
-        AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "am start -n org.cloud.sonic.android/.AudioActivity");
-        AndroidDeviceBridgeTool.pressKey(udIdMap.get(session), 4);
+        IDevice iDevice = udIdMap.get(session);
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
+        AndroidDeviceBridgeTool.pressKey(iDevice, 4);
         int appListPort = PortTool.getPort();
         Thread audio = new Thread(() -> {
             try {
-                AndroidDeviceBridgeTool.forward(udIdMap.get(session), appListPort, "sonicaudioservice");
+                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
                 Socket audioSocket = null;
                 InputStream inputStream = null;
                 try {
                     audioSocket = new Socket("localhost", appListPort);
                     inputStream = audioSocket.getInputStream();
                     int len = 1024;
-                    while (audioSocket.isConnected() || Thread.interrupted()) {
+                    while (audioSocket.isConnected() && !Thread.interrupted()) {
                         byte[] buffer = new byte[len];
                         int realLen;
                         realLen = inputStream.read(buffer);
@@ -69,7 +69,7 @@ public class AudioWSServer {
                             byteBuffer.put(buffer);
                             byteBuffer.flip();
                             //bug
-                            sendText(session, byteBuffer);
+                            AgentTool.sendByte(session, byteBuffer);
                         }
                     }
                 } catch (IOException e) {
@@ -92,7 +92,7 @@ public class AudioWSServer {
                 }
             } catch (Exception e) {
             }
-            AndroidDeviceBridgeTool.removeForward(udIdMap.get(session), appListPort, "sonicaudioservice");
+            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
         });
         audio.start();
         audioMap.put(session, audio);
@@ -103,15 +103,6 @@ public class AudioWSServer {
             audioMap.get(session).interrupt();
         }
         audioMap.remove(session);
-    }
-
-    private void sendText(Session session, String message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IllegalStateException | IOException e) {
-            }
-        }
     }
 
     @OnMessage
@@ -135,10 +126,10 @@ public class AudioWSServer {
 
     @OnError
     public void onError(Session session, Throwable error) {
-        logger.error(error.getMessage());
+        logger.error("音频socket发生错误，刷新瞬间可无视：", error);
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
-        sendText(session, errMsg.toJSONString());
+        AgentTool.sendText(session, errMsg.toJSONString());
     }
 
     private void exit(Session session) {
