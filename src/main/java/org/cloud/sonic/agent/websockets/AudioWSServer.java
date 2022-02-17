@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.tools.AgentTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
@@ -38,7 +39,21 @@ public class AudioWSServer {
         }
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         udIdMap.put(session, iDevice);
-        startAudio(session);
+        int wait = 0;
+        boolean isInstall = true;
+        while (AndroidAPKMap.getMap().get(udId) == null || (!AndroidAPKMap.getMap().get(udId))) {
+            Thread.sleep(500);
+            wait++;
+            if (wait >= 40) {
+                isInstall = false;
+                break;
+            }
+        }
+        if (!isInstall) {
+            logger.info("等待安装超时！");
+        } else {
+            startAudio(session);
+        }
     }
 
     private void startAudio(Session session) {
