@@ -52,6 +52,19 @@ public class AgentTool {
         }
     }
 
+    public static void sendByte(Session session, ByteBuffer message) {
+        if (session == null || !session.isOpen()) {
+            return;
+        }
+        synchronized (session) {
+            try {
+                session.getBasicRemote().sendBinary(message);
+            } catch (IllegalStateException | IOException e) {
+                log.error("WebSocket发送失败!连接已关闭！");
+            }
+        }
+    }
+
     public static void sendText(Session session, String message) {
         if (session == null || !session.isOpen()) {
             return;
