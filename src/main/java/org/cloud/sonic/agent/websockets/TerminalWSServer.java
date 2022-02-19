@@ -266,6 +266,10 @@ public class TerminalWSServer {
                     while (appListSocket.isConnected()) {
                         // 获取长度
                         byte[] lengthBytes = inputStream.readNBytes(32);
+                        if (Thread.interrupted() || lengthBytes.length == 0) {
+                            // lengthBytes.length基本就是中断的时候强制唤醒导致的
+                            break;
+                        }
                         // byte转字符串（二进制），然后再转长度
                         StringBuffer binStr = new StringBuffer();
                         for (byte lengthByte : lengthBytes) {
