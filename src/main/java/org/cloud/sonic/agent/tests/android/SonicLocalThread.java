@@ -162,7 +162,7 @@ public class SonicLocalThread extends Thread {
         if (man == null) {
             return;
         }
-        if (!suc && iDevice != null && man.equals("Xiaomi")) {
+        if (!suc && iDevice != null && (man.equals("Xiaomi") || man.equals("deltainno") || man.equals("HUAWEI"))) {
             suc = runMiniCap("Xiaomi");
             if (!suc && iDevice != null) {
                 suc = runMiniCap("Xiaomi_NW");
