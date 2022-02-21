@@ -533,7 +533,7 @@ public class AndroidStepHandler {
         try {
             androidDriver.installApp(path, new AndroidInstallApplicationOptions()
                     .withAllowTestPackagesEnabled().withReplaceEnabled()
-                    .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+                    .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(600000)));
         } catch (Exception e) {
             handleDes.setE(e);
             return;
