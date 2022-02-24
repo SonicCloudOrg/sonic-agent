@@ -116,23 +116,35 @@ public class AudioWSServer {
     private void stopAudio(Session session) {
         if (audioMap.get(session) != null) {
             audioMap.get(session).interrupt();
+            int wait = 0;
+            while (!audioMap.get(session).isInterrupted()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                wait++;
+                if (wait >= 3) {
+                    break;
+                }
+            }
         }
         audioMap.remove(session);
     }
 
-    @OnMessage
-    public void onMessage(String message, Session session) {
-        JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
-        switch (msg.getString("type")) {
-            case "start":
-                startAudio(session);
-                break;
-            case "stop":
-                stopAudio(session);
-                break;
-        }
-    }
+//    @OnMessage
+//    public void onMessage(String message, Session session) {
+//        JSONObject msg = JSON.parseObject(message);
+//        logger.info(session.getId() + " 发送 " + msg);
+//        switch (msg.getString("type")) {
+//            case "start":
+//                startAudio(session);
+//                break;
+//            case "stop":
+//                stopAudio(session);
+//                break;
+//        }
+//    }
 
     @OnClose
     public void onClose(Session session) {
@@ -142,9 +154,6 @@ public class AudioWSServer {
     @OnError
     public void onError(Session session, Throwable error) {
         logger.error("音频socket发生错误，刷新瞬间可无视：", error);
-        JSONObject errMsg = new JSONObject();
-        errMsg.put("msg", "error");
-        AgentTool.sendText(session, errMsg.toJSONString());
     }
 
     private void exit(Session session) {

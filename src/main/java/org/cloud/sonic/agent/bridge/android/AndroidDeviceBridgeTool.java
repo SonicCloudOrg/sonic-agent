@@ -12,9 +12,14 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -133,7 +138,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     public static IDevice getIDeviceByUdId(String udId) {
         IDevice iDevice = null;
         IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
-        if(iDevices.length==0){
+        if (iDevices.length == 0) {
             return null;
         }
         for (IDevice device : iDevices) {
@@ -200,6 +205,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             logger.error(e.getMessage());
         }
         return output.getOutput();
+    }
+
+    public static boolean checkSonicApkVersion(IDevice iDevice) {
+        String all = executeCommand(iDevice, "dumpsys package org.cloud.sonic.android");
+        if (!all.contains("versionName=1.3.2")) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     /**
