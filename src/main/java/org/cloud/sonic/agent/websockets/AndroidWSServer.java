@@ -96,13 +96,15 @@ public class AndroidWSServer {
                 .replaceAll("package:", "")
                 .replaceAll("\n", "")
                 .replaceAll("\t", "");
-        if (path.length() > 0) {
-            logger.info("已安装Sonic插件");
+        if (path.length() > 0 && AndroidDeviceBridgeTool.checkSonicApkVersion(iDevice)) {
+            logger.info("已安装Sonic插件，检查版本信息通过");
         } else {
+            logger.info("未安装Sonic插件或版本不是最新，正在安装...");
             try {
                 iDevice.installPackage("plugins/sonic-android-apk.apk",
                         true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                         , "-r", "-t", "-g");
+                logger.info("Sonic插件安装完毕");
             } catch (InstallException e) {
                 e.printStackTrace();
                 logger.info("Sonic插件安装失败！");

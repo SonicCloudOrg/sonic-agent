@@ -2,7 +2,8 @@ package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.*;
+import com.android.ddmlib.IDevice;
+import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.maps.AndroidAPKMap;
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 @ServerEndpoint(value = "/websockets/terminal/{key}/{udId}", configurator = MyEndpointConfigure.class)
 public class TerminalWSServer {
+
     private final Logger logger = LoggerFactory.getLogger(TerminalWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
@@ -39,7 +41,6 @@ public class TerminalWSServer {
     private Map<Session, Future<?>> terminalMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> appListMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
-    private Map<Session, Future<?>> audioMap = new ConcurrentHashMap<>();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
@@ -214,15 +215,6 @@ public class TerminalWSServer {
             }
         }
         terminalMap.remove(session);
-        Future<?> audioPro = audioMap.get(session);
-        if (audioPro != null && (!audioPro.isDone() || !audioPro.isCancelled())) {
-            try {
-                audioPro.cancel(true);
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-            }
-        }
-        audioMap.remove(session);
         Future<?> logcat = logcatMap.get(session);
         if (!logcat.isDone() || !logcat.isCancelled()) {
             try {
@@ -232,6 +224,7 @@ public class TerminalWSServer {
             }
         }
         logcatMap.remove(session);
+        udIdMap.remove(session);
         try {
             session.close();
         } catch (IOException e) {
@@ -249,69 +242,6 @@ public class TerminalWSServer {
             }
         }
     }
-
-//    public void getAudio(IDevice iDevice, Session session) {
-//        Future<?> audioPro = audioMap.get(session);
-//        if (audioPro != null && (!audioPro.isDone() || !audioPro.isCancelled())) {
-//            try {
-//                audioPro.cancel(true);
-//            } catch (Exception e) {
-//                logger.error(e.getMessage());
-//            }
-//        }
-//        audioPro = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-//            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
-//            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
-//            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
-//            int appListPort = PortTool.getPort();
-//            try {
-//                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
-//                Socket audioSocket = null;
-//                InputStream inputStream = null;
-//                try {
-//                    audioSocket = new Socket("localhost", appListPort);
-//                    inputStream = audioSocket.getInputStream();
-//                    int len = 1024;
-//                    while (audioSocket.isConnected() && !Thread.interrupted()) {
-//                        byte[] buffer = new byte[len];
-//                        int realLen;
-//                        realLen = inputStream.read(buffer);
-//                        if (buffer.length != realLen && realLen >= 0) {
-//                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
-//                        }
-//                        if (realLen >= 0) {
-////                            System.out.println(buffer);
-//                        }
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                } finally {
-//                    if (audioSocket != null && audioSocket.isConnected()) {
-//                        try {
-//                            audioSocket.close();
-//                            logger.info("audio socket已关闭");
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                    if (inputStream != null) {
-//                        try {
-//                            inputStream.close();
-//                            logger.info("audio output流已关闭");
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
-//            } catch (Exception e) {
-//                logger.info("{} 设备远程音频服务启动异常！"
-//                        , iDevice.getSerialNumber());
-//                logger.error(e.getMessage());
-//            }
-//            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
-//        });
-//        audioMap.put(session, audioPro);
-//    }
 
     public void getAppList(IDevice iDevice, Session session) {
         Future<?> app = appListMap.get(session);
@@ -333,26 +263,28 @@ public class TerminalWSServer {
                 try {
                     appListSocket = new Socket("localhost", appListPort);
                     inputStream = appListSocket.getInputStream();
-                    int len = 1024;
-                    String total = "";
                     while (appListSocket.isConnected()) {
-                        byte[] buffer = new byte[len];
-                        int realLen;
-                        realLen = inputStream.read(buffer);
-                        if (buffer.length != realLen && realLen >= 0) {
-                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
+                        // 获取长度
+                        byte[] lengthBytes = inputStream.readNBytes(32);
+                        if (Thread.interrupted() || lengthBytes.length == 0) {
+                            // lengthBytes.length基本就是中断的时候强制唤醒导致的
+                            break;
                         }
-                        if (realLen >= 0) {
-                            String chunk = new String(buffer);
-                            total += chunk;
-                            if (chunk.contains("}")) {
-                                JSONObject appListDetail = new JSONObject();
-                                appListDetail.put("msg", "appListDetail");
-                                appListDetail.put("detail", JSON.parseObject(total));
-                                AgentTool.sendText(session, appListDetail.toJSONString());
-                                total = "";
-                            }
+                        // byte转字符串（二进制），然后再转长度
+                        StringBuffer binStr = new StringBuffer();
+                        for (byte lengthByte : lengthBytes) {
+                            binStr.append(lengthByte);
                         }
+                        Integer readLen = Integer.valueOf(binStr.toString(), 2);
+
+                        // 根据长度读取数据体
+                        byte[] dataBytes = inputStream.readNBytes(readLen);
+                        String dataJson = new String(dataBytes);
+
+                        JSONObject appListDetail = new JSONObject();
+                        appListDetail.put("msg", "appListDetail");
+                        appListDetail.put("detail", JSON.parseObject(dataJson));
+                        AgentTool.sendText(session, appListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

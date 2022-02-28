@@ -533,7 +533,7 @@ public class AndroidStepHandler {
         try {
             androidDriver.installApp(path, new AndroidInstallApplicationOptions()
                     .withAllowTestPackagesEnabled().withReplaceEnabled()
-                    .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
+                    .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(600000)));
         } catch (Exception e) {
             handleDes.setE(e);
             return;
@@ -822,12 +822,29 @@ public class AndroidStepHandler {
         }
     }
 
-    public void swipe(HandleDes handleDes, String des1, String xy1, String des2, String xy2) {
+    public void swipePoint(HandleDes handleDes, String des1, String xy1, String des2, String xy2) {
         int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
         int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
         int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
         int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
         handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
+        handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+        try {
+            TouchAction ta = new TouchAction(androidDriver);
+            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void swipe(HandleDes handleDes, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
+        WebElement webElement = findEle(selector, pathValue);
+        WebElement webElement2 = findEle(selector2, pathValue2);
+        int x1 = webElement.getLocation().getX();
+        int y1 = webElement.getLocation().getY();
+        int x2 = webElement2.getLocation().getX();
+        int y2 = webElement2.getLocation().getY();
+        handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
         handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
         try {
             TouchAction ta = new TouchAction(androidDriver);
@@ -1440,8 +1457,12 @@ public class AndroidStepHandler {
                         , eleList.getJSONObject(0).getString("eleValue"), Integer.parseInt(step.getString("content")));
                 break;
             case "swipe":
-                swipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                swipePoint(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                         , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+                break;
+            case "swipe2":
+                swipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
                 break;
             case "tap":
                 tap(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
