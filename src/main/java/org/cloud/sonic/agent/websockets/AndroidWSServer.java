@@ -346,36 +346,36 @@ public class AndroidWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
             case "proxy": {
-                String processName = String.format("process-%s-proxy", udIdMap.get(session));
-                if (GlobalProcessMap.getMap().get(processName) != null) {
-                    Process ps = GlobalProcessMap.getMap().get(processName);
-                    ps.children().forEach(ProcessHandle::destroy);
-                    ps.destroy();
-                }
-                String system = System.getProperty("os.name").toLowerCase();
-                Process ps = null;
-                int port = PortTool.getPort();
-                int webPort = PortTool.getPort();
-                String uuid = UUID.randomUUID().toString();
-                File sgm = new File("plugins/sonic-go-mitmproxy");
-                String command = String.format(
-                        "%s -dump logs/%s.log -addr :%d -web_addr :%d", sgm.getAbsolutePath(), uuid, port, webPort);
-                try {
-                    if (system.contains("win")) {
-                        ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
-                    } else if (system.contains("linux") || system.contains("mac")) {
-                        ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
-                    }
-                    GlobalProcessMap.getMap().put(processName, ps);
-                    JSONObject proxy = new JSONObject();
-                    proxy.put("webPort", webPort);
-                    proxy.put("port", port);
-                    proxy.put("msg", "proxyResult");
-                    AgentTool.sendText(session, proxy.toJSONString());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                break;
+//                String processName = String.format("process-%s-proxy", udIdMap.get(session));
+//                if (GlobalProcessMap.getMap().get(processName) != null) {
+//                    Process ps = GlobalProcessMap.getMap().get(processName);
+//                    ps.children().forEach(ProcessHandle::destroy);
+//                    ps.destroy();
+//                }
+//                String system = System.getProperty("os.name").toLowerCase();
+//                Process ps = null;
+//                int port = PortTool.getPort();
+//                int webPort = PortTool.getPort();
+//                String uuid = UUID.randomUUID().toString();
+//                File sgm = new File("plugins/sonic-go-mitmproxy");
+//                String command = String.format(
+//                        "%s -dump logs/%s.log -addr :%d -web_addr :%d", sgm.getAbsolutePath(), uuid, port, webPort);
+//                try {
+//                    if (system.contains("win")) {
+//                        ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
+//                    } else if (system.contains("linux") || system.contains("mac")) {
+//                        ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
+//                    }
+//                    GlobalProcessMap.getMap().put(processName, ps);
+//                    JSONObject proxy = new JSONObject();
+//                    proxy.put("webPort", webPort);
+//                    proxy.put("port", port);
+//                    proxy.put("msg", "proxyResult");
+//                    AgentTool.sendText(session, proxy.toJSONString());
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                break;
             }
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
