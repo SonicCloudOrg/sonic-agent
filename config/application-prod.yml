@@ -22,11 +22,14 @@ modules:
     use-adbkit: true
   # iOS模块配置
   ios:
+    # 如果不需要连接iOS设备，请将true改为false
     enable: true
-    #替换为你自己使用的wda的bundleId，正常要添加.xctrunner后缀，建议使用公司的开发者证书
+    #替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
     wda-bundle-id: com.facebook.WebDriverAgentRunner.xctrunner
   appium:
     enable: true
+    # 默认为0会自动寻找随机端口启动，如果需要指定appium server端口，请在这里设置
+    port: 0
   # 在线webView调试模块配置
   webview:
     enable: true
