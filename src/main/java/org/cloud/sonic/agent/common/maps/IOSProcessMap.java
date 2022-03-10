@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.maps;
+package org.cloud.sonic.agent.common.maps;
 
 import java.util.List;
 import java.util.Map;

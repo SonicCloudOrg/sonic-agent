@@ -5,13 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import org.cloud.sonic.agent.cv.AKAZEFinder;
-import org.cloud.sonic.agent.cv.SIFTFinder;
-import org.cloud.sonic.agent.cv.SimilarityChecker;
-import org.cloud.sonic.agent.cv.TemMatcher;
-import org.cloud.sonic.agent.interfaces.ErrorType;
-import org.cloud.sonic.agent.interfaces.ResultDetailStatus;
-import org.cloud.sonic.agent.interfaces.StepType;
+import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
+import org.cloud.sonic.agent.tools.cv.SIFTFinder;
+import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
+import org.cloud.sonic.agent.tools.cv.TemMatcher;
+import org.cloud.sonic.agent.common.interfaces.ErrorType;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.tools.*;
 import io.appium.java_client.*;
 import io.appium.java_client.android.AndroidDriver;
@@ -25,18 +25,13 @@ import io.appium.java_client.remote.AutomationName;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
-import org.cloud.sonic.agent.tools.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -65,7 +60,7 @@ public class AndroidStepHandler {
     private String testPackage = "";
     private String udId = "";
     //测试状态
-    private int status = 1;
+    private int status = ResultDetailStatus.PASS;
 
     public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;

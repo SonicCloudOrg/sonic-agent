@@ -4,18 +4,17 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
-import org.cloud.sonic.agent.cv.AKAZEFinder;
-import org.cloud.sonic.agent.cv.SIFTFinder;
-import org.cloud.sonic.agent.cv.SimilarityChecker;
-import org.cloud.sonic.agent.cv.TemMatcher;
-import org.cloud.sonic.agent.interfaces.ErrorType;
-import org.cloud.sonic.agent.interfaces.ResultDetailStatus;
-import org.cloud.sonic.agent.interfaces.StepType;
-import org.cloud.sonic.agent.maps.IOSProcessMap;
-import org.cloud.sonic.agent.maps.IOSSizeMap;
+import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
+import org.cloud.sonic.agent.tools.cv.SIFTFinder;
+import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
+import org.cloud.sonic.agent.tools.cv.TemMatcher;
+import org.cloud.sonic.agent.common.interfaces.ErrorType;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.common.maps.IOSSizeMap;
 import org.cloud.sonic.agent.tools.DownImageTool;
 import org.cloud.sonic.agent.tools.LogTool;
-import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MultiTouchAction;
 import io.appium.java_client.Setting;
@@ -38,14 +37,8 @@ import org.openqa.selenium.Platform;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -71,7 +64,7 @@ public class IOSStepHandler {
     private String testPackage = "";
     private String udId = "";
     //测试状态
-    private int status = 1;
+    private int status = ResultDetailStatus.PASS;
 
     public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;

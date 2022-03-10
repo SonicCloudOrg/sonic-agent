@@ -1,10 +1,10 @@
 package org.cloud.sonic.agent.bridge.ios;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.interfaces.PlatformType;
-import org.cloud.sonic.agent.maps.IOSDeviceManagerMap;
-import org.cloud.sonic.agent.maps.IOSProcessMap;
-import org.cloud.sonic.agent.maps.IOSSizeMap;
+import org.cloud.sonic.agent.common.interfaces.PlatformType;
+import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
+import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.common.maps.IOSSizeMap;
 import org.cloud.sonic.agent.netty.NettyClientHandler;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tools.PortTool;

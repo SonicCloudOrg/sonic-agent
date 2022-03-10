@@ -1,7 +1,7 @@
 package org.cloud.sonic.agent.tests.android;
 
 import com.android.ddmlib.IDevice;
-import org.cloud.sonic.agent.maps.ScrcpyMap;
+import org.cloud.sonic.agent.common.maps.ScrcpyMap;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;

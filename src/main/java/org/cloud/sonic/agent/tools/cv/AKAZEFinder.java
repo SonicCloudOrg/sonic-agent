@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.cv;
+package org.cloud.sonic.agent.tools.cv;
 
 import org.cloud.sonic.agent.automation.FindResult;
 import org.cloud.sonic.agent.tools.UploadTools;

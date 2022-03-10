@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.maps;
+package org.cloud.sonic.agent.common.maps;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

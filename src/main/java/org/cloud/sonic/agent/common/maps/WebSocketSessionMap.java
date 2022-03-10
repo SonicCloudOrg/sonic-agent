@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.maps;
+package org.cloud.sonic.agent.common.maps;
 
 import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;

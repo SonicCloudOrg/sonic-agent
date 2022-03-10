@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.cv;
+package org.cloud.sonic.agent.tools.cv;
 
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.FFmpegFrameRecorder;

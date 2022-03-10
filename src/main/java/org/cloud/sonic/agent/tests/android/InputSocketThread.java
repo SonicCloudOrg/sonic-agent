@@ -2,7 +2,7 @@ package org.cloud.sonic.agent.tests.android;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.maps.MiniCapMap;
+import org.cloud.sonic.agent.common.maps.MiniCapMap;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

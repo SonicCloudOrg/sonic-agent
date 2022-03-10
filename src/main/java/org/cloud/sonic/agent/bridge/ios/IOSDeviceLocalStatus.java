@@ -1,9 +1,9 @@
 package org.cloud.sonic.agent.bridge.ios;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.interfaces.DeviceStatus;
-import org.cloud.sonic.agent.maps.IOSDeviceManagerMap;
-import org.cloud.sonic.agent.maps.IOSSizeMap;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
+import org.cloud.sonic.agent.common.maps.IOSSizeMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 
 public class IOSDeviceLocalStatus {

@@ -2,7 +2,7 @@ package org.cloud.sonic.agent.tools;
 
 import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
-import org.cloud.sonic.agent.maps.GlobalProcessMap;
+import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;

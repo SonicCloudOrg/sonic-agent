@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.cv;
+package org.cloud.sonic.agent.tools.cv;
 
 import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_features2d.FlannBasedMatcher;

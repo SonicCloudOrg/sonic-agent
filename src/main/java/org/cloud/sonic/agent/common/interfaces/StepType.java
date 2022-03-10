@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.interfaces;
+package org.cloud.sonic.agent.common.interfaces;
 
 /**
  * @author ZhouYiXun

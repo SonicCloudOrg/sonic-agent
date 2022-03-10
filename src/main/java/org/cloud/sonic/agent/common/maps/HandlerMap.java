@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.maps;
+package org.cloud.sonic.agent.common.maps;
 
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.IOSStepHandler;

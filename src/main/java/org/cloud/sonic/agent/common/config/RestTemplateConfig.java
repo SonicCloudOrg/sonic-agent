@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.config;
+package org.cloud.sonic.agent.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
