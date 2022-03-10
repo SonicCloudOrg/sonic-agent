@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
+    <link rel="icon" th:href="@{/static/favicon.ico}"/>
     <meta charset="UTF-8">
-    <title>欢迎来到证书下载页面</title>
+    <title th:text="${msg}"></title>
 </head>
 <body>
+<span th:text="${msg}"></span>
 <span th:text="${msg}"></span>
 </body>
 </html>
