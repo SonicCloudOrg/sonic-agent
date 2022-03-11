@@ -48,6 +48,10 @@ public class AndroidWSServer {
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
+    @Value("${sonic.agent.host}")
+    private String host;
+    @Value("${sonic.agent.port}")
+    private String port;
     @Value("${modules.android.use-adbkit}")
     private boolean isEnableAdbKit;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
@@ -373,6 +377,11 @@ public class AndroidWSServer {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                break;
+            }
+            case "installCert": {
+                AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
+                        String.format("am start -a android.intent.action.VIEW -d http://%s:%s/assets/download", host, port));
                 break;
             }
             case "forwardView": {

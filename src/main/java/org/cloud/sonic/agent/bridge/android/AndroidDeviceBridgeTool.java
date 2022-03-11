@@ -209,7 +209,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
     public static boolean checkSonicApkVersion(IDevice iDevice) {
         String all = executeCommand(iDevice, "dumpsys package org.cloud.sonic.android");
-        if (!all.contains("versionName=1.3.2")) {
+        if (!all.contains("versionName=1.3.4")) {
             return false;
         } else {
             return true;
