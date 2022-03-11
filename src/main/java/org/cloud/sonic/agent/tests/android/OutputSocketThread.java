@@ -78,8 +78,8 @@ public class OutputSocketThread extends Thread {
             try {
                 buffer = dataQueue.take();
             } catch (InterruptedException e) {
-                log.error("获取数据流失败：{}", e.getMessage());
-                e.printStackTrace();
+                log.debug("获取数据流中断：", e);
+                return;
             }
             int len = buffer.length;
             for (int cursor = 0; cursor < len; ) {

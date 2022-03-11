@@ -63,7 +63,7 @@ public class TaskManager {
     /**
      * 启动子线程
      */
-    public static void startChildThread(String key, Thread childThread) {
+    public static synchronized void startChildThread(String key, Thread childThread) {
         childThread.start();
         addChildThread(key, childThread);
     }
@@ -149,6 +149,13 @@ public class TaskManager {
      */
     public static void clearTerminatedThreadByKey(String key) {
         bootThreadsMap.remove(key);
+        Set<Thread> threads = childThreadsMap.get(key);
+        if (threads == null) {
+            return;
+        }
+        for (Thread thread : threads) {
+            thread.interrupt();
+        }
         childThreadsMap.remove(key);
     }
 
