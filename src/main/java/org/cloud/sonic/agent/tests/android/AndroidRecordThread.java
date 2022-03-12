@@ -3,7 +3,7 @@ package org.cloud.sonic.agent.tests.android;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.tools.RecordHandler;
+import org.cloud.sonic.agent.tools.cv.RecordHandler;
 import org.cloud.sonic.agent.tools.MiniCapTool;
 import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;

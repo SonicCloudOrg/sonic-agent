@@ -1,10 +1,11 @@
-package org.cloud.sonic.agent.tools;
+package org.cloud.sonic.agent.tools.cv;
 
 import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.ffmpeg.global.avutil;
 import org.bytedeco.javacv.FFmpegFrameRecorder;
 import org.bytedeco.javacv.FrameRecorder;
 import org.bytedeco.javacv.Java2DFrameConverter;
+import org.cloud.sonic.agent.tools.UploadTools;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

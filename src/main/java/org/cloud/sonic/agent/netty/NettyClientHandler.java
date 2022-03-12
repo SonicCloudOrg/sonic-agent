@@ -61,6 +61,10 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
         logger.info("Agent:{} 收到服务器 {} 消息: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonObject);
         NettyThreadPool.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
+                case "update": {
+
+                    break;
+                }
                 case "reboot":
                     if (jsonObject.getInteger("platform") == PlatformType.ANDROID) {
                         IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(jsonObject.getString("udId"));
