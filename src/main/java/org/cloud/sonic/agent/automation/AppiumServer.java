@@ -31,6 +31,14 @@ public class AppiumServer {
         service.start();
     }
 
+    public static int getPort() {
+        if (service != null && service.isRunning()) {
+            return service.getUrl().getPort();
+        } else {
+            return 0;
+        }
+    }
+
     public static void close() {
         if (service != null && service.isRunning()) {
             service.stop();
