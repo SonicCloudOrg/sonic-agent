@@ -156,14 +156,6 @@ public class AndroidStepHandler {
     public void closeAndroidDriver() {
         try {
             if (androidDriver != null) {
-                //终止测试包
-                if (!testPackage.equals("")) {
-                    try {
-                        androidDriver.terminateApp(testPackage, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
                 androidDriver.quit();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
             }

@@ -116,14 +116,6 @@ public class IOSStepHandler {
     public void closeIOSDriver() {
         try {
             if (iosDriver != null) {
-                //终止测试包
-                if (!testPackage.equals("")) {
-                    try {
-                        iosDriver.terminateApp(testPackage, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
                 iosDriver.quit();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
                 if (IOSProcessMap.getMap().get(udId) != null) {
