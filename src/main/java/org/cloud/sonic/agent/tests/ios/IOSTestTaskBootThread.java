@@ -3,7 +3,7 @@ package org.cloud.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
-import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.slf4j.Logger;
@@ -163,7 +163,7 @@ public class IOSTestTaskBootThread extends Thread {
             startTestSuccess = true;
             //启动测试
             try {
-                int wdaPort = TIDeviceTool.startWda(udId);
+                int wdaPort = SibTool.startWda(udId);
                 iosStepHandler.startIOSDriver(udId, wdaPort);
             } catch (Exception e) {
                 log.error(e.getMessage());

@@ -6,7 +6,7 @@ import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
-import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
@@ -65,13 +65,13 @@ public class IOSWSServer {
         jsonDebug.put("udId", udId);
         NettyThreadPool.send(jsonDebug);
         WebSocketSessionMap.addSession(session);
-        if (!TIDeviceTool.getDeviceList().contains(udId)) {
+        if (!SibTool.getDeviceList().contains(udId)) {
             logger.info("设备未连接，请检查！");
             return;
         }
         udIdMap.put(session, udId);
-        int wdaPort = TIDeviceTool.startWda(udId);
-        int imgPort = TIDeviceTool.relayImg(udId);
+        int wdaPort = SibTool.startWda(udId);
+        int imgPort = SibTool.relayImg(udId);
         JSONObject picFinish = new JSONObject();
         picFinish.put("msg", "picFinish");
         picFinish.put("wda", wdaPort);

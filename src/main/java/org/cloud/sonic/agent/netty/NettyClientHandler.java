@@ -7,7 +7,7 @@ import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
@@ -73,8 +73,8 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         }
                     }
                     if (jsonObject.getInteger("platform") == PlatformType.IOS) {
-                        if (TIDeviceTool.getDeviceList().contains(jsonObject.getString("udId"))) {
-                            TIDeviceTool.reboot(jsonObject.getString("udId"));
+                        if (SibTool.getDeviceList().contains(jsonObject.getString("udId"))) {
+                            SibTool.reboot(jsonObject.getString("udId"));
                         }
                     }
                     break;

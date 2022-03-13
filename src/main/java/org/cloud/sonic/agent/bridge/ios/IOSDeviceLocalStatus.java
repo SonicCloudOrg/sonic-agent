@@ -35,7 +35,7 @@ public class IOSDeviceLocalStatus {
     }
 
     public static void finish(String udId) {
-        if (TIDeviceTool.getDeviceList().contains(udId)
+        if (SibTool.getDeviceList().contains(udId)
                 && IOSDeviceManagerMap.getMap().get(udId) != null) {
             if (IOSDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.DEBUGGING)
                     || IOSDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.TESTING)) {
@@ -46,7 +46,7 @@ public class IOSDeviceLocalStatus {
     }
 
     public static void finishError(String udId) {
-        if (TIDeviceTool.getDeviceList().contains(udId)
+        if (SibTool.getDeviceList().contains(udId)
                 && IOSDeviceManagerMap.getMap().get(udId) != null) {
             if (IOSDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.DEBUGGING)
                     || IOSDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.TESTING)) {
