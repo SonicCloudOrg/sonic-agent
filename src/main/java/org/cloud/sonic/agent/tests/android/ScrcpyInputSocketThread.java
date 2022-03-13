@@ -79,14 +79,12 @@ public class ScrcpyInputSocketThread extends Thread {
             controlSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
             inputStream = videoSocket.getInputStream();
             int readLength;
-            int naluIndex = 0;
+            int naLuIndex;
             int bufferLength = 0;
-
             byte[] buffer = new byte[BUFFER_SIZE];
             while (scrcpyLocalThread.isAlive()) {
                 readLength = inputStream.read(buffer, bufferLength, READ_BUFFER_SIZE);
                 if (readLength > 0) {
-
                     bufferLength += readLength;
                     for (int i = 5; i < bufferLength - 4; i++) {
                         if (buffer[i] == 0x00 &&
@@ -94,31 +92,28 @@ public class ScrcpyInputSocketThread extends Thread {
                                 buffer[i + 2] == 0x00 &&
                                 buffer[i + 3] == 0x01
                         ) {
-                            naluIndex = i;
-
-                            byte[] naluBuffer = new byte[naluIndex];
-                            System.arraycopy(buffer, 0, naluBuffer, 0, naluIndex);
+                            naLuIndex = i;
+                            byte[] naluBuffer = new byte[naLuIndex];
+                            System.arraycopy(buffer, 0, naluBuffer, 0, naLuIndex);
                             dataQueue.add(naluBuffer);
-                            bufferLength -= naluIndex;
-                            System.arraycopy(buffer, naluIndex, buffer, 0, bufferLength);
+                            bufferLength -= naLuIndex;
+                            System.arraycopy(buffer, naLuIndex, buffer, 0, bufferLength);
                             i = 5;
                         }
                     }
-
                 }
-
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             if (scrcpyLocalThread.isAlive()) {
                 scrcpyLocalThread.interrupt();
-                log.info("scprcpy thread已关闭");
+                log.info("scrcpy thread已关闭");
             }
             if (videoSocket.isConnected()) {
                 try {
                     videoSocket.close();
-                    log.info("scprcpy video socket已关闭");
+                    log.info("scrcpy video socket已关闭");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -126,7 +121,7 @@ public class ScrcpyInputSocketThread extends Thread {
             if (controlSocket.isConnected()) {
                 try {
                     controlSocket.close();
-                    log.info("scprcpy control socket已关闭");
+                    log.info("scrcpy control socket已关闭");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -134,7 +129,7 @@ public class ScrcpyInputSocketThread extends Thread {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                    log.info("scprcpy input流已关闭");
+                    log.info("scrcpy input流已关闭");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
