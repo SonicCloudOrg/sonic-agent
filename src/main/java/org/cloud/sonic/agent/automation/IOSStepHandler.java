@@ -813,11 +813,23 @@ public class IOSStepHandler {
         return we;
     }
 
+    public void stepHold(HandleDes handleDes, int time) {
+        handleDes.setStepDes("设置全局步骤间隔");
+        handleDes.setDetail("间隔" + time + " ms");
+        holdTime = time;
+    }
+
+    private int holdTime = 0;
+
     public void runStep(JSONObject stepJSON) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
         HandleDes handleDes = new HandleDes();
+        Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
+            case "stepHold":
+                stepHold(handleDes, Integer.parseInt(step.getString("content")));
+                break;
             case "siriCommand":
                 siriCommand(handleDes, step.getString("content"));
                 break;
