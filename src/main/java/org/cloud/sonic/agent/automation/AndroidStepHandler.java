@@ -866,6 +866,26 @@ public class AndroidStepHandler {
         }
     }
 
+    public void isExistEle(HandleDes handleDes, String des, String selector, String pathValue, boolean expect) {
+        handleDes.setStepDes("判断控件 " + des + " 是否存在");
+        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+        boolean hasEle = false;
+        try {
+            WebElement w = findEle(selector, pathValue);
+            if (w != null) {
+                hasEle = true;
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+            return;
+        }
+        try {
+            assertEquals(hasEle, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void getTitle(HandleDes handleDes, String expect) {
         String title = androidDriver.getTitle();
         handleDes.setStepDes("验证网页标题");
@@ -1434,6 +1454,10 @@ public class AndroidStepHandler {
             case "getText":
                 getTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "isExistEle":
+                isExistEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
                 break;
             case "clear":
                 clear(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
