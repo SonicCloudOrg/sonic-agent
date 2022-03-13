@@ -23,4 +23,9 @@ public class AgentManagerTool {
         context.close();
         logger.info("Bye！");
     }
+
+    public void update(){
+        logger.info("Updating...");
+
+    }
 }

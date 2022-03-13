@@ -48,39 +48,40 @@ public class ScrcpyOutputSocketThread extends Thread {
 
             while (!dataQueue.isEmpty()) {
                 byte[] buffer = dataQueue.poll();
+                sendByte(session, buffer);
 
-                for (int cursor = 0; cursor < buffer.length - 5; ) {
-                    boolean startFlag = (buffer[cursor] & 0xff) == 0 && (buffer[cursor + 1] & 0xff) == 0
-                            && (buffer[cursor + 2] & 0xff) == 0 && (buffer[cursor + 3] & 0xff) == 1
-                            && (buffer[cursor + 4] & 0xff) != 104;
-                    if (!sendFlag && startFlag) {
-                        if (body.length > 1) {
-                            body = addBytes(body, subByteArray(buffer, 0, cursor));
-                            sendMessage(body);
-                            body = new byte[0];
-                        }
-                    }
-                    if (startFlag) {
-                        sendFlag = false;
-                        int start = cursor;
-                        for (cursor += 4; cursor < buffer.length - 5; cursor++) {
-                            boolean endFlag = (buffer[cursor] & 0xff) == 0 && (buffer[cursor + 1] & 0xff) == 0
-                                    && (buffer[cursor + 2] & 0xff) == 0 && (buffer[cursor + 3] & 0xff) == 1
-                                    && (buffer[cursor + 4] & 0xff) != 104;
-                            if (endFlag) {
-                                body = subByteArray(buffer, start, cursor);
-                                sendMessage(body);
-                                body = new byte[0];
-                                sendFlag = true;
-                                break;
-                            }
-                        }
-                        if (sendFlag) continue;
-                        body = addBytes(body, subByteArray(buffer, start, buffer.length));
-                        continue;
-                    }
-                    cursor++;
-                }
+//                for (int cursor = 0; cursor < buffer.length - 5; ) {
+//                    boolean startFlag = (buffer[cursor] & 0xff) == 0 && (buffer[cursor + 1] & 0xff) == 0
+//                            && (buffer[cursor + 2] & 0xff) == 0 && (buffer[cursor + 3] & 0xff) == 1
+//                            && (buffer[cursor + 4] & 0xff) != 104;
+//                    if (!sendFlag && startFlag) {
+//                        if (body.length > 1) {
+//                            body = addBytes(body, subByteArray(buffer, 0, cursor));
+//                            sendMessage(body);
+//                            body = new byte[0];
+//                        }
+//                    }
+//                    if (startFlag) {
+//                        sendFlag = false;
+//                        int start = cursor;
+//                        for (cursor += 4; cursor < buffer.length - 5; cursor++) {
+//                            boolean endFlag = (buffer[cursor] & 0xff) == 0 && (buffer[cursor + 1] & 0xff) == 0
+//                                    && (buffer[cursor + 2] & 0xff) == 0 && (buffer[cursor + 3] & 0xff) == 1
+//                                    && (buffer[cursor + 4] & 0xff) != 104;
+//                            if (endFlag) {
+//                                body = subByteArray(buffer, start, cursor);
+//                                sendMessage(body);
+//                                body = new byte[0];
+//                                sendFlag = true;
+//                                break;
+//                            }
+//                        }
+//                        if (sendFlag) continue;
+//                        body = addBytes(body, subByteArray(buffer, start, buffer.length));
+//                        continue;
+//                    }
+//                    cursor++;
+//                }
             }
         }
     }

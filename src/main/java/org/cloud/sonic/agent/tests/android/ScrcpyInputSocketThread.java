@@ -64,6 +64,9 @@ public class ScrcpyInputSocketThread extends Thread {
         return session;
     }
 
+    private static final int BUFFER_SIZE = 1024 * 1024;
+    private static final int READ_BUFFER_SIZE = 1024 * 5;
+
     @Override
     public void run() {
         int scrcpyPort = PortTool.getPort();
@@ -75,11 +78,33 @@ public class ScrcpyInputSocketThread extends Thread {
             videoSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
             controlSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
             inputStream = videoSocket.getInputStream();
+            int readLength;
+            int naluIndex = 0;
+            int bufferLength = 0;
+
+            byte[] buffer = new byte[BUFFER_SIZE];
             while (scrcpyLocalThread.isAlive()) {
-                byte[] buffer = new byte[inputStream.available()];
-                int length = inputStream.read(buffer);
-                if (length > 1){
-                    dataQueue.offer(buffer);
+                readLength = inputStream.read(buffer, bufferLength, READ_BUFFER_SIZE);
+                if (readLength > 0) {
+
+                    bufferLength += readLength;
+                    for (int i = 5; i < bufferLength - 4; i++) {
+                        if (buffer[i] == 0x00 &&
+                                buffer[i + 1] == 0x00 &&
+                                buffer[i + 2] == 0x00 &&
+                                buffer[i + 3] == 0x01
+                        ) {
+                            naluIndex = i;
+
+                            byte[] naluBuffer = new byte[naluIndex];
+                            System.arraycopy(buffer, 0, naluBuffer, 0, naluIndex);
+                            dataQueue.add(naluBuffer);
+                            bufferLength -= naluIndex;
+                            System.arraycopy(buffer, naluIndex, buffer, 0, bufferLength);
+                            i = 5;
+                        }
+                    }
+
                 }
 
             }
