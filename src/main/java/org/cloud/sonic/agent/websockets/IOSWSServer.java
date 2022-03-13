@@ -70,12 +70,11 @@ public class IOSWSServer {
             return;
         }
         udIdMap.put(session, udId);
-        int wdaPort = SibTool.startWda(udId);
-        int imgPort = SibTool.relayImg(udId);
+        int[] ports = SibTool.startWda(udId);
         JSONObject picFinish = new JSONObject();
         picFinish.put("msg", "picFinish");
-        picFinish.put("wda", wdaPort);
-        picFinish.put("port", imgPort);
+        picFinish.put("wda", ports[0]);
+        picFinish.put("port", ports[1]);
         sendText(session, picFinish.toJSONString());
 
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -83,7 +82,7 @@ public class IOSWSServer {
             iosStepHandler.setTestMode(0, 0, udId, DeviceStatus.DEBUGGING, session.getId());
             JSONObject result = new JSONObject();
             try {
-                iosStepHandler.startIOSDriver(udId, wdaPort);
+                iosStepHandler.startIOSDriver(udId, ports[0]);
                 result.put("status", "success");
                 result.put("width", iosStepHandler.getDriver().manage().window().getSize().width);
                 result.put("height", iosStepHandler.getDriver().manage().window().getSize().height);

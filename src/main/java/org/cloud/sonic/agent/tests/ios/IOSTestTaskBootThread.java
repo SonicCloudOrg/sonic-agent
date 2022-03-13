@@ -163,7 +163,7 @@ public class IOSTestTaskBootThread extends Thread {
             startTestSuccess = true;
             //启动测试
             try {
-                int wdaPort = SibTool.startWda(udId);
+                int wdaPort = SibTool.startWda(udId)[0];
                 iosStepHandler.startIOSDriver(udId, wdaPort);
             } catch (Exception e) {
                 log.error(e.getMessage());

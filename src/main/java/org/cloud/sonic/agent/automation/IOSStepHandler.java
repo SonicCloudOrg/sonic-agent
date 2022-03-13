@@ -12,7 +12,7 @@ import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.common.maps.IOSSizeMap;
+import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.tools.DownImageTool;
 import org.cloud.sonic.agent.tools.LogTool;
 import org.cloud.sonic.agent.tools.UploadTools;
@@ -109,7 +109,7 @@ public class IOSStepHandler {
         }
         int width = iosDriver.manage().window().getSize().width;
         int height = iosDriver.manage().window().getSize().height;
-        IOSSizeMap.getMap().put(udId, width + "x" + height);
+        IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
     }
 
     public void closeIOSDriver() {

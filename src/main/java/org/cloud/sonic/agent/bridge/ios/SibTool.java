@@ -5,8 +5,7 @@ import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.common.maps.IOSSizeMap;
-import org.cloud.sonic.agent.netty.NettyClientHandler;
+import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
@@ -25,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
     private static String bundleId;
-    private String sib = new File("plugins/sonic-ios-bridge").getAbsolutePath();
+    private static String sib = new File("sonic-ios-bridge").getAbsolutePath();
 
     @Bean
     public void setEnv() {
@@ -94,7 +94,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
 
     public static List<String> getDeviceList() {
         List<String> result = new ArrayList<>();
-        List<String> data = ProcessCommandTool.getProcessLocalCommand("tidevice list");
+        String commandLine = "%s devices";
+        List<String> data = ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib));
         for (String a : data) {
             result.add(a.substring(0, a.indexOf(" ")));
         }
@@ -106,7 +107,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
         deviceStatus.put("status", "DISCONNECTED");
-        deviceStatus.put("size", IOSSizeMap.getMap().get(jsonObject.getString("serialNumber")));
+        deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 下线！");
         NettyThreadPool.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
@@ -122,26 +123,21 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         deviceStatus.put("status", "ONLINE");
         deviceStatus.put("platform", PlatformType.IOS);
         deviceStatus.put("version", detail.getString("productVersion"));
-        deviceStatus.put("size", IOSSizeMap.getMap().get(jsonObject.getString("serialNumber")));
+        deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
         deviceStatus.put("manufacturer", "APPLE");
         logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 上线！");
         NettyThreadPool.send(deviceStatus);
+        IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static String getName(String udId) {
-        List<String> s = ProcessCommandTool.getProcessLocalCommand("tidevice -u " + udId + " info");
-        for (String json : s) {
-            String j = json.replaceAll(" ", "").replaceAll("\n", "").replaceAll("\r", "").trim();
-            if (j.contains("DeviceName:")) {
-                return j.replaceAll("DeviceName:", "");
-            }
-        }
-        return "";
+        String r = IOSInfoMap.getDetailMap().get(udId).getString("deviceName");
+        return r != null ? r : "";
     }
 
-    public static int startWda(String udId) throws IOException, InterruptedException {
+    public static int[] startWda(String udId) throws IOException, InterruptedException {
         synchronized (SibTool.class) {
             List<Process> processList;
             if (IOSProcessMap.getMap().get(udId) != null) {
@@ -153,24 +149,26 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                     }
                 }
             }
-            int port = PortTool.getPort();
+            Socket wda = PortTool.getBindSocket();
+            Socket mjpeg = PortTool.getBindSocket();
+            int wdaPort = PortTool.releaseAndGetPort(wda);
+            int mjpegPort = PortTool.releaseAndGetPort(mjpeg);
             Process wdaProcess = null;
-            String commandLine = "tidevice -u " + udId +
-                    " wdaproxy" + " -B " + bundleId +
-                    " --port " + port;
+            String commandLine = "%s run wda -u %s -b %s --mjpeg-remote-port 9200" +
+                    " --server-remote-port 8200 --mjpeg-local-port %d --server-local-port %d";
             String system = System.getProperty("os.name").toLowerCase();
             if (system.contains("win")) {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
             }
             BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(wdaProcess.getErrorStream()));
+                    InputStreamReader(wdaProcess.getInputStream()));
             String s;
             int wait = 0;
             while (wdaProcess.isAlive()) {
                 if ((s = stdInput.readLine()) != null) {
-                    if (s.contains("WebDriverAgent start successfully")) {
+                    if (s.contains("WebDriverAgent server start successful")) {
                         break;
                     }
                 } else {
@@ -178,7 +176,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                     wait++;
                     if (wait >= 120) {
                         logger.info(udId + " WebDriverAgent启动超时！");
-                        return 0;
+                        return new int[]{0, 0};
                     }
                 }
                 logger.info(s);
@@ -186,31 +184,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             processList = new ArrayList<>();
             processList.add(wdaProcess);
             IOSProcessMap.getMap().put(udId, processList);
-            return port;
+            return new int[]{wdaPort, mjpegPort};
         }
-    }
-
-    public static int relayImg(String udId) throws IOException, InterruptedException {
-        int port = PortTool.getPort();
-        Process relayProcess = null;
-        String commandLine = "tidevice -u " + udId +
-                " relay " + port + " " + 9100;
-        String system = System.getProperty("os.name").toLowerCase();
-        if (system.contains("win")) {
-            relayProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
-        } else if (system.contains("linux") || system.contains("mac")) {
-            relayProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
-        }
-        List<Process> processList;
-        if (IOSProcessMap.getMap().get(udId) != null) {
-            processList = IOSProcessMap.getMap().get(udId);
-        } else {
-            processList = new ArrayList<>();
-        }
-        processList.add(relayProcess);
-        IOSProcessMap.getMap().put(udId, processList);
-        Thread.sleep(1000);
-        return port;
     }
 
     public static void reboot(String udId) {
