@@ -191,4 +191,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     public static void reboot(String udId) {
         ProcessCommandTool.getProcessLocalCommand("tidevice -u " + udId + " reboot");
     }
+
+    public static void install(String udId, String path) {
+        String commandLine = "%s app install -u %s -p %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, path));
+    }
 }

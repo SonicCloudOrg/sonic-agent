@@ -45,8 +45,6 @@ public class EnvCheckTool {
     public static String appiumVersion = "unknown \n";
     public static String adbKitPath = "unknown \n";
     public static String adbKitVersion = "unknown \n";
-    public static String tidevicePath = "unknown \n";
-    public static String tideviceVersion = "unknown \n";
 
     @Value("${modules.webview.chrome-driver-path}")
     public String chromeDriverPath;
@@ -54,8 +52,6 @@ public class EnvCheckTool {
     public boolean androidEnAble;
     @Value("${modules.android.use-adbkit}")
     public boolean adbkitEnAble;
-    @Value("${modules.ios.enable}")
-    public boolean iosEnAble;
     @Value("${modules.appium.enable}")
     public boolean appiumEnAble;
     @Value("${modules.webview.enable}")
@@ -73,9 +69,6 @@ public class EnvCheckTool {
             if (androidEnAble) {
                 checkSDK();
                 checkAdb();
-            }
-            if (iosEnAble) {
-                checkTIDevice();
             }
             //adbkit和appium依赖node服务
             if (adbkitEnAble || appiumEnAble) {
@@ -191,23 +184,6 @@ public class EnvCheckTool {
             System.out.println(e.getMessage());
             printFail(type);
             throw new RuntimeException(String.format("提示：请确保安卓SDK目录下的platform-tools有adb工具"));
-        }
-        printPass(type);
-    }
-
-    /**
-     * 检查tidevice环境
-     */
-    public void checkTIDevice() throws IOException, InterruptedException {
-        String type = "检查 tidevice 环境";
-        String commandStr = "tidevice -v";
-        try {
-            tidevicePath = findCommandPath("tidevice");
-            tideviceVersion = exeCmd(false, commandStr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            printFail(type);
-            throw new RuntimeException(String.format("提示：可前往https://github.com/alibaba/taobao-iphone-device查看安装方式"));
         }
         printPass(type);
     }
@@ -374,8 +350,6 @@ public class EnvCheckTool {
                 printInfo("adbkit version: ") + adbKitVersion +
                 printInfo("Appium path: ") + appiumPath +
                 printInfo("Appium version: ") + appiumVersion +
-                printInfo("tidevice path: ") + tidevicePath +
-                printInfo("tidevice version: ") + tideviceVersion +
                 printInfo("System: ") + system;
     }
 }
