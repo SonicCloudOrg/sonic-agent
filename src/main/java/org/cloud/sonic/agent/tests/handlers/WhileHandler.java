@@ -42,24 +42,20 @@ public class WhileHandler implements StepHandler {
         // while 可以手动设置循环次数，至少为一次，在没有判断条件的步骤时才会进入
         if (conditionStep == null) {
             while (i < count) {
-                // 执行条件步骤
-                noneConditionHandler.runStep(conditionStep, handleDes, thread);
-                // 上述步骤无异常则取出else if下的步骤，再次丢给 stepHandlers 处理
-                if (handleDes.getE() == null) {
-                    for (JSONObject step : steps) {
-                        stepHandlers.runStep(step, handleDes, thread);
-                    }
+                for (JSONObject step : steps) {
+                    stepHandlers.runStep(step, handleDes, thread);
                 }
                 i++;
             }
         } else {
             // 设置了判断条件步骤，则先运行判断条件的步骤
             noneConditionHandler.runStep(conditionStep, handleDes, thread);
-            if (handleDes.getE() == null) {
+            while(handleDes.getE() == null) {
                 // 条件步骤成功，取出while下所属的步骤丢给stepHandlers处理
                 for (JSONObject step : steps) {
                     stepHandlers.runStep(step, handleDes, thread);
                 }
+                noneConditionHandler.runStep(conditionStep, handleDes, thread);
             }
             // 不满足条件则返回
         }
