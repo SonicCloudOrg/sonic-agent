@@ -48,7 +48,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         logger.info("开启iOS相关功能");
     }
 
-
     public void init() {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             String processName = "sib";
@@ -189,7 +188,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static void reboot(String udId) {
-        ProcessCommandTool.getProcessLocalCommand("tidevice -u " + udId + " reboot");
+        String commandLine = "%s reboot -u %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
     }
 
     public static void install(String udId, String path) {
