@@ -36,7 +36,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
     private static String bundleId;
-    private static String sib = new File("sonic-ios-bridge").getAbsolutePath();
+    private static String sib = new File("plugins/sonic-ios-bridge").getAbsolutePath();
 
     @Bean
     public void setEnv() {
