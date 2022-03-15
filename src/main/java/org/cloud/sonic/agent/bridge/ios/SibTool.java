@@ -36,7 +36,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
     private static String bundleId;
-    private static String sib = new File("sonic-ios-bridge").getAbsolutePath();
+    private static String sib = new File("plugins/sonic-ios-bridge").getAbsolutePath();
 
     @Bean
     public void setEnv() {
@@ -47,7 +47,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         logger.info("开启iOS相关功能");
     }
-
 
     public void init() {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -189,6 +188,12 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static void reboot(String udId) {
-        ProcessCommandTool.getProcessLocalCommand("tidevice -u " + udId + " reboot");
+        String commandLine = "%s reboot -u %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
+    }
+
+    public static void install(String udId, String path) {
+        String commandLine = "%s app install -u %s -p %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, path));
     }
 }

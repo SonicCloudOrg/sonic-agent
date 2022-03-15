@@ -19,6 +19,7 @@ import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
+import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tools.*;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
@@ -154,9 +155,9 @@ public class AndroidWSServer {
                                     }
                                     while (MiniCapMap.getMap().get(session) != null);
                                 }
-                                MiniCapTool miniCapTool = new MiniCapTool();
+                                MiniCapUtil miniCapUtil = new MiniCapUtil();
                                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                                Thread miniCapThread = miniCapTool.start(
+                                Thread miniCapThread = miniCapUtil.start(
                                         udIdMap.get(session).getSerialNumber(), banner, null,
                                         picMap.get(session) == null ? "high" : picMap.get(session),
                                         Integer.parseInt(res), session
@@ -500,9 +501,9 @@ public class AndroidWSServer {
                     }
                 }
                 while (MiniCapMap.getMap().get(session) != null);
-                MiniCapTool miniCapTool = new MiniCapTool();
+                MiniCapUtil miniCapUtil = new MiniCapUtil();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                Thread miniCapThread = miniCapTool.start(
+                Thread miniCapThread = miniCapUtil.start(
                         udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
                         rotationStatusMap.get(session), session
                 );

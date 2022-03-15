@@ -1,8 +1,9 @@
-package org.cloud.sonic.agent.tests.android;
+package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.common.maps.ScrcpyMap;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Queue;
@@ -33,6 +35,9 @@ public class ScrcpyInputSocketThread extends Thread {
     private AndroidTestTaskBootThread androidTestTaskBootThread;
 
     private Session session;
+
+    private InputStream controlInputStream;
+    private OutputStream controlOutputStream;
 
     public ScrcpyInputSocketThread(IDevice iDevice, Queue<byte[]> dataQueue, ScrcpyLocalThread scrcpyLocalThread, Session session) {
         this.iDevice = iDevice;
@@ -64,6 +69,14 @@ public class ScrcpyInputSocketThread extends Thread {
         return session;
     }
 
+    public InputStream getControlInputStream() {
+        return controlInputStream;
+    }
+
+    public OutputStream getControlOutputStream() {
+        return controlOutputStream;
+    }
+
     private static final int BUFFER_SIZE = 1024 * 1024;
     private static final int READ_BUFFER_SIZE = 1024 * 5;
 
@@ -78,6 +91,8 @@ public class ScrcpyInputSocketThread extends Thread {
             videoSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
             controlSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
             inputStream = videoSocket.getInputStream();
+            controlInputStream = controlSocket.getInputStream();
+            controlOutputStream = controlSocket.getOutputStream();
             int readLength;
             int naLuIndex;
             int bufferLength = 0;
@@ -130,6 +145,22 @@ public class ScrcpyInputSocketThread extends Thread {
                 try {
                     inputStream.close();
                     log.info("scrcpy input流已关闭");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (controlOutputStream != null) {
+                try {
+                    controlOutputStream.close();
+                    log.info("scrcpy control output流已关闭");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (controlInputStream != null) {
+                try {
+                    controlInputStream.close();
+                    log.info("scrcpy control input流已关闭");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

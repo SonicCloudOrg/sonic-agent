@@ -1,12 +1,9 @@
-package org.cloud.sonic.agent.tools;
+package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tests.android.InputSocketThread;
-import org.cloud.sonic.agent.tests.android.OutputSocketThread;
-import org.cloud.sonic.agent.tests.android.SonicLocalThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +19,8 @@ import static org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread.ANDR
  * @des
  * @date 2021/8/26 9:20
  */
-public class MiniCapTool {
-    private final Logger logger = LoggerFactory.getLogger(MiniCapTool.class);
+public class MiniCapUtil {
+    private final Logger logger = LoggerFactory.getLogger(MiniCapUtil.class);
 
     public Thread start(
             String udId,
@@ -56,7 +53,7 @@ public class MiniCapTool {
             s = tor;
         }
         // 启动minicap服务
-        SonicLocalThread miniCapPro = new SonicLocalThread(iDevice, pic, s * 90, session, androidTestTaskBootThread);
+        MiniCapLocalThread miniCapPro = new MiniCapLocalThread(iDevice, pic, s * 90, session, androidTestTaskBootThread);
         TaskManager.startChildThread(key, miniCapPro);
 
         // 等待启动
@@ -75,15 +72,15 @@ public class MiniCapTool {
         }
 
         // 启动输入流
-        InputSocketThread sendImg = new InputSocketThread(
+        MiniCapInputSocketThread sendImg = new MiniCapInputSocketThread(
                 iDevice, new LinkedBlockingQueue<>(), miniCapPro, session
         );
         // 启动输出流
-        OutputSocketThread outputSocketThread = new OutputSocketThread(
+        MiniCapOutputSocketThread miniCapOutputSocketThread = new MiniCapOutputSocketThread(
                 sendImg, banner, imgList, session, pic
         );
 
-        TaskManager.startChildThread(key, sendImg, outputSocketThread);
+        TaskManager.startChildThread(key, sendImg, miniCapOutputSocketThread);
 
         return miniCapPro; // server线程
     }

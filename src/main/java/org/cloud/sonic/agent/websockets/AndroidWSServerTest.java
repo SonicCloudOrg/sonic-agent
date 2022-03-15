@@ -18,6 +18,8 @@ import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
+import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
+import org.cloud.sonic.agent.tests.android.scrcpy.ScrcpyServerUtil;
 import org.cloud.sonic.agent.tools.*;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
@@ -154,8 +156,8 @@ public class AndroidWSServerTest {
 //                                        Integer.parseInt(res), session
 //                                );
 //                                MiniCapMap.getMap().put(session, miniCapThread);
-                                ScrcpyServerTool scrcpyServerTool = new ScrcpyServerTool();
-                                Thread scrcpyThread = scrcpyServerTool.start(udIdMap.get(session).getSerialNumber(), 0, session);
+                                ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
+                                Thread scrcpyThread = scrcpyServerUtil.start(udIdMap.get(session).getSerialNumber(), 0, session);
                                 MiniCapMap.getMap().put(session, scrcpyThread);
                                 JSONObject picFinish = new JSONObject();
                                 picFinish.put("msg", "picFinish");
@@ -453,9 +455,9 @@ public class AndroidWSServerTest {
                     }
                 }
                 while (MiniCapMap.getMap().get(session) != null);
-                MiniCapTool miniCapTool = new MiniCapTool();
+                MiniCapUtil miniCapUtil = new MiniCapUtil();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                Thread miniCapThread = miniCapTool.start(
+                Thread miniCapThread = miniCapUtil.start(
                         udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
                         rotationStatusMap.get(session), session
                 );

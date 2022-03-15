@@ -1,12 +1,9 @@
-package org.cloud.sonic.agent.tools;
+package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tests.android.ScrcpyInputSocketThread;
-import org.cloud.sonic.agent.tests.android.ScrcpyLocalThread;
-import org.cloud.sonic.agent.tests.android.ScrcpyOutputSocketThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +12,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread.ANDROID_TEST_TASK_BOOT_PRE;
 
-public class ScrcpyServerTool {
-    private final Logger logger = LoggerFactory.getLogger(ScrcpyServerTool.class);
+public class ScrcpyServerUtil {
+    private final Logger logger = LoggerFactory.getLogger(ScrcpyServerUtil.class);
 
     public Thread start(
             String udId,

@@ -200,14 +200,7 @@ public class IOSWSServer {
                             result.put("msg", "installFinish");
                             try {
                                 File localFile = DownImageTool.download(msg.getString("ipa"));
-                                String commandLine = "tidevice -u " + udIdMap.get(session) +
-                                        " install " + localFile.getAbsolutePath();
-                                String system = System.getProperty("os.name").toLowerCase();
-                                if (system.contains("win")) {
-                                    Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
-                                } else if (system.contains("linux") || system.contains("mac")) {
-                                    Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
-                                }
+                                SibTool.install(udIdMap.get(session), localFile.getAbsolutePath());
                                 result.put("status", "success");
                             } catch (IOException e) {
                                 result.put("status", "fail");

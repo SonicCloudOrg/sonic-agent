@@ -1,6 +1,7 @@
-package org.cloud.sonic.agent.tests.android;
+package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.AgentTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,16 +18,16 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:12 上午
  */
-public class OutputSocketThread extends Thread {
+public class MiniCapOutputSocketThread extends Thread {
 
-    private final Logger log = LoggerFactory.getLogger(OutputSocketThread.class);
+    private final Logger log = LoggerFactory.getLogger(MiniCapOutputSocketThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
     public final static String ANDROID_OUTPUT_SOCKET_PRE = "android-output-socket-task-%s-%s-%s";
 
-    private InputSocketThread sendImg;
+    private MiniCapInputSocketThread sendImg;
 
     private AtomicReference<String[]> banner;
 
@@ -40,8 +41,8 @@ public class OutputSocketThread extends Thread {
 
     private AndroidTestTaskBootThread androidTestTaskBootThread;
 
-    public OutputSocketThread(
-            InputSocketThread sendImg,
+    public MiniCapOutputSocketThread(
+            MiniCapInputSocketThread sendImg,
             AtomicReference<String[]> banner,
             AtomicReference<List<byte[]>> imgList,
             Session session,

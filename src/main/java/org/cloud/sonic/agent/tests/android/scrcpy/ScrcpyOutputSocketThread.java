@@ -1,5 +1,6 @@
-package org.cloud.sonic.agent.tests.android;
+package org.cloud.sonic.agent.tests.android.scrcpy;
 
+import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
