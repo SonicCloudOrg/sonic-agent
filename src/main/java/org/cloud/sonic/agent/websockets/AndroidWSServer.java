@@ -252,9 +252,7 @@ public class AndroidWSServer {
             } finally {
                 if (NotStopSession.contains(session)) {
                     try {
-                        outputStream.write("r ".getBytes());
-                        outputStream.flush();
-                        outputStream.write("c\n".getBytes());
+                        outputStream.write("r\n".getBytes());
                         outputStream.flush();
                     } catch (IOException e) {
                         e.printStackTrace();
