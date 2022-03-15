@@ -258,6 +258,8 @@ public class AndroidWSServer {
                         outputStream.flush();
                     } catch (IOException e) {
                         e.printStackTrace();
+                    } finally {
+                        NotStopSession.remove(session);
                     }
                 }
                 if (touchPro.isAlive()) {
