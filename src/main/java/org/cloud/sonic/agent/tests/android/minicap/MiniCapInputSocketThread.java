@@ -1,8 +1,9 @@
-package org.cloud.sonic.agent.tests.android;
+package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.MiniCapMap;
+import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,9 +23,9 @@ import static org.cloud.sonic.agent.tools.AgentTool.subByteArray;
  * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/02 00:52 下午
  */
-public class InputSocketThread extends Thread {
+public class MiniCapInputSocketThread extends Thread {
 
-    private final Logger log = LoggerFactory.getLogger(InputSocketThread.class);
+    private final Logger log = LoggerFactory.getLogger(MiniCapInputSocketThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
@@ -35,13 +36,13 @@ public class InputSocketThread extends Thread {
 
     private BlockingQueue<byte[]> dataQueue;
 
-    private SonicLocalThread miniCapPro;
+    private MiniCapLocalThread miniCapPro;
 
     private AndroidTestTaskBootThread androidTestTaskBootThread;
 
     private Session session;
 
-    public InputSocketThread(IDevice iDevice, BlockingQueue<byte[]> dataQueue, SonicLocalThread miniCapPro, Session session) {
+    public MiniCapInputSocketThread(IDevice iDevice, BlockingQueue<byte[]> dataQueue, MiniCapLocalThread miniCapPro, Session session) {
         this.iDevice = iDevice;
         this.dataQueue = dataQueue;
         this.miniCapPro = miniCapPro;
@@ -61,7 +62,7 @@ public class InputSocketThread extends Thread {
         return dataQueue;
     }
 
-    public SonicLocalThread getMiniCapPro() {
+    public MiniCapLocalThread getMiniCapPro() {
         return miniCapPro;
     }
 

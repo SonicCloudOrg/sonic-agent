@@ -1,9 +1,10 @@
-package org.cloud.sonic.agent.tests.android;
+package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.AgentTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +21,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:40 上午
  */
-public class SonicLocalThread extends Thread {
+public class MiniCapLocalThread extends Thread {
 
-    private final Logger log = LoggerFactory.getLogger(SonicLocalThread.class);
+    private final Logger log = LoggerFactory.getLogger(MiniCapLocalThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
@@ -44,8 +45,8 @@ public class SonicLocalThread extends Thread {
     private Semaphore isFinish = new Semaphore(0);
 
 
-    public SonicLocalThread(IDevice iDevice, String pic, int finalC, Session session,
-                            AndroidTestTaskBootThread androidTestTaskBootThread) {
+    public MiniCapLocalThread(IDevice iDevice, String pic, int finalC, Session session,
+                              AndroidTestTaskBootThread androidTestTaskBootThread) {
         this.iDevice = iDevice;
         this.pic = pic;
         this.finalC = finalC;

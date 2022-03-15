@@ -4,7 +4,7 @@ import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tools.cv.RecordHandler;
-import org.cloud.sonic.agent.tools.MiniCapTool;
+import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.bytedeco.javacv.FrameRecorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,8 +75,8 @@ public class AndroidRecordThread extends Thread {
                     isSupportRecord = false;
                 }
             } else {
-                MiniCapTool miniCapTool = new MiniCapTool();
-                miniCapPro = miniCapTool.start(udId, banner, imgList, "high", -1, null, androidTestTaskBootThread);
+                MiniCapUtil miniCapUtil = new MiniCapUtil();
+                miniCapPro = miniCapUtil.start(udId, banner, imgList, "high", -1, null, androidTestTaskBootThread);
             }
             int w = 0;
             while (w < 10 && (runStepThread.isAlive())) {
