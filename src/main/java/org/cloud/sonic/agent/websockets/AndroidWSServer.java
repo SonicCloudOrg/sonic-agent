@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -63,6 +64,7 @@ public class AndroidWSServer {
     private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
     private Map<Session, String> picMap = new ConcurrentHashMap<>();
     private Map<Session, String> logMap = new ConcurrentHashMap<>();
+    private List<Session> NotStopSession = new ArrayList<>();
     @Autowired
     private RestTemplate restTemplate;
 
@@ -195,6 +197,9 @@ public class AndroidWSServer {
                             public void addOutput(byte[] bytes, int i, int i1) {
                                 String res = new String(bytes, i, i1);
                                 logger.info(res);
+                                if (res.contains("Address already in use")) {
+                                    NotStopSession.add(session);
+                                }
                                 if (res.contains("Server start")) {
                                     isTouchFinish.release();
                                 }
@@ -245,6 +250,16 @@ public class AndroidWSServer {
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             } finally {
+                if (NotStopSession.contains(session)) {
+                    try {
+                        outputStream.write("r ".getBytes());
+                        outputStream.flush();
+                        outputStream.write("c\n".getBytes());
+                        outputStream.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 if (touchPro.isAlive()) {
                     touchPro.interrupt();
                     logger.info("touch thread已关闭");
