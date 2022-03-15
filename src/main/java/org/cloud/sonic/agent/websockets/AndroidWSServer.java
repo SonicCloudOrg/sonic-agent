@@ -158,7 +158,7 @@ public class AndroidWSServer {
                                 MiniCapUtil miniCapUtil = new MiniCapUtil();
                                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                                 Thread miniCapThread = miniCapUtil.start(
-                                        udIdMap.get(session).getSerialNumber(), banner, null,
+                                        iDevice.getSerialNumber(), banner, null,
                                         picMap.get(session) == null ? "high" : picMap.get(session),
                                         Integer.parseInt(res), session
                                 );
@@ -269,7 +269,7 @@ public class AndroidWSServer {
             AndroidDeviceBridgeTool.removeForward(iDevice, finalTouchPort, "sonictouchservice");
         });
 
-        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session)));
+        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(iDevice));
 
         if (isEnableAdbKit) {
             String processName = String.format("process-%s-adbkit", udId);
@@ -353,10 +353,11 @@ public class AndroidWSServer {
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
+        IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "proxy": {
-                AndroidDeviceBridgeTool.clearProxy(udIdMap.get(session));
-                String processName = String.format("process-%s-proxy", udIdMap.get(session));
+                AndroidDeviceBridgeTool.clearProxy(iDevice);
+                String processName = String.format("process-%s-proxy", iDevice);
                 if (GlobalProcessMap.getMap().get(processName) != null) {
                     Process ps = GlobalProcessMap.getMap().get(processName);
                     ps.children().forEach(ProcessHandle::destroy);
@@ -378,7 +379,7 @@ public class AndroidWSServer {
                     } else if (system.contains("linux") || system.contains("mac")) {
                         ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
                     }
-                    AndroidDeviceBridgeTool.startProxy(udIdMap.get(session),host,pPort);
+                    AndroidDeviceBridgeTool.startProxy(iDevice, host, pPort);
                     GlobalProcessMap.getMap().put(processName, ps);
                     JSONObject proxy = new JSONObject();
                     proxy.put("webPort", webPort);
@@ -391,13 +392,12 @@ public class AndroidWSServer {
                 break;
             }
             case "installCert": {
-                AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
+                AndroidDeviceBridgeTool.executeCommand(iDevice,
                         String.format("am start -a android.intent.action.VIEW -d http://%s:%d/assets/download", host, port));
                 break;
             }
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
-                IDevice iDevice = udIdMap.get(session);
                 List<String> wList = Arrays.asList("webview", "WebView", "chrome_devtools_remote", "Terrace_devtools_remote");
                 List<String> webViewList = new ArrayList<>();
                 for (String w : wList) {
@@ -469,15 +469,15 @@ public class AndroidWSServer {
                 break;
             }
             case "find":
-                AndroidDeviceBridgeTool.searchDevice(udIdMap.get(session));
+                AndroidDeviceBridgeTool.searchDevice(iDevice);
                 break;
             case "battery":
-                AndroidDeviceBridgeTool.controlBattery(udIdMap.get(session), msg.getInteger("detail"));
+                AndroidDeviceBridgeTool.controlBattery(iDevice, msg.getInteger("detail"));
                 break;
             case "uninstallApp": {
                 JSONObject result = new JSONObject();
                 try {
-                    udIdMap.get(session).uninstallPackage(msg.getString("detail"));
+                    iDevice.uninstallPackage(msg.getString("detail"));
                     result.put("detail", "success");
                 } catch (InstallException e) {
                     result.put("detail", "fail");
@@ -488,10 +488,10 @@ public class AndroidWSServer {
                 break;
             }
             case "scan":
-                AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
+                AndroidDeviceBridgeTool.pushToCamera(iDevice, msg.getString("url"));
                 break;
             case "text":
-                ProcessCommandTool.getProcessLocalCommand("adb -s " + udIdMap.get(session).getSerialNumber()
+                ProcessCommandTool.getProcessLocalCommand("adb -s " + iDevice.getSerialNumber()
                         + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
                 break;
             case "pic": {
@@ -508,7 +508,7 @@ public class AndroidWSServer {
                 MiniCapUtil miniCapUtil = new MiniCapUtil();
                 AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                 Thread miniCapThread = miniCapUtil.start(
-                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
+                        iDevice.getSerialNumber(), banner, null, msg.getString("detail"),
                         rotationStatusMap.get(session), session
                 );
                 MiniCapMap.getMap().put(session, miniCapThread);
@@ -531,14 +531,14 @@ public class AndroidWSServer {
                 }
                 break;
             case "keyEvent":
-                AndroidDeviceBridgeTool.pressKey(udIdMap.get(session), msg.getInteger("detail"));
+                AndroidDeviceBridgeTool.pressKey(iDevice, msg.getInteger("detail"));
                 break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
                     JSONObject jsonDebug = new JSONObject();
                     jsonDebug.put("msg", "findSteps");
                     jsonDebug.put("key", key);
-                    jsonDebug.put("udId", udIdMap.get(session).getSerialNumber());
+                    jsonDebug.put("udId", iDevice.getSerialNumber());
                     jsonDebug.put("pwd", msg.getString("pwd"));
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
@@ -551,7 +551,7 @@ public class AndroidWSServer {
                     );
                 } else if (msg.getString("detail").equals("openApp")) {
                     AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                        AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
+                        AndroidDeviceBridgeTool.executeCommand(iDevice,
                                 String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
                     });
                 } else {
@@ -559,13 +559,13 @@ public class AndroidWSServer {
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
                         if (msg.getString("detail").equals("openDriver")) {
                             androidStepHandler = new AndroidStepHandler();
-                            androidStepHandler.setTestMode(0, 0, udIdMap.get(session).getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+                            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
                             JSONObject result = new JSONObject();
                             AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 try {
-                                    AndroidDeviceLocalStatus.startDebug(udIdMap.get(session).getSerialNumber());
-                                    finalAndroidStepHandler1.startAndroidDriver(udIdMap.get(session).getSerialNumber());
+                                    AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
+                                    finalAndroidStepHandler1.startAndroidDriver(iDevice.getSerialNumber());
                                     result.put("status", "success");
                                     result.put("detail", "初始化Driver完成！");
                                     HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
@@ -586,13 +586,13 @@ public class AndroidWSServer {
                             String xy = msg.getString("point");
                             int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
                             int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input tap " + x + " " + y);
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input tap " + x + " " + y);
                         }
                         if (msg.getString("detail").equals("longPress")) {
                             String xy = msg.getString("point");
                             int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
                             int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input swipe " + x + " " + y + " " + x + " " + y + " 1500");
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x + " " + y + " " + x + " " + y + " 1500");
                         }
                         if (msg.getString("detail").equals("swipe")) {
                             String xy1 = msg.getString("pointA");
@@ -601,7 +601,7 @@ public class AndroidWSServer {
                             int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
                             int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
                             int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 200");
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 200");
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -612,7 +612,7 @@ public class AndroidWSServer {
                             result.put("msg", "installFinish");
                             try {
                                 File localFile = DownImageTool.download(msg.getString("apk"));
-                                udIdMap.get(session).installPackage(localFile.getAbsolutePath()
+                                iDevice.installPackage(localFile.getAbsolutePath()
                                         , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                                         , "-r", "-t", "-g");
                                 result.put("status", "success");
@@ -672,7 +672,7 @@ public class AndroidWSServer {
 
     private void exit(Session session) {
         AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
-        AndroidDeviceBridgeTool.clearProxy(udIdMap.get(session));
+        IDevice iDevice = udIdMap.get(session);
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
@@ -680,23 +680,24 @@ public class AndroidWSServer {
         } finally {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
-        if (udIdMap.get(session) != null) {
-            List<JSONObject> has = webViewForwardMap.get(udIdMap.get(session));
+        if (iDevice != null) {
+            AndroidDeviceBridgeTool.clearProxy(iDevice);
+            List<JSONObject> has = webViewForwardMap.get(iDevice);
             if (has != null && has.size() > 0) {
                 for (JSONObject j : has) {
-                    AndroidDeviceBridgeTool.removeForward(udIdMap.get(session), j.getInteger("port"), j.getString("name"));
+                    AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
                 }
             }
-            webViewForwardMap.remove(udIdMap.get(session));
+            webViewForwardMap.remove(iDevice);
             if (isEnableAdbKit) {
-                String processName = String.format("process-%s-adbkit", udIdMap.get(session).getSerialNumber());
+                String processName = String.format("process-%s-adbkit", iDevice.getSerialNumber());
                 if (GlobalProcessMap.getMap().get(processName) != null) {
                     Process ps = GlobalProcessMap.getMap().get(processName);
                     ps.children().forEach(ProcessHandle::destroy);
                     ps.destroy();
                 }
             }
-            String processName = String.format("process-%s-proxy", udIdMap.get(session).getSerialNumber());
+            String processName = String.format("process-%s-proxy", iDevice.getSerialNumber());
             if (GlobalProcessMap.getMap().get(processName) != null) {
                 Process ps = GlobalProcessMap.getMap().get(processName);
                 ps.children().forEach(ProcessHandle::destroy);
@@ -704,7 +705,7 @@ public class AndroidWSServer {
             }
             logMap.remove(session);
         }
-        AndroidAPKMap.getMap().remove(udIdMap.get(session).getSerialNumber());
+        AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);
         udIdMap.remove(session);
         if (rotationMap.get(session) != null) {
