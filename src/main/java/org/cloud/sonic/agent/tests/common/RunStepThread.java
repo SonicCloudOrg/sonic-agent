@@ -1,5 +1,7 @@
 package org.cloud.sonic.agent.tests.common;
 
+import org.cloud.sonic.agent.common.interfaces.PlatformType;
+
 /**
  * @author JayWenStar
  * @date 2022/2/11 10:49 上午
@@ -7,6 +9,16 @@ package org.cloud.sonic.agent.tests.common;
 public class RunStepThread extends Thread {
 
     protected volatile boolean stopped = false;
+
+    protected volatile int platformType;
+
+    public int getPlatformType() {
+        return platformType;
+    }
+
+    public void setPlatformType(int platformType) {
+        this.platformType = platformType;
+    }
 
     public boolean isStopped() {
         return stopped;

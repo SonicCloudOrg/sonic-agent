@@ -43,6 +43,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Scrcpy方案
+ */
 @Component
 @ServerEndpoint(value = "/websockets/android2/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class AndroidWSServerTest {

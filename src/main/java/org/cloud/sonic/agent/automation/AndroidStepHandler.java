@@ -1380,7 +1380,7 @@ public class AndroidStepHandler {
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
             try {
-                runStep(stepDetail);
+                runStep(stepDetail, handleDes);
             } catch (Throwable e) {
                 handleDes.setE(e);
                 break;
@@ -1430,10 +1430,9 @@ public class AndroidStepHandler {
 
     private int holdTime = 0;
 
-    public void runStep(JSONObject stepJSON) throws Throwable {
+    public void runStep(JSONObject stepJSON, HandleDes handleDes) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
-        HandleDes handleDes = new HandleDes();
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
             case "stepHold":
