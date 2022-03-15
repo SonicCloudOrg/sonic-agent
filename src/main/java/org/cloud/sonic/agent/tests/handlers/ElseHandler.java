@@ -32,11 +32,13 @@ public class ElseHandler implements StepHandler {
         }
 
         // 取出 else 下所属的步骤，丢给stepHandlers处理
-        List<JSONObject> steps = stepJSON.getJSONArray("steps").toJavaList(JSONObject.class);
+        List<JSONObject> steps = stepJSON.getJSONObject("step").getJSONArray("childSteps").toJavaList(JSONObject.class);
         // 上述步骤无异常则取出else if下的步骤，再次丢给 stepHandlers 处理
         if (handleDes.getE() == null) {
             for (JSONObject step : steps) {
-                stepHandlers.runStep(step, handleDes, thread);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("step", step);
+                stepHandlers.runStep(jsonObject, handleDes, thread);
             }
         }
         return handleDes;

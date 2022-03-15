@@ -29,36 +29,21 @@ public class WhileHandler implements StepHandler {
             return null;
         }
 
-        // 取出 while 判断条件的步骤
-        JSONObject conditionStep = null;
-        int count = 1;
-        int i = 0;
-        if (stepJSON.containsKey("conditionStep")) {
-            conditionStep = stepJSON.getJSONObject("conditionStep");
-        } else {
-            count = stepJSON.getInteger("count");
-        }
-        List<JSONObject> steps = stepJSON.getJSONArray("steps").toJavaList(JSONObject.class);
-        // while 可以手动设置循环次数，至少为一次，在没有判断条件的步骤时才会进入
-        if (conditionStep == null) {
-            while (i < count) {
-                for (JSONObject step : steps) {
-                    stepHandlers.runStep(step, handleDes, thread);
-                }
-                i++;
+        // 取出 while 下的步骤集合
+        JSONObject conditionStep = stepJSON.getJSONObject("step");
+        List<JSONObject> steps = conditionStep.getJSONArray("conditionStep").toJavaList(JSONObject.class);
+        // 设置了判断条件步骤，则先运行判断条件的步骤
+        noneConditionHandler.runStep(stepJSON, handleDes, thread);
+        while(handleDes.getE() == null) {
+            // 条件步骤成功，取出while下所属的步骤丢给stepHandlers处理
+            for (JSONObject step : steps) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("step", step);
+                stepHandlers.runStep(jsonObject, handleDes, thread);
             }
-        } else {
-            // 设置了判断条件步骤，则先运行判断条件的步骤
             noneConditionHandler.runStep(conditionStep, handleDes, thread);
-            while(handleDes.getE() == null) {
-                // 条件步骤成功，取出while下所属的步骤丢给stepHandlers处理
-                for (JSONObject step : steps) {
-                    stepHandlers.runStep(step, handleDes, thread);
-                }
-                noneConditionHandler.runStep(conditionStep, handleDes, thread);
-            }
-            // 不满足条件则返回
         }
+        // 不满足条件则返回
         return handleDes;
     }
 

@@ -33,15 +33,17 @@ public class ElseIfHandler implements StepHandler {
             return handleDes;
         }
 
-        // 取出 else if判断条件的步骤
-        JSONObject conditionStep = stepJSON.getJSONObject("conditionStep");
-        List<JSONObject> steps = stepJSON.getJSONArray("steps").toJavaList(JSONObject.class);
+        // 取出 else if下的步骤集合
+        JSONObject conditionStep = stepJSON.getJSONObject("step");
+        List<JSONObject> steps = conditionStep.getJSONArray("childSteps").toJavaList(JSONObject.class);
         // 执行条件步骤
-        noneConditionHandler.runStep(conditionStep, handleDes, thread);
+        noneConditionHandler.runStep(stepJSON, handleDes, thread);
         // 上述步骤无异常则取出else if下的步骤，再次丢给 stepHandlers 处理
         if (handleDes.getE() == null) {
             for (JSONObject step : steps) {
-                stepHandlers.runStep(step, handleDes, thread);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("step", step);
+                stepHandlers.runStep(jsonObject, handleDes, thread);
             }
         }
         return handleDes;

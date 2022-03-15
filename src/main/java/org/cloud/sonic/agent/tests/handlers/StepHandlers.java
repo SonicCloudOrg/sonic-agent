@@ -7,7 +7,11 @@ import org.cloud.sonic.agent.enums.SonicEnum;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
@@ -21,17 +25,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date 2022/3/13 3:23 下午
  */
 @Component
-public class StepHandlers {
+public class StepHandlers implements ApplicationListener<ContextRefreshedEvent> {
+
 
     private final Logger logger = LoggerFactory.getLogger(StepHandlers.class);
 
     private final ConcurrentHashMap<ConditionEnum, StepHandler> stepHandlers =
             new ConcurrentHashMap<>(8);
 
-    public StepHandlers(ApplicationContext applicationContext) {
-        addConditionHandlers(applicationContext.getBeansOfType(StepHandler.class).values());
-        logger.info("Registered {} condition handler(s)", stepHandlers.size());
-    }
+//    public StepHandlers(ApplicationContext applicationContext) {
+//        addConditionHandlers(applicationContext.getBeansOfType(StepHandler.class).values());
+//        logger.info("Registered {} condition handler(s)", stepHandlers.size());
+//    }
 
     public HandleDes runStep(JSONObject stepJSON, HandleDes handleDes, RunStepThread thread) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
@@ -60,5 +65,11 @@ public class StepHandlers {
             throw new RuntimeException("condition handler for 「" + conditionEnum + "」 not found");
         }
         return handler;
+    }
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+        addConditionHandlers(event.getApplicationContext().getBeansOfType(StepHandler.class).values());
+        logger.info("Registered {} condition handler(s)", stepHandlers.size());
     }
 }
