@@ -79,7 +79,7 @@ public class ScrcpyLocalThread extends Thread {
             e.printStackTrace();
         }
         try {
-            iDevice.executeShellCommand("CLASSPATH=/data/local/tmp/sonic-android-scrcpy.jar app_process / com.genymobile.scrcpy.Server 1.23 log_level=info max_size=0 bit_rate=2097152 max_fps=60 lock_video_orientation=-1 tunnel_forward=true send_frame_meta=false control=true show_touches=false stay_awake=true power_off_on_close=false clipboard_autosync=false",
+            iDevice.executeShellCommand("CLASSPATH=/data/local/tmp/sonic-android-scrcpy.jar app_process / com.genymobile.scrcpy.Server 1.23 log_level=info max_size=0 bit_rate=2097152 max_fps=60 lock_video_orientation=-1 tunnel_forward=true send_frame_meta=false control=false show_touches=false stay_awake=true power_off_on_close=false clipboard_autosync=false",
                     new IShellOutputReceiver() {
                         @Override
                         public void addOutput(byte[] bytes, int i, int i1) {

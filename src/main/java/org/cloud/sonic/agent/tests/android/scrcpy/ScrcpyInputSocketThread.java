@@ -36,9 +36,6 @@ public class ScrcpyInputSocketThread extends Thread {
 
     private Session session;
 
-    private InputStream controlInputStream;
-    private OutputStream controlOutputStream;
-
     public ScrcpyInputSocketThread(IDevice iDevice, Queue<byte[]> dataQueue, ScrcpyLocalThread scrcpyLocalThread, Session session) {
         this.iDevice = iDevice;
         this.dataQueue = dataQueue;
@@ -69,14 +66,6 @@ public class ScrcpyInputSocketThread extends Thread {
         return session;
     }
 
-    public InputStream getControlInputStream() {
-        return controlInputStream;
-    }
-
-    public OutputStream getControlOutputStream() {
-        return controlOutputStream;
-    }
-
     private static final int BUFFER_SIZE = 1024 * 1024;
     private static final int READ_BUFFER_SIZE = 1024 * 5;
 
@@ -85,14 +74,10 @@ public class ScrcpyInputSocketThread extends Thread {
         int scrcpyPort = PortTool.getPort();
         AndroidDeviceBridgeTool.forward(iDevice, scrcpyPort, "scrcpy");
         Socket videoSocket = new Socket();
-        Socket controlSocket = new Socket();
         InputStream inputStream = null;
         try {
             videoSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
-            controlSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
             inputStream = videoSocket.getInputStream();
-            controlInputStream = controlSocket.getInputStream();
-            controlOutputStream = controlSocket.getOutputStream();
             int readLength;
             int naLuIndex;
             int bufferLength = 0;
@@ -133,34 +118,10 @@ public class ScrcpyInputSocketThread extends Thread {
                     e.printStackTrace();
                 }
             }
-            if (controlSocket.isConnected()) {
-                try {
-                    controlSocket.close();
-                    log.info("scrcpy control socket已关闭");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
             if (inputStream != null) {
                 try {
                     inputStream.close();
                     log.info("scrcpy input流已关闭");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (controlOutputStream != null) {
-                try {
-                    controlOutputStream.close();
-                    log.info("scrcpy control output流已关闭");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (controlInputStream != null) {
-                try {
-                    controlInputStream.close();
-                    log.info("scrcpy control input流已关闭");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
