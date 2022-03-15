@@ -316,6 +316,14 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         return filePath;
     }
 
+    public static void startProxy(IDevice iDevice, String host, int port) {
+        executeCommand(iDevice, String.format("settings put global http_proxy %s:%d", host, port));
+    }
+
+    public static void clearProxy(IDevice iDevice){
+        executeCommand(iDevice, "settings put global http_proxy :0");
+    }
+
     public static void screen(IDevice iDevice, String type) {
         int p = getScreen(iDevice);
         try {

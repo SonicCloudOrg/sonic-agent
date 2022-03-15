@@ -53,7 +53,7 @@ public class AndroidWSServer {
     @Value("${sonic.agent.host}")
     private String host;
     @Value("${sonic.agent.port}")
-    private String port;
+    private int port;
     @Value("${modules.android.use-adbkit}")
     private boolean isEnableAdbKit;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
@@ -355,6 +355,7 @@ public class AndroidWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
             case "proxy": {
+                AndroidDeviceBridgeTool.clearProxy(udIdMap.get(session));
                 String processName = String.format("process-%s-proxy", udIdMap.get(session));
                 if (GlobalProcessMap.getMap().get(processName) != null) {
                     Process ps = GlobalProcessMap.getMap().get(processName);
@@ -363,22 +364,25 @@ public class AndroidWSServer {
                 }
                 String system = System.getProperty("os.name").toLowerCase();
                 Process ps = null;
-                int port = PortTool.getPort();
-                int webPort = PortTool.getPort();
+                Socket portSocket = PortTool.getBindSocket();
+                Socket webPortSocket = PortTool.getBindSocket();
+                int pPort = PortTool.releaseAndGetPort(portSocket);
+                int webPort = PortTool.releaseAndGetPort(webPortSocket);
                 File pFile = new File("plugins");
                 File sgm = new File(pFile + File.separator + "sonic-go-mitmproxy");
                 String command = String.format(
-                        "%s -cert_path %s -addr :%d -web_addr :%d", sgm.getAbsolutePath(), pFile.getAbsolutePath(), port, webPort);
+                        "%s -cert_path %s -addr :%d -web_addr :%d", sgm.getAbsolutePath(), pFile.getAbsolutePath(), pPort, webPort);
                 try {
                     if (system.contains("win")) {
                         ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
                     } else if (system.contains("linux") || system.contains("mac")) {
                         ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
                     }
+                    AndroidDeviceBridgeTool.startProxy(udIdMap.get(session),host,pPort);
                     GlobalProcessMap.getMap().put(processName, ps);
                     JSONObject proxy = new JSONObject();
                     proxy.put("webPort", webPort);
-                    proxy.put("port", port);
+                    proxy.put("port", pPort);
                     proxy.put("msg", "proxyResult");
                     AgentTool.sendText(session, proxy.toJSONString());
                 } catch (Exception e) {
@@ -388,7 +392,7 @@ public class AndroidWSServer {
             }
             case "installCert": {
                 AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
-                        String.format("am start -a android.intent.action.VIEW -d http://%s:%s/assets/download", host, port));
+                        String.format("am start -a android.intent.action.VIEW -d http://%s:%d/assets/download", host, port));
                 break;
             }
             case "forwardView": {
@@ -668,6 +672,7 @@ public class AndroidWSServer {
 
     private void exit(Session session) {
         AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
+        AndroidDeviceBridgeTool.clearProxy(udIdMap.get(session));
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
