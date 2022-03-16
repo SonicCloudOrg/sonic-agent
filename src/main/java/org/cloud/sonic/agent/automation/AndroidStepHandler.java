@@ -876,8 +876,6 @@ public class AndroidStepHandler {
                 hasEle = true;
             }
         } catch (Exception e) {
-            handleDes.setE(e);
-            return;
         }
         try {
             assertEquals(hasEle, expect);

@@ -2,6 +2,7 @@ package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
@@ -10,10 +11,12 @@ import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
+import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
+import org.cloud.sonic.agent.tools.AgentTool;
 import org.cloud.sonic.agent.tools.DownImageTool;
 import org.cloud.sonic.agent.tools.UploadTools;
 import io.appium.java_client.TouchAction;
@@ -97,6 +100,11 @@ public class IOSWSServer {
                 sendText(session, result.toJSONString());
             }
         });
+
+        JSONObject port = new JSONObject();
+        port.put("port", AppiumServer.getPort());
+        port.put("msg", "appiumPort");
+        AgentTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
@@ -123,6 +131,19 @@ public class IOSWSServer {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
         switch (msg.getString("type")) {
+            case "appList":
+                JSONObject appList = SibTool.getAppList(udIdMap.get(session));
+                if (appList.get("appList") != null) {
+                    appList.put("msg", "appListDetail");
+                    sendText(session, appList.toJSONString());
+                }
+                break;
+            case "launch":
+                SibTool.launch(udIdMap.get(session), msg.getString("pkg"));
+                break;
+            case "uninstallApp":
+                SibTool.uninstall(udIdMap.get(session), msg.getString("detail"));
+                break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
                     JSONObject jsonDebug = new JSONObject();
@@ -263,7 +284,6 @@ public class IOSWSServer {
     }
 
     private void exit(Session session) {
-        IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
         } catch (Exception e) {
@@ -271,7 +291,9 @@ public class IOSWSServer {
         } finally {
             HandlerMap.getIOSMap().remove(session.getId());
         }
+        IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);
+        udIdMap.remove(session);
         try {
             session.close();
         } catch (IOException e) {

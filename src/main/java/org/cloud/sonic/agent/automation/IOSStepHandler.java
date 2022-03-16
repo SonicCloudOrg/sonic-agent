@@ -568,8 +568,6 @@ public class IOSStepHandler {
                 hasEle = true;
             }
         } catch (Exception e) {
-            handleDes.setE(e);
-            return;
         }
         try {
             assertEquals(hasEle, expect);
