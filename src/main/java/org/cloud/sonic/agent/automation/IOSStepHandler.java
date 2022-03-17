@@ -13,7 +13,7 @@ import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.tools.DownImageTool;
+import org.cloud.sonic.agent.tools.DownloadTool;
 import org.cloud.sonic.agent.tools.LogTool;
 import org.cloud.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MultiTouchAction;
@@ -593,7 +593,7 @@ public class IOSStepHandler {
         File file = null;
         if (pathValue.startsWith("http")) {
             try {
-                file = DownImageTool.download(pathValue);
+                file = DownloadTool.download(pathValue);
             } catch (Exception e) {
                 handleDes.setE(e);
                 return;
@@ -697,7 +697,7 @@ public class IOSStepHandler {
         log.sendStepLog(StepType.INFO, "开始检测" + des + "兼容", "检测与当前设备截图相似度，期望相似度为" + matchThreshold + "%");
         File file = null;
         if (pathValue.startsWith("http")) {
-            file = DownImageTool.download(pathValue);
+            file = DownloadTool.download(pathValue);
         }
         double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
         handleDes.setStepDes("检测" + des + "图片相似度");

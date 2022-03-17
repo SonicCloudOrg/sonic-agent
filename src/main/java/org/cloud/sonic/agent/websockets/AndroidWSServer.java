@@ -41,7 +41,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -626,7 +625,7 @@ public class AndroidWSServer {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
-                                File localFile = DownImageTool.download(msg.getString("apk"));
+                                File localFile = DownloadTool.download(msg.getString("apk"));
                                 iDevice.installPackage(localFile.getAbsolutePath()
                                         , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                                         , "-r", "-t", "-g");

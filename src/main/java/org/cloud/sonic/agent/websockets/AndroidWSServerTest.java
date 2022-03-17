@@ -561,7 +561,7 @@ public class AndroidWSServerTest {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
-                                File localFile = DownImageTool.download(msg.getString("apk"));
+                                File localFile = DownloadTool.download(msg.getString("apk"));
                                 udIdMap.get(session).installPackage(localFile.getAbsolutePath()
                                         , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                                         , "-r", "-t", "-g");

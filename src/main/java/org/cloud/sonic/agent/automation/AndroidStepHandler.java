@@ -901,7 +901,7 @@ public class AndroidStepHandler {
         File file = null;
         if (pathValue.startsWith("http")) {
             try {
-                file = DownImageTool.download(pathValue);
+                file = DownloadTool.download(pathValue);
             } catch (Exception e) {
                 handleDes.setE(e);
                 return;
@@ -1024,7 +1024,7 @@ public class AndroidStepHandler {
             log.sendStepLog(StepType.INFO, "开始检测" + des + "兼容", "检测与当前设备截图相似度，期望相似度为" + matchThreshold + "%");
             File file = null;
             if (pathValue.startsWith("http")) {
-                file = DownImageTool.download(pathValue);
+                file = DownloadTool.download(pathValue);
             }
             double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
             handleDes.setStepDes("检测" + des + "图片相似度");
