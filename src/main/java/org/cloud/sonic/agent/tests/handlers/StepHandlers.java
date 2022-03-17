@@ -33,11 +33,6 @@ public class StepHandlers implements ApplicationListener<ContextRefreshedEvent> 
     private final ConcurrentHashMap<ConditionEnum, StepHandler> stepHandlers =
             new ConcurrentHashMap<>(8);
 
-//    public StepHandlers(ApplicationContext applicationContext) {
-//        addConditionHandlers(applicationContext.getBeansOfType(StepHandler.class).values());
-//        logger.info("Registered {} condition handler(s)", stepHandlers.size());
-//    }
-
     public HandleDes runStep(JSONObject stepJSON, HandleDes handleDes, RunStepThread thread) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         Integer conditionType = step.getInteger("conditionType");

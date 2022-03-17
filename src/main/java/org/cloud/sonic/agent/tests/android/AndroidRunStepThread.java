@@ -34,6 +34,8 @@ public class AndroidRunStepThread extends RunStepThread {
 
         this.setDaemon(true);
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_RUN_STEP_TASK_PRE));
+        setPlatformType(PlatformType.ANDROID);
+        setLogTool(androidTestTaskBootThread.getAndroidStepHandler().getLog());
     }
 
     public AndroidTestTaskBootThread getAndroidTestTaskBootThread() {
@@ -45,14 +47,14 @@ public class AndroidRunStepThread extends RunStepThread {
         StepHandlers stepHandlers = SpringTool.getBean(StepHandlers.class);
         JSONObject jsonObject = androidTestTaskBootThread.getJsonObject();
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
-        setPlatformType(PlatformType.ANDROID);
 
+        HandleDes handleDes = new HandleDes();
         for (JSONObject step : steps) {
             if (isStopped()) {
                 return;
             }
             try {
-                stepHandlers.runStep(step, new HandleDes(), this);
+                stepHandlers.runStep(step, handleDes, this);
             } catch (Throwable e) {
                 break;
             }

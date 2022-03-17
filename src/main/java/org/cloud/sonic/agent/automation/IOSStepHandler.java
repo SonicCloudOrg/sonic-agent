@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
 import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
@@ -64,6 +65,10 @@ public class IOSStepHandler {
     private String udId = "";
     //测试状态
     private int status = ResultDetailStatus.PASS;
+
+    public LogTool getLog() {
+        return log;
+    }
 
     public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;
@@ -938,30 +943,40 @@ public class IOSStepHandler {
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
         }
-        switchType(step.getInteger("error"), handleDes.getStepDes(), handleDes.getDetail(), handleDes.getE());
+        switchType(step, handleDes);
     }
 
-    public void switchType(int error, String step, String detail, Throwable e) throws Throwable {
+    public void switchType(JSONObject stepJson, HandleDes handleDes) throws Throwable {
+        Integer error = stepJson.getInteger("error");
+        String stepDes = handleDes.getStepDes();
+        String detail = handleDes.getDetail();
+        Throwable e = handleDes.getE();
         if (e != null) {
             switch (error) {
                 case ErrorType.IGNORE:
-                    log.sendStepLog(StepType.PASS, step + "异常！已忽略...", detail);
+                    if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
+                        log.sendStepLog(StepType.PASS, stepDes + "异常！已忽略...", detail);
+                    }
                     break;
                 case ErrorType.WARNING:
-                    log.sendStepLog(StepType.WARN, step + "异常！", detail);
+                    log.sendStepLog(StepType.WARN, stepDes + "异常！", detail);
                     setResultDetailStatus(ResultDetailStatus.WARN);
                     errorScreen();
                     exceptionLog(e);
                     break;
                 case ErrorType.SHUTDOWN:
-                    log.sendStepLog(StepType.ERROR, step + "异常！", detail);
+                    log.sendStepLog(StepType.ERROR, stepDes + "异常！", detail);
                     setResultDetailStatus(ResultDetailStatus.FAIL);
                     errorScreen();
                     exceptionLog(e);
                     throw e;
             }
+            // 非条件步骤清除异常对象
+            if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
+                handleDes.clear();
+            }
         } else {
-            log.sendStepLog(StepType.PASS, step, detail);
+            log.sendStepLog(StepType.PASS, stepDes, detail);
         }
     }
 }

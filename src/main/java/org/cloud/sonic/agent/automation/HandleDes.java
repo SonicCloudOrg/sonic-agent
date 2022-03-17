@@ -16,6 +16,12 @@ public class HandleDes {
         this.e = null;
     }
 
+    public void clear() {
+        this.stepDes = "";
+        this.detail = "";
+        this.e = null;
+    }
+
     public String getStepDes() {
         return stepDes;
     }
