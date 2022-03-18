@@ -25,6 +25,8 @@ public class IOSRunStepThread extends RunStepThread {
 
         this.setDaemon(true);
         this.setName(iosTestTaskBootThread.formatThreadName(IOS_RUN_STEP_TASK_PRE));
+        setPlatformType(PlatformType.IOS);
+        setLogTool(iosTestTaskBootThread.getIosStepHandler().getLog());
     }
 
     public IOSTestTaskBootThread getIosTestTaskBootThread() {
@@ -36,7 +38,6 @@ public class IOSRunStepThread extends RunStepThread {
         StepHandlers stepHandlers = SpringTool.getBean(StepHandlers.class);
         JSONObject jsonObject = iosTestTaskBootThread.getJsonObject();
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
-        setPlatformType(PlatformType.IOS);
 
         for (JSONObject step : steps) {
             if (isStopped()) {

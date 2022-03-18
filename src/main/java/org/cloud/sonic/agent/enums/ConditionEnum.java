@@ -11,32 +11,35 @@ public enum ConditionEnum implements SonicEnum<Integer>, Serializable {
     /**
      * 非条件
      */
-    NONE(0),
+    NONE(0, "none"),
 
     /**
      * if 条件
      */
-    IF(1),
+    IF(1, "if"),
 
     /**
      * else if 条件
      */
-    ELSE_IF(2),
+    ELSE_IF(2, "else_if"),
 
     /**
      * else 条件
      */
-    ELSE(3),
+    ELSE(3, "else"),
 
     /**
      * while 条件
      */
-    WHILE(4);
+    WHILE(4, "while");
 
-    private Integer value = 0;
+    private final Integer value;
 
-    ConditionEnum(int value) {
+    private final String name;
+
+    ConditionEnum(int value, String name) {
         this.value = value;
+        this.name = name;
     }
 
     @Override
@@ -44,5 +47,7 @@ public enum ConditionEnum implements SonicEnum<Integer>, Serializable {
         return value;
     }
 
-
+    public String getName() {
+        return name;
+    }
 }

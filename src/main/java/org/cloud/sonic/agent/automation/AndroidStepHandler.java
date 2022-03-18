@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.enums.SonicEnum;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
 import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
@@ -61,6 +63,10 @@ public class AndroidStepHandler {
     private String udId = "";
     //测试状态
     private int status = ResultDetailStatus.PASS;
+
+    public LogTool getLog() {
+        return log;
+    }
 
     public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;
@@ -579,6 +585,7 @@ public class AndroidStepHandler {
     public void rotateDevice(HandleDes handleDes, String text) {
         try {
             String s = "";
+            handleDes.setDetail("");
             switch (text) {
                 case "screenSub":
                     s = "sub";
@@ -601,6 +608,7 @@ public class AndroidStepHandler {
 
     public void lock(HandleDes handleDes) {
         handleDes.setStepDes("锁定屏幕");
+        handleDes.setDetail("");
         try {
             androidDriver.lockDevice();
         } catch (Exception e) {
@@ -610,6 +618,7 @@ public class AndroidStepHandler {
 
     public void unLock(HandleDes handleDes) {
         handleDes.setStepDes("解锁屏幕");
+        handleDes.setDetail("");
         try {
             androidDriver.unlockDevice();
         } catch (Exception e) {
@@ -619,6 +628,7 @@ public class AndroidStepHandler {
 
     public void airPlaneMode(HandleDes handleDes) {
         handleDes.setStepDes("切换飞行模式");
+        handleDes.setDetail("");
         try {
             androidDriver.toggleAirplaneMode();
         } catch (Exception e) {
@@ -628,6 +638,7 @@ public class AndroidStepHandler {
 
     public void wifiMode(HandleDes handleDes) {
         handleDes.setStepDes("打开WIFI网络");
+        handleDes.setDetail("");
         try {
             if (!androidDriver.getConnection().isWiFiEnabled()) {
                 androidDriver.toggleWifi();
@@ -639,6 +650,7 @@ public class AndroidStepHandler {
 
     public void locationMode(HandleDes handleDes) {
         handleDes.setStepDes("切换位置服务");
+        handleDes.setDetail("");
         try {
             androidDriver.toggleLocationServices();
         } catch (Exception e) {
@@ -648,6 +660,7 @@ public class AndroidStepHandler {
 
     public void asserts(HandleDes handleDes, String actual, String expect, String type) {
         handleDes.setDetail("真实值： " + actual + " 期望值： " + expect);
+        handleDes.setDetail("");
         try {
             switch (type) {
                 case "assertEquals":
@@ -693,6 +706,7 @@ public class AndroidStepHandler {
 
     public void toWebView(HandleDes handleDes, String webViewName) {
         handleDes.setStepDes("切换到" + webViewName);
+        handleDes.setDetail("");
         try {
             androidDriver.context(webViewName);
         } catch (Exception e) {
@@ -763,6 +777,7 @@ public class AndroidStepHandler {
 
     public void keyCode(HandleDes handleDes, String key) {
         handleDes.setStepDes("按系统按键" + key + "键");
+        handleDes.setDetail("");
         try {
             androidDriver.pressKey(new KeyEvent().withKey(AndroidKey.valueOf(key)));
         } catch (Exception e) {
@@ -975,6 +990,7 @@ public class AndroidStepHandler {
 
     public void toHandle(HandleDes handleDes, String titleName) throws Exception {
         handleDes.setStepDes("切换Handle");
+        handleDes.setDetail("");
         Thread.sleep(1000);
         Set<String> handle = androidDriver.getWindowHandles();//获取handles
         String ha;
@@ -1055,6 +1071,7 @@ public class AndroidStepHandler {
 
     public String stepScreen(HandleDes handleDes) {
         handleDes.setStepDes("获取截图");
+        handleDes.setDetail("");
         String url = "";
         try {
             androidDriver.context("NATIVE_APP");//先切换回app
@@ -1088,6 +1105,7 @@ public class AndroidStepHandler {
 
     public void runMonkey(HandleDes handleDes, JSONObject content, List<JSONObject> text) {
         handleDes.setStepDes("运行随机事件测试完毕");
+        handleDes.setDetail("");
         String packageName = content.getString("packageName");
         int pctNum = content.getInteger("pctNum");
         if (!androidDriver.isAppInstalled(packageName)) {
@@ -1374,6 +1392,7 @@ public class AndroidStepHandler {
 
     public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
         handleDes.setStepDes("执行公共步骤 " + name);
+        handleDes.setDetail("");
         log.sendStepLog(StepType.WARN, "公共步骤 " + name + " 开始执行", "");
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
@@ -1565,30 +1584,46 @@ public class AndroidStepHandler {
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
         }
-        switchType(step.getInteger("error"), handleDes.getStepDes(), handleDes.getDetail(), handleDes.getE());
+        switchType(step, handleDes);
     }
 
-    public void switchType(int error, String step, String detail, Throwable e) throws Throwable {
+    public void switchType(JSONObject stepJson, HandleDes handleDes) throws Throwable {
+        Integer error = stepJson.getInteger("error");
+        String stepDes = handleDes.getStepDes();
+        String detail = handleDes.getDetail();
+        Throwable e = handleDes.getE();
         if (e != null) {
             switch (error) {
                 case ErrorType.IGNORE:
-                    log.sendStepLog(StepType.PASS, step + "异常！已忽略...", detail);
+                    if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
+                        log.sendStepLog(StepType.PASS, stepDes + "异常！已忽略...", detail);
+                    } else {
+                        ConditionEnum conditionType =
+                                SonicEnum.valueToEnum(ConditionEnum.class, stepJson.getInteger("conditionType"));
+                        String des = "「%s」步骤「%s」异常".formatted(conditionType.getName(), stepDes);
+                        log.sendStepLog(StepType.ERROR, des, detail);
+                        exceptionLog(e);
+                    }
                     break;
                 case ErrorType.WARNING:
-                    log.sendStepLog(StepType.WARN, step + "异常！", detail);
+                    log.sendStepLog(StepType.WARN, stepDes + "异常！", detail);
                     setResultDetailStatus(ResultDetailStatus.WARN);
                     errorScreen();
                     exceptionLog(e);
                     break;
                 case ErrorType.SHUTDOWN:
-                    log.sendStepLog(StepType.ERROR, step + "异常！", detail);
+                    log.sendStepLog(StepType.ERROR, stepDes + "异常！", detail);
                     setResultDetailStatus(ResultDetailStatus.FAIL);
                     errorScreen();
                     exceptionLog(e);
                     throw e;
             }
+            // 非条件步骤清除异常对象
+            if (stepJson.getInteger("conditionType").equals(0)) {
+                handleDes.clear();
+            }
         } else {
-            log.sendStepLog(StepType.PASS, step, detail);
+            log.sendStepLog(StepType.PASS, stepDes, detail);
         }
     }
 }
