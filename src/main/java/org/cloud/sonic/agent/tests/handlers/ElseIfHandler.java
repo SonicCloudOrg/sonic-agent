@@ -44,7 +44,7 @@ public class ElseIfHandler implements StepHandler {
         noneConditionHandler.runStep(stepJSON, handleDes, thread);
         // 上述步骤没有异常则取出else if下的步骤，再次丢给 stepHandlers 处理
         if (handleDes.getE() == null) {
-            thread.getLogTool().sendStepLog(StepType.PASS, "「else if」步骤直通通过，开始执行「else if」子步骤", "");
+            thread.getLogTool().sendStepLog(StepType.PASS, "「else if」步骤通过，开始执行「else if」子步骤", "");
             handleDes.clear();
             for (JSONObject step : steps) {
                 JSONObject jsonObject = new JSONObject();

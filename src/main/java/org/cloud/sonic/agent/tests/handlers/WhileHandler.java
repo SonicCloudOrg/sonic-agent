@@ -49,7 +49,7 @@ public class WhileHandler implements StepHandler {
             thread.getLogTool().sendStepLog(StepType.PASS, "第「" + i + "」次子步骤执行完毕", "");
 
             handleDes.clear();
-            thread.getLogTool().sendStepLog(StepType.PASS, "开始执行第「" + i+1 + "」次「while」步骤", "");
+            thread.getLogTool().sendStepLog(StepType.PASS, "开始执行第「" + (i+1) + "」次「while」步骤", "");
             noneConditionHandler.runStep(stepJSON, handleDes, thread);
 
             i++;

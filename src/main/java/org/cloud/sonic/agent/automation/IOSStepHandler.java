@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.enums.SonicEnum;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
 import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
@@ -956,6 +957,12 @@ public class IOSStepHandler {
                 case ErrorType.IGNORE:
                     if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
                         log.sendStepLog(StepType.PASS, stepDes + "异常！已忽略...", detail);
+                    } else {
+                        ConditionEnum conditionType =
+                                SonicEnum.valueToEnum(ConditionEnum.class, stepJson.getInteger("conditionType"));
+                        String des = "「%s」步骤「%s」异常".formatted(conditionType.getName(), stepDes);
+                        log.sendStepLog(StepType.ERROR, des, detail);
+                        exceptionLog(e);
                     }
                     break;
                 case ErrorType.WARNING:
