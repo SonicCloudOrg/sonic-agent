@@ -80,7 +80,6 @@ public class TerminalWSServer {
         if (!isInstall) {
             logger.info("等待安装超时！");
         }
-//        getWifiList(iDevice,session);
     }
 
     @OnMessage
@@ -90,6 +89,9 @@ public class TerminalWSServer {
         switch (msg.getString("type")) {
             case "appList":
                 getAppList(udIdMap.get(session), session);
+                break;
+            case "wifiList":
+                getWifiList(udIdMap.get(session), session);
                 break;
             case "stopCmd":
                 Future<?> ter = terminalMap.get(session);
@@ -328,6 +330,9 @@ public class TerminalWSServer {
             }
         }
         wifi = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android ACCESS_FINE_LOCATION allow");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android ACCESS_NETWORK_STATE allow");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android ACCESS_WIFI_STATE allow");
             AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.WifiListActivity");
             AndroidDeviceBridgeTool.pressKey(iDevice, 4);
             int wifiListPort = PortTool.getPort();
@@ -355,12 +360,10 @@ public class TerminalWSServer {
                         // 根据长度读取数据体
                         byte[] dataBytes = inputStream.readNBytes(readLen);
                         String dataJson = new String(dataBytes);
-
-                        System.out.println(dataJson);
-//                        JSONObject wifiListDetail = new JSONObject();
-//                        wifiListDetail.put("msg", "appListDetail");
-//                        wifiListDetail.put("detail", JSON.parseObject(dataJson));
-//                        AgentTool.sendText(session, wifiListDetail.toJSONString());
+                        JSONObject wifiListDetail = new JSONObject();
+                        wifiListDetail.put("msg", "wifiList");
+                        wifiListDetail.put("detail", JSON.parseObject(dataJson));
+                        AgentTool.sendText(session, wifiListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

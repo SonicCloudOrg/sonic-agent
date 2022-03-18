@@ -3,9 +3,10 @@ package org.cloud.sonic.agent.tools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
 
 /**
  * @author ZhouYiXun
@@ -14,18 +15,29 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AgentManagerTool {
-    private final Logger logger = LoggerFactory.getLogger(AgentManagerTool.class);
+    private final static Logger logger = LoggerFactory.getLogger(AgentManagerTool.class);
+
+    private static ConfigurableApplicationContext context;
 
     @Autowired
-    private ConfigurableApplicationContext context;
+    public void setContext(ConfigurableApplicationContext c) {
+        AgentManagerTool.context = c;
+    }
 
-    public void stop() {
+    public static void stop() {
         context.close();
         logger.info("Bye！");
     }
 
-    public void update(){
+    public static void update(String version) {
         logger.info("Updating...");
-
+        try {
+            DownloadTool.update(version);
+        } catch (IOException e) {
+            logger.info("Update agent version failed!");
+            logger.error(e.getMessage());
+        } finally {
+            logger.info("Done.");
+        }
     }
 }

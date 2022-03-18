@@ -77,7 +77,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                         JSONObject r = JSONObject.parseObject(s);
                         if (r.getString("status").equals("online")) {
                             sendOnlineStatus(r);
-                        } else {
+                        } else if (r.getString("status").equals("offline")) {
                             sendDisConnectStatus(r);
                         }
                         logger.info(s);
@@ -205,12 +205,12 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
     }
 
-    public static void launch(String udId,String pkg){
+    public static void launch(String udId, String pkg) {
         String commandLine = "%s app launch -u %s -b %s";
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));
     }
 
-    public static void uninstall(String udId,String pkg){
+    public static void uninstall(String udId, String pkg) {
         String commandLine = "%s app uninstall -u %s -b %s";
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));
     }

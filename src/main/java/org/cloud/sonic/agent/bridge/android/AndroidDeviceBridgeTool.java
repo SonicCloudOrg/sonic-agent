@@ -2,7 +2,7 @@ package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.tests.android.AndroidTemperThread;
-import org.cloud.sonic.agent.tools.DownImageTool;
+import org.cloud.sonic.agent.tools.DownloadTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,14 +12,9 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -383,7 +378,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
     public static void pushToCamera(IDevice iDevice, String url) {
         try {
-            File image = DownImageTool.download(url);
+            File image = DownloadTool.download(url);
             iDevice.pushFile(image.getAbsolutePath(), "/sdcard/DCIM/Camera/" + image.getName());
             executeCommand(iDevice, "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/" + image.getName());
         } catch (IOException e) {

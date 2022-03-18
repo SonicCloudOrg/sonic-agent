@@ -11,13 +11,12 @@ import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
-import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentTool;
-import org.cloud.sonic.agent.tools.DownImageTool;
+import org.cloud.sonic.agent.tools.DownloadTool;
 import org.cloud.sonic.agent.tools.UploadTools;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
@@ -220,7 +219,7 @@ public class IOSWSServer {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
-                                File localFile = DownImageTool.download(msg.getString("ipa"));
+                                File localFile = DownloadTool.download(msg.getString("ipa"));
                                 SibTool.install(udIdMap.get(session), localFile.getAbsolutePath());
                                 result.put("status", "success");
                             } catch (IOException e) {
