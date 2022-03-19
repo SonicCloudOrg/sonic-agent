@@ -43,7 +43,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Scrcpy方案
  */
 @Component
-@ServerEndpoint(value = "/websockets/android2/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/screen/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class AndroidScreenWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidScreenWSServer.class);
