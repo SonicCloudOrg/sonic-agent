@@ -2,7 +2,7 @@ package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.common.maps.MiniCapMap;
+import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
@@ -122,7 +122,7 @@ public class MiniCapInputSocketThread extends Thread {
         }
         AndroidDeviceBridgeTool.removeForward(iDevice, finalMiniCapPort, "minicap");
         if (session != null) {
-            MiniCapMap.getMap().remove(session);
+            ScreenMap.getMap().remove(session);
         }
     }
 }

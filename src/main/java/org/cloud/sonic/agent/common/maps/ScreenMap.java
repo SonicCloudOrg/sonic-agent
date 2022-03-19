@@ -4,10 +4,10 @@ import javax.websocket.Session;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ScrcpyMap {
-    private static Map<Session, Thread> scrcpyMap = new ConcurrentHashMap<>();
+public class ScreenMap {
+    private static Map<Session, Thread> miniCapMap = new ConcurrentHashMap<>();
 
     public static Map<Session, Thread> getMap() {
-        return scrcpyMap;
+        return miniCapMap;
     }
 }

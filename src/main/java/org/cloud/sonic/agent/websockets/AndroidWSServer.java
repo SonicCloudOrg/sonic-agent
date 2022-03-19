@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
-@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/screen/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class AndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
@@ -59,9 +59,6 @@ public class AndroidWSServer {
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
-    private Map<Session, Thread> rotationMap = new ConcurrentHashMap<>();
-    private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
-    private Map<Session, String> picMap = new ConcurrentHashMap<>();
     private List<Session> NotStopSession = new ArrayList<>();
     @Autowired
     private RestTemplate restTemplate;
@@ -93,7 +90,6 @@ public class AndroidWSServer {
             logger.info("设备未连接，请检查！");
             return;
         }
-        AndroidDeviceBridgeTool.screen(iDevice, "abort");
         udIdMap.put(session, iDevice);
 
         AndroidAPKMap.getMap().put(udId, false);
@@ -129,62 +125,6 @@ public class AndroidWSServer {
 
         Semaphore isTouchFinish = new Semaphore(0);
         String finalPath = path;
-        Thread rotationPro = new Thread(() -> {
-            try {
-                //开始启动
-                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.RotationMonitorService", finalPath)
-                        , new IShellOutputReceiver() {
-                            @Override
-                            public void addOutput(byte[] bytes, int i, int i1) {
-                                String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
-                                logger.info(udId + "旋转到：" + res);
-                                rotationStatusMap.put(session, Integer.parseInt(res));
-                                JSONObject rotationJson = new JSONObject();
-                                rotationJson.put("msg", "rotation");
-                                rotationJson.put("value", Integer.parseInt(res) * 90);
-                                AgentTool.sendText(session, rotationJson.toJSONString());
-                                Thread old = MiniCapMap.getMap().get(session);
-                                if (old != null) {
-                                    old.interrupt();
-                                    do {
-                                        try {
-                                            Thread.sleep(1000);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    while (MiniCapMap.getMap().get(session) != null);
-                                }
-                                MiniCapUtil miniCapUtil = new MiniCapUtil();
-                                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                                Thread miniCapThread = miniCapUtil.start(
-                                        iDevice.getSerialNumber(), banner, null,
-                                        picMap.get(session) == null ? "high" : picMap.get(session),
-                                        Integer.parseInt(res), session
-                                );
-                                MiniCapMap.getMap().put(session, miniCapThread);
-                                JSONObject picFinish = new JSONObject();
-                                picFinish.put("msg", "picFinish");
-                                AgentTool.sendText(session, picFinish.toJSONString());
-                            }
-
-                            @Override
-                            public void flush() {
-                            }
-
-                            @Override
-                            public boolean isCancelled() {
-                                return false;
-                            }
-                        }, 0, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                logger.info("{} 设备方向监听启动异常！"
-                        , iDevice.getSerialNumber());
-                logger.error(e.getMessage());
-            }
-        });
-        rotationPro.start();
-        rotationMap.put(session, rotationPro);
 
         Thread touchPro = new Thread(() -> {
             try {
@@ -363,7 +303,7 @@ public class AndroidWSServer {
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) throws InterruptedException {
+    public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
         IDevice iDevice = udIdMap.get(session);
@@ -486,29 +426,6 @@ public class AndroidWSServer {
                 ProcessCommandTool.getProcessLocalCommand("adb -s " + iDevice.getSerialNumber()
                         + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
                 break;
-            case "pic": {
-                Thread old = MiniCapMap.getMap().get(session);
-                old.interrupt();
-                do {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                while (MiniCapMap.getMap().get(session) != null);
-                MiniCapUtil miniCapUtil = new MiniCapUtil();
-                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                Thread miniCapThread = miniCapUtil.start(
-                        iDevice.getSerialNumber(), banner, null, msg.getString("detail"),
-                        rotationStatusMap.get(session), session
-                );
-                MiniCapMap.getMap().put(session, miniCapThread);
-                JSONObject picFinish = new JSONObject();
-                picFinish.put("msg", "picFinish");
-                AgentTool.sendText(session, picFinish.toJSONString());
-                break;
-            }
             case "touch":
                 OutputStream outputStream = outputMap.get(session);
                 if (outputStream != null) {
@@ -694,13 +611,6 @@ public class AndroidWSServer {
         AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);
         udIdMap.remove(session);
-        if (rotationMap.get(session) != null) {
-            rotationMap.get(session).interrupt();
-        }
-        rotationMap.remove(session);
-        if (MiniCapMap.getMap().get(session) != null) {
-            MiniCapMap.getMap().get(session).interrupt();
-        }
         WebSocketSessionMap.removeSession(session);
         try {
             session.close();

@@ -1,7 +1,6 @@
 package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.android.ddmlib.IDevice;
-import org.cloud.sonic.agent.common.maps.ScrcpyMap;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.PortTool;
@@ -11,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Queue;
