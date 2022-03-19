@@ -62,7 +62,6 @@ public class AndroidWSServer {
     private Map<Session, Thread> rotationMap = new ConcurrentHashMap<>();
     private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
     private Map<Session, String> picMap = new ConcurrentHashMap<>();
-    private Map<Session, String> logMap = new ConcurrentHashMap<>();
     private List<Session> NotStopSession = new ArrayList<>();
     @Autowired
     private RestTemplate restTemplate;
@@ -371,38 +370,17 @@ public class AndroidWSServer {
         switch (msg.getString("type")) {
             case "proxy": {
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
-                String processName = String.format("process-%s-proxy", iDevice);
-                if (GlobalProcessMap.getMap().get(processName) != null) {
-                    Process ps = GlobalProcessMap.getMap().get(processName);
-                    ps.children().forEach(ProcessHandle::destroy);
-                    ps.destroy();
-                }
-                String system = System.getProperty("os.name").toLowerCase();
-                Process ps = null;
                 Socket portSocket = PortTool.getBindSocket();
                 Socket webPortSocket = PortTool.getBindSocket();
                 int pPort = PortTool.releaseAndGetPort(portSocket);
                 int webPort = PortTool.releaseAndGetPort(webPortSocket);
-                File pFile = new File("plugins");
-                File sgm = new File(pFile + File.separator + "sonic-go-mitmproxy");
-                String command = String.format(
-                        "%s -cert_path %s -addr :%d -web_addr :%d", sgm.getAbsolutePath(), pFile.getAbsolutePath(), pPort, webPort);
-                try {
-                    if (system.contains("win")) {
-                        ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
-                    } else if (system.contains("linux") || system.contains("mac")) {
-                        ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
-                    }
-                    AndroidDeviceBridgeTool.startProxy(iDevice, host, pPort);
-                    GlobalProcessMap.getMap().put(processName, ps);
-                    JSONObject proxy = new JSONObject();
-                    proxy.put("webPort", webPort);
-                    proxy.put("port", pPort);
-                    proxy.put("msg", "proxyResult");
-                    AgentTool.sendText(session, proxy.toJSONString());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                SGMTool.startProxy(iDevice.getSerialNumber(), SGMTool.getCommand(pPort, webPort));
+                AndroidDeviceBridgeTool.startProxy(iDevice, host, pPort);
+                JSONObject proxy = new JSONObject();
+                proxy.put("webPort", webPort);
+                proxy.put("port", pPort);
+                proxy.put("msg", "proxyResult");
+                AgentTool.sendText(session, proxy.toJSONString());
                 break;
             }
             case "installCert": {
@@ -711,13 +689,7 @@ public class AndroidWSServer {
                     ps.destroy();
                 }
             }
-            String processName = String.format("process-%s-proxy", iDevice.getSerialNumber());
-            if (GlobalProcessMap.getMap().get(processName) != null) {
-                Process ps = GlobalProcessMap.getMap().get(processName);
-                ps.children().forEach(ProcessHandle::destroy);
-                ps.destroy();
-            }
-            logMap.remove(session);
+            SGMTool.stopProxy(iDevice.getSerialNumber());
         }
         AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);

@@ -29,7 +29,20 @@ public class LaunchTool implements ApplicationRunner {
         if (!testFile.exists()) {
             testFile.mkdirs();
         }
+        new Thread(() -> {
+            File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
+            if (!file.exists()) {
+                SGMTool.startProxy("init", SGMTool.getCommand());
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                SGMTool.stopProxy("init");
+            }
+        }).start();
         AppiumServer.start(port);
+
     }
 
     @PreDestroy

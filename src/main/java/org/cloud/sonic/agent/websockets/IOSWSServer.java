@@ -10,14 +10,13 @@ import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
+import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
-import org.cloud.sonic.agent.tools.AgentTool;
-import org.cloud.sonic.agent.tools.DownloadTool;
-import org.cloud.sonic.agent.tools.UploadTools;
+import org.cloud.sonic.agent.tools.*;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
@@ -32,6 +31,7 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.File;
 import java.io.IOException;
+import java.net.Socket;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +44,10 @@ public class IOSWSServer {
     private Map<Session, String> udIdMap = new ConcurrentHashMap<>();
     @Value("${sonic.agent.key}")
     private String key;
+    @Value("${sonic.agent.host}")
+    private String host;
+    @Value("${sonic.agent.port}")
+    private int port;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -129,26 +133,48 @@ public class IOSWSServer {
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
+        String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "proxy": {
+                Socket portSocket = PortTool.getBindSocket();
+                Socket webPortSocket = PortTool.getBindSocket();
+                int pPort = PortTool.releaseAndGetPort(portSocket);
+                int webPort = PortTool.releaseAndGetPort(webPortSocket);
+                SGMTool.startProxy(udId, SGMTool.getCommand(pPort, webPort));
+                JSONObject proxy = new JSONObject();
+                proxy.put("webPort", webPort);
+                proxy.put("port", pPort);
+                proxy.put("msg", "proxyResult");
+                AgentTool.sendText(session, proxy.toJSONString());
+                break;
+            }
+            case "installCert": {
+                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
+                if (iosStepHandler == null || iosStepHandler.getDriver() == null) {
+                    break;
+                }
+                iosStepHandler.getDriver().activateApp("com.apple.mobilesafari");
+                break;
+            }
             case "appList":
-                JSONObject appList = SibTool.getAppList(udIdMap.get(session));
+                JSONObject appList = SibTool.getAppList(udId);
                 if (appList.get("appList") != null) {
                     appList.put("msg", "appListDetail");
                     sendText(session, appList.toJSONString());
                 }
                 break;
             case "launch":
-                SibTool.launch(udIdMap.get(session), msg.getString("pkg"));
+                SibTool.launch(udId, msg.getString("pkg"));
                 break;
             case "uninstallApp":
-                SibTool.uninstall(udIdMap.get(session), msg.getString("detail"));
+                SibTool.uninstall(udId, msg.getString("detail"));
                 break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
                     JSONObject jsonDebug = new JSONObject();
                     jsonDebug.put("msg", "findSteps");
                     jsonDebug.put("key", key);
-                    jsonDebug.put("udId", udIdMap.get(session));
+                    jsonDebug.put("udId", udId);
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     NettyThreadPool.send(jsonDebug);
@@ -220,7 +246,7 @@ public class IOSWSServer {
                             result.put("msg", "installFinish");
                             try {
                                 File localFile = DownloadTool.download(msg.getString("ipa"));
-                                SibTool.install(udIdMap.get(session), localFile.getAbsolutePath());
+                                SibTool.install(udId, localFile.getAbsolutePath());
                                 result.put("status", "success");
                             } catch (IOException e) {
                                 result.put("status", "fail");
@@ -290,6 +316,7 @@ public class IOSWSServer {
         } finally {
             HandlerMap.getIOSMap().remove(session.getId());
         }
+        SGMTool.stopProxy(udIdMap.get(session));
         IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);
         udIdMap.remove(session);
