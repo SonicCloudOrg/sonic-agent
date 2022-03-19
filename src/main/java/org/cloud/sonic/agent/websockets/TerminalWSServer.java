@@ -6,7 +6,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import org.cloud.sonic.agent.maps.AndroidAPKMap;
+import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.tools.AgentTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
@@ -40,6 +40,7 @@ public class TerminalWSServer {
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> terminalMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> appListMap = new ConcurrentHashMap<>();
+    private Map<Session, Future<?>> wifiListMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
 
     @OnOpen
@@ -88,6 +89,9 @@ public class TerminalWSServer {
         switch (msg.getString("type")) {
             case "appList":
                 getAppList(udIdMap.get(session), session);
+                break;
+            case "wifiList":
+                getWifiList(udIdMap.get(session), session);
                 break;
             case "stopCmd":
                 Future<?> ter = terminalMap.get(session);
@@ -314,5 +318,80 @@ public class TerminalWSServer {
             AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicapplistservice");
         });
         appListMap.put(session, app);
+    }
+
+    public void getWifiList(IDevice iDevice, Session session) {
+        Future<?> wifi = wifiListMap.get(session);
+        if (wifi != null && (!wifi.isDone() || !wifi.isCancelled())) {
+            try {
+                wifi.cancel(true);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+            }
+        }
+        wifi = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android ACCESS_FINE_LOCATION allow");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android ACCESS_NETWORK_STATE allow");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android ACCESS_WIFI_STATE allow");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.WifiListActivity");
+            AndroidDeviceBridgeTool.pressKey(iDevice, 4);
+            int wifiListPort = PortTool.getPort();
+            try {
+                AndroidDeviceBridgeTool.forward(iDevice, wifiListPort, "sonicawifilistservice");
+                Socket wifiListSocket = null;
+                InputStream inputStream = null;
+                try {
+                    wifiListSocket = new Socket("localhost", wifiListPort);
+                    inputStream = wifiListSocket.getInputStream();
+                    while (wifiListSocket.isConnected()) {
+                        // 获取长度
+                        byte[] lengthBytes = inputStream.readNBytes(32);
+                        if (Thread.interrupted() || lengthBytes.length == 0) {
+                            // lengthBytes.length基本就是中断的时候强制唤醒导致的
+                            break;
+                        }
+                        // byte转字符串（二进制），然后再转长度
+                        StringBuffer binStr = new StringBuffer();
+                        for (byte lengthByte : lengthBytes) {
+                            binStr.append(lengthByte);
+                        }
+                        Integer readLen = Integer.valueOf(binStr.toString(), 2);
+
+                        // 根据长度读取数据体
+                        byte[] dataBytes = inputStream.readNBytes(readLen);
+                        String dataJson = new String(dataBytes);
+                        JSONObject wifiListDetail = new JSONObject();
+                        wifiListDetail.put("msg", "wifiList");
+                        wifiListDetail.put("detail", JSON.parseObject(dataJson));
+                        AgentTool.sendText(session, wifiListDetail.toJSONString());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (wifiListSocket != null && wifiListSocket.isConnected()) {
+                        try {
+                            wifiListSocket.close();
+                            logger.info("wifiList socket已关闭");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (inputStream != null) {
+                        try {
+                            inputStream.close();
+                            logger.info("wifiList output流已关闭");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.info("{} 设备wifi列表监听服务启动异常！"
+                        , iDevice.getSerialNumber());
+                logger.error(e.getMessage());
+            }
+            AndroidDeviceBridgeTool.removeForward(iDevice, wifiListPort, "sonicawifilistservice");
+        });
+        appListMap.put(session, wifi);
     }
 }

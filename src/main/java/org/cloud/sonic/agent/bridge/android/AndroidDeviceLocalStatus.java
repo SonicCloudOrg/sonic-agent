@@ -1,8 +1,8 @@
 package org.cloud.sonic.agent.bridge.android;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.interfaces.DeviceStatus;
-import org.cloud.sonic.agent.maps.AndroidDeviceManagerMap;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 
 /**

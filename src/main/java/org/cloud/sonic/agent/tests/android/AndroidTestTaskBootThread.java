@@ -3,13 +3,12 @@ package org.cloud.sonic.agent.tests.android;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
-import org.cloud.sonic.agent.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 /**
  * android启动各个子任务的线程

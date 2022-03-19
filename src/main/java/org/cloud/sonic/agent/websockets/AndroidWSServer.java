@@ -8,18 +8,18 @@ import com.android.ddmlib.IShellOutputReceiver;
 import com.android.ddmlib.InstallException;
 import com.android.ddmlib.InstallReceiver;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import org.cloud.sonic.agent.interfaces.DeviceStatus;
-import org.cloud.sonic.agent.interfaces.PlatformType;
-import org.cloud.sonic.agent.maps.*;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
-import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
+import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tools.*;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
@@ -50,14 +50,16 @@ public class AndroidWSServer {
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
+    @Value("${sonic.agent.host}")
+    private String host;
+    @Value("${sonic.agent.port}")
+    private int port;
     @Value("${modules.android.use-adbkit}")
     private boolean isEnableAdbKit;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
-    private Map<Session, Thread> rotationMap = new ConcurrentHashMap<>();
-    private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
-    private Map<Session, String> picMap = new ConcurrentHashMap<>();
+    private List<Session> NotStopSession = new ArrayList<>();
     @Autowired
     private RestTemplate restTemplate;
 
@@ -88,7 +90,6 @@ public class AndroidWSServer {
             logger.info("设备未连接，请检查！");
             return;
         }
-        AndroidDeviceBridgeTool.screen(iDevice, "abort");
         udIdMap.put(session, iDevice);
 
         AndroidAPKMap.getMap().put(udId, false);
@@ -100,6 +101,11 @@ public class AndroidWSServer {
             logger.info("已安装Sonic插件，检查版本信息通过");
         } else {
             logger.info("未安装Sonic插件或版本不是最新，正在安装...");
+            try {
+                iDevice.uninstallPackage("org.cloud.sonic.android");
+            } catch (InstallException e) {
+                logger.info("卸载出错...");
+            }
             try {
                 iDevice.installPackage("plugins/sonic-android-apk.apk",
                         true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
@@ -119,62 +125,6 @@ public class AndroidWSServer {
 
         Semaphore isTouchFinish = new Semaphore(0);
         String finalPath = path;
-        Thread rotationPro = new Thread(() -> {
-            try {
-                //开始启动
-                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.RotationMonitorService", finalPath)
-                        , new IShellOutputReceiver() {
-                            @Override
-                            public void addOutput(byte[] bytes, int i, int i1) {
-                                String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
-                                logger.info(udId + "旋转到：" + res);
-                                rotationStatusMap.put(session, Integer.parseInt(res));
-                                JSONObject rotationJson = new JSONObject();
-                                rotationJson.put("msg", "rotation");
-                                rotationJson.put("value", Integer.parseInt(res) * 90);
-                                AgentTool.sendText(session, rotationJson.toJSONString());
-                                Thread old = MiniCapMap.getMap().get(session);
-                                if (old != null) {
-                                    old.interrupt();
-                                    do {
-                                        try {
-                                            Thread.sleep(1000);
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    while (MiniCapMap.getMap().get(session) != null);
-                                }
-                                MiniCapTool miniCapTool = new MiniCapTool();
-                                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                                Thread miniCapThread = miniCapTool.start(
-                                        udIdMap.get(session).getSerialNumber(), banner, null,
-                                        picMap.get(session) == null ? "high" : picMap.get(session),
-                                        Integer.parseInt(res), session
-                                );
-                                MiniCapMap.getMap().put(session, miniCapThread);
-                                JSONObject picFinish = new JSONObject();
-                                picFinish.put("msg", "picFinish");
-                                AgentTool.sendText(session, picFinish.toJSONString());
-                            }
-
-                            @Override
-                            public void flush() {
-                            }
-
-                            @Override
-                            public boolean isCancelled() {
-                                return false;
-                            }
-                        }, 0, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                logger.info("{} 设备方向监听启动异常！"
-                        , iDevice.getSerialNumber());
-                logger.error(e.getMessage());
-            }
-        });
-        rotationPro.start();
-        rotationMap.put(session, rotationPro);
 
         Thread touchPro = new Thread(() -> {
             try {
@@ -185,6 +135,9 @@ public class AndroidWSServer {
                             public void addOutput(byte[] bytes, int i, int i1) {
                                 String res = new String(bytes, i, i1);
                                 logger.info(res);
+                                if (res.contains("Address already in use")) {
+                                    NotStopSession.add(session);
+                                }
                                 if (res.contains("Server start")) {
                                     isTouchFinish.release();
                                 }
@@ -235,6 +188,16 @@ public class AndroidWSServer {
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             } finally {
+                if (NotStopSession.contains(session)) {
+                    try {
+                        outputStream.write("r\n".getBytes());
+                        outputStream.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        NotStopSession.remove(session);
+                    }
+                }
                 if (touchPro.isAlive()) {
                     touchPro.interrupt();
                     logger.info("touch thread已关闭");
@@ -259,7 +222,7 @@ public class AndroidWSServer {
             AndroidDeviceBridgeTool.removeForward(iDevice, finalTouchPort, "sonictouchservice");
         });
 
-        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(udIdMap.get(session)));
+        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(iDevice));
 
         if (isEnableAdbKit) {
             String processName = String.format("process-%s-adbkit", udId);
@@ -312,6 +275,11 @@ public class AndroidWSServer {
                 AgentTool.sendText(session, result.toJSONString());
             }
         });
+
+        JSONObject port = new JSONObject();
+        port.put("port", AppiumServer.getPort());
+        port.put("msg", "appiumPort");
+        AgentTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
@@ -335,13 +303,33 @@ public class AndroidWSServer {
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) throws InterruptedException {
+    public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
+        IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "proxy": {
+                AndroidDeviceBridgeTool.clearProxy(iDevice);
+                Socket portSocket = PortTool.getBindSocket();
+                Socket webPortSocket = PortTool.getBindSocket();
+                int pPort = PortTool.releaseAndGetPort(portSocket);
+                int webPort = PortTool.releaseAndGetPort(webPortSocket);
+                SGMTool.startProxy(iDevice.getSerialNumber(), SGMTool.getCommand(pPort, webPort));
+                AndroidDeviceBridgeTool.startProxy(iDevice, host, pPort);
+                JSONObject proxy = new JSONObject();
+                proxy.put("webPort", webPort);
+                proxy.put("port", pPort);
+                proxy.put("msg", "proxyResult");
+                AgentTool.sendText(session, proxy.toJSONString());
+                break;
+            }
+            case "installCert": {
+                AndroidDeviceBridgeTool.executeCommand(iDevice,
+                        String.format("am start -a android.intent.action.VIEW -d http://%s:%d/assets/download", host, port));
+                break;
+            }
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
-                IDevice iDevice = udIdMap.get(session);
                 List<String> wList = Arrays.asList("webview", "WebView", "chrome_devtools_remote", "Terrace_devtools_remote");
                 List<String> webViewList = new ArrayList<>();
                 for (String w : wList) {
@@ -413,15 +401,15 @@ public class AndroidWSServer {
                 break;
             }
             case "find":
-                AndroidDeviceBridgeTool.searchDevice(udIdMap.get(session));
+                AndroidDeviceBridgeTool.searchDevice(iDevice);
                 break;
             case "battery":
-                AndroidDeviceBridgeTool.controlBattery(udIdMap.get(session), msg.getInteger("detail"));
+                AndroidDeviceBridgeTool.controlBattery(iDevice, msg.getInteger("detail"));
                 break;
             case "uninstallApp": {
                 JSONObject result = new JSONObject();
                 try {
-                    udIdMap.get(session).uninstallPackage(msg.getString("detail"));
+                    iDevice.uninstallPackage(msg.getString("detail"));
                     result.put("detail", "success");
                 } catch (InstallException e) {
                     result.put("detail", "fail");
@@ -432,35 +420,12 @@ public class AndroidWSServer {
                 break;
             }
             case "scan":
-                AndroidDeviceBridgeTool.pushToCamera(udIdMap.get(session), msg.getString("url"));
+                AndroidDeviceBridgeTool.pushToCamera(iDevice, msg.getString("url"));
                 break;
             case "text":
-                ProcessCommandTool.getProcessLocalCommand("adb -s " + udIdMap.get(session).getSerialNumber()
+                ProcessCommandTool.getProcessLocalCommand("adb -s " + iDevice.getSerialNumber()
                         + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
                 break;
-            case "pic": {
-                Thread old = MiniCapMap.getMap().get(session);
-                old.interrupt();
-                do {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                while (MiniCapMap.getMap().get(session) != null);
-                MiniCapTool miniCapTool = new MiniCapTool();
-                AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                Thread miniCapThread = miniCapTool.start(
-                        udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
-                        rotationStatusMap.get(session), session
-                );
-                MiniCapMap.getMap().put(session, miniCapThread);
-                JSONObject picFinish = new JSONObject();
-                picFinish.put("msg", "picFinish");
-                AgentTool.sendText(session, picFinish.toJSONString());
-                break;
-            }
             case "touch":
                 OutputStream outputStream = outputMap.get(session);
                 if (outputStream != null) {
@@ -475,14 +440,14 @@ public class AndroidWSServer {
                 }
                 break;
             case "keyEvent":
-                AndroidDeviceBridgeTool.pressKey(udIdMap.get(session), msg.getInteger("detail"));
+                AndroidDeviceBridgeTool.pressKey(iDevice, msg.getInteger("detail"));
                 break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
                     JSONObject jsonDebug = new JSONObject();
                     jsonDebug.put("msg", "findSteps");
                     jsonDebug.put("key", key);
-                    jsonDebug.put("udId", udIdMap.get(session).getSerialNumber());
+                    jsonDebug.put("udId", iDevice.getSerialNumber());
                     jsonDebug.put("pwd", msg.getString("pwd"));
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
@@ -495,7 +460,7 @@ public class AndroidWSServer {
                     );
                 } else if (msg.getString("detail").equals("openApp")) {
                     AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                        AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session),
+                        AndroidDeviceBridgeTool.executeCommand(iDevice,
                                 String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
                     });
                 } else {
@@ -503,13 +468,13 @@ public class AndroidWSServer {
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
                         if (msg.getString("detail").equals("openDriver")) {
                             androidStepHandler = new AndroidStepHandler();
-                            androidStepHandler.setTestMode(0, 0, udIdMap.get(session).getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+                            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
                             JSONObject result = new JSONObject();
                             AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 try {
-                                    AndroidDeviceLocalStatus.startDebug(udIdMap.get(session).getSerialNumber());
-                                    finalAndroidStepHandler1.startAndroidDriver(udIdMap.get(session).getSerialNumber());
+                                    AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
+                                    finalAndroidStepHandler1.startAndroidDriver(iDevice.getSerialNumber());
                                     result.put("status", "success");
                                     result.put("detail", "初始化Driver完成！");
                                     HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
@@ -530,13 +495,13 @@ public class AndroidWSServer {
                             String xy = msg.getString("point");
                             int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
                             int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input tap " + x + " " + y);
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input tap " + x + " " + y);
                         }
                         if (msg.getString("detail").equals("longPress")) {
                             String xy = msg.getString("point");
                             int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
                             int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input swipe " + x + " " + y + " " + x + " " + y + " 1500");
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x + " " + y + " " + x + " " + y + " 1500");
                         }
                         if (msg.getString("detail").equals("swipe")) {
                             String xy1 = msg.getString("pointA");
@@ -545,7 +510,7 @@ public class AndroidWSServer {
                             int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
                             int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
                             int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(udIdMap.get(session), "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 200");
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 200");
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -555,8 +520,8 @@ public class AndroidWSServer {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
-                                File localFile = DownImageTool.download(msg.getString("apk"));
-                                udIdMap.get(session).installPackage(localFile.getAbsolutePath()
+                                File localFile = DownloadTool.download(msg.getString("apk"));
+                                iDevice.installPackage(localFile.getAbsolutePath()
                                         , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                                         , "-r", "-t", "-g");
                                 result.put("status", "success");
@@ -616,6 +581,7 @@ public class AndroidWSServer {
 
     private void exit(Session session) {
         AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
+        IDevice iDevice = udIdMap.get(session);
         try {
             HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
         } catch (Exception e) {
@@ -623,33 +589,28 @@ public class AndroidWSServer {
         } finally {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
-        if (udIdMap.get(session) != null) {
-            List<JSONObject> has = webViewForwardMap.get(udIdMap.get(session));
+        if (iDevice != null) {
+            AndroidDeviceBridgeTool.clearProxy(iDevice);
+            List<JSONObject> has = webViewForwardMap.get(iDevice);
             if (has != null && has.size() > 0) {
                 for (JSONObject j : has) {
-                    AndroidDeviceBridgeTool.removeForward(udIdMap.get(session), j.getInteger("port"), j.getString("name"));
+                    AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
                 }
             }
-            webViewForwardMap.remove(udIdMap.get(session));
+            webViewForwardMap.remove(iDevice);
             if (isEnableAdbKit) {
-                String processName = String.format("process-%s-adbkit", udIdMap.get(session).getSerialNumber());
+                String processName = String.format("process-%s-adbkit", iDevice.getSerialNumber());
                 if (GlobalProcessMap.getMap().get(processName) != null) {
                     Process ps = GlobalProcessMap.getMap().get(processName);
                     ps.children().forEach(ProcessHandle::destroy);
                     ps.destroy();
                 }
             }
+            SGMTool.stopProxy(iDevice.getSerialNumber());
         }
-        AndroidAPKMap.getMap().remove(udIdMap.get(session).getSerialNumber());
+        AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);
         udIdMap.remove(session);
-        if (rotationMap.get(session) != null) {
-            rotationMap.get(session).interrupt();
-        }
-        rotationMap.remove(session);
-        if (MiniCapMap.getMap().get(session) != null) {
-            MiniCapMap.getMap().get(session).interrupt();
-        }
         WebSocketSessionMap.removeSession(session);
         try {
             session.close();

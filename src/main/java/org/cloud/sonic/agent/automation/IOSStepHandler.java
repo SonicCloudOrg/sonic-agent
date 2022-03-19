@@ -3,24 +3,24 @@ package org.cloud.sonic.agent.automation;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
-import org.cloud.sonic.agent.cv.AKAZEFinder;
-import org.cloud.sonic.agent.cv.SIFTFinder;
-import org.cloud.sonic.agent.cv.SimilarityChecker;
-import org.cloud.sonic.agent.cv.TemMatcher;
-import org.cloud.sonic.agent.interfaces.ErrorType;
-import org.cloud.sonic.agent.interfaces.ResultDetailStatus;
-import org.cloud.sonic.agent.interfaces.StepType;
-import org.cloud.sonic.agent.maps.IOSProcessMap;
-import org.cloud.sonic.agent.maps.IOSSizeMap;
-import org.cloud.sonic.agent.tools.DownImageTool;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
+import org.cloud.sonic.agent.tools.cv.SIFTFinder;
+import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
+import org.cloud.sonic.agent.tools.cv.TemMatcher;
+import org.cloud.sonic.agent.common.interfaces.ErrorType;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.common.maps.IOSInfoMap;
+import org.cloud.sonic.agent.tools.DownloadTool;
 import org.cloud.sonic.agent.tools.LogTool;
-import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MultiTouchAction;
 import io.appium.java_client.Setting;
 import io.appium.java_client.TouchAction;
-import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
 import io.appium.java_client.appmanagement.BaseInstallApplicationOptions;
 import io.appium.java_client.appmanagement.BaseTerminateApplicationOptions;
 import io.appium.java_client.ios.IOSDriver;
@@ -38,14 +38,8 @@ import org.openqa.selenium.Platform;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -71,7 +65,11 @@ public class IOSStepHandler {
     private String testPackage = "";
     private String udId = "";
     //测试状态
-    private int status = 1;
+    private int status = ResultDetailStatus.PASS;
+
+    public LogTool getLog() {
+        return log;
+    }
 
     public void setTestMode(int caseId, int resultId, String udId, String type, String sessionId) {
         log.caseId = caseId;
@@ -92,7 +90,7 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME, AutomationName.IOS_XCUI_TEST);
         desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 3600);
         desiredCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
-        desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME, TIDeviceTool.getName(udId));
+        desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME, SibTool.getName(udId));
         desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
         desiredCapabilities.setCapability("wdaConnectionTimeout", 60000);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.WEB_DRIVER_AGENT_URL, "http://127.0.0.1:" + wdaPort);
@@ -117,20 +115,12 @@ public class IOSStepHandler {
         }
         int width = iosDriver.manage().window().getSize().width;
         int height = iosDriver.manage().window().getSize().height;
-        IOSSizeMap.getMap().put(udId, width + "x" + height);
+        IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
     }
 
     public void closeIOSDriver() {
         try {
             if (iosDriver != null) {
-                //终止测试包
-                if (!testPackage.equals("")) {
-                    try {
-                        iosDriver.terminateApp(testPackage, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
                 iosDriver.quit();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
                 if (IOSProcessMap.getMap().get(udId) != null) {
@@ -574,6 +564,24 @@ public class IOSStepHandler {
         }
     }
 
+    public void isExistEle(HandleDes handleDes, String des, String selector, String pathValue, boolean expect) {
+        handleDes.setStepDes("判断控件 " + des + " 是否存在");
+        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+        boolean hasEle = false;
+        try {
+            WebElement w = findEle(selector, pathValue);
+            if (w != null) {
+                hasEle = true;
+            }
+        } catch (Exception e) {
+        }
+        try {
+            assertEquals(hasEle, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void getTitle(HandleDes handleDes, String expect) {
         String title = iosDriver.getTitle();
         handleDes.setStepDes("验证网页标题");
@@ -591,7 +599,7 @@ public class IOSStepHandler {
         File file = null;
         if (pathValue.startsWith("http")) {
             try {
-                file = DownImageTool.download(pathValue);
+                file = DownloadTool.download(pathValue);
             } catch (Exception e) {
                 handleDes.setE(e);
                 return;
@@ -695,7 +703,7 @@ public class IOSStepHandler {
         log.sendStepLog(StepType.INFO, "开始检测" + des + "兼容", "检测与当前设备截图相似度，期望相似度为" + matchThreshold + "%");
         File file = null;
         if (pathValue.startsWith("http")) {
-            file = DownImageTool.download(pathValue);
+            file = DownloadTool.download(pathValue);
         }
         double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
         handleDes.setStepDes("检测" + des + "图片相似度");
@@ -760,7 +768,7 @@ public class IOSStepHandler {
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
             try {
-                runStep(stepDetail);
+                runStep(stepDetail, handleDes);
             } catch (Throwable e) {
                 handleDes.setE(e);
                 break;
@@ -808,11 +816,22 @@ public class IOSStepHandler {
         return we;
     }
 
-    public void runStep(JSONObject stepJSON) throws Throwable {
+    public void stepHold(HandleDes handleDes, int time) {
+        handleDes.setStepDes("设置全局步骤间隔");
+        handleDes.setDetail("间隔" + time + " ms");
+        holdTime = time;
+    }
+
+    private int holdTime = 0;
+
+    public void runStep(JSONObject stepJSON, HandleDes handleDes) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
-        HandleDes handleDes = new HandleDes();
+        Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
+            case "stepHold":
+                stepHold(handleDes, Integer.parseInt(step.getString("content")));
+                break;
             case "siriCommand":
                 siriCommand(handleDes, step.getString("content"));
                 break;
@@ -837,6 +856,10 @@ public class IOSStepHandler {
             case "getText":
                 getTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "isExistEle":
+                isExistEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
                 break;
             case "clear":
                 clear(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
@@ -921,30 +944,46 @@ public class IOSStepHandler {
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
         }
-        switchType(step.getInteger("error"), handleDes.getStepDes(), handleDes.getDetail(), handleDes.getE());
+        switchType(step, handleDes);
     }
 
-    public void switchType(int error, String step, String detail, Throwable e) throws Throwable {
+    public void switchType(JSONObject stepJson, HandleDes handleDes) throws Throwable {
+        Integer error = stepJson.getInteger("error");
+        String stepDes = handleDes.getStepDes();
+        String detail = handleDes.getDetail();
+        Throwable e = handleDes.getE();
         if (e != null) {
             switch (error) {
                 case ErrorType.IGNORE:
-                    log.sendStepLog(StepType.PASS, step + "异常！已忽略...", detail);
+                    if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
+                        log.sendStepLog(StepType.PASS, stepDes + "异常！已忽略...", detail);
+                    } else {
+                        ConditionEnum conditionType =
+                                SonicEnum.valueToEnum(ConditionEnum.class, stepJson.getInteger("conditionType"));
+                        String des = "「%s」步骤「%s」异常".formatted(conditionType.getName(), stepDes);
+                        log.sendStepLog(StepType.ERROR, des, detail);
+                        exceptionLog(e);
+                    }
                     break;
                 case ErrorType.WARNING:
-                    log.sendStepLog(StepType.WARN, step + "异常！", detail);
+                    log.sendStepLog(StepType.WARN, stepDes + "异常！", detail);
                     setResultDetailStatus(ResultDetailStatus.WARN);
                     errorScreen();
                     exceptionLog(e);
                     break;
                 case ErrorType.SHUTDOWN:
-                    log.sendStepLog(StepType.ERROR, step + "异常！", detail);
+                    log.sendStepLog(StepType.ERROR, stepDes + "异常！", detail);
                     setResultDetailStatus(ResultDetailStatus.FAIL);
                     errorScreen();
                     exceptionLog(e);
                     throw e;
             }
+            // 非条件步骤清除异常对象
+            if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
+                handleDes.clear();
+            }
         } else {
-            log.sendStepLog(StepType.PASS, step, detail);
+            log.sendStepLog(StepType.PASS, stepDes, detail);
         }
     }
 }

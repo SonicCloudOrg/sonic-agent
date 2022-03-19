@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${msg}"></title>
+</head>
+<body>
+<div style="text-align:center;margin-top:20vh">
+    <img src="/static/logo.png" style="width:70%"/>
+    <div th:text="${msg}" style="margin-bottom:2rem;font-size:3rem;margin-top:2rem;color:#909399"></div>
+
+    <a th:href="${pemUrl}" th:download="${pemName}">
+        <div th:text="${pemMsg}" style="font-size:3rem;margin-top:2rem;color:#409EFF"></div>
+    </a>
+    <a th:href="${cerUrl}" th:download="${cerName}">
+        <div th:text="${cerMsg}" style="font-size:3rem;margin-top:2rem;color:#409EFF"></div>
+    </a>
+    <div th:text="${tips}" style="font-size:3rem;margin-top:2rem;color:#909399"></div>
+</div>
+</body>
+<style>
+a{
+    text-decoration:none
+ }
+
+</style>
+</html>
