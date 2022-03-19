@@ -25,19 +25,12 @@ public class AgentManagerTool {
     }
 
     public static void stop() {
-        context.close();
-        logger.info("Bye！");
-    }
-
-    public static void update(String version) {
-        logger.info("Updating...");
         try {
-            DownloadTool.update(version);
-        } catch (IOException e) {
-            logger.info("Update agent version failed!");
-            logger.error(e.getMessage());
-        } finally {
-            logger.info("Done.");
+            context.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        logger.info("Bye！");
+        System.exit(0);
     }
 }

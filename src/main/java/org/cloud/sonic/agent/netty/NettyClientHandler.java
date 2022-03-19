@@ -22,6 +22,7 @@ import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.TestNG;
@@ -61,8 +62,8 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
         logger.info("Agent:{} 收到服务器 {} 消息: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonObject);
         NettyThreadPool.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
-                case "update": {
-
+                case "stop": {
+                    AgentManagerTool.stop();
                     break;
                 }
                 case "reboot":

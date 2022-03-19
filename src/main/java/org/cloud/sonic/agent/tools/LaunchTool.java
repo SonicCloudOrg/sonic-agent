@@ -55,5 +55,6 @@ public class LaunchTool implements ApplicationRunner {
                 Thread.sleep(1000);
             }
         }
+        logger.info("Release done!");
     }
 }
