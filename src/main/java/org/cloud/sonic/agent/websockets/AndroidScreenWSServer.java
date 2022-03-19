@@ -117,7 +117,7 @@ public class AndroidScreenWSServer {
                                         while (ScreenMap.getMap().get(session) != null);
                                     }
                                     if (typeMap.get(session) == null) {
-                                        typeMap.put(session, "scrcpy");
+                                        typeMap.put(session, "minicap");
                                     }
                                     switch (typeMap.get(session)) {
                                         case "scrcpy": {
