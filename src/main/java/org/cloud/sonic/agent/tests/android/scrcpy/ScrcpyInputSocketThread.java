@@ -2,6 +2,7 @@ package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
@@ -127,7 +128,7 @@ public class ScrcpyInputSocketThread extends Thread {
         }
         AndroidDeviceBridgeTool.removeForward(iDevice, scrcpyPort, "scrcpy");
         if (session != null) {
-            ScrcpyMap.getMap().remove(session);
+            ScreenMap.getMap().remove(session);
         }
     }
 }
