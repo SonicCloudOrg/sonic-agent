@@ -184,6 +184,37 @@ public class AndroidScreenWSServer {
         switch (msg.getString("type")) {
             case "switch": {
                 typeMap.put(session, msg.getString("detail"));
+                Thread old = ScreenMap.getMap().get(session);
+                old.interrupt();
+                do {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                while (ScreenMap.getMap().get(session) != null);
+                switch (typeMap.get(session)) {
+                    case "scrcpy": {
+                        ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
+                        Thread scrcpyThread = scrcpyServerUtil.start(udIdMap.get(session).getSerialNumber(), rotationStatusMap.get(session), session);
+                        ScreenMap.getMap().put(session, scrcpyThread);
+                        break;
+                    }
+                    case "minicap": {
+                        MiniCapUtil miniCapUtil = new MiniCapUtil();
+                        AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+                        Thread miniCapThread = miniCapUtil.start(
+                                udIdMap.get(session).getSerialNumber(), banner, null, picMap.get(session) == null ? "high" : picMap.get(session),
+                                rotationStatusMap.get(session), session
+                        );
+                        ScreenMap.getMap().put(session, miniCapThread);
+                        break;
+                    }
+                }
+                JSONObject picFinish = new JSONObject();
+                picFinish.put("msg", "picFinish");
+                AgentTool.sendText(session, picFinish.toJSONString());
                 break;
             }
             case "pic": {
