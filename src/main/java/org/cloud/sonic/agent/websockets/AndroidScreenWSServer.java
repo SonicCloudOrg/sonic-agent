@@ -82,7 +82,7 @@ public class AndroidScreenWSServer {
         }
         if (!isInstall) {
             logger.info("等待安装超时！");
-            throw new Exception("等待安装超时！");
+            udIdMap.remove(session);
         }
     }
 
