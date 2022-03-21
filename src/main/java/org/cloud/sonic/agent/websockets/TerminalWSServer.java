@@ -90,9 +90,9 @@ public class TerminalWSServer {
             case "appList":
                 getAppList(udIdMap.get(session), session);
                 break;
-            case "wifiList":
-                getWifiList(udIdMap.get(session), session);
-                break;
+//            case "wifiList":
+//                getWifiList(udIdMap.get(session), session);
+//                break;
             case "stopCmd":
                 Future<?> ter = terminalMap.get(session);
                 if (!ter.isDone() || !ter.isCancelled()) {
