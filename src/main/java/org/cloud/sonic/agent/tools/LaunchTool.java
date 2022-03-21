@@ -29,6 +29,7 @@ public class LaunchTool implements ApplicationRunner {
         if (!testFile.exists()) {
             testFile.mkdirs();
         }
+        SGMTool.init();
         new Thread(() -> {
             File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
             if (!file.exists()) {
@@ -39,6 +40,10 @@ public class LaunchTool implements ApplicationRunner {
                     e.printStackTrace();
                 }
                 SGMTool.stopProxy("init");
+                file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
+                if (!file.exists()) {
+                    logger.info("sonic-go-mitmproxy-ca证书生成失败！");
+                }
             }
         }).start();
         AppiumServer.start(port);
