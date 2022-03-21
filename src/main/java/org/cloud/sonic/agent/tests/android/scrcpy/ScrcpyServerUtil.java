@@ -38,7 +38,7 @@ public class ScrcpyServerUtil {
             s = tor;
         }
         // 启动scrcpy服务
-        ScrcpyLocalThread scrcpyThread = new ScrcpyLocalThread(iDevice, s * 90, session, androidTestTaskBootThread);
+        ScrcpyLocalThread scrcpyThread = new ScrcpyLocalThread(iDevice, s, session, androidTestTaskBootThread);
         TaskManager.startChildThread(key, scrcpyThread);
 
         // 等待启动

@@ -186,7 +186,7 @@ public class AndroidScreenWSServer {
             switch (typeMap.get(session)) {
                 case "scrcpy": {
                     ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
-                    Thread scrcpyThread = scrcpyServerUtil.start(iDevice.getSerialNumber(), rotationStatusMap.get(session) * 90, session);
+                    Thread scrcpyThread = scrcpyServerUtil.start(iDevice.getSerialNumber(), rotationStatusMap.get(session), session);
                     ScreenMap.getMap().put(session, scrcpyThread);
                     break;
                 }
