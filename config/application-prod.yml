@@ -9,9 +9,9 @@ sonic:
   server:
     # 这个host改成后端的host
     host: 192.168.1.1
-    # 如果跨网段，这个port改成后端文件中心的port（一般不变）
+    # 这个port改成后端文件中心的port（一般不变）
     folder-port: 8094
-    # 如果跨网段，这个port改成后端传输中心的port（一般不变）
+    # 这个port改成后端传输中心的port（一般不变）
     transport-port: 8095
 
 modules:
@@ -24,7 +24,7 @@ modules:
   ios:
     # 如果不需要连接iOS设备，请将true改为false。开启的windows用户请确保本机已安装iTunes
     enable: true
-    #替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
+    # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
     wda-bundle-id: com.facebook.WebDriverAgentRunner.xctrunner
   appium:
     enable: true
