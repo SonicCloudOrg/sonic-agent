@@ -32,7 +32,6 @@ RUN wget -O java.tar.gz https://download.oracle.com/java/17/latest/jdk-17_linux-
 ENV JAVA_HOME="/root/jdk-17.0.2" \
     PATH=$PATH:$JAVA_HOME/bin
 
-ARG ANDROID_PLATFORM_VERSION="android-29"
 ENV ANDROID_HOME=/root
 
 RUN mkdir -p $ANDROID_HOME/cmdline-tools && \
@@ -48,7 +47,7 @@ ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest:$ANDROID_HOME/cmdline-tools/la
 RUN mkdir -p ~/.android && \
     touch ~/.android/repositories.cfg && \
     echo y | sdkmanager "platform-tools" && \
-    echo y | sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION" && \
+    echo y | sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
 
 ENV PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools
 
