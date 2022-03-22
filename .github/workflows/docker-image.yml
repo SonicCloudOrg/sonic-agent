@@ -19,4 +19,4 @@ jobs:
     - name: Validate and Compile with Maven
       run: mvn package -Plinux-x86_64
     - name: Build the Docker image
-      run: docker build . --file src/main/docker/Dockerfile 
+      run: docker build -t sonic-agent -f src/main/docker/Dockerfile .
