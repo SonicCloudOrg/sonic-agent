@@ -7,6 +7,8 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
 import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
@@ -1393,16 +1395,18 @@ public class AndroidStepHandler {
     public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
         handleDes.setStepDes("执行公共步骤 " + name);
         handleDes.setDetail("");
-        log.sendStepLog(StepType.WARN, "公共步骤 " + name + " 开始执行", "");
+        log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」开始执行", "");
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
             try {
-                runStep(stepDetail, handleDes);
+                SpringTool.getBean(StepHandlers.class)
+                        .runStep(stepDetail, handleDes, (RunStepThread) Thread.currentThread());
             } catch (Throwable e) {
                 handleDes.setE(e);
                 break;
             }
         }
+        log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
     public WebElement findEle(String selector, String pathValue) {
@@ -1583,6 +1587,7 @@ public class AndroidStepHandler {
                 break;
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
+                return;
         }
         switchType(step, handleDes);
     }

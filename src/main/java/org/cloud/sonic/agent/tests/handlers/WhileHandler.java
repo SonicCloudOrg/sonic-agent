@@ -42,9 +42,7 @@ public class WhileHandler implements StepHandler {
             // 条件步骤成功，取出while下所属的步骤丢给stepHandlers处理
             thread.getLogTool().sendStepLog(StepType.PASS, "「while」步骤通过，开始执行第「" + i + "」次子步骤循环", "");
             for (JSONObject step : steps) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("step", step);
-                stepHandlers.runStep(jsonObject, handleDes, thread);
+                stepHandlers.runStep(handlerPublicStep(step), handleDes, thread);
             }
             thread.getLogTool().sendStepLog(StepType.PASS, "第「" + i + "」次子步骤执行完毕", "");
 

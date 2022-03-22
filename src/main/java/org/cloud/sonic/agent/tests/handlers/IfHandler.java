@@ -41,9 +41,7 @@ public class IfHandler implements StepHandler {
         if (handleDes.getE() == null) {
             thread.getLogTool().sendStepLog(StepType.PASS, "「if」步骤通过，开始执行子步骤", "");
             for (JSONObject step : steps) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("step", step);
-                stepHandlers.runStep(jsonObject, handleDes, thread);
+                stepHandlers.runStep(handlerPublicStep(step), handleDes, thread);
             }
             thread.getLogTool().sendStepLog(StepType.PASS, "「if」子步骤执行完毕", "");
         } else {
