@@ -17,4 +17,15 @@ public interface StepHandler {
     HandleDes runStep(JSONObject step, HandleDes handleDes, RunStepThread thread) throws Throwable;
 
     ConditionEnum getCondition();
+
+    default JSONObject handlerPublicStep(JSONObject step) {
+        if (step.containsKey("pubSteps")) {
+            return step;
+        }
+        return new JSONObject(){
+            {
+                put("step", step);
+            }
+        };
+    }
 }

@@ -40,6 +40,7 @@ public class LaunchTool implements ApplicationRunner {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                // 仅生成证书
                 SGMTool.stopProxy("init");
                 file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
                 if (!file.exists()) {
