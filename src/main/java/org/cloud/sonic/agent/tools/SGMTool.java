@@ -28,7 +28,7 @@ public class SGMTool {
     public static void init() {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgm));
         if (ver.size() == 0 || !ver.get(0).equals(String.format("sonic-go-mitmproxy: %s",sgmVersion))) {
-            logger.info(String.format("启动sonic-go-mitmproxy失败！请执行 chmod -R 777 %s", new File("").getAbsolutePath()));
+            logger.info(String.format("启动sonic-go-mitmproxy失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", new File("").getAbsolutePath()));
             System.exit(0);
         }
     }

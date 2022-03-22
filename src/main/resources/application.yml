@@ -1,7 +1,7 @@
 spring:
   version: @project.version@
   profiles:
-    active: dev,@profileActive@
+    active: prod,@profileActive@
 
 sonic:
   saa: 1.3.4

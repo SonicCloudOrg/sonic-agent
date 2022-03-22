@@ -107,6 +107,16 @@ public class EnvCheckTool {
         File config = new File("config/application-prod.yml");
         File mini = new File("mini");
         File plugins = new File("plugins");
+        if (system.contains("linux") || system.contains("mac")) {
+            String p = new File("").getAbsolutePath();
+            try {
+                exeCmd(false, "sh", "-c", String.format("chmod -R 777 %", p));
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         if (webview.exists()
                 && config.exists()
                 && mini.exists()
