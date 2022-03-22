@@ -6,6 +6,9 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
 import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
@@ -337,6 +340,7 @@ public class IOSStepHandler {
 
     public void lock(HandleDes handleDes) {
         handleDes.setStepDes("锁定屏幕");
+        handleDes.setDetail("");
         try {
             iosDriver.lockDevice();
         } catch (Exception e) {
@@ -346,6 +350,7 @@ public class IOSStepHandler {
 
     public void unLock(HandleDes handleDes) {
         handleDes.setStepDes("解锁屏幕");
+        handleDes.setDetail("");
         try {
             iosDriver.unlockDevice();
         } catch (Exception e) {
@@ -461,6 +466,7 @@ public class IOSStepHandler {
 
     public void keyCode(HandleDes handleDes, String key) {
         handleDes.setStepDes("按系统按键" + key + "键");
+        handleDes.setDetail("");
         try {
             iosDriver.executeScript("mobile:pressButton", JSON.parse("{name: \"" + key + "\"}"));
         } catch (Exception e) {
@@ -741,6 +747,7 @@ public class IOSStepHandler {
 
     public String stepScreen(HandleDes handleDes) {
         handleDes.setStepDes("获取截图");
+        handleDes.setDetail("");
         String url = "";
         try {
             url = UploadTools.upload(((TakesScreenshot) iosDriver)
@@ -764,16 +771,19 @@ public class IOSStepHandler {
 
     public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
         handleDes.setStepDes("执行公共步骤 " + name);
-        log.sendStepLog(StepType.WARN, "公共步骤 " + name + " 开始执行", "");
+        handleDes.setDetail("");
+        log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」开始执行", "");
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
             try {
-                runStep(stepDetail, handleDes);
+                SpringTool.getBean(StepHandlers.class)
+                        .runStep(stepDetail, handleDes, (RunStepThread) Thread.currentThread());
             } catch (Throwable e) {
                 handleDes.setE(e);
                 break;
             }
         }
+        log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
     public WebElement findEle(String selector, String pathValue) {
@@ -943,6 +953,7 @@ public class IOSStepHandler {
 //                break;
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
+                return;
         }
         switchType(step, handleDes);
     }

@@ -308,6 +308,9 @@ public class AndroidWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "clearProxy":
+                AndroidDeviceBridgeTool.clearProxy(iDevice);
+                break;
             case "proxy": {
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
                 Socket portSocket = PortTool.getBindSocket();

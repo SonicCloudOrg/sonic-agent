@@ -82,84 +82,7 @@ public class AndroidScreenWSServer {
         }
         if (!isInstall) {
             logger.info("等待安装超时！");
-        } else {
-            String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
-                    .replaceAll("package:", "")
-                    .replaceAll("\n", "")
-                    .replaceAll("\t", "");
-
-            String finalPath = path;
-
-            Thread rotationPro = new Thread(() -> {
-                try {
-                    //开始启动
-                    iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.RotationMonitorService", finalPath)
-                            , new IShellOutputReceiver() {
-                                @Override
-                                public void addOutput(byte[] bytes, int i, int i1) {
-                                    String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
-                                    logger.info(udId + "旋转到：" + res);
-                                    rotationStatusMap.put(session, Integer.parseInt(res));
-                                    JSONObject rotationJson = new JSONObject();
-                                    rotationJson.put("msg", "rotation");
-                                    rotationJson.put("value", Integer.parseInt(res) * 90);
-                                    AgentTool.sendText(session, rotationJson.toJSONString());
-                                    Thread old = ScreenMap.getMap().get(session);
-                                    if (old != null) {
-                                        old.interrupt();
-                                        do {
-                                            try {
-                                                Thread.sleep(1000);
-                                            } catch (InterruptedException e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
-                                        while (ScreenMap.getMap().get(session) != null);
-                                    }
-                                    if (typeMap.get(session) == null) {
-                                        typeMap.put(session, "minicap");
-                                    }
-                                    switch (typeMap.get(session)) {
-                                        case "scrcpy": {
-                                            ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
-                                            Thread scrcpyThread = scrcpyServerUtil.start(iDevice.getSerialNumber(), Integer.parseInt(res) * 90, session);
-                                            ScreenMap.getMap().put(session, scrcpyThread);
-                                            break;
-                                        }
-                                        case "minicap": {
-                                            MiniCapUtil miniCapUtil = new MiniCapUtil();
-                                            AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                                            Thread miniCapThread = miniCapUtil.start(
-                                                    iDevice.getSerialNumber(), banner, null,
-                                                    picMap.get(session) == null ? "high" : picMap.get(session),
-                                                    Integer.parseInt(res), session
-                                            );
-                                            ScreenMap.getMap().put(session, miniCapThread);
-                                            break;
-                                        }
-                                    }
-                                    JSONObject picFinish = new JSONObject();
-                                    picFinish.put("msg", "picFinish");
-                                    AgentTool.sendText(session, picFinish.toJSONString());
-                                }
-
-                                @Override
-                                public void flush() {
-                                }
-
-                                @Override
-                                public boolean isCancelled() {
-                                    return false;
-                                }
-                            }, 0, TimeUnit.MILLISECONDS);
-                } catch (Exception e) {
-                    logger.info("{} 设备方向监听启动异常！"
-                            , iDevice.getSerialNumber());
-                    logger.error(e.getMessage());
-                }
-            });
-            rotationPro.start();
-            rotationMap.put(session, rotationPro);
+            udIdMap.remove(session);
         }
     }
 
@@ -184,41 +107,69 @@ public class AndroidScreenWSServer {
         switch (msg.getString("type")) {
             case "switch": {
                 typeMap.put(session, msg.getString("detail"));
-                Thread old = ScreenMap.getMap().get(session);
-                old.interrupt();
-                do {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                if (rotationMap.get(session) == null) {
+                    IDevice iDevice = udIdMap.get(session);
+                    if (iDevice != null) {
+                        String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
+                                .replaceAll("package:", "")
+                                .replaceAll("\n", "")
+                                .replaceAll("\t", "");
+
+                        String finalPath = path;
+
+                        Thread rotationPro = new Thread(() -> {
+                            try {
+                                //开始启动
+                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.RotationMonitorService", finalPath)
+                                        , new IShellOutputReceiver() {
+                                            @Override
+                                            public void addOutput(byte[] bytes, int i, int i1) {
+                                                String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
+                                                logger.info(iDevice.getSerialNumber() + "旋转到：" + res);
+                                                rotationStatusMap.put(session, Integer.parseInt(res));
+                                                JSONObject rotationJson = new JSONObject();
+                                                rotationJson.put("msg", "rotation");
+                                                rotationJson.put("value", Integer.parseInt(res) * 90);
+                                                AgentTool.sendText(session, rotationJson.toJSONString());
+                                                startScreen(session);
+                                            }
+
+                                            @Override
+                                            public void flush() {
+                                            }
+
+                                            @Override
+                                            public boolean isCancelled() {
+                                                return false;
+                                            }
+                                        }, 0, TimeUnit.MILLISECONDS);
+                            } catch (Exception e) {
+                                logger.info("{} 设备方向监听启动异常！"
+                                        , iDevice.getSerialNumber());
+                                logger.error(e.getMessage());
+                            }
+                        });
+                        rotationPro.start();
+                        rotationMap.put(session, rotationPro);
                     }
+                } else {
+                    startScreen(session);
                 }
-                while (ScreenMap.getMap().get(session) != null);
-                switch (typeMap.get(session)) {
-                    case "scrcpy": {
-                        ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
-                        Thread scrcpyThread = scrcpyServerUtil.start(udIdMap.get(session).getSerialNumber(), rotationStatusMap.get(session), session);
-                        ScreenMap.getMap().put(session, scrcpyThread);
-                        break;
-                    }
-                    case "minicap": {
-                        MiniCapUtil miniCapUtil = new MiniCapUtil();
-                        AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                        Thread miniCapThread = miniCapUtil.start(
-                                udIdMap.get(session).getSerialNumber(), banner, null, picMap.get(session) == null ? "high" : picMap.get(session),
-                                rotationStatusMap.get(session), session
-                        );
-                        ScreenMap.getMap().put(session, miniCapThread);
-                        break;
-                    }
-                }
-                JSONObject picFinish = new JSONObject();
-                picFinish.put("msg", "picFinish");
-                AgentTool.sendText(session, picFinish.toJSONString());
                 break;
             }
             case "pic": {
-                Thread old = ScreenMap.getMap().get(session);
+                picMap.put(session, msg.getString("detail"));
+                startScreen(session);
+                break;
+            }
+        }
+    }
+
+    private void startScreen(Session session) {
+        IDevice iDevice = udIdMap.get(session);
+        if (iDevice != null) {
+            Thread old = ScreenMap.getMap().get(session);
+            if (old != null) {
                 old.interrupt();
                 do {
                     try {
@@ -228,29 +179,32 @@ public class AndroidScreenWSServer {
                     }
                 }
                 while (ScreenMap.getMap().get(session) != null);
-                switch (typeMap.get(session)) {
-                    case "scrcpy": {
-                        ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
-                        Thread scrcpyThread = scrcpyServerUtil.start(udIdMap.get(session).getSerialNumber(), rotationStatusMap.get(session), session);
-                        ScreenMap.getMap().put(session, scrcpyThread);
-                        break;
-                    }
-                    case "minicap": {
-                        MiniCapUtil miniCapUtil = new MiniCapUtil();
-                        AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
-                        Thread miniCapThread = miniCapUtil.start(
-                                udIdMap.get(session).getSerialNumber(), banner, null, msg.getString("detail"),
-                                rotationStatusMap.get(session), session
-                        );
-                        ScreenMap.getMap().put(session, miniCapThread);
-                        break;
-                    }
-                }
-                JSONObject picFinish = new JSONObject();
-                picFinish.put("msg", "picFinish");
-                AgentTool.sendText(session, picFinish.toJSONString());
-                break;
             }
+            if (typeMap.get(session) == null) {
+                typeMap.put(session, "scrcpy");
+            }
+            switch (typeMap.get(session)) {
+                case "scrcpy": {
+                    ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
+                    Thread scrcpyThread = scrcpyServerUtil.start(iDevice.getSerialNumber(), rotationStatusMap.get(session), session);
+                    ScreenMap.getMap().put(session, scrcpyThread);
+                    break;
+                }
+                case "minicap": {
+                    MiniCapUtil miniCapUtil = new MiniCapUtil();
+                    AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
+                    Thread miniCapThread = miniCapUtil.start(
+                            iDevice.getSerialNumber(), banner, null,
+                            picMap.get(session) == null ? "high" : picMap.get(session),
+                            rotationStatusMap.get(session), session
+                    );
+                    ScreenMap.getMap().put(session, miniCapThread);
+                    break;
+                }
+            }
+            JSONObject picFinish = new JSONObject();
+            picFinish.put("msg", "picFinish");
+            AgentTool.sendText(session, picFinish.toJSONString());
         }
     }
 
@@ -263,6 +217,8 @@ public class AndroidScreenWSServer {
         if (ScreenMap.getMap().get(session) != null) {
             ScreenMap.getMap().get(session).interrupt();
         }
+        typeMap.remove(session);
+        picMap.remove(session);
         try {
             session.close();
         } catch (IOException e) {

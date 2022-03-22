@@ -40,9 +40,7 @@ public class ElseHandler implements StepHandler {
         if (handleDes.getE() != null) {
             handleDes.clear();
             for (JSONObject step : steps) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("step", step);
-                stepHandlers.runStep(jsonObject, handleDes, thread);
+                stepHandlers.runStep(handlerPublicStep(step), handleDes, thread);
             }
         }
         thread.getLogTool().sendStepLog(StepType.PASS, "「else」步骤执行完毕", "");

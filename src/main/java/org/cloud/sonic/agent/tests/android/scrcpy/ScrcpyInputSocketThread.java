@@ -1,9 +1,11 @@
 package org.cloud.sonic.agent.tests.android.scrcpy;
 
+import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
+import org.cloud.sonic.agent.tools.AgentTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +79,14 @@ public class ScrcpyInputSocketThread extends Thread {
         try {
             videoSocket.connect(new InetSocketAddress("localhost", scrcpyPort));
             inputStream = videoSocket.getInputStream();
+            if (videoSocket.isConnected()) {
+                String sizeTotal = AndroidDeviceBridgeTool.getScreenSize(iDevice);
+                JSONObject size = new JSONObject();
+                size.put("msg", "size");
+                size.put("width", sizeTotal.split("x")[0]);
+                size.put("height", sizeTotal.split("x")[1]);
+                AgentTool.sendText(session, size.toJSONString());
+            }
             int readLength;
             int naLuIndex;
             int bufferLength = 0;

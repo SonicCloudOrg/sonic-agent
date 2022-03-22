@@ -47,9 +47,7 @@ public class ElseIfHandler implements StepHandler {
             thread.getLogTool().sendStepLog(StepType.PASS, "「else if」步骤通过，开始执行「else if」子步骤", "");
             handleDes.clear();
             for (JSONObject step : steps) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("step", step);
-                stepHandlers.runStep(jsonObject, handleDes, thread);
+                stepHandlers.runStep(handlerPublicStep(step), handleDes, thread);
             }
             thread.getLogTool().sendStepLog(StepType.PASS, "「else if」子步骤执行完毕", "");
         } else {

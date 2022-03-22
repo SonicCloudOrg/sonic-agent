@@ -37,6 +37,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     private String getBundleId;
     private static String bundleId;
     private static String sib = new File("plugins/sonic-ios-bridge").getAbsolutePath();
+    @Value("${sonic.sib}")
+    private String sibVersion;
 
     @Bean
     public void setEnv() {
@@ -49,6 +51,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public void init() {
+        List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
+        if (ver.size() == 0 || !ver.get(0).equals(sibVersion)) {
+            logger.info(String.format("启动sonic-ios-bridge失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", new File("").getAbsolutePath()));
+            System.exit(0);
+        }
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             String processName = "sib";
             if (GlobalProcessMap.getMap().get(processName) != null) {
