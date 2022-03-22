@@ -18,5 +18,9 @@ jobs:
         cache: maven
     - name: Validate and Compile with Maven
       run: mvn package -Plinux-x86_64
+    - name: login docker hub
+      run: echo "${{ secrets.ACCESS_TOKEN }}" | docker login -u zhouyixun --password-stdin
     - name: Build the Docker image
-      run: docker build -t sonic-agent -f src/main/docker/Dockerfile .
+      run: docker build -t sonic-agent-linux:v1.3.2-release -f src/main/docker/Dockerfile .
+    - name: push
+      run: docker push sonic-agent-linux:v1.3.2-release
