@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV SDK_VERSION=commandlinetools-linux-7583922_latest \
     ANDROID_BUILD_TOOLS_VERSION=29.0.3 \
     APPIUM_VERSION=1.22.0 \
-    ATD_VERSION=1.2
+    ATD_VERSION=1.2 \
     CHROME_VERSION=google-chrome-stable
 
 WORKDIR /root
