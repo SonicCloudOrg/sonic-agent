@@ -110,7 +110,7 @@ public class EnvCheckTool {
         if (system.contains("linux") || system.contains("mac")) {
             String p = new File("").getAbsolutePath();
             try {
-                exeCmd(false, "sh", "-c", String.format("chmod -R 777 %", p));
+                exeCmd(false, "sh", "-c", String.format("chmod -R 777 %s", p));
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
