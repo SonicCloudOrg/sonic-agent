@@ -1,7 +1,9 @@
 version: '3'
 services:
   sonic-agent:
-    image: "sonicorg/sonic-agent-linux:v1.3.2-release"
+    #下方为Docker Hub镜像，推荐海外用户使用，默认使用国内加速镜像
+#    image: "sonicorg/sonic-agent-linux:v1.3.2-release"
+    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.3.2-release"
     environment:
       # 替换为部署Agent机器的ipv4
       - AGENT_HOST=192.168.1.1
