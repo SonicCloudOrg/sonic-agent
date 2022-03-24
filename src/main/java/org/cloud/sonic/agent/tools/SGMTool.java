@@ -21,14 +21,14 @@ public class SGMTool {
     private String ver;
 
     @Bean
-    public void setSgmVer(){
+    public void setSgmVer() {
         sgmVersion = ver;
     }
 
     public static void init() {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgm));
-        if (ver.size() == 0 || !ver.get(0).equals(String.format("sonic-go-mitmproxy: %s",sgmVersion))) {
-            logger.info(String.format("启动sonic-go-mitmproxy失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", new File("").getAbsolutePath()));
+        if (ver.size() == 0 || !ver.get(0).equals(String.format("sonic-go-mitmproxy: %s", sgmVersion))) {
+            logger.info(String.format("启动sonic-go-mitmproxy失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", pFile));
             System.exit(0);
         }
     }
