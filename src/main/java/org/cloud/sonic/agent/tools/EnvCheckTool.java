@@ -109,7 +109,7 @@ public class EnvCheckTool {
         File plugins = new File("plugins");
         if (system.contains("linux") || system.contains("mac")) {
             try {
-                Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format("chmod -R 777 %s", plugins.getAbsolutePath())});
+                Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format("chmod -R 777 %s", new File("").getAbsolutePath())});
             } catch (IOException e) {
                 e.printStackTrace();
             }
