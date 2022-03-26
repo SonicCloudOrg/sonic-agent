@@ -398,7 +398,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     }
 
     public static void searchDevice(IDevice iDevice) {
-        executeCommand(iDevice, "am start -n com.sonic.plugins.assist/com.sonic.plugins.assist.SearchActivity");
+        executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SearchActivity");
     }
 
     public static void controlBattery(IDevice iDevice, int type) {
