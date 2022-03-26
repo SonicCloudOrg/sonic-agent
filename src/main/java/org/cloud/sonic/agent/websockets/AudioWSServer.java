@@ -82,7 +82,6 @@ public class AudioWSServer {
                             ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.length);
                             byteBuffer.put(buffer);
                             byteBuffer.flip();
-                            //bug
                             AgentTool.sendByte(session, byteBuffer);
                         }
                     }
