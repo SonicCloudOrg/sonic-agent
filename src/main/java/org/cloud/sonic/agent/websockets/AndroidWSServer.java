@@ -3,10 +3,7 @@ package org.cloud.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.IShellOutputReceiver;
-import com.android.ddmlib.InstallException;
-import com.android.ddmlib.InstallReceiver;
+import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
@@ -445,6 +442,43 @@ public class AndroidWSServer {
             case "keyEvent":
                 AndroidDeviceBridgeTool.pressKey(iDevice, msg.getInteger("detail"));
                 break;
+            case "pullFile": {
+                JSONObject result = new JSONObject();
+                result.put("msg", "pullResult");
+                try {
+                    long time = Calendar.getInstance().getTimeInMillis();
+                    String tail = "";
+                    if (msg.getString("path").lastIndexOf(".") != -1) {
+                        tail = msg.getString("path").substring(msg.getString("path").lastIndexOf(".") + 1);
+                    }
+                    String filename = "test-output" + File.separator + "pull-" + time + "." + tail;
+                    File file = new File(filename);
+                    //判断是否文件夹
+                    iDevice.pullFile(file.getAbsolutePath(), msg.getString("path"));
+
+                    result.put("status", "success");
+                } catch (IOException | AdbCommandRejectedException | SyncException | TimeoutException e) {
+                    result.put("status", "fail");
+                    e.printStackTrace();
+                }
+                AgentTool.sendText(session, result.toJSONString());
+                break;
+            }
+            case "pushFile": {
+                JSONObject result = new JSONObject();
+                result.put("msg", "pushResult");
+                try {
+                    File localFile = DownloadTool.download(msg.getString("file"));
+                    iDevice.pushFile(localFile.getAbsolutePath()
+                            , msg.getString("path"));
+                    result.put("status", "success");
+                } catch (IOException | AdbCommandRejectedException | SyncException | TimeoutException e) {
+                    result.put("status", "fail");
+                    e.printStackTrace();
+                }
+                AgentTool.sendText(session, result.toJSONString());
+                break;
+            }
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
                     JSONObject jsonDebug = new JSONObject();
