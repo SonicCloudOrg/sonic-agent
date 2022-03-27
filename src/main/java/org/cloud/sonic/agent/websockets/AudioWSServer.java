@@ -70,20 +70,21 @@ public class AudioWSServer {
                 try {
                     audioSocket = new Socket("localhost", appListPort);
                     inputStream = audioSocket.getInputStream();
-                    int len = 1024;
                     while (audioSocket.isConnected() && !Thread.interrupted()) {
-                        byte[] buffer = new byte[len];
-                        int realLen;
-                        realLen = inputStream.read(buffer);
-                        if (buffer.length != realLen && realLen >= 0) {
-                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
+                        byte[] lengthBytes = inputStream.readNBytes(32);
+                        if (Thread.interrupted() || lengthBytes.length == 0) {
+                            break;
                         }
-                        if (realLen >= 0) {
-                            ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.length);
-                            byteBuffer.put(buffer);
-                            byteBuffer.flip();
-                            AgentTool.sendByte(session, byteBuffer);
+                        StringBuffer binStr = new StringBuffer();
+                        for (byte lengthByte : lengthBytes) {
+                            binStr.append(lengthByte);
                         }
+                        Integer readLen = Integer.valueOf(binStr.toString(), 2);
+                        byte[] dataBytes = inputStream.readNBytes(readLen);
+                        ByteBuffer byteBuffer = ByteBuffer.allocate(dataBytes.length);
+                        byteBuffer.put(dataBytes);
+                        byteBuffer.flip();
+                        AgentTool.sendByte(session, byteBuffer);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
