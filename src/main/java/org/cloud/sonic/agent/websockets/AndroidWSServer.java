@@ -16,8 +16,10 @@ import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
-import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tools.*;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.agent.tools.file.ZipTool;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 @ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
@@ -243,7 +244,7 @@ public class AndroidWSServer {
                 adbkit.put("msg", "adbkit");
                 adbkit.put("isEnable", true);
                 adbkit.put("port", port);
-                AgentTool.sendText(session, adbkit.toJSONString());
+                BytesTool.sendText(session, adbkit.toJSONString());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -251,7 +252,7 @@ public class AndroidWSServer {
             JSONObject adbkit = new JSONObject();
             adbkit.put("msg", "adbkit");
             adbkit.put("isEnable", false);
-            AgentTool.sendText(session, adbkit.toJSONString());
+            BytesTool.sendText(session, adbkit.toJSONString());
         }
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -269,14 +270,14 @@ public class AndroidWSServer {
                 result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
             } finally {
                 result.put("msg", "openDriver");
-                AgentTool.sendText(session, result.toJSONString());
+                BytesTool.sendText(session, result.toJSONString());
             }
         });
 
         JSONObject port = new JSONObject();
         port.put("port", AppiumServer.getPort());
         port.put("msg", "appiumPort");
-        AgentTool.sendText(session, port.toJSONString());
+        BytesTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
@@ -296,7 +297,7 @@ public class AndroidWSServer {
         error.printStackTrace();
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
-        AgentTool.sendText(session, errMsg.toJSONString());
+        BytesTool.sendText(session, errMsg.toJSONString());
     }
 
     @OnMessage
@@ -320,7 +321,7 @@ public class AndroidWSServer {
                 proxy.put("webPort", webPort);
                 proxy.put("port", pPort);
                 proxy.put("msg", "proxyResult");
-                AgentTool.sendText(session, proxy.toJSONString());
+                BytesTool.sendText(session, proxy.toJSONString());
                 break;
             }
             case "installCert": {
@@ -397,7 +398,7 @@ public class AndroidWSServer {
                 }
                 forwardView.put("chromePort", RemoteDebugDriver.chromePort);
                 forwardView.put("detail", result);
-                AgentTool.sendText(session, forwardView.toJSONString());
+                BytesTool.sendText(session, forwardView.toJSONString());
                 break;
             }
             case "find":
@@ -416,7 +417,7 @@ public class AndroidWSServer {
                     e.printStackTrace();
                 }
                 result.put("msg", "uninstallFinish");
-                AgentTool.sendText(session, result.toJSONString());
+                BytesTool.sendText(session, result.toJSONString());
                 break;
             }
             case "scan":
@@ -445,23 +446,23 @@ public class AndroidWSServer {
             case "pullFile": {
                 JSONObject result = new JSONObject();
                 result.put("msg", "pullResult");
+                String filename = "test-output" + File.separator + "pull-" + UUID.randomUUID();
+                File file = new File(filename);
                 try {
-                    long time = Calendar.getInstance().getTimeInMillis();
-                    String tail = "";
-                    if (msg.getString("path").lastIndexOf(".") != -1) {
-                        tail = msg.getString("path").substring(msg.getString("path").lastIndexOf(".") + 1);
-                    }
-                    String filename = "test-output" + File.separator + "pull-" + time + "." + tail;
-                    File file = new File(filename);
-                    //判断是否文件夹
-                    iDevice.pullFile(file.getAbsolutePath(), msg.getString("path"));
-
+                    file.mkdirs();
+                    iDevice.pullFile(msg.getString("path"), file.getAbsolutePath());
+                    File re = new File(filename + ".zip");
+                    ZipTool.zip(re, file);
+                    String url = UploadTools.upload(re, "packageFiles");
                     result.put("status", "success");
+                    result.put("url", url);
                 } catch (IOException | AdbCommandRejectedException | SyncException | TimeoutException e) {
                     result.put("status", "fail");
                     e.printStackTrace();
+                } finally {
+                    deleteDir(file);
                 }
-                AgentTool.sendText(session, result.toJSONString());
+                BytesTool.sendText(session, result.toJSONString());
                 break;
             }
             case "pushFile": {
@@ -476,7 +477,7 @@ public class AndroidWSServer {
                     result.put("status", "fail");
                     e.printStackTrace();
                 }
-                AgentTool.sendText(session, result.toJSONString());
+                BytesTool.sendText(session, result.toJSONString());
                 break;
             }
             case "debug":
@@ -521,7 +522,7 @@ public class AndroidWSServer {
                                     result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
                                 } finally {
                                     result.put("msg", "openDriver");
-                                    AgentTool.sendText(session, result.toJSONString());
+                                    BytesTool.sendText(session, result.toJSONString());
                                 }
                             });
                         }
@@ -566,7 +567,7 @@ public class AndroidWSServer {
                                 result.put("status", "fail");
                                 e.printStackTrace();
                             }
-                            AgentTool.sendText(session, result.toJSONString());
+                            BytesTool.sendText(session, result.toJSONString());
                         });
                     }
                     if (msg.getString("detail").equals("tree")) {
@@ -584,17 +585,17 @@ public class AndroidWSServer {
                                     logger.error(handleDes.getE().getMessage());
                                     JSONObject resultFail = new JSONObject();
                                     resultFail.put("msg", "treeFail");
-                                    AgentTool.sendText(session, resultFail.toJSONString());
+                                    BytesTool.sendText(session, resultFail.toJSONString());
                                 } else {
                                     result.put("webView", finalAndroidStepHandler.getWebView());
                                     result.put("activity", finalAndroidStepHandler.getCurrentActivity());
-                                    AgentTool.sendText(session, result.toJSONString());
+                                    BytesTool.sendText(session, result.toJSONString());
                                 }
                             } catch (Throwable e) {
                                 logger.error(e.getMessage());
                                 JSONObject result = new JSONObject();
                                 result.put("msg", "treeFail");
-                                AgentTool.sendText(session, result.toJSONString());
+                                BytesTool.sendText(session, result.toJSONString());
                             }
                         });
                     }
@@ -608,7 +609,7 @@ public class AndroidWSServer {
                             } catch (Exception e) {
                                 result.put("errMsg", "获取元素截图失败！");
                             }
-                            AgentTool.sendText(session, result.toJSONString());
+                            BytesTool.sendText(session, result.toJSONString());
                         });
                     }
                 }
@@ -655,5 +656,21 @@ public class AndroidWSServer {
             e.printStackTrace();
         }
         logger.info(session.getId() + "退出");
+    }
+
+    public void deleteDir(File file) {
+        if (!file.exists()) {
+            logger.info("文件不存在");
+            return;
+        }
+        File[] files = file.listFiles();
+        for (File f : files) {
+            if (f.isDirectory()) {
+                deleteDir(f);
+            } else {
+                f.delete();
+            }
+        }
+        file.delete();
     }
 }

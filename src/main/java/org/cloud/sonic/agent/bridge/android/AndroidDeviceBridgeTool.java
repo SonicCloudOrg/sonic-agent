@@ -2,7 +2,7 @@ package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.tests.android.AndroidTemperThread;
-import org.cloud.sonic.agent.tools.DownloadTool;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

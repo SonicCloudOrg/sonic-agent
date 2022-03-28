@@ -7,7 +7,7 @@ import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -288,7 +288,7 @@ public class TerminalWSServer {
                         JSONObject appListDetail = new JSONObject();
                         appListDetail.put("msg", "appListDetail");
                         appListDetail.put("detail", JSON.parseObject(dataJson));
-                        AgentTool.sendText(session, appListDetail.toJSONString());
+                        BytesTool.sendText(session, appListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -363,7 +363,7 @@ public class TerminalWSServer {
                         JSONObject wifiListDetail = new JSONObject();
                         wifiListDetail.put("msg", "wifiList");
                         wifiListDetail.put("detail", JSON.parseObject(dataJson));
-                        AgentTool.sendText(session, wifiListDetail.toJSONString());
+                        BytesTool.sendText(session, wifiListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

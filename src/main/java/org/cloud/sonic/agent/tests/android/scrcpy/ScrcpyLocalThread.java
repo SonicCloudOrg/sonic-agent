@@ -12,7 +12,7 @@ import java.io.File;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static org.cloud.sonic.agent.tools.AgentTool.sendText;
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 /**
  * 启动scrcpy等服务的线程

@@ -5,7 +5,7 @@ import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +85,7 @@ public class ScrcpyInputSocketThread extends Thread {
                 size.put("msg", "size");
                 size.put("width", sizeTotal.split("x")[0]);
                 size.put("height", sizeTotal.split("x")[1]);
-                AgentTool.sendText(session, size.toJSONString());
+                BytesTool.sendText(session, size.toJSONString());
             }
             int readLength;
             int naLuIndex;

@@ -1,7 +1,6 @@
 package org.cloud.sonic.agent.tests.common;
 
-import org.cloud.sonic.agent.common.interfaces.PlatformType;
-import org.cloud.sonic.agent.tools.LogTool;
+import org.cloud.sonic.agent.tests.LogUtil;
 
 /**
  * @author JayWenStar
@@ -13,7 +12,7 @@ public class RunStepThread extends Thread {
 
     protected volatile int platformType;
 
-    protected LogTool logTool;
+    protected LogUtil logUtil;
 
     public int getPlatformType() {
         return platformType;
@@ -23,12 +22,12 @@ public class RunStepThread extends Thread {
         this.platformType = platformType;
     }
 
-    public LogTool getLogTool() {
-        return logTool;
+    public LogUtil getLogTool() {
+        return logUtil;
     }
 
-    public void setLogTool(LogTool logTool) {
-        this.logTool = logTool;
+    public void setLogTool(LogUtil logUtil) {
+        this.logUtil = logUtil;
     }
 
     public boolean isStopped() {

@@ -10,7 +10,6 @@ import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
-import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
@@ -20,6 +19,8 @@ import org.cloud.sonic.agent.tools.*;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,7 +108,7 @@ public class IOSWSServer {
         JSONObject port = new JSONObject();
         port.put("port", AppiumServer.getPort());
         port.put("msg", "appiumPort");
-        AgentTool.sendText(session, port.toJSONString());
+        BytesTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
@@ -145,7 +146,7 @@ public class IOSWSServer {
                 proxy.put("webPort", webPort);
                 proxy.put("port", pPort);
                 proxy.put("msg", "proxyResult");
-                AgentTool.sendText(session, proxy.toJSONString());
+                BytesTool.sendText(session, proxy.toJSONString());
                 break;
             }
             case "installCert": {

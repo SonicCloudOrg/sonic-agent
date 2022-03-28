@@ -1,39 +1,23 @@
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
-import com.android.ddmlib.InstallException;
-import com.android.ddmlib.InstallReceiver;
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.HandleDes;
-import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.*;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
-import org.cloud.sonic.agent.tests.TaskManager;
-import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tests.android.scrcpy.ScrcpyServerUtil;
 import org.cloud.sonic.agent.tools.*;
-import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -97,7 +81,7 @@ public class AndroidScreenWSServer {
         error.printStackTrace();
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
-        AgentTool.sendText(session, errMsg.toJSONString());
+        BytesTool.sendText(session, errMsg.toJSONString());
     }
 
     @OnMessage
@@ -130,7 +114,7 @@ public class AndroidScreenWSServer {
                                                 JSONObject rotationJson = new JSONObject();
                                                 rotationJson.put("msg", "rotation");
                                                 rotationJson.put("value", Integer.parseInt(res) * 90);
-                                                AgentTool.sendText(session, rotationJson.toJSONString());
+                                                BytesTool.sendText(session, rotationJson.toJSONString());
                                                 startScreen(session);
                                             }
 
@@ -204,7 +188,7 @@ public class AndroidScreenWSServer {
             }
             JSONObject picFinish = new JSONObject();
             picFinish.put("msg", "picFinish");
-            AgentTool.sendText(session, picFinish.toJSONString());
+            BytesTool.sendText(session, picFinish.toJSONString());
         }
     }
 

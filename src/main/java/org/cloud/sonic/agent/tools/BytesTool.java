@@ -12,8 +12,8 @@ import java.nio.ByteBuffer;
  * @des 获取id
  * @date 2021/8/26 22:23
  */
-public class AgentTool {
-    private static final Logger log = LoggerFactory.getLogger(AgentTool.class);
+public class BytesTool {
+    private static final Logger log = LoggerFactory.getLogger(BytesTool.class);
 
     public static int agentId = 0;
 

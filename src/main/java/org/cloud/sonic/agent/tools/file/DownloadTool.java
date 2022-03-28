@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.tools;
+package org.cloud.sonic.agent.tools.file;
 
 import java.io.File;
 import java.io.FileOutputStream;

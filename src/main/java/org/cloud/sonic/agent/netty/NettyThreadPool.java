@@ -1,7 +1,7 @@
 package org.cloud.sonic.agent.netty;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +48,7 @@ public class NettyThreadPool {
                     if (NettyClientHandler.channel != null) {
                         if (!dataQueue.isEmpty()) {
                             JSONObject m = dataQueue.poll();
-                            m.put("agentId", AgentTool.agentId);
+                            m.put("agentId", BytesTool.agentId);
                             NettyClientHandler.channel.writeAndFlush(m.toJSONString());
                         }else{
                             Thread.sleep(1000);
