@@ -7,6 +7,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
@@ -29,6 +30,8 @@ import io.appium.java_client.remote.AutomationName;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
@@ -53,7 +56,7 @@ import static org.testng.Assert.*;
  * @date 2021/8/16 20:10
  */
 public class AndroidStepHandler {
-    public LogTool log = new LogTool();
+    public LogUtil log = new LogUtil();
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
     //包版本
@@ -66,7 +69,7 @@ public class AndroidStepHandler {
     //测试状态
     private int status = ResultDetailStatus.PASS;
 
-    public LogTool getLog() {
+    public LogUtil getLog() {
         return log;
     }
 

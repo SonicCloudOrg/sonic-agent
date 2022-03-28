@@ -14,7 +14,7 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 
-import static org.cloud.sonic.agent.tools.AgentTool.subByteArray;
+import static org.cloud.sonic.agent.tools.BytesTool.subByteArray;
 
 /**
  * minicap socket线程

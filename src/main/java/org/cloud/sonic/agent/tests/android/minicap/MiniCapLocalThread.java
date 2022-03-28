@@ -5,7 +5,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,7 +182,7 @@ public class MiniCapLocalThread extends Thread {
             JSONObject support = new JSONObject();
             support.put("msg", "support");
             support.put("text", "该设备不兼容MiniCap投屏！");
-            AgentTool.sendText(session, support.toJSONString());
+            BytesTool.sendText(session, support.toJSONString());
         }
     }
 

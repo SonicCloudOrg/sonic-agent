@@ -18,9 +18,9 @@ import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.tools.DownloadTool;
-import org.cloud.sonic.agent.tools.LogTool;
-import org.cloud.sonic.agent.tools.UploadTools;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tests.LogUtil;
+import org.cloud.sonic.agent.tools.file.UploadTools;
 import io.appium.java_client.MultiTouchAction;
 import io.appium.java_client.Setting;
 import io.appium.java_client.TouchAction;
@@ -62,7 +62,7 @@ import static org.testng.Assert.*;
  * @date 2021/8/16 20:10
  */
 public class IOSStepHandler {
-    public LogTool log = new LogTool();
+    public LogUtil log = new LogUtil();
     private IOSDriver iosDriver;
     private JSONObject globalParams = new JSONObject();
     private String testPackage = "";
@@ -70,7 +70,7 @@ public class IOSStepHandler {
     //测试状态
     private int status = ResultDetailStatus.PASS;
 
-    public LogTool getLog() {
+    public LogUtil getLog() {
         return log;
     }
 

@@ -3,7 +3,7 @@ package org.cloud.sonic.agent.websockets;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,7 @@ public class AudioWSServer {
                         ByteBuffer byteBuffer = ByteBuffer.allocate(dataBytes.length);
                         byteBuffer.put(dataBytes);
                         byteBuffer.flip();
-                        AgentTool.sendByte(session, byteBuffer);
+                        BytesTool.sendByte(session, byteBuffer);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();

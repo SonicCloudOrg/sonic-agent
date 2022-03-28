@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.tools;
+package org.cloud.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
@@ -18,8 +18,8 @@ import java.util.Date;
  * @des log工具类，会发送到服务端入库
  * @date 2021/8/16 19:54
  */
-public class LogTool {
-    private final Logger logger = LoggerFactory.getLogger(LogTool.class);
+public class LogUtil {
+    private final Logger logger = LoggerFactory.getLogger(LogUtil.class);
     public String sessionId = "";
     public String type;
     public int caseId = 0;

@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.tools;
+package org.cloud.sonic.agent.tools.file;
 
 import com.alibaba.fastjson.JSONObject;
 import net.coobird.thumbnailator.Thumbnails;
