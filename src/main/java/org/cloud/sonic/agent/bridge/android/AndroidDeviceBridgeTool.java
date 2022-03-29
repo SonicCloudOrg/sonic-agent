@@ -1,7 +1,7 @@
 package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
-import org.cloud.sonic.agent.tests.android.AndroidTemperThread;
+import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
-    private AndroidTemperThread androidTemperThread = null;
+    private AndroidBatteryThread androidBatteryThread = null;
     private static String apkVersion;
     @Value("${sonic.saa}")
     private String ver;
@@ -95,9 +95,9 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 break;
             }
         }
-        if (androidTemperThread == null || !androidTemperThread.isAlive()) {
-            androidTemperThread = new AndroidTemperThread();
-            androidTemperThread.start();
+        if (androidBatteryThread == null || !androidBatteryThread.isAlive()) {
+            androidBatteryThread = new AndroidBatteryThread();
+            androidBatteryThread.start();
         }
     }
 
