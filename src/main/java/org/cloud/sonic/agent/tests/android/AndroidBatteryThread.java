@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class AndroidTemperThread extends Thread {
+public class AndroidBatteryThread extends Thread {
     @Override
     public void run() {
         while (NettyClientHandler.serverOnline) {
@@ -31,15 +31,18 @@ public class AndroidTemperThread extends Thread {
                 String temper = AndroidDeviceBridgeTool
                         .executeCommand(iDevice, "dumpsys battery");
                 if (StringUtils.hasText(temper)) {
-                    String real = temper.substring(temper.indexOf("temperature")).trim();
-                    int total = getInt(real.substring(13, real.indexOf("\n")));
+                    String realTem = temper.substring(temper.indexOf("temperature")).trim();
+                    int tem = getInt(realTem.substring(13, realTem.indexOf("\n")));
+                    String realLevel = temper.substring(temper.indexOf("level")).trim();
+                    int level = getInt(realLevel.substring(7, realLevel.indexOf("\n")));
                     jsonObject.put("udId", iDevice.getSerialNumber());
-                    jsonObject.put("tem", total);
+                    jsonObject.put("tem", tem);
+                    jsonObject.put("level", level);
                     detail.add(jsonObject);
                 }
             }
             JSONObject result = new JSONObject();
-            result.put("msg", "temperature");
+            result.put("msg", "battery");
             result.put("detail", detail);
             NettyThreadPool.send(result);
             try {
