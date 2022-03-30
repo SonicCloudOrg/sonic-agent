@@ -9,6 +9,9 @@ services:
       - AGENT_PORT=7777
       # 替换为前端新增Agent生成的key
       - AGENT_KEY=29002272-4659-4808-a804-08ce3388b136
+      # 是否为Sonic专属Hub，可以前往https://sonic-cloud.gitee.io/#/Hub了解更多
+      - HUB_ENABLE=true
+      - HUB_GENERATION=1st
       # 这个host改成后端的host
       - SERVER_HOST=192.168.1.1
       # 这个port改成后端文件中心的port（一般不变）
@@ -31,6 +34,8 @@ services:
       - WEBVIEW_ENABLE=true
       # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
       - CHROME_DRIVER_PORT=0
+      # 是否开启sonic-go-mitmproxy代理功能
+      - SGM_ENABLE=true
     network_mode: "host"
     privileged: true
     volumes:
