@@ -3,6 +3,9 @@ sonic:
     host: 192.168.0.2
     port: 7777
     key: 29002272-4659-4808-a804-08ce3388b136
+    hub:
+      enable: false
+      generation: 1st
   server:
     host: 192.168.0.2
     folder-port: 8094
@@ -22,6 +25,8 @@ modules:
     enable: true
     chrome-driver-debug-port: 7778
     chrome-driver-path: C:\Program Files\Google\Chrome\Application\chromedriver.exe
+  sgm:
+    enable: true
 
 logging:
   file:
