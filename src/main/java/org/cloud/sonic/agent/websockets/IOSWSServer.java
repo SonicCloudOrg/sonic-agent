@@ -2,20 +2,21 @@ package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
-import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
-import org.cloud.sonic.agent.interfaces.DeviceStatus;
-import org.cloud.sonic.agent.maps.DevicesLockMap;
-import org.cloud.sonic.agent.maps.HandlerMap;
-import org.cloud.sonic.agent.maps.WebSocketSessionMap;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.common.maps.DevicesLockMap;
+import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
+import org.cloud.sonic.agent.common.maps.HandlerMap;
+import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
-import org.cloud.sonic.agent.tools.DownImageTool;
-import org.cloud.sonic.agent.tools.UploadTools;
+import org.cloud.sonic.agent.tools.*;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
@@ -30,6 +31,7 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.File;
 import java.io.IOException;
+import java.net.Socket;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +44,10 @@ public class IOSWSServer {
     private Map<Session, String> udIdMap = new ConcurrentHashMap<>();
     @Value("${sonic.agent.key}")
     private String key;
+    @Value("${sonic.agent.host}")
+    private String host;
+    @Value("${sonic.agent.port}")
+    private int port;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -65,17 +71,16 @@ public class IOSWSServer {
         jsonDebug.put("udId", udId);
         NettyThreadPool.send(jsonDebug);
         WebSocketSessionMap.addSession(session);
-        if (!TIDeviceTool.getDeviceList().contains(udId)) {
+        if (!SibTool.getDeviceList().contains(udId)) {
             logger.info("设备未连接，请检查！");
             return;
         }
         udIdMap.put(session, udId);
-        int wdaPort = TIDeviceTool.startWda(udId);
-        int imgPort = TIDeviceTool.relayImg(udId);
+        int[] ports = SibTool.startWda(udId);
         JSONObject picFinish = new JSONObject();
         picFinish.put("msg", "picFinish");
-        picFinish.put("wda", wdaPort);
-        picFinish.put("port", imgPort);
+        picFinish.put("wda", ports[0]);
+        picFinish.put("port", ports[1]);
         sendText(session, picFinish.toJSONString());
 
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -83,7 +88,7 @@ public class IOSWSServer {
             iosStepHandler.setTestMode(0, 0, udId, DeviceStatus.DEBUGGING, session.getId());
             JSONObject result = new JSONObject();
             try {
-                iosStepHandler.startIOSDriver(udId, wdaPort);
+                iosStepHandler.startIOSDriver(udId, ports[0]);
                 result.put("status", "success");
                 result.put("width", iosStepHandler.getDriver().manage().window().getSize().width);
                 result.put("height", iosStepHandler.getDriver().manage().window().getSize().height);
@@ -98,6 +103,11 @@ public class IOSWSServer {
                 sendText(session, result.toJSONString());
             }
         });
+
+        JSONObject port = new JSONObject();
+        port.put("port", AppiumServer.getPort());
+        port.put("msg", "appiumPort");
+        AgentTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
@@ -123,13 +133,48 @@ public class IOSWSServer {
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
         logger.info(session.getId() + " 发送 " + msg);
+        String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "proxy": {
+                Socket portSocket = PortTool.getBindSocket();
+                Socket webPortSocket = PortTool.getBindSocket();
+                int pPort = PortTool.releaseAndGetPort(portSocket);
+                int webPort = PortTool.releaseAndGetPort(webPortSocket);
+                SGMTool.startProxy(udId, SGMTool.getCommand(pPort, webPort));
+                JSONObject proxy = new JSONObject();
+                proxy.put("webPort", webPort);
+                proxy.put("port", pPort);
+                proxy.put("msg", "proxyResult");
+                AgentTool.sendText(session, proxy.toJSONString());
+                break;
+            }
+            case "installCert": {
+                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
+                if (iosStepHandler == null || iosStepHandler.getDriver() == null) {
+                    break;
+                }
+                iosStepHandler.getDriver().activateApp("com.apple.mobilesafari");
+                break;
+            }
+            case "appList":
+                JSONObject appList = SibTool.getAppList(udId);
+                if (appList.get("appList") != null) {
+                    appList.put("msg", "appListDetail");
+                    sendText(session, appList.toJSONString());
+                }
+                break;
+            case "launch":
+                SibTool.launch(udId, msg.getString("pkg"));
+                break;
+            case "uninstallApp":
+                SibTool.uninstall(udId, msg.getString("detail"));
+                break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
                     JSONObject jsonDebug = new JSONObject();
                     jsonDebug.put("msg", "findSteps");
                     jsonDebug.put("key", key);
-                    jsonDebug.put("udId", udIdMap.get(session));
+                    jsonDebug.put("udId", udId);
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
                     NettyThreadPool.send(jsonDebug);
@@ -200,15 +245,8 @@ public class IOSWSServer {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
-                                File localFile = DownImageTool.download(msg.getString("ipa"));
-                                String commandLine = "tidevice -u " + udIdMap.get(session) +
-                                        " install " + localFile.getAbsolutePath();
-                                String system = System.getProperty("os.name").toLowerCase();
-                                if (system.contains("win")) {
-                                    Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
-                                } else if (system.contains("linux") || system.contains("mac")) {
-                                    Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
-                                }
+                                File localFile = DownloadTool.download(msg.getString("ipa"));
+                                SibTool.install(udId, localFile.getAbsolutePath());
                                 result.put("status", "success");
                             } catch (IOException e) {
                                 result.put("status", "fail");
@@ -271,7 +309,6 @@ public class IOSWSServer {
     }
 
     private void exit(Session session) {
-        IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
         } catch (Exception e) {
@@ -279,7 +316,10 @@ public class IOSWSServer {
         } finally {
             HandlerMap.getIOSMap().remove(session.getId());
         }
+        SGMTool.stopProxy(udIdMap.get(session));
+        IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);
+        udIdMap.remove(session);
         try {
             session.close();
         } catch (IOException e) {

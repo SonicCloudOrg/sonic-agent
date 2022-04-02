@@ -1,9 +1,9 @@
 package org.cloud.sonic.agent.tools;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.interfaces.DeviceStatus;
-import org.cloud.sonic.agent.interfaces.StepType;
-import org.cloud.sonic.agent.maps.WebSocketSessionMap;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

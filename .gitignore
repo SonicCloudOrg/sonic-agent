@@ -6,3 +6,7 @@
 *.iml
 */.DS_Store
 .DS_Store
+.sib/
+/plugins/sonic-go-mitmproxy-ca-cert.cer
+/plugins/sonic-go-mitmproxy-ca-cert.pem
+/plugins/sonic-go-mitmproxy-ca.pem

@@ -2,24 +2,20 @@ package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.tests.android.AndroidTemperThread;
-import org.cloud.sonic.agent.tools.DownImageTool;
+import org.cloud.sonic.agent.tools.DownloadTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,6 +30,9 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
     private AndroidTemperThread androidTemperThread = null;
+    private static String apkVersion;
+    @Value("${sonic.saa}")
+    private String ver;
 
     @Autowired
     private AndroidDeviceStatusListener androidDeviceStatusListener;
@@ -68,6 +67,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      * @date 2021/8/16 19:36
      */
     public void init() {
+        apkVersion = ver;
         //获取系统SDK路径
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
@@ -209,7 +209,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
     public static boolean checkSonicApkVersion(IDevice iDevice) {
         String all = executeCommand(iDevice, "dumpsys package org.cloud.sonic.android");
-        if (!all.contains("versionName=1.3.2")) {
+        if (!all.contains("versionName=" + apkVersion)) {
             return false;
         } else {
             return true;
@@ -316,6 +316,14 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         return filePath;
     }
 
+    public static void startProxy(IDevice iDevice, String host, int port) {
+        executeCommand(iDevice, String.format("settings put global http_proxy %s:%d", host, port));
+    }
+
+    public static void clearProxy(IDevice iDevice) {
+        executeCommand(iDevice, "settings put global http_proxy :0");
+    }
+
     public static void screen(IDevice iDevice, String type) {
         int p = getScreen(iDevice);
         try {
@@ -375,7 +383,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
     public static void pushToCamera(IDevice iDevice, String url) {
         try {
-            File image = DownImageTool.download(url);
+            File image = DownloadTool.download(url);
             iDevice.pushFile(image.getAbsolutePath(), "/sdcard/DCIM/Camera/" + image.getName());
             executeCommand(iDevice, "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/" + image.getName());
         } catch (IOException e) {

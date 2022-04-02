@@ -2,7 +2,11 @@ package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.automation.HandleDes;
+import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +34,8 @@ public class AndroidRunStepThread extends RunStepThread {
 
         this.setDaemon(true);
         this.setName(androidTestTaskBootThread.formatThreadName(ANDROID_RUN_STEP_TASK_PRE));
+        setPlatformType(PlatformType.ANDROID);
+        setLogTool(androidTestTaskBootThread.getAndroidStepHandler().getLog());
     }
 
     public AndroidTestTaskBootThread getAndroidTestTaskBootThread() {
@@ -38,16 +44,17 @@ public class AndroidRunStepThread extends RunStepThread {
 
     @Override
     public void run() {
+        StepHandlers stepHandlers = SpringTool.getBean(StepHandlers.class);
         JSONObject jsonObject = androidTestTaskBootThread.getJsonObject();
-        AndroidStepHandler androidStepHandler = androidTestTaskBootThread.getAndroidStepHandler();
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
 
+        HandleDes handleDes = new HandleDes();
         for (JSONObject step : steps) {
             if (isStopped()) {
                 return;
             }
             try {
-                androidStepHandler.runStep(step);
+                stepHandlers.runStep(step, handleDes, this);
             } catch (Throwable e) {
                 break;
             }

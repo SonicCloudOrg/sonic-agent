@@ -1,0 +1,40 @@
+version: '3'
+services:
+  sonic-agent:
+    #下方为Docker Hub镜像，推荐海外用户使用，默认使用国内加速镜像
+#    image: "sonicorg/sonic-agent-linux:v1.3.2-release"
+    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.3.2-release"
+    environment:
+      # 替换为部署Agent机器的ipv4
+      - AGENT_HOST=192.168.1.1
+      # 替换为Agent服务的端口，可以自行更改
+      - AGENT_PORT=7777
+      # 替换为前端新增Agent生成的key
+      - AGENT_KEY=29002272-4659-4808-a804-08ce3388b136
+      # 这个host改成后端的host
+      - SERVER_HOST=192.168.1.1
+      # 这个port改成后端文件中心的port（一般不变）
+      - SERVER_FOLDER_PORT=8094
+      # 这个port改成后端传输中心的port（一般不变）
+      - SERVER_TRANSPORT_PORT=8095
+      # 是否使用安卓模块
+      - ANDROID_ENABLE=true
+      # 是否开启远程adb调试功能
+      - USE_ADBKIT=true
+      # 是否使用iOS模块
+      - IOS_ENABLE=true
+      # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
+      - WDA_BUNDLE_ID=com.facebook.WebDriverAgentRunner.xctrunner
+      # 是否启用Appium
+      - APPIUM_ENABLE=true
+      # 默认为0会自动寻找随机端口启动，如果需要指定appium server端口，请在这里设置
+      - APPIUM_PORT=0
+      # 是否启用webview调试功能
+      - WEBVIEW_ENABLE=true
+      # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
+      - CHROME_DRIVER_PORT=0
+    network_mode: "host"
+    privileged: true
+    volumes:
+      - /dev/bus/usb:/dev/bus/usb
+      - /var/run/usbmuxd:/var/run/usbmuxd

@@ -18,11 +18,25 @@ public class AppiumServer {
      * @des 启动appium服务
      * @date 2021/8/16 20:01
      */
-    public static void start() {
-        service = AppiumDriverLocalService.buildService(new AppiumServiceBuilder().usingAnyFreePort()
+    public static void start(int port) {
+        AppiumServiceBuilder appiumServiceBuilder = new AppiumServiceBuilder();
+        if (port == 0) {
+            appiumServiceBuilder.usingAnyFreePort();
+        } else {
+            appiumServiceBuilder.usingPort(port);
+        }
+        service = AppiumDriverLocalService.buildService(appiumServiceBuilder
                 .withArgument(GeneralServerFlag.LOG_LEVEL, "error")
                 .withArgument(GeneralServerFlag.ALLOW_INSECURE, "chromedriver_autodownload"));
         service.start();
+    }
+
+    public static int getPort() {
+        if (service != null && service.isRunning()) {
+            return service.getUrl().getPort();
+        } else {
+            return 0;
+        }
     }
 
     public static void close() {

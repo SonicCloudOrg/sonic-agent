@@ -1,0 +1,34 @@
+sonic:
+  agent:
+    host: ${AGENT_HOST}
+    port: ${AGENT_PORT}
+    key: ${AGENT_KEY}
+  server:
+    host: ${SERVER_HOST}
+    folder-port: ${SERVER_FOLDER_PORT}
+    transport-port: ${SERVER_TRANSPORT_PORT}
+
+modules:
+  android:
+    enable: ${ANDROID_ENABLE}
+    use-adbkit: ${USE_ADBKIT}
+  ios:
+    enable: ${IOS_ENABLE}
+    wda-bundle-id: ${WDA_BUNDLE_ID}
+  appium:
+    enable: ${APPIUM_ENABLE}
+    port: ${APPIUM_PORT}
+  webview:
+    enable: ${WEBVIEW_ENABLE}
+    chrome-driver-debug-port: ${CHROME_DRIVER_PORT}
+    chrome-driver-path: /usr/bin/chromedriver
+
+logging:
+  file:
+    name: logs/sonic-agent.log
+  logback:
+    rollingpolicy:
+      clean-history-on-start: true
+      max-history: 3
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"

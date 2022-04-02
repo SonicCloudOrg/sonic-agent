@@ -1,7 +1,7 @@
 package org.cloud.sonic.agent.netty;
 
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.bridge.ios.TIDeviceTool;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -75,7 +75,7 @@ public class NettyClient implements ApplicationRunner {
                     SpringTool.getBean(AndroidDeviceBridgeTool.class).init();
                 }
                 if (iosEnable) {
-                    SpringTool.getBean(TIDeviceTool.class).init();
+                    SpringTool.getBean(SibTool.class).init();
                 }
             } else {
                 logger.info("连接到服务器{}:{}失败！10s后重连...", serverHost, serverPort);

@@ -1,7 +1,6 @@
 package org.cloud.sonic.agent.tests;
 
-import org.cloud.sonic.agent.interfaces.PlatformType;
-import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
+import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
@@ -149,6 +148,13 @@ public class TaskManager {
      */
     public static void clearTerminatedThreadByKey(String key) {
         bootThreadsMap.remove(key);
+        Set<Thread> threads = childThreadsMap.get(key);
+        if (threads == null) {
+            return;
+        }
+        for (Thread thread : threads) {
+            thread.interrupt();
+        }
         childThreadsMap.remove(key);
     }
 
