@@ -34,7 +34,8 @@ public class LaunchTool implements ApplicationRunner {
             testFile.mkdirs();
         }
         if (isEnableSgm) {
-            SGMTool.init();
+            // fixme 本地调试环境忽略
+            // SGMTool.init();
             new Thread(() -> {
                 File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
                 if (!file.exists()) {

@@ -1,9 +1,0 @@
-spring:
-  version: @project.version@
-  profiles:
-    active: dev,@profileActive@
-
-sonic:
-  saa: 1.3.4
-  sgm: 0.1.7
-  sib: v1.0.2

@@ -107,13 +107,14 @@ public class EnvCheckTool {
         File config = new File("config/application-prod.yml");
         File mini = new File("mini");
         File plugins = new File("plugins");
-        if (system.contains("linux") || system.contains("mac")) {
-            try {
-                Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format("chmod -R 777 %s", new File("").getAbsolutePath())});
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        // fixme 本地测试关闭授权
+//        if (system.contains("linux") || system.contains("mac")) {
+//            try {
+//                Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format("chmod -R 777 %s", new File("").getAbsolutePath())});
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
         if (webview.exists()
                 && config.exists()
                 && mini.exists()
