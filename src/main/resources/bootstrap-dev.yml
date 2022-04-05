@@ -1,0 +1,53 @@
+spring:
+  version: @project.version@
+  application:
+    name: @project.artifactId@
+    des: "Sonic云真机测试平台 - agent端"
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: sonic-server-folder
+      name: @project.artifactId@,actuator,zookeeper,dubbo,feign,common
+      profile: ${PROFILE:dev}
+      fail-fast: true
+
+sonic:
+  agent:
+    host: localhost
+    port: 7777
+    key: 8414e223-89ff-4545-a81c-69c1db9545f0
+    hub:
+      enable: false
+      generation: 1st
+  server:
+    host: localhost
+    folder-port: 8094
+    transport-port: 8095
+
+modules:
+  android:
+    enable: true
+    use-adbkit: true
+  ios:
+    enable: false
+    wda-bundle-id: com.sonic.WebDriverAgentRunner.xctrunner
+  appium:
+    enable: true
+    port: 9999
+  webview:
+    enable: true
+    chrome-driver-debug-port: 7778
+    chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
+  sgm:
+    enable: true
+
+logging:
+  file:
+    name: logs/sonic-agent.log
+  logback:
+    rollingpolicy:
+      clean-history-on-start: true
+      max-history: 3
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
