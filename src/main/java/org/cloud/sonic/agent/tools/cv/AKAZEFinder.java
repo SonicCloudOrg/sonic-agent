@@ -1,7 +1,7 @@
 package org.cloud.sonic.agent.tools.cv;
 
 import org.cloud.sonic.agent.automation.FindResult;
-import org.cloud.sonic.agent.tools.UploadTools;
+import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_features2d.AKAZE;
 import org.bytedeco.opencv.opencv_flann.Index;

@@ -22,6 +22,10 @@ public class LaunchTool implements ApplicationRunner {
     private final Logger logger = LoggerFactory.getLogger(LaunchTool.class);
     @Value("${modules.appium.port}")
     private int port;
+    @Value("${modules.appium.enable}")
+    private boolean isEnableAppium;
+    @Value("${modules.sgm.enable}")
+    private boolean isEnableSgm;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -29,29 +33,33 @@ public class LaunchTool implements ApplicationRunner {
         if (!testFile.exists()) {
             testFile.mkdirs();
         }
-        SGMTool.init();
-        new Thread(() -> {
-            File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
-            if (!file.exists()) {
-                logger.info("开始生成ca证书...");
-                SGMTool.startProxy("init", SGMTool.getCommand());
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                // 仅生成证书
-                SGMTool.stopProxy("init");
-                file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
+        if (isEnableSgm) {
+            // fixme 本地调试环境忽略
+            // SGMTool.init();
+            new Thread(() -> {
+                File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
                 if (!file.exists()) {
-                    logger.info("sonic-go-mitmproxy-ca证书生成失败！");
-                } else {
-                    logger.info("sonic-go-mitmproxy-ca证书生成成功！");
+                    logger.info("开始生成ca证书...");
+                    SGMTool.startProxy("init", SGMTool.getCommand());
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    // 仅生成证书
+                    SGMTool.stopProxy("init");
+                    file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
+                    if (!file.exists()) {
+                        logger.info("sonic-go-mitmproxy-ca证书生成失败！");
+                    } else {
+                        logger.info("sonic-go-mitmproxy-ca证书生成成功！");
+                    }
                 }
-            }
-        }).start();
-        AppiumServer.start(port);
-
+            }).start();
+        }
+        if (isEnableAppium) {
+            AppiumServer.start(port);
+        }
     }
 
     @PreDestroy

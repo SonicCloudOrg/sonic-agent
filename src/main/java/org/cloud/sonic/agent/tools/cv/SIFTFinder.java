@@ -4,7 +4,7 @@ import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_features2d.FlannBasedMatcher;
 import org.bytedeco.opencv.opencv_xfeatures2d.SIFT;
 import org.cloud.sonic.agent.automation.FindResult;
-import org.cloud.sonic.agent.tools.UploadTools;
+import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.Session;
 import java.util.Queue;
 
-import static org.cloud.sonic.agent.tools.AgentTool.sendByte;
+import static org.cloud.sonic.agent.tools.BytesTool.sendByte;
 
 /**
  * 视频流输出线程

@@ -2,7 +2,7 @@ package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,31 +100,31 @@ public class MiniCapOutputSocketThread extends Thread {
                         case 3:
                         case 4:
                         case 5:
-                            banner.get()[5] = AgentTool.bytesToLong(buffer, 2) + "";
+                            banner.get()[5] = BytesTool.bytesToLong(buffer, 2) + "";
                             break;
                         case 6:
                         case 7:
                         case 8:
                         case 9:
-                            banner.get()[9] = AgentTool.bytesToLong(buffer, 6) + "";
+                            banner.get()[9] = BytesTool.bytesToLong(buffer, 6) + "";
                             break;
                         case 10:
                         case 11:
                         case 12:
                         case 13:
-                            banner.get()[13] = AgentTool.bytesToLong(buffer, 10) + "";
+                            banner.get()[13] = BytesTool.bytesToLong(buffer, 10) + "";
                             break;
                         case 14:
                         case 15:
                         case 16:
                         case 17:
-                            banner.get()[17] = AgentTool.bytesToLong(buffer, 14) + "";
+                            banner.get()[17] = BytesTool.bytesToLong(buffer, 14) + "";
                             break;
                         case 18:
                         case 19:
                         case 20:
                         case 21:
-                            banner.get()[21] = AgentTool.bytesToLong(buffer, 18) + "";
+                            banner.get()[21] = BytesTool.bytesToLong(buffer, 18) + "";
                             break;
                         case 22:
                             banner.get()[22] += buffer[cursor] * 90;
@@ -143,7 +143,7 @@ public class MiniCapOutputSocketThread extends Thread {
                             size.put("msg", "size");
                             size.put("width", banner.get()[9]);
                             size.put("height", banner.get()[13]);
-                            AgentTool.sendText(session, size.toJSONString());
+                            BytesTool.sendText(session, size.toJSONString());
                         }
                     }
                 } else if (readFrameBytes < 4) {//读取并设置图片的大小
@@ -152,13 +152,13 @@ public class MiniCapOutputSocketThread extends Thread {
                     readFrameBytes += 1;
                 } else {
                     if (len - cursor >= frameBodyLength) {
-                        byte[] subByte = AgentTool.subByteArray(buffer, cursor,
+                        byte[] subByte = BytesTool.subByteArray(buffer, cursor,
                                 cursor + frameBodyLength);
-                        frameBody = AgentTool.addBytes(frameBody, subByte);
+                        frameBody = BytesTool.addBytes(frameBody, subByte);
                         if ((frameBody[0] != -1) || frameBody[1] != -40) {
                             return;
                         }
-                        final byte[] finalBytes = AgentTool.subByteArray(frameBody,
+                        final byte[] finalBytes = BytesTool.subByteArray(frameBody,
                                 0, frameBody.length);
                         if (sessionOpen()) {
                             if (!Arrays.equals(oldBytes, finalBytes)) {
@@ -176,7 +176,7 @@ public class MiniCapOutputSocketThread extends Thread {
                                 if (count % 4 == 0) {
                                     count = 0;
                                     oldBytes = finalBytes;
-                                    AgentTool.sendByte(session, finalBytes);
+                                    BytesTool.sendByte(session, finalBytes);
                                 }
                             }
                         }
@@ -188,8 +188,8 @@ public class MiniCapOutputSocketThread extends Thread {
                         readFrameBytes = 0;
                         frameBody = new byte[0];
                     } else {
-                        byte[] subByte = AgentTool.subByteArray(buffer, cursor, len);
-                        frameBody = AgentTool.addBytes(frameBody, subByte);
+                        byte[] subByte = BytesTool.subByteArray(buffer, cursor, len);
+                        frameBody = BytesTool.addBytes(frameBody, subByte);
                         frameBodyLength -= (len - cursor);
                         readFrameBytes += (len - cursor);
                         cursor = len;

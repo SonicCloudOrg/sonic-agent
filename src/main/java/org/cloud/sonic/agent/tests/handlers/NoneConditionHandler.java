@@ -25,6 +25,7 @@ public class NoneConditionHandler implements StepHandler {
         if (thread.isStopped()) {
             return null;
         }
+        handleDes.clear();
 
         switch (thread.getPlatformType()) {
             case PlatformType.ANDROID:
