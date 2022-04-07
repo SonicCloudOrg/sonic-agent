@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 
 /**
  * @author ZhouYiXun
- * @des 获取id
+ * @des
  * @date 2021/8/26 22:23
  */
 public class BytesTool {
