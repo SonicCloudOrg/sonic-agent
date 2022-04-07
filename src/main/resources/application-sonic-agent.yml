@@ -1,17 +1,3 @@
-spring:
-  version: @project.version@
-  application:
-    name: @project.artifactId@
-    des: "Sonic云真机测试平台 - agent端"
-  cloud:
-    config:
-      discovery:
-        enabled: true
-        service-id: sonic-server-folder
-      name: @project.artifactId@,actuator,zookeeper,dubbo,feign,common
-      profile: ${PROFILE:dev}
-      fail-fast: true
-
 sonic:
   agent:
     host: localhost
@@ -45,9 +31,7 @@ modules:
 logging:
   file:
     name: logs/sonic-agent.log
-  logback:
-    rollingpolicy:
-      clean-history-on-start: true
-      max-history: 3
+    max-history: 3
+    clean-history-on-start: true
   pattern:
     console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
