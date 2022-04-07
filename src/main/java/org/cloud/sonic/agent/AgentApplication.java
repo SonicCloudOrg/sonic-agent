@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent;
 
+import org.apache.dubbo.config.spring.context.annotation.DubboComponentScan;
 import org.cloud.sonic.common.config.APIDocumentConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -40,6 +41,7 @@ import org.springframework.context.annotation.FilterType;
 )
 @EnableFeignClients(basePackages = {"org.cloud.sonic.common.feign"})
 @EnableDiscoveryClient
+@DubboComponentScan(basePackages = "org.cloud.sonic.agent.service.impl")
 public class AgentApplication {
     @Value("${sonic.agent.port}")
     private int port;
