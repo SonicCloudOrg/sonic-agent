@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +37,16 @@ public class TaskManager {
      */
     private static ConcurrentHashMap<String, Set<Thread>> childThreadsMap = new ConcurrentHashMap<>();
 
+    /**
+     * 记录正在运行的rid记录
+     */
+    private static Set<Integer> runningRidSet =  Collections.synchronizedSet(new HashSet<>());
+
     private static final Lock lock = new ReentrantLock();
+
+    public static boolean ridRunning(Integer rid) {
+        return runningRidSet.contains(rid);
+    }
 
     /**
      * 启动boot线程
@@ -46,6 +56,9 @@ public class TaskManager {
     public static void startBootThread(Thread bootThread) {
         bootThread.start();
         addBootThread(bootThread.getName(), bootThread);
+
+        String[] split = bootThread.getName().split("-");
+        runningRidSet.add(Integer.parseInt(split[split.length-3]));
     }
 
     /**
@@ -156,6 +169,9 @@ public class TaskManager {
             thread.interrupt();
         }
         childThreadsMap.remove(key);
+
+        String[] split = key.split("-");
+        runningRidSet.remove(Integer.parseInt(split[split.length-3]));
     }
 
     /**
@@ -171,6 +187,9 @@ public class TaskManager {
         terminatedThread.forEach((k, v) -> {
             v.interrupt();
             bootThreadsMap.remove(k);
+
+            String[] split = k.split("-");
+            runningRidSet.remove(Integer.parseInt(split[split.length-3]));
         });
         // 删除boot衍生的线程
         terminatedThread.forEach((key, value) -> {
@@ -202,6 +221,8 @@ public class TaskManager {
         bootThreadsMap.remove(key);
         childThreadsMap.remove(key);
         runningTestsMap.remove(resultId + "");
+
+        runningRidSet.remove(resultId);
     }
 
     /**

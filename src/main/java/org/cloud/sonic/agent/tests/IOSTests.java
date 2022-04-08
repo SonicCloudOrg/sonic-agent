@@ -56,6 +56,10 @@ public class IOSTests {
     @Test(dataProvider = "testData")
     public void run(JSONObject jsonObject) throws IOException {
         int rid = jsonObject.getInteger("rid");
+        if (TaskManager.ridRunning(rid)) {
+            logger.info("可能因为网络原因，任务重复下发，跳过");
+            return;
+        }
         int cid = jsonObject.getInteger("cid");
         IOSStepHandler iosStepHandler = new IOSStepHandler();
         String udId = jsonObject.getJSONObject("device").getString("udId");
