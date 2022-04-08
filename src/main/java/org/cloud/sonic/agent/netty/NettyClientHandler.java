@@ -93,6 +93,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                         runIOSStep(jsonObject);
                     }
                     break;
+                // fixme 已经实现对应的rpc，记得之后删除
                 case "suite":
                     List<JSONObject> cases = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
                     TestNG tng = new TestNG();
