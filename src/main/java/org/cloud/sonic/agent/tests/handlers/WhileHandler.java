@@ -54,7 +54,7 @@ public class WhileHandler implements StepHandler {
         thread.getLogTool().sendStepLog(StepType.PASS, "开始执行「while」步骤", "");
         noneConditionHandler.runStep(stepJSON, handleDes, thread);
         int i = 1;
-        while(handleDes.getE() == null) {
+        while(handleDes.getE() == null && !thread.isStopped()) {
             // 条件步骤成功，取出while下所属的步骤丢给stepHandlers处理
             thread.getLogTool().sendStepLog(StepType.PASS, "「while」步骤通过，开始执行第「" + i + "」次子步骤循环", "");
             for (JSONObject step : steps) {
@@ -70,6 +70,9 @@ public class WhileHandler implements StepHandler {
         }
         if (handleDes.getE() != null) {
             thread.getLogTool().sendStepLog(StepType.WARN, "「while」步骤执行失败，循环结束", "");
+        }
+        if (thread.isStopped()) {
+            thread.getLogTool().sendStepLog(StepType.WARN, "「while」被强制中断", "");
         }
         // 不满足条件则返回
         return handleDes;
