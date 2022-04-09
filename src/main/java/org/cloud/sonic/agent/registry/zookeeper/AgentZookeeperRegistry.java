@@ -73,6 +73,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
         agentsService.updateAgentsByLockVersion(currentAgent);
 
         // 注册节点
+        currentAgent = agentsService.findBySecretKey(secretKey);
         CuratorFramework curatorFramework = SpringTool.getApplicationContext().getBean(CuratorFramework.class);
         String nodePath = "/sonic-agent/%s".formatted(currentAgent.getId());
         try {
