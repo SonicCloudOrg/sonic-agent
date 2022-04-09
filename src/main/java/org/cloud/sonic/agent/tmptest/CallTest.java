@@ -2,7 +2,6 @@ package org.cloud.sonic.agent.tmptest;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
-import org.apache.dubbo.rpc.RpcContext;
 import org.cloud.sonic.common.feign.ControllerFeignClient;
 import org.cloud.sonic.common.http.RespModel;
 import org.cloud.sonic.common.models.domain.Devices;

@@ -8,7 +8,6 @@ import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
 import org.cloud.sonic.common.services.AgentsClientService;
 import org.cloud.sonic.common.services.AgentsService;
-import org.cloud.sonic.common.services.TestSuitesService;
 import org.springframework.stereotype.Service;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;

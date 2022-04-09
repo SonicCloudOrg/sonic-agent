@@ -16,14 +16,14 @@
  */
 package org.cloud.sonic.agent.tools.cv;
 
-import org.cloud.sonic.agent.automation.FindResult;
-import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_features2d.AKAZE;
 import org.bytedeco.opencv.opencv_flann.Index;
 import org.bytedeco.opencv.opencv_flann.IndexParams;
 import org.bytedeco.opencv.opencv_flann.LshIndexParams;
 import org.bytedeco.opencv.opencv_flann.SearchParams;
+import org.cloud.sonic.agent.automation.FindResult;
+import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
