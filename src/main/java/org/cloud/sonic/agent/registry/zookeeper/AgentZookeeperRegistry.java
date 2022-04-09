@@ -16,20 +16,13 @@
 package org.cloud.sonic.agent.registry.zookeeper;
 
 import org.apache.dubbo.common.URL;
-import org.apache.dubbo.config.annotation.DubboReference;
-import org.apache.dubbo.config.spring.ReferenceBean;
-import org.apache.dubbo.config.spring.beans.factory.annotation.ReferenceAnnotationBeanPostProcessor;
 import org.apache.dubbo.registry.zookeeper.ZookeeperRegistry;
 import org.apache.dubbo.remoting.zookeeper.ZookeeperTransporter;
 import org.cloud.sonic.common.models.domain.Agents;
 import org.cloud.sonic.common.models.interfaces.AgentStatus;
 import org.cloud.sonic.common.services.AgentsService;
 import org.cloud.sonic.common.tools.SpringTool;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
-
-import java.util.Collection;
 
 /**
  * @author JayWenStar
