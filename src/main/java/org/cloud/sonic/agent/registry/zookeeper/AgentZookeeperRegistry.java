@@ -15,9 +15,12 @@
  */
 package org.cloud.sonic.agent.registry.zookeeper;
 
+import com.alibaba.fastjson.JSON;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.registry.zookeeper.ZookeeperRegistry;
 import org.apache.dubbo.remoting.zookeeper.ZookeeperTransporter;
+import org.apache.zookeeper.CreateMode;
 import org.cloud.sonic.common.models.domain.Agents;
 import org.cloud.sonic.common.models.interfaces.AgentStatus;
 import org.cloud.sonic.common.services.AgentsService;
@@ -30,6 +33,8 @@ import org.springframework.util.ObjectUtils;
  */
 public class AgentZookeeperRegistry extends ZookeeperRegistry {
 
+    private boolean registered = false;
+
     public AgentZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
         super(url, zookeeperTransporter);
     }
@@ -41,22 +46,45 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
             return;
         }
 
+        if (registered) {
+            logger.debug("已注册，无需重复注册");
+            return;
+        }
+
         String host = url.getHost();
-        int port = url.getPort();
+        int rpcPort = url.getPort();
         String version = SpringTool.getPropertiesValue("spring.version");
         String secretKey = SpringTool.getPropertiesValue("sonic.agent.key");
+        int webPort = Integer.parseInt(SpringTool.getPropertiesValue("sonic.agent.port"));
         String systemType = System.getProperty("os.name");
         AgentsService agentsService = SpringTool.getBean(AgentsService.class);
 
+        // 保存记录
         Agents currentAgent = agentsService.findBySecretKey(secretKey);
         if (ObjectUtils.isEmpty(currentAgent)) {
             throw new RuntimeException("配置 sonic.agent.key 错误，请检查！");
         }
         currentAgent.setHost(host)
-                .setPort(port)
+                .setPort(webPort)
+                .setRpcPort(rpcPort)
                 .setStatus(AgentStatus.ONLINE)
                 .setSystemType(systemType)
                 .setVersion(version);
-        agentsService.saveAgents(currentAgent);
+        agentsService.updateAgentsByLockVersion(currentAgent);
+
+        // 注册节点
+        CuratorFramework curatorFramework = SpringTool.getApplicationContext().getBean(CuratorFramework.class);
+        String nodePath = "/sonic-agent/%s".formatted(currentAgent.getId());
+        try {
+            if (curatorFramework.checkExists().forPath(nodePath) != null) {
+                curatorFramework.delete().guaranteed().forPath(nodePath);
+            }
+            curatorFramework.create().creatingParentsIfNeeded()
+                    .withMode(CreateMode.EPHEMERAL)
+                    .forPath(nodePath, JSON.toJSONBytes(currentAgent));
+        } catch (Exception e) {
+            throw new RuntimeException("注册节点失败！");
+        }
+        registered = true;
     }
 }
