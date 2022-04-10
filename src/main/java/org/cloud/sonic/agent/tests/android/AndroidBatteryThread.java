@@ -18,9 +18,12 @@ package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.netty.NettyClientHandler;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.common.services.DevicesService;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -28,10 +31,12 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class AndroidBatteryThread extends Thread {
     @Override
     public void run() {
-        while (NettyClientHandler.serverOnline) {
+        AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
+        while (agentManagerTool.checkServerOnline()) {
             IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
             if (deviceList == null) {
                 try {
@@ -57,10 +62,16 @@ public class AndroidBatteryThread extends Thread {
                     detail.add(jsonObject);
                 }
             }
+            DevicesService devicesService = SpringTool.getBean(DevicesService.class);
             JSONObject result = new JSONObject();
             result.put("msg", "battery");
             result.put("detail", detail);
-            NettyThreadPool.send(result);
+            result.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+            try {
+                devicesService.refreshDevicesBattery(result);
+            } catch (Exception e) {
+                log.error("发送电量信息失败，错误信息：", e);
+            }
             try {
                 Thread.sleep(30000);
             } catch (InterruptedException e) {

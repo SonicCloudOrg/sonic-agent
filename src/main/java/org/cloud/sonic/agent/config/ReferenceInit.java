@@ -18,6 +18,7 @@ package org.cloud.sonic.agent.config;
 import org.apache.dubbo.config.annotation.DubboReference;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.common.services.AgentsService;
+import org.cloud.sonic.common.services.DevicesService;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
@@ -35,5 +36,8 @@ public class ReferenceInit {
 
     @DubboReference
     private AgentsService agentsService;
+
+    @DubboReference
+    private DevicesService devicesService;
 
 }

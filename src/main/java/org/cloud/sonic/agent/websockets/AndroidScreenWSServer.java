@@ -42,12 +42,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 @ServerEndpoint(value = "/websockets/android/screen/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
-public class AndroidScreenWSServer {
+public class AndroidScreenWSServer implements IAndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidScreenWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
-    private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<Session, Thread> rotationMap = new ConcurrentHashMap<>();
     private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
     private Map<Session, String> typeMap = new ConcurrentHashMap<>();
@@ -67,7 +66,7 @@ public class AndroidScreenWSServer {
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
-        udIdMap.put(session, iDevice);
+        saveUdIdMapAndSet(session, iDevice);
         int wait = 0;
         boolean isInstall = true;
         while (AndroidAPKMap.getMap().get(udId) == null || (!AndroidAPKMap.getMap().get(udId))) {
@@ -80,7 +79,7 @@ public class AndroidScreenWSServer {
         }
         if (!isInstall) {
             logger.info("等待安装超时！");
-            udIdMap.remove(session);
+            removeUdIdMapAndSet(session);
         }
     }
 
@@ -206,8 +205,10 @@ public class AndroidScreenWSServer {
         }
     }
 
+
+
     private void exit(Session session) {
-        udIdMap.remove(session);
+        removeUdIdMapAndSet(session);
         if (rotationMap.get(session) != null) {
             rotationMap.get(session).interrupt();
         }

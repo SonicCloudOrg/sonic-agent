@@ -20,7 +20,9 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +74,8 @@ public class LogUtil {
      */
     private void sendToServer(JSONObject message) {
         message.put("time", new Date());
-        NettyThreadPool.send(message);
+        message.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        SpringTool.getBean(AgentManagerTool.class).saveByTransport(message);
     }
 
     /**
