@@ -49,7 +49,7 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("udId", device.getSerialNumber());
         deviceDetail.put("name", device.getProperty("ro.product.name"));
         deviceDetail.put("model", device.getProperty(IDevice.PROP_DEVICE_MODEL));
-        deviceDetail.put("status", device.getState());
+        deviceDetail.put("status", device.getState().toString());
         deviceDetail.put("platform", PlatformType.ANDROID);
         deviceDetail.put("version", device.getProperty(IDevice.PROP_BUILD_VERSION));
         deviceDetail.put("size", AndroidDeviceBridgeTool.getScreenSize(device));
