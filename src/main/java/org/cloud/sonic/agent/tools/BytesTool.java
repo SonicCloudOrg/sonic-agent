@@ -15,8 +15,6 @@ import java.nio.ByteBuffer;
 public class BytesTool {
     private static final Logger log = LoggerFactory.getLogger(BytesTool.class);
 
-    public static int agentId = 0;
-
     public static byte[] subByteArray(byte[] byte1, int start, int end) {
         byte[] byte2;
         byte2 = new byte[end - start];

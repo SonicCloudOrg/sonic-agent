@@ -58,10 +58,19 @@ public class TaskManager {
      */
     private static Set<Integer> runningRidSet =  Collections.synchronizedSet(new HashSet<>());
 
+    /**
+     * 记录正在运行的udId记录
+     */
+    private static Set<String> runningUdIdSet =  Collections.synchronizedSet(new HashSet<>());
+
     private static final Lock lock = new ReentrantLock();
 
     public static boolean ridRunning(Integer rid) {
         return runningRidSet.contains(rid);
+    }
+
+    public static boolean udIdRunning(String udId) {
+        return runningUdIdSet.contains(udId);
     }
 
     /**
@@ -75,6 +84,7 @@ public class TaskManager {
 
         String[] split = bootThread.getName().split("-");
         runningRidSet.add(Integer.parseInt(split[split.length-3]));
+        runningUdIdSet.add(split[split.length-1]);
     }
 
     /**
@@ -188,6 +198,7 @@ public class TaskManager {
 
         String[] split = key.split("-");
         runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+        runningUdIdSet.remove(split[split.length-1]);
     }
 
     /**
@@ -206,10 +217,14 @@ public class TaskManager {
 
             String[] split = k.split("-");
             runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+            runningUdIdSet.remove(split[split.length-1]);
         });
         // 删除boot衍生的线程
         terminatedThread.forEach((key, value) -> {
             childThreadsMap.remove(key);
+            String[] split = key.split("-");
+            runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+            runningUdIdSet.remove(split[split.length-1]);
         });
     }
 
@@ -239,6 +254,7 @@ public class TaskManager {
         runningTestsMap.remove(resultId + "");
 
         runningRidSet.remove(resultId);
+        runningUdIdSet.remove(udId);
     }
 
     /**

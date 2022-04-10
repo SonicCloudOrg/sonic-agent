@@ -17,16 +17,22 @@
 package org.cloud.sonic.agent.registry.zookeeper;
 
 import com.alibaba.fastjson.JSON;
+import lombok.SneakyThrows;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.dubbo.common.URL;
 import org.apache.dubbo.registry.zookeeper.ZookeeperRegistry;
 import org.apache.dubbo.remoting.zookeeper.ZookeeperTransporter;
 import org.apache.zookeeper.CreateMode;
+import org.cloud.sonic.agent.event.AgentRegisteredEvent;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.common.models.domain.Agents;
 import org.cloud.sonic.common.models.interfaces.AgentStatus;
 import org.cloud.sonic.common.services.AgentsService;
 import org.cloud.sonic.common.tools.SpringTool;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.ObjectUtils;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author JayWenStar
@@ -36,10 +42,13 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
 
     private boolean registered = false;
 
+    public static Agents currentAgent;
+
     public AgentZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
         super(url, zookeeperTransporter);
     }
 
+    @SneakyThrows
     @Override
     public void doRegister(URL url) {
         super.doRegister(url);
@@ -52,13 +61,29 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
             return;
         }
 
+        AgentsService agentsService = SpringTool.getBean(AgentsService.class);
+        AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
+        ApplicationEventPublisher publisher = SpringTool.getApplicationContext();
+        int count = 1;
+        while (!agentManagerTool.checkServerOnline() && count <= 6) {
+            logger.warn("未检测到server上线，10s后重试");
+            TimeUnit.SECONDS.sleep(10);
+            count++;
+        }
+        if (count > 6) {
+            String tips = "请确保server启动后再启动agent";
+            logger.error(tips);
+            AgentManagerTool.stop(tips);
+            return;
+        }
+        logger.info("检查到server上线，开始注册");
+
         String host = url.getHost();
         int rpcPort = url.getPort();
         String version = SpringTool.getPropertiesValue("spring.version");
         String secretKey = SpringTool.getPropertiesValue("sonic.agent.key");
         int webPort = Integer.parseInt(SpringTool.getPropertiesValue("sonic.agent.port"));
         String systemType = System.getProperty("os.name");
-        AgentsService agentsService = SpringTool.getBean(AgentsService.class);
 
         // 保存记录
         Agents currentAgent = agentsService.findBySecretKey(secretKey);
@@ -72,6 +97,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
                 .setSystemType(systemType)
                 .setVersion(version);
         agentsService.updateAgentsByLockVersion(currentAgent);
+        AgentZookeeperRegistry.currentAgent = currentAgent;
 
         // 注册节点
         currentAgent = agentsService.findBySecretKey(secretKey);
@@ -88,5 +114,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
             throw new RuntimeException("注册节点失败！");
         }
         registered = true;
+
+        publisher.publishEvent(new AgentRegisteredEvent(this));
     }
 }

@@ -1,14 +1,33 @@
 package org.cloud.sonic.agent.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.IDevice;
 import org.apache.dubbo.config.annotation.DubboService;
+import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
+import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
+import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
+import org.cloud.sonic.agent.tests.TaskManager;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
+import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
+import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
+import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.websockets.AndroidScreenWSServer;
+import org.cloud.sonic.agent.websockets.AndroidWSServer;
+import org.cloud.sonic.agent.websockets.IOSWSServer;
 import org.cloud.sonic.common.services.AgentsClientService;
 import org.cloud.sonic.common.services.AgentsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlSuite;
@@ -29,6 +48,10 @@ import java.util.Map;
 @Service
 @DubboService
 public class AgentsClientServiceImpl implements AgentsClientService {
+
+    @Autowired private AndroidScreenWSServer androidScreenWSServer;
+    @Autowired private AndroidWSServer androidWSServer;
+    @Autowired private IOSWSServer ioswsServer;
 
     @Override
     public void runSuite(JSONObject jsonObject) {
@@ -60,4 +83,81 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         tng.addListener(new SuiteListener());
         new Thread(tng::run).start();
     }
+
+    @Override
+    public void stop() {
+        AgentManagerTool.stop();
+    }
+
+    @Override
+    public void forceStopSuite(JSONObject jsonObject) {
+        List<JSONObject> caseList = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
+        for (JSONObject aCase : caseList) {
+            int resultId = (int) aCase.get("rid");
+            int caseId = (int) aCase.get("cid");
+            JSONArray devices = (JSONArray) aCase.get("device");
+            List<JSONObject> deviceList = devices.toJavaList(JSONObject.class);
+            for (JSONObject device : deviceList) {
+                String udId = (String) device.get("udId");
+                TaskManager.forceStopSuite(jsonObject.getInteger("pf"), resultId, caseId, udId);
+            }
+        }
+    }
+
+    @Override
+    public Boolean reboot(String udId, Integer platform) {
+        switch (platform) {
+            case PlatformType.ANDROID -> {
+                IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+                if (rebootDevice != null) {
+                    AndroidDeviceBridgeTool.reboot(rebootDevice);
+                    return true;
+                }
+                return false;
+            }
+            case PlatformType.IOS -> {
+                if (SibTool.getDeviceList().contains(udId)) {
+                    SibTool.reboot(udId);
+                    return true;
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
+
+    @Override
+    public Boolean checkDeviceOnline(String udId, Integer platform) {
+        if (!StringUtils.hasText(udId) || platform == null) {
+            return false;
+        }
+        switch (platform)  {
+            case PlatformType.ANDROID:
+                IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+                return rebootDevice != null;
+            case PlatformType.IOS:
+                return SibTool.getDeviceList().contains(udId + "");
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean checkDeviceDebugging(String udId) {
+        return androidScreenWSServer.getUdIdSet().contains(udId) ||
+                androidWSServer.getUdIdSet().contains(udId) ||
+                ioswsServer.getUdIdSet().contains(udId);
+    }
+
+    @Override
+    public Boolean checkDeviceTesting(String udId) {
+        return TaskManager.udIdRunning(udId);
+    }
+
+    @Override
+    public Boolean checkSuiteRunning(Integer rid) {
+        return TaskManager.ridRunning(rid);
+    }
+
+
 }

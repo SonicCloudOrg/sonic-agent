@@ -20,17 +20,19 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.common.tools.SpringTool;
 
 public class IOSDeviceLocalStatus {
 
     public static void send(String udId, String status) {
         JSONObject deviceDetail = new JSONObject();
-        deviceDetail.put("msg", "deviceDetail");
         deviceDetail.put("size", IOSInfoMap.getSizeMap().get(udId));
         deviceDetail.put("udId", udId);
         deviceDetail.put("status", status);
-        NettyThreadPool.send(deviceDetail);
+        deviceDetail.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceDetail);
     }
 
     public static boolean startTest(String udId) {

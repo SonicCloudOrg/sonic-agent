@@ -31,9 +31,9 @@ import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SGMTool;
@@ -42,6 +42,7 @@ import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -52,21 +53,19 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
-public class IOSWSServer {
+public class IOSWSServer implements IIOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
-    private Map<Session, String> udIdMap = new ConcurrentHashMap<>();
     @Value("${sonic.agent.key}")
     private String key;
     @Value("${sonic.agent.host}")
     private String host;
     @Value("${sonic.agent.port}")
     private int port;
+    @Autowired private AgentManagerTool agentManagerTool;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -84,17 +83,16 @@ public class IOSWSServer {
         }
         logger.info("ios上锁udId：{}", udId);
         IOSDeviceLocalStatus.startDebug(udId);
-        JSONObject jsonDebug = new JSONObject();
-        jsonDebug.put("msg", "debugUser");
-        jsonDebug.put("token", token);
-        jsonDebug.put("udId", udId);
-        NettyThreadPool.send(jsonDebug);
+
+        // 更新使用用户
+        agentManagerTool.updateDebugUser(udId, token);
+
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
             logger.info("设备未连接，请检查！");
             return;
         }
-        udIdMap.put(session, udId);
+        saveUdIdMapAndSet(session, udId);
         int[] ports = SibTool.startWda(udId);
         JSONObject picFinish = new JSONObject();
         picFinish.put("msg", "picFinish");
@@ -190,13 +188,13 @@ public class IOSWSServer {
                 break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
-                    JSONObject jsonDebug = new JSONObject();
-                    jsonDebug.put("msg", "findSteps");
-                    jsonDebug.put("key", key);
-                    jsonDebug.put("udId", udId);
-                    jsonDebug.put("sessionId", session.getId());
-                    jsonDebug.put("caseId", msg.getInteger("caseId"));
-                    NettyThreadPool.send(jsonDebug);
+                    JSONObject steps = agentManagerTool.findSteps(
+                            msg.getInteger("caseId"),
+                            session.getId(),
+                            "",
+                            udId
+                    );
+                    agentManagerTool.runIOSStep(steps);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
@@ -338,7 +336,7 @@ public class IOSWSServer {
         SGMTool.stopProxy(udIdMap.get(session));
         IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);
-        udIdMap.remove(session);
+        removeUdIdMapAndSet(session);
         try {
             session.close();
         } catch (IOException e) {
