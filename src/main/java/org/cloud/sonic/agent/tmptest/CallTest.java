@@ -37,6 +37,6 @@ public class CallTest implements ApplicationRunner {
         if (respModel.getCode() != 2000) {
             throw new Exception("openfeign调度失败，返回信息：" + respModel.toString());
         }
-        log.info("openfeign Android设备列表：{}", allAndroid);
+        log.info("openfeign Android设备列表：{}", respModel);
     }
 }

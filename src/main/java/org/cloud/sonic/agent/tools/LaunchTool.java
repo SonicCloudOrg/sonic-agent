@@ -33,7 +33,6 @@ import java.io.File;
 import java.util.List;
 
 @Component
-@DependsOn("nettyMsgInit")
 public class LaunchTool implements ApplicationRunner {
     private final Logger logger = LoggerFactory.getLogger(LaunchTool.class);
     @Value("${modules.appium.port}")

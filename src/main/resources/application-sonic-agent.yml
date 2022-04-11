@@ -2,7 +2,7 @@ sonic:
   agent:
     host: localhost
     port: 7777
-    key: 8414e223-89ff-4545-a81c-69c1db9545f0
+    key: 29002272-4659-4808-a804-08ce3388b136
     hub:
       enable: false
       generation: 1st
@@ -22,7 +22,7 @@ modules:
     enable: true
     port: 9999
   webview:
-    enable: true
+    enable: false
     chrome-driver-debug-port: 7778
     chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
   sgm:
