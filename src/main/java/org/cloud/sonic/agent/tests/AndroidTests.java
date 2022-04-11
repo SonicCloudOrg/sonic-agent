@@ -1,3 +1,19 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSON;
@@ -54,6 +70,10 @@ public class AndroidTests {
     @Test(dataProvider = "testData")
     public void run(JSONObject jsonObject) throws IOException {
         int rid = jsonObject.getInteger("rid");
+        if (TaskManager.ridRunning(rid)) {
+            logger.info("可能因为网络原因，任务重复下发，跳过");
+            return;
+        }
         int cid = jsonObject.getInteger("cid");
         AndroidStepHandler androidStepHandler = new AndroidStepHandler();
         String udId = jsonObject.getJSONObject("device").getString("udId");

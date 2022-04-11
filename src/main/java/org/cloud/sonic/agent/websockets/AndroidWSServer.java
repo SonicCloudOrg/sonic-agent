@@ -1,3 +1,19 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
@@ -13,7 +29,6 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.*;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tools.*;
@@ -43,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
-public class AndroidWSServer {
+public class AndroidWSServer implements IAndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
     @Value("${sonic.agent.key}")
@@ -54,12 +69,11 @@ public class AndroidWSServer {
     private int port;
     @Value("${modules.android.use-adbkit}")
     private boolean isEnableAdbKit;
-    private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
     private List<Session> NotStopSession = new ArrayList<>();
-    @Autowired
-    private RestTemplate restTemplate;
+    @Autowired private RestTemplate restTemplate;
+    @Autowired private AgentManagerTool agentManagerTool;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -77,18 +91,17 @@ public class AndroidWSServer {
         }
         logger.info("android上锁udId：{}", udId);
         AndroidDeviceLocalStatus.startDebug(udId);
-        JSONObject jsonDebug = new JSONObject();
-        jsonDebug.put("msg", "debugUser");
-        jsonDebug.put("token", token);
-        jsonDebug.put("udId", udId);
-        NettyThreadPool.send(jsonDebug);
+
+        // 更新使用用户
+        agentManagerTool.updateDebugUser(udId, token);
+
         WebSocketSessionMap.addSession(session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
             logger.info("设备未连接，请检查！");
             return;
         }
-        udIdMap.put(session, iDevice);
+        saveUdIdMapAndSet(session, iDevice);
 
         AndroidAPKMap.getMap().put(udId, false);
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
@@ -482,14 +495,13 @@ public class AndroidWSServer {
             }
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
-                    JSONObject jsonDebug = new JSONObject();
-                    jsonDebug.put("msg", "findSteps");
-                    jsonDebug.put("key", key);
-                    jsonDebug.put("udId", iDevice.getSerialNumber());
-                    jsonDebug.put("pwd", msg.getString("pwd"));
-                    jsonDebug.put("sessionId", session.getId());
-                    jsonDebug.put("caseId", msg.getInteger("caseId"));
-                    NettyThreadPool.send(jsonDebug);
+                    JSONObject steps = agentManagerTool.findSteps(
+                            msg.getInteger("caseId"),
+                            session.getId(),
+                            msg.getString("pwd"),
+                            iDevice.getSerialNumber()
+                    );
+                    agentManagerTool.runAndroidStep(steps);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
@@ -648,7 +660,7 @@ public class AndroidWSServer {
         }
         AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);
-        udIdMap.remove(session);
+        removeUdIdMapAndSet(session);
         WebSocketSessionMap.removeSession(session);
         try {
             session.close();
@@ -673,4 +685,5 @@ public class AndroidWSServer {
         }
         file.delete();
     }
+
 }

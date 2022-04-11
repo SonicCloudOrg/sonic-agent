@@ -1,10 +1,28 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +74,8 @@ public class LogUtil {
      */
     private void sendToServer(JSONObject message) {
         message.put("time", new Date());
-        NettyThreadPool.send(message);
+        message.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        SpringTool.getBean(AgentManagerTool.class).saveByTransport(message);
     }
 
     /**

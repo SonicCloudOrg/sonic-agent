@@ -1,24 +1,26 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import org.cloud.sonic.agent.enums.ConditionEnum;
-import org.cloud.sonic.agent.enums.SonicEnum;
-import org.cloud.sonic.agent.tests.LogUtil;
-import org.cloud.sonic.agent.tests.common.RunStepThread;
-import org.cloud.sonic.agent.tests.handlers.StepHandlers;
-import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
-import org.cloud.sonic.agent.tools.cv.SIFTFinder;
-import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
-import org.cloud.sonic.agent.tools.cv.TemMatcher;
-import org.cloud.sonic.agent.common.interfaces.ErrorType;
-import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
-import org.cloud.sonic.agent.common.interfaces.StepType;
-import org.cloud.sonic.agent.tools.*;
-import io.appium.java_client.*;
+import io.appium.java_client.MultiTouchAction;
+import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
 import io.appium.java_client.android.appmanagement.AndroidInstallApplicationOptions;
@@ -30,15 +32,32 @@ import io.appium.java_client.remote.AutomationName;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.common.interfaces.ErrorType;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tests.LogUtil;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
+import org.cloud.sonic.agent.tools.cv.SIFTFinder;
+import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
+import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.util.*;
+import org.springframework.util.Base64Utils;
+import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;

@@ -1,26 +1,24 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.bridge.ios.SibTool;
-import org.cloud.sonic.agent.enums.ConditionEnum;
-import org.cloud.sonic.agent.enums.SonicEnum;
-import org.cloud.sonic.agent.tests.common.RunStepThread;
-import org.cloud.sonic.agent.tests.handlers.StepHandlers;
-import org.cloud.sonic.agent.tools.SpringTool;
-import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
-import org.cloud.sonic.agent.tools.cv.SIFTFinder;
-import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
-import org.cloud.sonic.agent.tools.cv.TemMatcher;
-import org.cloud.sonic.agent.common.interfaces.ErrorType;
-import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
-import org.cloud.sonic.agent.common.interfaces.StepType;
-import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.tools.file.DownloadTool;
-import org.cloud.sonic.agent.tests.LogUtil;
-import org.cloud.sonic.agent.tools.file.UploadTools;
 import io.appium.java_client.MultiTouchAction;
 import io.appium.java_client.Setting;
 import io.appium.java_client.TouchAction;
@@ -33,6 +31,24 @@ import io.appium.java_client.remote.IOSMobileCapabilityType;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.interfaces.ErrorType;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.IOSInfoMap;
+import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tests.LogUtil;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
+import org.cloud.sonic.agent.tools.cv.SIFTFinder;
+import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
+import org.cloud.sonic.agent.tools.cv.TemMatcher;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;

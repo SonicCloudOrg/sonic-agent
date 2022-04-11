@@ -1,0 +1,37 @@
+sonic:
+  agent:
+    host: localhost
+    port: 7777
+    key: 29002272-4659-4808-a804-08ce3388b136
+    hub:
+      enable: false
+      generation: 1st
+  server:
+    host: localhost
+    folder-port: 8094
+    transport-port: 8095
+
+modules:
+  android:
+    enable: true
+    use-adbkit: true
+  ios:
+    enable: false
+    wda-bundle-id: com.sonic.WebDriverAgentRunner.xctrunner
+  appium:
+    enable: true
+    port: 9999
+  webview:
+    enable: false
+    chrome-driver-debug-port: 7778
+    chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
+  sgm:
+    enable: true
+
+logging:
+  file:
+    name: logs/sonic-agent.log
+    max-history: 3
+    clean-history-on-start: true
+  pattern:
+    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"

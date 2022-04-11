@@ -9,13 +9,11 @@ import java.nio.ByteBuffer;
 
 /**
  * @author ZhouYiXun
- * @des 获取id
+ * @des
  * @date 2021/8/26 22:23
  */
 public class BytesTool {
     private static final Logger log = LoggerFactory.getLogger(BytesTool.class);
-
-    public static int agentId = 0;
 
     public static byte[] subByteArray(byte[] byte1, int start, int end) {
         byte[] byte2;

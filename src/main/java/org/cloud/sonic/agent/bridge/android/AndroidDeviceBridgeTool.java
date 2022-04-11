@@ -1,6 +1,23 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
+import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.slf4j.Logger;
@@ -24,9 +41,9 @@ import java.util.concurrent.TimeUnit;
  * @date 2021/08/16 19:26
  */
 @ConditionalOnProperty(value = "modules.android.enable", havingValue = "true")
-@DependsOn({"androidThreadPoolInit", "nettyMsgInit"})
+@DependsOn({"androidThreadPoolInit"})
 @Component
-public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
+public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegisteredEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
     private AndroidBatteryThread androidBatteryThread = null;
@@ -39,7 +56,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
 
     @Override
-    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
+    public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
+        init();
         logger.info("开启安卓相关功能");
     }
 
@@ -71,7 +89,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         //获取系统SDK路径
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
-        androidDebugBridge.addDeviceChangeListener(androidDeviceStatusListener);
+        AndroidDebugBridge.addDeviceChangeListener(androidDeviceStatusListener);
         try {
             AndroidDebugBridge.init(false);
         } catch (IllegalStateException e) {
