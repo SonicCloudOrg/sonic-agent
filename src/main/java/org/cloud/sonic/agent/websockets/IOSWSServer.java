@@ -111,20 +111,20 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("height", iosStepHandler.getDriver().manage().window().getSize().height);
                 result.put("detail", "初始化Driver完成！");
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
+                JSONObject port = new JSONObject();
+                port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
+                port.put("msg", "appiumPort");
+                BytesTool.sendText(session, port.toJSONString());
             } catch (Exception e) {
                 logger.error(e.getMessage());
                 result.put("status", "error");
                 result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+                iosStepHandler.closeIOSDriver();
             } finally {
                 result.put("msg", "openDriver");
                 sendText(session, result.toJSONString());
             }
         });
-
-        JSONObject port = new JSONObject();
-        port.put("port", AppiumServer.getPort());
-        port.put("msg", "appiumPort");
-        BytesTool.sendText(session, port.toJSONString());
     }
 
     @OnClose

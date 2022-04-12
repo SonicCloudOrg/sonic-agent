@@ -59,7 +59,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
     @Override
     public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
         init();
-        logger.info("开启安卓相关功能");
+        logger.info("Enable Android Module");
     }
 
     /**
@@ -73,7 +73,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         if (path != null) {
             path += File.separator + "platform-tools" + File.separator + "adb";
         } else {
-            logger.error("获取ANDROID_HOME环境变量失败！");
+            logger.error("Get ANDROID_HOME env failed!");
             return null;
         }
         return path;
@@ -94,12 +94,12 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         try {
             AndroidDebugBridge.init(false);
         } catch (IllegalStateException e) {
-            logger.warn("AndroidDebugBridge已经初始化过，无需再初始化");
+            logger.warn("AndroidDebugBridge has been init!");
         }
         //开始创建ADB
         androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         if (androidDebugBridge != null) {
-            logger.info("安卓设备监听已开启");
+            logger.info("Android devices listening...");
         }
         int count = 0;
         //获取设备列表，超时后退出
@@ -168,8 +168,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
                 break;
             }
         }
-        if (iDevice == null && !StringUtils.hasText(RpcContext.getContext().getRemoteHost())) {
-            logger.info("udId: 「{}」，设备未连接！", udId);
+        if (iDevice == null) {
+            logger.info("Device has not connected!");
         }
         return iDevice;
     }
@@ -198,10 +198,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
                     .replace("\n", "")
                     .replace(" ", "");
             if (size.length() > 20) {
-                size = "未知";
+                size = "unknown";
             }
         } catch (Exception e) {
-            logger.info("获取屏幕尺寸失败！拔插瞬间可忽略该错误...");
+            logger.info("Get screen size failed, ignore when plug in moment...");
         }
         return size;
     }
@@ -219,7 +219,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         try {
             iDevice.executeShellCommand(command, output, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.info("发送shell指令 {} 给设备 {} 异常！"
+            logger.info("Send shell command {} to device {} failed."
                     , command, iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
@@ -246,7 +246,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
      */
     public static void forward(IDevice iDevice, int port, String service) {
         try {
-            logger.info("{} 设备 {} 服务端口转发到：{}", iDevice.getSerialNumber(), service, port);
+            logger.info("{} device {} port forward to {}", iDevice.getSerialNumber(), service, port);
             iDevice.createForward(port, service, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -264,7 +264,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
      */
     public static void removeForward(IDevice iDevice, int port, String serviceName) {
         try {
-            logger.info("{} 设备 {} 服务端口取消转发到：{}", iDevice.getSerialNumber(), serviceName, port);
+            logger.info("cancel {} device {} port forward to {}", iDevice.getSerialNumber(), serviceName, port);
             iDevice.removeForward(port, serviceName, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
         } catch (Exception e) {
             logger.error(e.getMessage());

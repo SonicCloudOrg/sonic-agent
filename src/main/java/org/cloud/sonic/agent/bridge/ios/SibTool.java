@@ -67,13 +67,13 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
     @Override
     public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
         init();
-        logger.info("开启iOS相关功能");
+        logger.info("Enable iOS Module");
     }
 
     public void init() {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
         if (ver.size() == 0 || !ver.get(0).equals(sibVersion)) {
-            logger.info(String.format("启动sonic-ios-bridge失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", new File("plugins").getAbsolutePath()));
+            logger.info(String.format("Start sonic-ios-bridge failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
             System.exit(0);
         }
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -115,7 +115,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
             }
             GlobalProcessMap.getMap().put(processName, listenProcess);
         });
-        logger.info("iOS设备监听已开启");
+        logger.info("iOS devices listening...");
     }
 
     public static List<String> getDeviceList() {
@@ -134,7 +134,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         deviceStatus.put("status", DeviceStatus.DISCONNECTED);
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
-        logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 下线！");
+        logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
         SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
     }
@@ -152,7 +152,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
         deviceStatus.put("manufacturer", "APPLE");
         deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
-        logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 上线！");
+        logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
         SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
@@ -201,7 +201,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
                 Thread.sleep(500);
                 wait++;
                 if (wait >= 120) {
-                    logger.info(udId + " WebDriverAgent启动超时！");
+                    logger.info(udId + " WebDriverAgent start timeout!");
                     return new int[]{0, 0};
                 }
             }

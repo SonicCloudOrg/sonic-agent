@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.tools;
 
+import io.appium.java_client.service.local.AppiumDriverLocalService;
 import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
@@ -35,10 +36,6 @@ import java.util.List;
 @Component
 public class LaunchTool implements ApplicationRunner {
     private final Logger logger = LoggerFactory.getLogger(LaunchTool.class);
-    @Value("${modules.appium.port}")
-    private int port;
-    @Value("${modules.appium.enable}")
-    private boolean isEnableAppium;
     @Value("${modules.sgm.enable}")
     private boolean isEnableSgm;
 
@@ -54,7 +51,7 @@ public class LaunchTool implements ApplicationRunner {
             new Thread(() -> {
                 File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
                 if (!file.exists()) {
-                    logger.info("开始生成ca证书...");
+                    logger.info("Generating ca file...");
                     SGMTool.startProxy("init", SGMTool.getCommand());
                     try {
                         Thread.sleep(5000);
@@ -65,20 +62,17 @@ public class LaunchTool implements ApplicationRunner {
                     SGMTool.stopProxy("init");
                     file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
                     if (!file.exists()) {
-                        logger.info("sonic-go-mitmproxy-ca证书生成失败！");
+                        logger.info("init sonic-go-mitmproxy-ca failed!");
                     } else {
-                        logger.info("sonic-go-mitmproxy-ca证书生成成功！");
+                        logger.info("init sonic-go-mitmproxy-ca Successful!");
                     }
                 }
             }).start();
         }
-        if (isEnableAppium) {
-            AppiumServer.start(port);
-        }
     }
 
     @PreDestroy
-    public void destroy() throws InterruptedException {
+    public void destroy() {
         RemoteDebugDriver.close();
         for (String key : GlobalProcessMap.getMap().keySet()) {
             Process ps = GlobalProcessMap.getMap().get(key);
@@ -92,13 +86,8 @@ public class LaunchTool implements ApplicationRunner {
                 p.destroy();
             }
         }
-        AppiumServer.close();
-        while (AppiumServer.service != null) {
-            if (!AppiumServer.service.isRunning()) {
-                break;
-            } else {
-                Thread.sleep(1000);
-            }
+        for(String udId:AppiumServer.serviceMap.keySet()){
+            AppiumServer.close(udId);
         }
         logger.info("Release done!");
     }

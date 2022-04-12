@@ -32,8 +32,6 @@ modules:
   appium:
     # 是否开启Appium功能
     enable: true
-    # 默认为0会自动寻找随机端口启动，如果需要指定appium server端口，请在这里设置
-    port: 0
   webview:
     # 是否开启在线webView调试功能
     enable: true
