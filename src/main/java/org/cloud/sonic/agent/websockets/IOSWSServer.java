@@ -115,6 +115,7 @@ public class IOSWSServer implements IIOSWSServer {
                 logger.error(e.getMessage());
                 result.put("status", "error");
                 result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+                iosStepHandler.closeIOSDriver();
             } finally {
                 result.put("msg", "openDriver");
                 sendText(session, result.toJSONString());
@@ -122,7 +123,7 @@ public class IOSWSServer implements IIOSWSServer {
         });
 
         JSONObject port = new JSONObject();
-        port.put("port", AppiumServer.getPort());
+        port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
         port.put("msg", "appiumPort");
         BytesTool.sendText(session, port.toJSONString());
     }

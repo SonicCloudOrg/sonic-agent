@@ -119,7 +119,8 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability("skipLogCapture", true);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, false);
         try {
-            iosDriver = new IOSDriver(AppiumServer.service.getUrl(), desiredCapabilities);
+            AppiumServer.start(udId);
+            iosDriver = new IOSDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
             iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
             iosDriver.setSetting(Setting.MJPEG_SERVER_FRAMERATE, 50);
             iosDriver.setSetting(Setting.MJPEG_SCALING_FACTOR, 50);
@@ -158,6 +159,8 @@ public class IOSStepHandler {
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
+        }finally {
+            AppiumServer.close(udId);
         }
     }
 

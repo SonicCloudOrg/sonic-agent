@@ -20,7 +20,6 @@ modules:
     wda-bundle-id: ${WDA_BUNDLE_ID}
   appium:
     enable: ${APPIUM_ENABLE}
-    port: ${APPIUM_PORT}
   webview:
     enable: ${WEBVIEW_ENABLE}
     chrome-driver-debug-port: ${CHROME_DRIVER_PORT}

@@ -159,7 +159,8 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT, PortTool.getPort());
         desiredCapabilities.setCapability("skipLogcatCapture", true);
         try {
-            androidDriver = new AndroidDriver(AppiumServer.service.getUrl(), desiredCapabilities);
+            AppiumServer.start(udId);
+            androidDriver = new AndroidDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
             androidDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
@@ -194,6 +195,8 @@ public class AndroidStepHandler {
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
+        }finally {
+            AppiumServer.close(udId);
         }
     }
 

@@ -20,7 +20,6 @@ modules:
     wda-bundle-id: com.sonic.WebDriverAgentRunner.xctrunner
   appium:
     enable: true
-    port: 9999
   webview:
     enable: false
     chrome-driver-debug-port: 7778
