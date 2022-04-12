@@ -54,7 +54,7 @@ public class LaunchTool implements ApplicationRunner {
             new Thread(() -> {
                 File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
                 if (!file.exists()) {
-                    logger.info("开始生成ca证书...");
+                    logger.info("Generating ca file...");
                     SGMTool.startProxy("init", SGMTool.getCommand());
                     try {
                         Thread.sleep(5000);
@@ -65,9 +65,9 @@ public class LaunchTool implements ApplicationRunner {
                     SGMTool.stopProxy("init");
                     file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
                     if (!file.exists()) {
-                        logger.info("sonic-go-mitmproxy-ca证书生成失败！");
+                        logger.info("init sonic-go-mitmproxy-ca failed!");
                     } else {
-                        logger.info("sonic-go-mitmproxy-ca证书生成成功！");
+                        logger.info("init sonic-go-mitmproxy-ca Successful!");
                     }
                 }
             }).start();
