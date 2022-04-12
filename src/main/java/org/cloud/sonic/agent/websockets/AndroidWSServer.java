@@ -282,6 +282,10 @@ public class AndroidWSServer implements IAndroidWSServer {
                     result.put("status", "success");
                     result.put("detail", "初始化Driver完成！");
                     HandlerMap.getAndroidMap().put(session.getId(), androidStepHandler);
+                    JSONObject port = new JSONObject();
+                    port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
+                    port.put("msg", "appiumPort");
+                    BytesTool.sendText(session, port.toJSONString());
                 } catch (Exception e) {
                     logger.error(e.getMessage());
                     result.put("status", "error");
@@ -292,11 +296,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                     BytesTool.sendText(session, result.toJSONString());
                 }
             });
-
-            JSONObject port = new JSONObject();
-            port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
-            port.put("msg", "appiumPort");
-            BytesTool.sendText(session, port.toJSONString());
         }
     }
 

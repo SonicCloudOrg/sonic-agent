@@ -111,6 +111,10 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("height", iosStepHandler.getDriver().manage().window().getSize().height);
                 result.put("detail", "初始化Driver完成！");
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
+                JSONObject port = new JSONObject();
+                port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
+                port.put("msg", "appiumPort");
+                BytesTool.sendText(session, port.toJSONString());
             } catch (Exception e) {
                 logger.error(e.getMessage());
                 result.put("status", "error");
@@ -121,11 +125,6 @@ public class IOSWSServer implements IIOSWSServer {
                 sendText(session, result.toJSONString());
             }
         });
-
-        JSONObject port = new JSONObject();
-        port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
-        port.put("msg", "appiumPort");
-        BytesTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
