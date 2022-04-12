@@ -17,6 +17,7 @@
 package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
+import org.apache.dubbo.rpc.RpcContext;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
@@ -27,9 +28,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -147,7 +148,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
     }
 
     /**
-     * @param udId
+     * @param udId  设备序列号
      * @return com.android.ddmlib.IDevice
      * @author ZhouYiXun
      * @des 根据udId获取iDevice对象

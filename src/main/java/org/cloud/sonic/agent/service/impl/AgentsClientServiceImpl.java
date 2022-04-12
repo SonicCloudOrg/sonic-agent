@@ -4,21 +4,14 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import org.apache.dubbo.config.annotation.DubboService;
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
-import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
-import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
 import org.cloud.sonic.agent.tests.TaskManager;
-import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
-import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
-import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.websockets.AndroidScreenWSServer;
 import org.cloud.sonic.agent.websockets.AndroidWSServer;
@@ -159,5 +152,19 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         return TaskManager.ridRunning(rid);
     }
 
+    @Override
+    public String getDeviceStatus(String udId, Integer platform) {
+        if (checkDeviceDebugging(udId)) {
+            return DeviceStatus.DEBUGGING;
+        }
+        if (checkDeviceTesting(udId)) {
+            return DeviceStatus.TESTING;
+        }
+        if (checkDeviceOnline(udId, platform)) {
+            return DeviceStatus.ONLINE;
+        } else {
+            return DeviceStatus.OFFLINE;
+        }
+    }
 
 }
