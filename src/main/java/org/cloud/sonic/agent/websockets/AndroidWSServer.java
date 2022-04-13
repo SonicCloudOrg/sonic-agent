@@ -144,7 +144,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         Thread touchPro = new Thread(() -> {
             try {
                 //开始启动
-                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.SonicTouchService", finalPath)
+                    iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginTouchService", finalPath)
                         , new IShellOutputReceiver() {
                             @Override
                             public void addOutput(byte[] bytes, int i, int i1) {
@@ -153,7 +153,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 if (res.contains("Address already in use")) {
                                     NotStopSession.add(session);
                                 }
-                                if (res.contains("Server start")) {
+                                if (res.contains("Touch server start")) {
                                     isTouchFinish.release();
                                 }
                             }

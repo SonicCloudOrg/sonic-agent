@@ -152,19 +152,4 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         return TaskManager.ridRunning(rid);
     }
 
-    @Override
-    public String getDeviceStatus(String udId, Integer platform) {
-        if (checkDeviceDebugging(udId)) {
-            return DeviceStatus.DEBUGGING;
-        }
-        if (checkDeviceTesting(udId)) {
-            return DeviceStatus.TESTING;
-        }
-        if (checkDeviceOnline(udId, platform)) {
-            return DeviceStatus.ONLINE;
-        } else {
-            return DeviceStatus.OFFLINE;
-        }
-    }
-
 }
