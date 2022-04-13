@@ -379,6 +379,7 @@ public class IOSStepHandler {
 
     public void asserts(HandleDes handleDes, String actual, String expect, String type) {
         handleDes.setDetail("真实值： " + actual + " 期望值： " + expect);
+        handleDes.setStepDes("");
         try {
             switch (type) {
                 case "assertEquals":
