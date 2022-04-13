@@ -462,10 +462,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         int port = PortTool.getPort();
         int target = 0;
         switch (type) {
-            case "unity":
+            case "unity3d":
                 target = 5001;
                 break;
-            case "other":
+            case "cocos2dx":
                 target = 15004;
         }
         forward(iDevice, port, target);
