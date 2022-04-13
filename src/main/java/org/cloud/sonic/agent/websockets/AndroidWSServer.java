@@ -144,7 +144,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         Thread touchPro = new Thread(() -> {
             try {
                 //开始启动
-                    iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.SonicTouchService", finalPath)
+                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.SonicTouchService", finalPath)
                         , new IShellOutputReceiver() {
                             @Override
                             public void addOutput(byte[] bytes, int i, int i1) {
@@ -297,7 +297,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                 }
             });
         }
-        AndroidDeviceBridgeTool.getPocoTree(iDevice,"unity");
     }
 
     @OnClose
@@ -326,6 +325,15 @@ public class AndroidWSServer implements IAndroidWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "poco": {
+                AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                    JSONObject poco = new JSONObject();
+                    poco.put("result", AndroidDeviceBridgeTool.getPocoTree(iDevice, msg.getString("detail")));
+                    poco.put("msg", "poco");
+                    BytesTool.sendText(session, poco.toJSONString());
+                });
+                break;
+            }
             case "clearProxy":
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
                 break;
