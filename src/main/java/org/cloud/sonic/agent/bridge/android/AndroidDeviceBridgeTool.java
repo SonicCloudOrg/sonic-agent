@@ -16,10 +16,14 @@
  */
 package org.cloud.sonic.agent.bridge.android;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.apache.dubbo.rpc.RpcContext;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
+import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +38,12 @@ import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -148,7 +158,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
     }
 
     /**
-     * @param udId  设备序列号
+     * @param udId 设备序列号
      * @return com.android.ddmlib.IDevice
      * @author ZhouYiXun
      * @des 根据udId获取iDevice对象
@@ -253,6 +263,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         }
     }
 
+    public static void forward(IDevice iDevice, int port, int target) {
+        try {
+            logger.info("{} device {} forward to {}", iDevice.getSerialNumber(), target, port);
+            iDevice.createForward(port, target);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+    }
+
     /**
      * @param iDevice
      * @param port
@@ -266,6 +285,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         try {
             logger.info("cancel {} device {} port forward to {}", iDevice.getSerialNumber(), serviceName, port);
             iDevice.removeForward(port, serviceName, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    public static void removeForward(IDevice iDevice, int port, int target) {
+        try {
+            logger.info("cancel {} device {} forward to {}", iDevice.getSerialNumber(), target, port);
+            iDevice.removeForward(port, target);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -427,6 +455,52 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         if (type == 1) {
             executeCommand(iDevice, "dumpsys battery reset");
         }
+    }
+
+    public static JSONArray getPocoTree(IDevice iDevice, String type) throws IOException {
+        int port = PortTool.getPort();
+        int target = 0;
+        switch (type) {
+            case "unity":
+                target = 5001;
+                break;
+            case "other":
+                target = 15004;
+        }
+        forward(iDevice, port, target);
+        Socket test = new Socket("localhost", target);
+        InputStream inputStream = test.getInputStream();
+        OutputStream outputStream = test.getOutputStream();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("jsonrpc", "2.0");
+        jsonObject.put("method", "Dump");
+        jsonObject.put("params", Arrays.asList(true));
+        jsonObject.put("id", 0);
+        int len = jsonObject.toJSONString().length();
+        ByteBuffer header = ByteBuffer.allocate(4);
+        header.put(BytesTool.intToByteArray(len), 0, 4);
+        header.flip();
+        ByteBuffer body = ByteBuffer.allocate(len);
+        body.put(jsonObject.toJSONString().getBytes(StandardCharsets.UTF_8), 0, len);
+        body.flip();
+        ByteBuffer total = ByteBuffer.allocate(len + 4);
+        total.put(header.array());
+        total.put(body.array());
+        total.flip();
+        outputStream.write(total.array());
+        while (test.isConnected()) {
+            byte[] head = new byte[4];
+            inputStream.read(head);
+            byte[] buffer = new byte[BytesTool.toInt(head)];
+            int realLen;
+            realLen = inputStream.read(buffer);
+            if (realLen >= 0) {
+                System.out.println(new String(buffer));
+                break;
+            }
+        }
+        removeForward(iDevice, port, target);
+        return null;
     }
 
     /**
