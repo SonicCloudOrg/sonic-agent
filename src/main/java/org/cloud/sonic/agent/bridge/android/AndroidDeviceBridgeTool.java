@@ -462,21 +462,30 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         int port = PortTool.getPort();
         int target = 0;
         switch (type) {
-            case "unity3d":
+            case "Unity3d":
+            case "UE4":
                 target = 5001;
                 break;
-            case "cocos2dx":
+            case "Egret":
+            case "Cocos2dx-js":
+            case "cocos-creator":
+                target = 5003;
+                break;
+            case "Cocos2dx-lua":
                 target = 15004;
+                break;
+            case "Cocos2dx-c++":
+                target = 18888;
+                break;
         }
         forward(iDevice, port, target);
         AtomicReference<JSONObject> result = new AtomicReference<>();
-        int finalTarget = target;
         Thread pocoThread = new Thread(() -> {
             Socket poco = null;
             InputStream inputStream = null;
             OutputStream outputStream = null;
             try {
-                poco = new Socket("localhost", finalTarget);
+                poco = new Socket("localhost", port);
                 inputStream = poco.getInputStream();
                 outputStream = poco.getOutputStream();
                 JSONObject jsonObject = new JSONObject();
@@ -534,7 +543,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
                         e.printStackTrace();
                     }
                 }
-                removeForward(iDevice, port, finalTarget);
             }
         });
         pocoThread.start();
@@ -550,6 +558,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
                 pocoThread.interrupt();
             }
         }
+        removeForward(iDevice, port, target);
         return result.get();
     }
 

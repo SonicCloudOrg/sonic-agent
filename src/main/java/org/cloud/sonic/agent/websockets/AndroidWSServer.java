@@ -271,32 +271,6 @@ public class AndroidWSServer implements IAndroidWSServer {
             adbkit.put("isEnable", false);
             BytesTool.sendText(session, adbkit.toJSONString());
         }
-
-        if (isEnableAppium) {
-            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                AndroidStepHandler androidStepHandler = new AndroidStepHandler();
-                androidStepHandler.setTestMode(0, 0, udId, DeviceStatus.DEBUGGING, session.getId());
-                JSONObject result = new JSONObject();
-                try {
-                    androidStepHandler.startAndroidDriver(udId);
-                    result.put("status", "success");
-                    result.put("detail", "初始化Driver完成！");
-                    HandlerMap.getAndroidMap().put(session.getId(), androidStepHandler);
-                    JSONObject port = new JSONObject();
-                    port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
-                    port.put("msg", "appiumPort");
-                    BytesTool.sendText(session, port.toJSONString());
-                } catch (Exception e) {
-                    logger.error(e.getMessage());
-                    result.put("status", "error");
-                    result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
-                    androidStepHandler.closeAndroidDriver();
-                } finally {
-                    result.put("msg", "openDriver");
-                    BytesTool.sendText(session, result.toJSONString());
-                }
-            });
-        }
     }
 
     @OnClose
@@ -532,27 +506,29 @@ public class AndroidWSServer implements IAndroidWSServer {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
                         if (msg.getString("detail").equals("openDriver")) {
-                            androidStepHandler = new AndroidStepHandler();
-                            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
-                            JSONObject result = new JSONObject();
-                            AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
-                            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                try {
-                                    AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
-                                    finalAndroidStepHandler1.startAndroidDriver(iDevice.getSerialNumber());
-                                    result.put("status", "success");
-                                    result.put("detail", "初始化Driver完成！");
-                                    HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
-                                } catch (Exception e) {
-                                    logger.error(e.getMessage());
-                                    result.put("status", "error");
-                                    result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
-                                    finalAndroidStepHandler1.closeAndroidDriver();
-                                } finally {
-                                    result.put("msg", "openDriver");
-                                    BytesTool.sendText(session, result.toJSONString());
-                                }
-                            });
+                            if (isEnableAppium) {
+                                androidStepHandler = new AndroidStepHandler();
+                                androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+                                JSONObject result = new JSONObject();
+                                AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
+                                AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                    try {
+                                        AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
+                                        finalAndroidStepHandler1.startAndroidDriver(iDevice.getSerialNumber());
+                                        result.put("status", "success");
+                                        result.put("detail", "初始化Driver完成！");
+                                        HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
+                                    } catch (Exception e) {
+                                        logger.error(e.getMessage());
+                                        result.put("status", "error");
+                                        result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+                                        finalAndroidStepHandler1.closeAndroidDriver();
+                                    } finally {
+                                        result.put("msg", "openDriver");
+                                        BytesTool.sendText(session, result.toJSONString());
+                                    }
+                                });
+                            }
                         }
                         break;
                     }
