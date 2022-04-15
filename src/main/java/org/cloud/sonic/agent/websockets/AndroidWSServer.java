@@ -28,6 +28,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
@@ -35,6 +36,7 @@ import org.cloud.sonic.agent.tools.*;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.tools.file.ZipTool;
+import org.cloud.sonic.agent.tools.poco.PocoTool;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,7 +139,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     .replaceAll("\t", "");
         }
         AndroidAPKMap.getMap().put(udId, true);
-
+        AndroidDeviceBridgeTool.pressKey(iDevice, 3);
         Semaphore isTouchFinish = new Semaphore(0);
         String finalPath = path;
 
@@ -302,7 +304,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "poco": {
                 AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                     JSONObject poco = new JSONObject();
-                    poco.put("result", AndroidDeviceBridgeTool.getPocoTree(iDevice, msg.getString("detail")));
+                    poco.put("result", PocoTool.getSocketResult(iDevice.getSerialNumber(), PlatformType.ANDROID, msg.getString("detail")));
                     poco.put("msg", "poco");
                     BytesTool.sendText(session, poco.toJSONString());
                 });
