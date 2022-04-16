@@ -16,16 +16,10 @@
  */
 package org.cloud.sonic.agent.bridge.android;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
-import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
-import org.cloud.sonic.agent.tools.poco.PocoTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,13 +32,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author ZhouYiXun
@@ -455,101 +443,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         if (type == 1) {
             executeCommand(iDevice, "dumpsys battery reset");
         }
-    }
-
-    public static JSONObject getPocoTree(IDevice iDevice, String type) {
-        int port = PortTool.getPort();
-        int target = 0;
-        switch (type) {
-            case "unity":
-                target = 5001;
-                break;
-            case "other":
-                target = 15004;
-        }
-        forward(iDevice, port, target);
-        AtomicReference<JSONObject> result = new AtomicReference<>();
-        int finalTarget = target;
-        Thread pocoThread = new Thread(() -> {
-            Socket poco = null;
-            InputStream inputStream = null;
-            OutputStream outputStream = null;
-            try {
-                poco = new Socket("localhost", finalTarget);
-                inputStream = poco.getInputStream();
-                outputStream = poco.getOutputStream();
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("jsonrpc", "2.0");
-                jsonObject.put("method", "Dump");
-                jsonObject.put("params", Arrays.asList(true));
-                jsonObject.put("id", 0);
-                int len = jsonObject.toJSONString().length();
-                ByteBuffer header = ByteBuffer.allocate(4);
-                header.put(BytesTool.intToByteArray(len), 0, 4);
-                header.flip();
-                ByteBuffer body = ByteBuffer.allocate(len);
-                body.put(jsonObject.toJSONString().getBytes(StandardCharsets.UTF_8), 0, len);
-                body.flip();
-                ByteBuffer total = ByteBuffer.allocate(len + 4);
-                total.put(header.array());
-                total.put(body.array());
-                total.flip();
-                outputStream.write(total.array());
-                while (poco.isConnected() && !Thread.interrupted()) {
-                    byte[] head = new byte[4];
-                    inputStream.read(head);
-                    byte[] buffer = new byte[BytesTool.toInt(head)];
-                    int realLen;
-                    realLen = inputStream.read(buffer);
-                    if (realLen >= 0) {
-                        result.set(JSON.parseObject(new String(buffer)).getJSONObject("result"));
-                        break;
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (poco != null && poco.isConnected()) {
-                    try {
-                        poco.close();
-                        logger.info("poco socket closed.");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (inputStream != null) {
-                    try {
-                        inputStream.close();
-                        logger.info("poco input stream closed.");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (outputStream != null) {
-                    try {
-                        outputStream.close();
-                        logger.info("poco output stream closed.");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                removeForward(iDevice, port, finalTarget);
-            }
-        });
-        pocoThread.start();
-        int wait = 0;
-        while (result.get() == null) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            wait++;
-            if (wait >= 20) {
-                pocoThread.interrupt();
-            }
-        }
-        return result.get();
     }
 
     /**
