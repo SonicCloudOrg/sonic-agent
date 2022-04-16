@@ -123,6 +123,9 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         String commandLine = "%s devices";
         List<String> data = ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib));
         for (String a : data) {
+            if (a.length() == 0) {
+                break;
+            }
             result.add(a.substring(0, a.indexOf(" ")));
         }
         return result;
