@@ -120,7 +120,7 @@ public class EnvCheckTool {
     public void checkFiles() {
         String type = "校验 本地文件夹 ";
         File webview = new File("webview");
-        File config = new File("config/application-prod.yml");
+        File config = new File("config/application-sonic-agent.yml");
         File mini = new File("mini");
         File plugins = new File("plugins");
         // fixme 本地测试请关闭授权
