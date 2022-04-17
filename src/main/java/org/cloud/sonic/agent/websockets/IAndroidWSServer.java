@@ -1,7 +1,7 @@
 package org.cloud.sonic.agent.websockets;
 
 import com.android.ddmlib.IDevice;
-import org.bytedeco.librealsense.device;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.springframework.util.ObjectUtils;
 
 import javax.websocket.Session;
@@ -18,6 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public interface IAndroidWSServer {
     Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     Set<String> udIdSet = Collections.synchronizedSet(new HashSet<>());
+
+    default String getHost() {
+        return AgentZookeeperRegistry.currentAgent.getHost();
+    }
 
     default Map<Session, IDevice> getUdIdMap() {
         return udIdMap;

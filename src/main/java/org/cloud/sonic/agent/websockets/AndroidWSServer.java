@@ -21,7 +21,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
@@ -65,8 +64,6 @@ public class AndroidWSServer implements IAndroidWSServer {
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
-    @Value("${sonic.agent.host}")
-    private String host;
     @Value("${sonic.agent.port}")
     private int port;
     @Value("${modules.android.use-adbkit}")
@@ -320,7 +317,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 int pPort = PortTool.releaseAndGetPort(portSocket);
                 int webPort = PortTool.releaseAndGetPort(webPortSocket);
                 SGMTool.startProxy(iDevice.getSerialNumber(), SGMTool.getCommand(pPort, webPort));
-                AndroidDeviceBridgeTool.startProxy(iDevice, host, pPort);
+                AndroidDeviceBridgeTool.startProxy(iDevice, getHost(), pPort);
                 JSONObject proxy = new JSONObject();
                 proxy.put("webPort", webPort);
                 proxy.put("port", pPort);
@@ -330,7 +327,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             }
             case "installCert": {
                 AndroidDeviceBridgeTool.executeCommand(iDevice,
-                        String.format("am start -a android.intent.action.VIEW -d http://%s:%d/assets/download", host, port));
+                        String.format("am start -a android.intent.action.VIEW -d http://%s:%d/assets/download", getHost(), port));
                 break;
             }
             case "forwardView": {

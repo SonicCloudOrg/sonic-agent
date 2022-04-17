@@ -16,21 +16,18 @@
  */
 package org.cloud.sonic.agent.tools.file;
 
-import com.alibaba.fastjson.JSONObject;
 import net.coobird.thumbnailator.Thumbnails;
+import org.cloud.sonic.common.feign.FolderFeignClient;
+import org.cloud.sonic.common.http.RespEnum;
+import org.cloud.sonic.common.http.RespModel;
+import org.cloud.sonic.common.tools.FileTool;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Calendar;
@@ -44,19 +41,6 @@ import java.util.UUID;
 @Component
 public class UploadTools {
     private final static Logger logger = LoggerFactory.getLogger(UploadTools.class);
-    @Value("${sonic.server.host}")
-    private String host;
-    @Value("${sonic.server.folder-port}")
-    private String port;
-    private static String baseUrl;
-
-    private static RestTemplate restTemplate;
-
-    @Autowired
-    public void setRestTemplate(RestTemplate restTemplate) {
-        UploadTools.restTemplate = restTemplate;
-        baseUrl = "http://" + host + ":" + port + "/api/folder";
-    }
 
     public static String upload(File uploadFile, String type) {
         File folder = new File("test-output");
@@ -77,18 +61,19 @@ public class UploadTools {
         } else {
             transfer = uploadFile;
         }
-        FileSystemResource resource = new FileSystemResource(transfer);
-        MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
-        param.add("file", resource);
-        param.add("type", type);
-        ResponseEntity<JSONObject> responseEntity =
-                restTemplate.postForEntity(baseUrl + "/upload", param, JSONObject.class);
-        if (responseEntity.getBody().getInteger("code") == 2000) {
-            transfer.delete();
-        } else {
-            logger.info("发送失败！" + responseEntity.getBody());
+
+        String resData = "upload failed, not url";
+        try {
+            MultipartFile multipartFile = FileTool.fileToMultipartFile("file", transfer);
+            RespModel<String> respModel = SpringTool.getBean(FolderFeignClient.class).uploadFiles(multipartFile, type);
+            if (respModel.getCode() != RespEnum.UPLOAD_OK.getCode()) {
+                logger.error("upload failed: {}", respModel);
+            }
+            resData = respModel.getData();
+        } catch (Exception e) {
+            logger.error("upload failed:", e);
         }
-        return responseEntity.getBody().getString("data");
+        return resData;
     }
 
     public static String uploadPatchRecord(File uploadFile) {
@@ -124,19 +109,14 @@ public class UploadTools {
                         break;
                 }
                 branch.close();
-                FileSystemResource resource = new FileSystemResource(branchFile);
-                MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
-                param.add("file", resource);
-                param.add("uuid", uuid);
-                param.add("index", i + "");
-                param.add("total", num + "");
-                ResponseEntity<JSONObject> responseEntity = restTemplate.postForEntity(baseUrl + "/upload/recordFiles", param, JSONObject.class);
-                if (responseEntity.getBody().getInteger("code") == 2000) {
-                    successNum++;
+                MultipartFile multipartFile = FileTool.fileToMultipartFile("file", branchFile);
+                RespModel<String> respModel = SpringTool.getBean(FolderFeignClient.class)
+                        .uploadRecord(multipartFile, uuid, i, num);
+                if (respModel.getCode() != RespEnum.UPLOAD_OK.getCode()) {
+                    logger.error("upload failed: {}", respModel);
                 }
-                if (responseEntity.getBody().getString("data") != null) {
-                    url = responseEntity.getBody().getString("data");
-                }
+                url = respModel.getData();
+                successNum++;
                 branchFile.delete();
                 try {
                     Thread.sleep(1000);
@@ -151,10 +131,8 @@ public class UploadTools {
             } else {
                 logger.info("上传缺失！");
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("upload failed:", e);
         }
         return url;
     }

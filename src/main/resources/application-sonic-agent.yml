@@ -1,15 +1,10 @@
 sonic:
   agent:
-    host: localhost
     port: 7777
     key: 29002272-4659-4808-a804-08ce3388b136
     hub:
       enable: false
       generation: 1st
-  server:
-    host: localhost
-    folder-port: 8094
-    transport-port: 8095
 
 modules:
   android:

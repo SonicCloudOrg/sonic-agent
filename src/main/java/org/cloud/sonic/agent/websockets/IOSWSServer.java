@@ -61,8 +61,6 @@ public class IOSWSServer implements IIOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
-    @Value("${sonic.agent.host}")
-    private String host;
     @Value("${sonic.agent.port}")
     private int port;
     @Autowired private AgentManagerTool agentManagerTool;
