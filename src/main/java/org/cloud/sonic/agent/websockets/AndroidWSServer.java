@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
@@ -517,6 +518,10 @@ public class AndroidWSServer implements IAndroidWSServer {
                                         result.put("status", "success");
                                         result.put("detail", "初始化Driver完成！");
                                         HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
+                                        JSONObject port = new JSONObject();
+                                        port.put("port", AppiumServer.serviceMap.get(iDevice.getSerialNumber()).getUrl().getPort());
+                                        port.put("msg", "appiumPort");
+                                        BytesTool.sendText(session, port.toJSONString());
                                     } catch (Exception e) {
                                         logger.error(e.getMessage());
                                         result.put("status", "error");

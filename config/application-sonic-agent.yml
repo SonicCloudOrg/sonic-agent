@@ -16,7 +16,7 @@ sonic:
     # 替换为Agent服务的端口，可以自行更改
     port: 7777
     # 替换为前端新增Agent生成的key
-    key: 8414e223-89ff-4545-a81c-69c1db9545f0
+    key: 29002272-4659-4808-a804-08ce3388b136
     hub:
       # 是否为Sonic专属Hub，可以前往https://sonic-cloud.gitee.io/#/Hub了解更多
       enable: false
@@ -38,7 +38,7 @@ modules:
     enable: true
   webview:
     # 是否开启在线webView调试功能
-    enable: true
+    enable: false
     # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
     chrome-driver-debug-port: 0
     # 替换为Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
