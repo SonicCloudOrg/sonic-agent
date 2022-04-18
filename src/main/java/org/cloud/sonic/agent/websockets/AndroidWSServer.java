@@ -172,7 +172,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                         , iDevice.getSerialNumber());
                 logger.error(e.getMessage());
             }
-            System.out.println("end");
         });
         touchPro.start();
 
