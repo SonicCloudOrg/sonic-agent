@@ -44,7 +44,7 @@ public class MiniCapLocalThread extends Thread {
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-start-minicap-server-task-%s-%s-%s";
+    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-minicap-start-minicap-server-task-%s-%s-%s";
 
     private IDevice iDevice;
 
