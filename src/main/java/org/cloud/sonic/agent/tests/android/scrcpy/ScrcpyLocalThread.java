@@ -37,7 +37,7 @@ public class ScrcpyLocalThread extends Thread {
 
     private final Logger log = LoggerFactory.getLogger(ScrcpyLocalThread.class);
 
-    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-start-scrcpy-server-task-%s-%s-%s";
+    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-scrcpy-start-scrcpy-server-task-%s-%s-%s";
 
     private IDevice iDevice;
 

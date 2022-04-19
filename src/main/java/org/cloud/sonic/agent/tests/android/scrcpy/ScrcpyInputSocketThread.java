@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * scrcpy socket线程
@@ -41,11 +42,11 @@ public class ScrcpyInputSocketThread extends Thread {
 
     private final Logger log = LoggerFactory.getLogger(ScrcpyInputSocketThread.class);
 
-    public final static String ANDROID_INPUT_SOCKET_PRE = "android-input-socket-task-%s-%s-%s";
+    public final static String ANDROID_INPUT_SOCKET_PRE = "android-scrcpy-input-socket-task-%s-%s-%s";
 
     private IDevice iDevice;
 
-    private Queue<byte[]> dataQueue;
+    private BlockingQueue<byte[]> dataQueue;
 
     private ScrcpyLocalThread scrcpyLocalThread;
 
@@ -53,7 +54,7 @@ public class ScrcpyInputSocketThread extends Thread {
 
     private Session session;
 
-    public ScrcpyInputSocketThread(IDevice iDevice, Queue<byte[]> dataQueue, ScrcpyLocalThread scrcpyLocalThread, Session session) {
+    public ScrcpyInputSocketThread(IDevice iDevice, BlockingQueue<byte[]> dataQueue, ScrcpyLocalThread scrcpyLocalThread, Session session) {
         this.iDevice = iDevice;
         this.dataQueue = dataQueue;
         this.scrcpyLocalThread = scrcpyLocalThread;
@@ -67,7 +68,7 @@ public class ScrcpyInputSocketThread extends Thread {
         return iDevice;
     }
 
-    public Queue<byte[]> getDataQueue() {
+    public BlockingQueue<byte[]> getDataQueue() {
         return dataQueue;
     }
 

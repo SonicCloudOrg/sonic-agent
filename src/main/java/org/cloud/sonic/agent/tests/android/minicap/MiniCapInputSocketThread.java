@@ -46,7 +46,7 @@ public class MiniCapInputSocketThread extends Thread {
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_INPUT_SOCKET_PRE = "android-input-socket-task-%s-%s-%s";
+    public final static String ANDROID_INPUT_SOCKET_PRE = "android-minicap-input-socket-task-%s-%s-%s";
 
     private IDevice iDevice;
 
