@@ -448,11 +448,11 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "pullFile": {
                 JSONObject result = new JSONObject();
                 result.put("msg", "pullResult");
-                File base = new File("test-output");
+                File base = new File("test-output" + File.separator + "pull");
                 String filename = base.getAbsolutePath() + File.separator + UUID.randomUUID();
                 File file = new File(filename);
+                file.mkdirs();
                 try {
-                    file.mkdirs();
                     iDevice.pullFile(msg.getString("path"), file.getAbsolutePath());
                     File re = new File(filename + ".zip");
                     ZipTool.zip(re, file);
@@ -463,7 +463,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     result.put("status", "fail");
                     e.printStackTrace();
                 } finally {
-//                    deleteDir(file);
+                    deleteDir(file);
                 }
                 BytesTool.sendText(session, result.toJSONString());
                 break;
