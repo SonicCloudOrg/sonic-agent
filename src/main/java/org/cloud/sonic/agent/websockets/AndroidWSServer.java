@@ -435,8 +435,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                     try {
                         outputStream.write(msg.getString("detail").getBytes());
                         outputStream.flush();
-                        outputStream.write("c\n".getBytes());
-                        outputStream.flush();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
