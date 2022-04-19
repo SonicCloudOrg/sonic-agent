@@ -45,12 +45,3 @@ modules:
     chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
   sgm:
     enable: true
-
-# 会的可以动，不会的不要动
-logging:
-  file:
-    name: logs/sonic-agent.log
-    max-history: 3
-    clean-history-on-start: true
-  pattern:
-    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
