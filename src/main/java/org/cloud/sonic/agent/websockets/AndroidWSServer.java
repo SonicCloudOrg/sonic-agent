@@ -448,7 +448,8 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "pullFile": {
                 JSONObject result = new JSONObject();
                 result.put("msg", "pullResult");
-                String filename = "test-output" + File.separator + "pull-" + UUID.randomUUID();
+                File base = new File("test-output");
+                String filename = base.getAbsolutePath() + File.separator + UUID.randomUUID();
                 File file = new File(filename);
                 try {
                     file.mkdirs();
@@ -462,7 +463,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     result.put("status", "fail");
                     e.printStackTrace();
                 } finally {
-                    deleteDir(file);
+//                    deleteDir(file);
                 }
                 BytesTool.sendText(session, result.toJSONString());
                 break;
