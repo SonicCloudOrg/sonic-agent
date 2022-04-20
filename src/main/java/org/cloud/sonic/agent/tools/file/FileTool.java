@@ -12,7 +12,7 @@ import java.util.zip.ZipOutputStream;
  * @des 压缩文件
  * @date 2022/3/29 23:38
  */
-public class ZipTool {
+public class FileTool {
     public static void zip(File result, File inputFile) throws IOException {
         ZipOutputStream out = new ZipOutputStream(new FileOutputStream(
                 result.getAbsoluteFile()));
@@ -37,5 +37,20 @@ public class ZipTool {
             }
             in.close();
         }
+    }
+
+    public static void deleteDir(File file) {
+        if (!file.exists()) {
+            return;
+        }
+        File[] files = file.listFiles();
+        for (File f : files) {
+            if (f.isDirectory()) {
+                deleteDir(f);
+            } else {
+                f.delete();
+            }
+        }
+        file.delete();
     }
 }

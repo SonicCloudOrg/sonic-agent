@@ -17,9 +17,12 @@
 package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
+import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.agent.tools.file.FileTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +35,10 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author ZhouYiXun
@@ -443,6 +449,63 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         if (type == 1) {
             executeCommand(iDevice, "dumpsys battery reset");
         }
+    }
+
+    public static String pullFile(IDevice iDevice, String path) {
+        String result = null;
+        File base = new File("test-output" + File.separator + "pull");
+        String filename = base.getAbsolutePath() + File.separator + UUID.randomUUID();
+        File file = new File(filename);
+        file.mkdirs();
+        String system = System.getProperty("os.name").toLowerCase();
+        String processName = String.format("process-%s-pull-file", iDevice.getSerialNumber());
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+        try {
+            Process process = null;
+            String command = String.format("%s pull %s %s", getADBPathFromSystemEnv(), path, file.getAbsolutePath());
+            if (system.contains("win")) {
+                process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                process = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
+            }
+            GlobalProcessMap.getMap().put(processName, process);
+            boolean isRunning;
+            int wait = 0;
+            do {
+                Thread.sleep(500);
+                wait++;
+                isRunning = false;
+                List<ProcessHandle> processHandleList = process.children().collect(Collectors.toList());
+                if (processHandleList.size() == 0) {
+                    if (process.isAlive()) {
+                        isRunning = true;
+                    }
+                } else {
+                    for (ProcessHandle p : processHandleList) {
+                        if (p.isAlive()) {
+                            isRunning = true;
+                            break;
+                        }
+                    }
+                }
+                if (wait >= 20) {
+                    process.children().forEach(ProcessHandle::destroy);
+                    process.destroy();
+                    break;
+                }
+            } while (isRunning);
+            File re = new File(filename + File.separator + (path.lastIndexOf("/") == -1 ? path : path.substring(path.lastIndexOf("/"))));
+            result = UploadTools.upload(re, "packageFiles");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            FileTool.deleteDir(file);
+        }
+        return result;
     }
 
     /**

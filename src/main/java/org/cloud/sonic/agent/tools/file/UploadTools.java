@@ -43,6 +43,9 @@ public class UploadTools {
     private final static Logger logger = LoggerFactory.getLogger(UploadTools.class);
 
     public static String upload(File uploadFile, String type) {
+        if(uploadFile.isDirectory()){
+            return null;
+        }
         File folder = new File("test-output");
         if (!folder.exists()) {//判断文件目录是否存在
             folder.mkdirs();
@@ -72,6 +75,8 @@ public class UploadTools {
             resData = respModel.getData();
         } catch (Exception e) {
             logger.error("upload failed:", e);
+        }finally {
+            transfer.delete();
         }
         return resData;
     }

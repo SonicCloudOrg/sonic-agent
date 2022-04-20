@@ -35,7 +35,6 @@ import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tools.*;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
-import org.cloud.sonic.agent.tools.file.ZipTool;
 import org.cloud.sonic.agent.tools.poco.PocoTool;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
@@ -448,22 +447,12 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "pullFile": {
                 JSONObject result = new JSONObject();
                 result.put("msg", "pullResult");
-                File base = new File("test-output" + File.separator + "pull");
-                String filename = base.getAbsolutePath() + File.separator + UUID.randomUUID();
-                File file = new File(filename);
-                file.mkdirs();
-                try {
-                    iDevice.pullFile(msg.getString("path"), file.getAbsolutePath());
-                    File re = new File(filename + ".zip");
-                    ZipTool.zip(re, file);
-                    String url = UploadTools.upload(re, "packageFiles");
+                String url = AndroidDeviceBridgeTool.pullFile(iDevice, msg.getString("path"));
+                if(url!=null){
                     result.put("status", "success");
-                    result.put("url", url);
-                } catch (IOException | AdbCommandRejectedException | SyncException | TimeoutException e) {
+                    result.put("url",url);
+                }else {
                     result.put("status", "fail");
-                    e.printStackTrace();
-                } finally {
-                    deleteDir(file);
                 }
                 BytesTool.sendText(session, result.toJSONString());
                 break;
@@ -666,21 +655,4 @@ public class AndroidWSServer implements IAndroidWSServer {
         }
         logger.info(session.getId() + "退出");
     }
-
-    public void deleteDir(File file) {
-        if (!file.exists()) {
-            logger.info("文件不存在");
-            return;
-        }
-        File[] files = file.listFiles();
-        for (File f : files) {
-            if (f.isDirectory()) {
-                deleteDir(f);
-            } else {
-                f.delete();
-            }
-        }
-        file.delete();
-    }
-
 }
