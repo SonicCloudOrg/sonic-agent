@@ -1,15 +1,20 @@
 zookeeper:
-  # zookeeper的ip地址，跟server端连接同一个
-  host: 127.0.0.1
-  # zookeeper的端口，跟server端连接同一个
-  port: 2181
+  # zookeeper的ip地址 除了开发环境，不推荐填localhost、127.0.0.1之类的配置
+  registry-host: 127.0.0.1
+  # zookeeper的端口
+  registry-port: 2181
+  # 本机网卡ip地址，开发、生产都禁止填localhost、127.0.0.1之类的配置
+  instance-host: 10.76.101.106
+
+# 一般不需要动，懂的可以定制
 spring:
   cloud:
     zookeeper:
-      # 不要动
+      register: true
       enabled: true
-      # 不要动
-      connect-string: ${zookeeper.host}:${zookeeper.port}
+      connect-string: ${zookeeper.registry-host}:${zookeeper.registry-port}
+      discovery:
+        instance-host: ${zookeeper.instance-host}
 
 sonic:
   agent:
