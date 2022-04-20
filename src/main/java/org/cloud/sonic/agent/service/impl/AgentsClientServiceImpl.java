@@ -149,7 +149,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
 
     @Override
     public Boolean checkSuiteRunning(Integer rid) {
-        return TaskManager.ridRunning(rid);
+        return SuiteListener.runningTestsMap.containsKey(rid+"");
     }
 
     @Override
