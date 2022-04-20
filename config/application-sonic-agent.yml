@@ -1,15 +1,20 @@
 zookeeper:
-  # zookeeper的ip地址，跟server端连接同一个
-  host: 127.0.0.1
-  # zookeeper的端口，跟server端连接同一个
-  port: 2181
+  # zookeeper的ip地址 除了开发环境，不推荐填localhost、127.0.0.1之类的配置
+  registry-host: 127.0.0.1
+  # zookeeper的端口
+  registry-port: 2181
+  # 本机网卡ip地址，开发、生产都禁止填localhost、127.0.0.1之类的配置
+  instance-host: 10.76.101.106
+
+# 一般不需要动，懂的可以定制
 spring:
   cloud:
     zookeeper:
-      # 不要动
+      register: true
       enabled: true
-      # 不要动
-      connect-string: ${zookeeper.host}:${zookeeper.port}
+      connect-string: ${zookeeper.registry-host}:${zookeeper.registry-port}
+      discovery:
+        instance-host: ${zookeeper.instance-host}
 
 sonic:
   agent:
@@ -45,12 +50,3 @@ modules:
     chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
   sgm:
     enable: true
-
-# 会的可以动，不会的不要动
-logging:
-  file:
-    name: logs/sonic-agent.log
-    max-history: 3
-    clean-history-on-start: true
-  pattern:
-    console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"

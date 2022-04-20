@@ -131,74 +131,7 @@ public class PocoTool {
                 e.printStackTrace();
             }
         } else {
-            Thread pocoThread = new Thread(() -> {
-                Socket poco = null;
-                InputStream inputStream = null;
-                OutputStream outputStream = null;
-                try {
-                    poco = new Socket("localhost", port);
-                    inputStream = poco.getInputStream();
-                    outputStream = poco.getOutputStream();
-                    int len = jsonObject.toJSONString().length();
-                    ByteBuffer header = ByteBuffer.allocate(4);
-                    header.put(BytesTool.intToByteArray(len), 0, 4);
-                    header.flip();
-                    ByteBuffer body = ByteBuffer.allocate(len);
-                    body.put(jsonObject.toJSONString().getBytes(StandardCharsets.UTF_8), 0, len);
-                    body.flip();
-                    ByteBuffer total = ByteBuffer.allocate(len + 4);
-                    total.put(header.array());
-                    total.put(body.array());
-                    total.flip();
-                    outputStream.write(total.array());
-                    byte[] head = new byte[4];
-                    inputStream.read(head);
-                    int headLen = BytesTool.toInt(head);
-                    String s = "";
-                    while (poco.isConnected() && !Thread.interrupted()) {
-                        byte[] buffer = new byte[1024];
-                        int realLen;
-                        realLen = inputStream.read(buffer);
-                        if (buffer.length != realLen && realLen >= 0) {
-                            buffer = subByteArray(buffer, 0, realLen);
-                        }
-                        if (realLen >= 0) {
-                            s += new String(buffer);
-                            if (s.getBytes(StandardCharsets.UTF_8).length == headLen) {
-                                result.set(s);
-                                break;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    if (poco != null && poco.isConnected()) {
-                        try {
-                            poco.close();
-                            logger.info("poco socket closed.");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (inputStream != null) {
-                        try {
-                            inputStream.close();
-                            logger.info("poco input stream closed.");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (outputStream != null) {
-                        try {
-                            outputStream.close();
-                            logger.info("poco output stream closed.");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            });
+            PocoThread pocoThread = new PocoThread(port, jsonObject, result);
             pocoThread.start();
             int wait = 0;
             while (pocoThread.isAlive()) {
@@ -224,6 +157,102 @@ public class PocoTool {
             }
         } else {
             return null;
+        }
+    }
+
+
+    static class PocoThread extends Thread {
+
+        private Socket poco = null;
+        private InputStream inputStream = null;
+        private OutputStream outputStream = null;
+
+        private int port;
+        private JSONObject jsonObject;
+        private AtomicReference<String> result;
+
+        public PocoThread(int port, JSONObject jsonObject, AtomicReference<String> result) {
+            this.port = port;
+            this.jsonObject = jsonObject;
+            this.result = result;
+        }
+
+        @Override
+        public void run() {
+            try {
+                poco = new Socket("localhost", port);
+                inputStream = poco.getInputStream();
+                outputStream = poco.getOutputStream();
+                int len = jsonObject.toJSONString().length();
+                ByteBuffer header = ByteBuffer.allocate(4);
+                header.put(BytesTool.intToByteArray(len), 0, 4);
+                header.flip();
+                ByteBuffer body = ByteBuffer.allocate(len);
+                body.put(jsonObject.toJSONString().getBytes(StandardCharsets.UTF_8), 0, len);
+                body.flip();
+                ByteBuffer total = ByteBuffer.allocate(len + 4);
+                total.put(header.array());
+                total.put(body.array());
+                total.flip();
+                outputStream.write(total.array());
+                byte[] head = new byte[4];
+                inputStream.read(head);
+                int headLen = BytesTool.toInt(head);
+                StringBuilder s = new StringBuilder();
+                while (poco.isConnected() && !Thread.interrupted()) {
+                    byte[] buffer = new byte[1024];
+                    int realLen;
+                    realLen = inputStream.read(buffer);
+                    if (buffer.length != realLen && realLen >= 0) {
+                        buffer = subByteArray(buffer, 0, realLen);
+                    }
+                    if (realLen >= 0) {
+                        s.append(new String(buffer));
+                        if (s.toString().getBytes(StandardCharsets.UTF_8).length == headLen) {
+                            result.set(s.toString());
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                stopPoco();
+            }
+        }
+
+
+        @Override
+        public void interrupt() {
+            super.interrupt();
+            stopPoco();
+        }
+
+        public void stopPoco() {
+            if (poco != null && poco.isConnected()) {
+                try {
+                    poco.close();
+                    logger.info("poco socket closed.");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                    logger.info("poco input stream closed.");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                    logger.info("poco output stream closed.");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

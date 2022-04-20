@@ -6,7 +6,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   profiles:
-    active: @project.artifactId@,actuator,dubbo,feign,user
+    active: @project.artifactId@,actuator,dubbo,feign,user,logging
 
 sonic:
   saa: 2.0.0

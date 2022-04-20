@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendByte;
 
@@ -32,7 +33,7 @@ public class ScrcpyOutputSocketThread extends Thread {
 
     private final Logger log = LoggerFactory.getLogger(ScrcpyOutputSocketThread.class);
 
-    public final static String ANDROID_OUTPUT_SOCKET_PRE = "android-output-socket-task-%s-%s-%s";
+    public final static String ANDROID_OUTPUT_SOCKET_PRE = "android-scrcpy-output-socket-task-%s-%s-%s";
 
     private ScrcpyInputSocketThread scrcpyInputSocketThread;
 
@@ -56,11 +57,14 @@ public class ScrcpyOutputSocketThread extends Thread {
     @Override
     public void run() {
         while (scrcpyInputSocketThread.isAlive()) {
-            Queue<byte[]> dataQueue = scrcpyInputSocketThread.getDataQueue();
-            while (!dataQueue.isEmpty()) {
-                byte[] buffer = dataQueue.poll();
-                sendByte(session, buffer);
+            BlockingQueue<byte[]> dataQueue = scrcpyInputSocketThread.getDataQueue();
+            byte[] buffer = new byte[0];
+            try {
+                buffer = dataQueue.take();
+            } catch (InterruptedException e) {
+                log.debug("scrcpy was interrupted：", e);
             }
+            sendByte(session, buffer);
         }
     }
 }
