@@ -70,7 +70,7 @@ public class AndroidTests {
     @Test(dataProvider = "testData")
     public void run(JSONObject jsonObject) throws IOException {
         int rid = jsonObject.getInteger("rid");
-        if (TaskManager.ridRunning(rid)) {
+        if (runningTestsMap.containsKey(rid+"")) {
             logger.info("可能因为网络原因，任务重复下发，跳过");
             return;
         }
