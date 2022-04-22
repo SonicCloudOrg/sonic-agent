@@ -75,10 +75,9 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
 
     @Override
     public void deviceChanged(IDevice device, int changeMask) {
-        if (device.isOnline()) {
-            logger.info("Android device: " + device.getSerialNumber() + " ONLINE！");
-        } else {
-            logger.info("Android device: " + device.getSerialNumber() + " OFFLINE！");
+        IDevice.DeviceState state = device.getState();
+        if (state == IDevice.DeviceState.ONLINE || state == IDevice.DeviceState.OFFLINE) {
+            return;
         }
         send(device);
     }

@@ -250,7 +250,12 @@ public class TaskManager {
         }
         // 清理map
         bootThreadsMap.remove(key);
-        childThreadsMap.remove(key);
+        Set<Thread> removed = childThreadsMap.remove(key);
+        for (Thread thread : removed) {
+            if (thread instanceof RunStepThread) {
+                ((RunStepThread) thread).setStopped(true);
+            }
+        }
         runningTestsMap.remove(resultId + "");
 
         runningRidSet.remove(resultId);

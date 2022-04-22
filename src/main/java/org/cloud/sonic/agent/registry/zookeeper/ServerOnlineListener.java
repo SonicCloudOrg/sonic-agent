@@ -24,6 +24,8 @@ import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.common.services.DevicesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
@@ -32,6 +34,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
+@Order(value = Ordered.LOWEST_PRECEDENCE)
 public class ServerOnlineListener implements ApplicationListener<AgentRegisteredEvent> {
 
     @Autowired private CuratorFramework curatorFramework;

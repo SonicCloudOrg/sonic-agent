@@ -30,6 +30,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +50,7 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(value = "modules.android.enable", havingValue = "true")
 @DependsOn({"androidThreadPoolInit"})
 @Component
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
 public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegisteredEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;

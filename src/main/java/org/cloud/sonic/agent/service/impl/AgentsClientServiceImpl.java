@@ -88,7 +88,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         for (JSONObject aCase : caseList) {
             int resultId = (int) aCase.get("rid");
             int caseId = (int) aCase.get("cid");
-            JSONArray devices = (JSONArray) aCase.get("device");
+            JSONArray devices =  aCase.getJSONArray("device");
             List<JSONObject> deviceList = devices.toJavaList(JSONObject.class);
             for (JSONObject device : deviceList) {
                 String udId = (String) device.get("udId");
@@ -149,7 +149,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
 
     @Override
     public Boolean checkSuiteRunning(Integer rid) {
-        return TaskManager.ridRunning(rid);
+        return SuiteListener.runningTestsMap.containsKey(rid+"");
     }
 
     @Override
