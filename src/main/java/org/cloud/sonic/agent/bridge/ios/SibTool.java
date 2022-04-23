@@ -1,14 +1,34 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.bridge.ios;
 
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
-import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.event.AgentRegisteredEvent;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +36,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -29,9 +50,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
-@DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
+@DependsOn({"iOSThreadPoolInit"})
 @Component
-public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
+public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
     private static final Logger logger = LoggerFactory.getLogger(SibTool.class);
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
@@ -46,14 +68,15 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     @Override
-    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
-        logger.info("开启iOS相关功能");
+    public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
+        init();
+        logger.info("Enable iOS Module");
     }
 
     public void init() {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
         if (ver.size() == 0 || !ver.get(0).equals(sibVersion)) {
-            logger.info(String.format("启动sonic-ios-bridge失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", new File("plugins").getAbsolutePath()));
+            logger.info(String.format("Start sonic-ios-bridge failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
             System.exit(0);
         }
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -95,7 +118,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             }
             GlobalProcessMap.getMap().put(processName, listenProcess);
         });
-        logger.info("iOS设备监听已开启");
+        logger.info("iOS devices listening...");
     }
 
     public static List<String> getDeviceList() {
@@ -103,6 +126,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String commandLine = "%s devices";
         List<String> data = ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib));
         for (String a : data) {
+            if (a.length() == 0) {
+                break;
+            }
             result.add(a.substring(0, a.indexOf(" ")));
         }
         return result;
@@ -110,30 +136,30 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
 
     public static void sendDisConnectStatus(JSONObject jsonObject) {
         JSONObject deviceStatus = new JSONObject();
-        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
-        deviceStatus.put("status", "DISCONNECTED");
+        deviceStatus.put("status", DeviceStatus.DISCONNECTED);
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
-        logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 下线！");
-        NettyThreadPool.send(deviceStatus);
+        deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
+        SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static void sendOnlineStatus(JSONObject jsonObject) {
         JSONObject detail = jsonObject.getJSONObject("deviceDetail");
         JSONObject deviceStatus = new JSONObject();
-        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
         deviceStatus.put("name", detail.getString("deviceName"));
         deviceStatus.put("model", detail.getString("generationName"));
-        deviceStatus.put("status", "ONLINE");
+        deviceStatus.put("status", DeviceStatus.ONLINE);
         deviceStatus.put("platform", PlatformType.IOS);
         deviceStatus.put("version", detail.getString("productVersion"));
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
         deviceStatus.put("manufacturer", "APPLE");
-        logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 上线！");
-        NettyThreadPool.send(deviceStatus);
+        deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
+        SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
     }
@@ -181,7 +207,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 Thread.sleep(500);
                 wait++;
                 if (wait >= 120) {
-                    logger.info(udId + " WebDriverAgent启动超时！");
+                    logger.info(udId + " WebDriverAgent start timeout!");
                     return new int[]{0, 0};
                 }
             }

@@ -1,26 +1,24 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.bridge.ios.SibTool;
-import org.cloud.sonic.agent.enums.ConditionEnum;
-import org.cloud.sonic.agent.enums.SonicEnum;
-import org.cloud.sonic.agent.tests.common.RunStepThread;
-import org.cloud.sonic.agent.tests.handlers.StepHandlers;
-import org.cloud.sonic.agent.tools.SpringTool;
-import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
-import org.cloud.sonic.agent.tools.cv.SIFTFinder;
-import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
-import org.cloud.sonic.agent.tools.cv.TemMatcher;
-import org.cloud.sonic.agent.common.interfaces.ErrorType;
-import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
-import org.cloud.sonic.agent.common.interfaces.StepType;
-import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.tools.DownloadTool;
-import org.cloud.sonic.agent.tools.LogTool;
-import org.cloud.sonic.agent.tools.UploadTools;
 import io.appium.java_client.MultiTouchAction;
 import io.appium.java_client.Setting;
 import io.appium.java_client.TouchAction;
@@ -33,6 +31,24 @@ import io.appium.java_client.remote.IOSMobileCapabilityType;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
+import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.interfaces.ErrorType;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.IOSInfoMap;
+import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tests.LogUtil;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
+import org.cloud.sonic.agent.tools.cv.SIFTFinder;
+import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
+import org.cloud.sonic.agent.tools.cv.TemMatcher;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
@@ -62,7 +78,7 @@ import static org.testng.Assert.*;
  * @date 2021/8/16 20:10
  */
 public class IOSStepHandler {
-    public LogTool log = new LogTool();
+    public LogUtil log = new LogUtil();
     private IOSDriver iosDriver;
     private JSONObject globalParams = new JSONObject();
     private String testPackage = "";
@@ -70,7 +86,7 @@ public class IOSStepHandler {
     //测试状态
     private int status = ResultDetailStatus.PASS;
 
-    public LogTool getLog() {
+    public LogUtil getLog() {
         return log;
     }
 
@@ -103,7 +119,8 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability("skipLogCapture", true);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, false);
         try {
-            iosDriver = new IOSDriver(AppiumServer.service.getUrl(), desiredCapabilities);
+            AppiumServer.start(udId);
+            iosDriver = new IOSDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
             iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
             iosDriver.setSetting(Setting.MJPEG_SERVER_FRAMERATE, 50);
             iosDriver.setSetting(Setting.MJPEG_SCALING_FACTOR, 50);
@@ -142,6 +159,8 @@ public class IOSStepHandler {
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
+        }finally {
+            AppiumServer.close(udId);
         }
     }
 
@@ -360,6 +379,7 @@ public class IOSStepHandler {
 
     public void asserts(HandleDes handleDes, String actual, String expect, String type) {
         handleDes.setDetail("真实值： " + actual + " 期望值： " + expect);
+        handleDes.setStepDes("");
         try {
             switch (type) {
                 case "assertEquals":

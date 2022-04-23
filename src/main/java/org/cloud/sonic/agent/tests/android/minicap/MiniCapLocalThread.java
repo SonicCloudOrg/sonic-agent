@@ -1,3 +1,19 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.alibaba.fastjson.JSONObject;
@@ -5,7 +21,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +44,7 @@ public class MiniCapLocalThread extends Thread {
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
      */
-    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-start-minicap-server-task-%s-%s-%s";
+    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-minicap-start-minicap-server-task-%s-%s-%s";
 
     private IDevice iDevice;
 
@@ -182,7 +198,7 @@ public class MiniCapLocalThread extends Thread {
             JSONObject support = new JSONObject();
             support.put("msg", "support");
             support.put("text", "该设备不兼容MiniCap投屏！");
-            AgentTool.sendText(session, support.toJSONString());
+            BytesTool.sendText(session, support.toJSONString());
         }
     }
 

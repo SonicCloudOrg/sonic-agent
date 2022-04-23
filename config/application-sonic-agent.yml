@@ -1,0 +1,52 @@
+zookeeper:
+  # zookeeper的ip地址 除了开发环境，不推荐填localhost、127.0.0.1之类的配置
+  registry-host: 127.0.0.1
+  # zookeeper的端口
+  registry-port: 2181
+  # 本机网卡ip地址，开发、生产都禁止填localhost、127.0.0.1之类的配置
+  instance-host: 10.76.101.106
+
+# 一般不需要动，懂的可以定制
+spring:
+  cloud:
+    zookeeper:
+      register: true
+      enabled: true
+      connect-string: ${zookeeper.registry-host}:${zookeeper.registry-port}
+      discovery:
+        instance-host: ${zookeeper.instance-host}
+
+sonic:
+  agent:
+    # 替换为Agent服务的端口，可以自行更改
+    port: 7777
+    # 替换为前端新增Agent生成的key
+    key: 29002272-4659-4808-a804-08ce3388b136
+    hub:
+      # 是否为Sonic专属Hub，可以前往https://sonic-cloud.gitee.io/#/Hub了解更多
+      enable: false
+      generation: 1st
+
+modules:
+  android:
+    # 是否开启安卓模块
+    enable: true
+    # 是否开启远程adb调试功能
+    use-adbkit: true
+  ios:
+    # 如果不需要连接iOS设备，请将true改为false。开启的windows用户请确保本机已安装iTunes
+    enable: true
+    # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
+    wda-bundle-id: com.facebook.WebDriverAgentRunner.xctrunner
+  appium:
+    # 是否开启Appium功能
+    enable: true
+  webview:
+    # 是否开启在线webView调试功能
+    enable: false
+    # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
+    chrome-driver-debug-port: 0
+    # 替换为Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
+    chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
+  sgm:
+    enable: true

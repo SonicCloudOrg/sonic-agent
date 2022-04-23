@@ -5,3 +5,6 @@
       ▀██  ██    ██  ██  █▄██     ██     ██▄
  █▄▄▄▄▄█▀   ██▄▄██   ██   ███   ▄▄██▄▄    ██▄▄▄▄█
   ▀▀▀▀▀      ▀▀▀▀    ▀▀   ▀▀▀   ▀▀▀▀▀▀      ▀▀▀▀
+
+              Author: SonicCloudOrg
+         https://github.com/SonicCloudOrg
