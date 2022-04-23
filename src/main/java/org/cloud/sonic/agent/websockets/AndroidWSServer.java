@@ -574,9 +574,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 result.put("msg", "tree");
                                 result.put("detail", finalAndroidStepHandler.getResource());
                                 HandleDes handleDes = new HandleDes();
-                                if (!msg.getBoolean("hasScreen")) {
-                                    result.put("img", finalAndroidStepHandler.stepScreen(handleDes));
-                                }
                                 if (handleDes.getE() != null) {
                                     logger.error(handleDes.getE().getMessage());
                                     JSONObject resultFail = new JSONObject();
