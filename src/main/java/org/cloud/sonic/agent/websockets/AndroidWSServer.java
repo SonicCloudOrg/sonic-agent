@@ -1,25 +1,12 @@
-/*
- *  Copyright (C) [SonicCloudOrg] Sonic Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.android.ddmlib.*;
+import com.android.ddmlib.IDevice;
+import com.android.ddmlib.IShellOutputReceiver;
+import com.android.ddmlib.InstallException;
+import com.android.ddmlib.InstallReceiver;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
@@ -28,14 +15,12 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
-import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
+import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tools.*;
-import org.cloud.sonic.agent.tools.file.DownloadTool;
-import org.cloud.sonic.agent.tools.file.UploadTools;
-import org.cloud.sonic.agent.tools.poco.PocoTool;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,27 +41,27 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Component
 @ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
-public class AndroidWSServer implements IAndroidWSServer {
+public class AndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
+    @Value("${sonic.agent.host}")
+    private String host;
     @Value("${sonic.agent.port}")
     private int port;
     @Value("${modules.android.use-adbkit}")
     private boolean isEnableAdbKit;
-    @Value("${modules.appium.enable}")
-    private boolean isEnableAppium;
+    private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<IDevice, List<JSONObject>> webViewForwardMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
     private List<Session> NotStopSession = new ArrayList<>();
     @Autowired
     private RestTemplate restTemplate;
-    @Autowired
-    private AgentManagerTool agentManagerTool;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -94,17 +79,18 @@ public class AndroidWSServer implements IAndroidWSServer {
         }
         logger.info("android上锁udId：{}", udId);
         AndroidDeviceLocalStatus.startDebug(udId);
-
-        // 更新使用用户
-        agentManagerTool.updateDebugUser(udId, token);
-
+        JSONObject jsonDebug = new JSONObject();
+        jsonDebug.put("msg", "debugUser");
+        jsonDebug.put("token", token);
+        jsonDebug.put("udId", udId);
+        NettyThreadPool.send(jsonDebug);
         WebSocketSessionMap.addSession(session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
             logger.info("设备未连接，请检查！");
             return;
         }
-        saveUdIdMapAndSet(session, iDevice);
+        udIdMap.put(session, iDevice);
 
         AndroidAPKMap.getMap().put(udId, false);
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
@@ -136,7 +122,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     .replaceAll("\t", "");
         }
         AndroidAPKMap.getMap().put(udId, true);
-        AndroidDeviceBridgeTool.pressKey(iDevice, 3);
+
         Semaphore isTouchFinish = new Semaphore(0);
         String finalPath = path;
 
@@ -260,7 +246,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 adbkit.put("msg", "adbkit");
                 adbkit.put("isEnable", true);
                 adbkit.put("port", port);
-                BytesTool.sendText(session, adbkit.toJSONString());
+                AgentTool.sendText(session, adbkit.toJSONString());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -268,8 +254,32 @@ public class AndroidWSServer implements IAndroidWSServer {
             JSONObject adbkit = new JSONObject();
             adbkit.put("msg", "adbkit");
             adbkit.put("isEnable", false);
-            BytesTool.sendText(session, adbkit.toJSONString());
+            AgentTool.sendText(session, adbkit.toJSONString());
         }
+
+        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+            AndroidStepHandler androidStepHandler = new AndroidStepHandler();
+            androidStepHandler.setTestMode(0, 0, udId, DeviceStatus.DEBUGGING, session.getId());
+            JSONObject result = new JSONObject();
+            try {
+                androidStepHandler.startAndroidDriver(udId);
+                result.put("status", "success");
+                result.put("detail", "初始化Driver完成！");
+                HandlerMap.getAndroidMap().put(session.getId(), androidStepHandler);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+                result.put("status", "error");
+                result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+            } finally {
+                result.put("msg", "openDriver");
+                AgentTool.sendText(session, result.toJSONString());
+            }
+        });
+
+        JSONObject port = new JSONObject();
+        port.put("port", AppiumServer.getPort());
+        port.put("msg", "appiumPort");
+        AgentTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
@@ -289,7 +299,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         error.printStackTrace();
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
-        BytesTool.sendText(session, errMsg.toJSONString());
+        AgentTool.sendText(session, errMsg.toJSONString());
     }
 
     @OnMessage
@@ -298,15 +308,6 @@ public class AndroidWSServer implements IAndroidWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
-            case "poco": {
-                AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                    JSONObject poco = new JSONObject();
-                    poco.put("result", PocoTool.getSocketResult(iDevice.getSerialNumber(), PlatformType.ANDROID, msg.getString("detail")));
-                    poco.put("msg", "poco");
-                    BytesTool.sendText(session, poco.toJSONString());
-                });
-                break;
-            }
             case "clearProxy":
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
                 break;
@@ -317,17 +318,17 @@ public class AndroidWSServer implements IAndroidWSServer {
                 int pPort = PortTool.releaseAndGetPort(portSocket);
                 int webPort = PortTool.releaseAndGetPort(webPortSocket);
                 SGMTool.startProxy(iDevice.getSerialNumber(), SGMTool.getCommand(pPort, webPort));
-                AndroidDeviceBridgeTool.startProxy(iDevice, getHost(), pPort);
+                AndroidDeviceBridgeTool.startProxy(iDevice, host, pPort);
                 JSONObject proxy = new JSONObject();
                 proxy.put("webPort", webPort);
                 proxy.put("port", pPort);
                 proxy.put("msg", "proxyResult");
-                BytesTool.sendText(session, proxy.toJSONString());
+                AgentTool.sendText(session, proxy.toJSONString());
                 break;
             }
             case "installCert": {
                 AndroidDeviceBridgeTool.executeCommand(iDevice,
-                        String.format("am start -a android.intent.action.VIEW -d http://%s:%d/assets/download", getHost(), port));
+                        String.format("am start -a android.intent.action.VIEW -d http://%s:%d/assets/download", host, port));
                 break;
             }
             case "forwardView": {
@@ -399,7 +400,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 }
                 forwardView.put("chromePort", RemoteDebugDriver.chromePort);
                 forwardView.put("detail", result);
-                BytesTool.sendText(session, forwardView.toJSONString());
+                AgentTool.sendText(session, forwardView.toJSONString());
                 break;
             }
             case "find":
@@ -418,7 +419,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     e.printStackTrace();
                 }
                 result.put("msg", "uninstallFinish");
-                BytesTool.sendText(session, result.toJSONString());
+                AgentTool.sendText(session, result.toJSONString());
                 break;
             }
             case "scan":
@@ -444,43 +445,16 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "keyEvent":
                 AndroidDeviceBridgeTool.pressKey(iDevice, msg.getInteger("detail"));
                 break;
-            case "pullFile": {
-                JSONObject result = new JSONObject();
-                result.put("msg", "pullResult");
-                String url = AndroidDeviceBridgeTool.pullFile(iDevice, msg.getString("path"));
-                if(url!=null){
-                    result.put("status", "success");
-                    result.put("url",url);
-                }else {
-                    result.put("status", "fail");
-                }
-                BytesTool.sendText(session, result.toJSONString());
-                break;
-            }
-            case "pushFile": {
-                JSONObject result = new JSONObject();
-                result.put("msg", "pushResult");
-                try {
-                    File localFile = DownloadTool.download(msg.getString("file"));
-                    iDevice.pushFile(localFile.getAbsolutePath()
-                            , msg.getString("path"));
-                    result.put("status", "success");
-                } catch (IOException | AdbCommandRejectedException | SyncException | TimeoutException e) {
-                    result.put("status", "fail");
-                    e.printStackTrace();
-                }
-                BytesTool.sendText(session, result.toJSONString());
-                break;
-            }
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
-                    JSONObject steps = agentManagerTool.findSteps(
-                            msg.getInteger("caseId"),
-                            session.getId(),
-                            msg.getString("pwd"),
-                            iDevice.getSerialNumber()
-                    );
-                    agentManagerTool.runAndroidStep(steps);
+                    JSONObject jsonDebug = new JSONObject();
+                    jsonDebug.put("msg", "findSteps");
+                    jsonDebug.put("key", key);
+                    jsonDebug.put("udId", iDevice.getSerialNumber());
+                    jsonDebug.put("pwd", msg.getString("pwd"));
+                    jsonDebug.put("sessionId", session.getId());
+                    jsonDebug.put("caseId", msg.getInteger("caseId"));
+                    NettyThreadPool.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
@@ -496,33 +470,26 @@ public class AndroidWSServer implements IAndroidWSServer {
                     AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                     if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
                         if (msg.getString("detail").equals("openDriver")) {
-                            if (isEnableAppium) {
-                                androidStepHandler = new AndroidStepHandler();
-                                androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
-                                JSONObject result = new JSONObject();
-                                AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
-                                AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                    try {
-                                        AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
-                                        finalAndroidStepHandler1.startAndroidDriver(iDevice.getSerialNumber());
-                                        result.put("status", "success");
-                                        result.put("detail", "初始化Driver完成！");
-                                        HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
-                                        JSONObject port = new JSONObject();
-                                        port.put("port", AppiumServer.serviceMap.get(iDevice.getSerialNumber()).getUrl().getPort());
-                                        port.put("msg", "appiumPort");
-                                        BytesTool.sendText(session, port.toJSONString());
-                                    } catch (Exception e) {
-                                        logger.error(e.getMessage());
-                                        result.put("status", "error");
-                                        result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
-                                        finalAndroidStepHandler1.closeAndroidDriver();
-                                    } finally {
-                                        result.put("msg", "openDriver");
-                                        BytesTool.sendText(session, result.toJSONString());
-                                    }
-                                });
-                            }
+                            androidStepHandler = new AndroidStepHandler();
+                            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+                            JSONObject result = new JSONObject();
+                            AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
+                            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                try {
+                                    AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
+                                    finalAndroidStepHandler1.startAndroidDriver(iDevice.getSerialNumber());
+                                    result.put("status", "success");
+                                    result.put("detail", "初始化Driver完成！");
+                                    HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
+                                } catch (Exception e) {
+                                    logger.error(e.getMessage());
+                                    result.put("status", "error");
+                                    result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+                                } finally {
+                                    result.put("msg", "openDriver");
+                                    AgentTool.sendText(session, result.toJSONString());
+                                }
+                            });
                         }
                         break;
                     }
@@ -565,7 +532,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 result.put("status", "fail");
                                 e.printStackTrace();
                             }
-                            BytesTool.sendText(session, result.toJSONString());
+                            AgentTool.sendText(session, result.toJSONString());
                         });
                     }
                     if (msg.getString("detail").equals("tree")) {
@@ -583,17 +550,17 @@ public class AndroidWSServer implements IAndroidWSServer {
                                     logger.error(handleDes.getE().getMessage());
                                     JSONObject resultFail = new JSONObject();
                                     resultFail.put("msg", "treeFail");
-                                    BytesTool.sendText(session, resultFail.toJSONString());
+                                    AgentTool.sendText(session, resultFail.toJSONString());
                                 } else {
                                     result.put("webView", finalAndroidStepHandler.getWebView());
                                     result.put("activity", finalAndroidStepHandler.getCurrentActivity());
-                                    BytesTool.sendText(session, result.toJSONString());
+                                    AgentTool.sendText(session, result.toJSONString());
                                 }
                             } catch (Throwable e) {
                                 logger.error(e.getMessage());
                                 JSONObject result = new JSONObject();
                                 result.put("msg", "treeFail");
-                                BytesTool.sendText(session, result.toJSONString());
+                                AgentTool.sendText(session, result.toJSONString());
                             }
                         });
                     }
@@ -607,7 +574,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             } catch (Exception e) {
                                 result.put("errMsg", "获取元素截图失败！");
                             }
-                            BytesTool.sendText(session, result.toJSONString());
+                            AgentTool.sendText(session, result.toJSONString());
                         });
                     }
                 }
@@ -646,7 +613,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         }
         AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);
-        removeUdIdMapAndSet(session);
+        udIdMap.remove(session);
         WebSocketSessionMap.removeSession(session);
         try {
             session.close();

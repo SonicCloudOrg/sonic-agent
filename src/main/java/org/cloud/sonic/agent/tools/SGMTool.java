@@ -1,21 +1,6 @@
-/*
- *  Copyright (C) [SonicCloudOrg] Sonic Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
 package org.cloud.sonic.agent.tools;
 
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +28,7 @@ public class SGMTool {
     public static void init() {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgm));
         if (ver.size() == 0 || !ver.get(0).equals(String.format("sonic-go-mitmproxy: %s", sgmVersion))) {
-            logger.info(String.format("Start sonic-go-mitmproxy failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", pFile));
+            logger.info(String.format("启动sonic-go-mitmproxy失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", pFile));
             System.exit(0);
         }
     }

@@ -1,19 +1,3 @@
-/*
- *  Copyright (C) [SonicCloudOrg] Sonic Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
 package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.alibaba.fastjson.JSONObject;
@@ -21,7 +5,7 @@ import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.AgentTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +16,6 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * scrcpy socket线程
@@ -42,11 +25,11 @@ public class ScrcpyInputSocketThread extends Thread {
 
     private final Logger log = LoggerFactory.getLogger(ScrcpyInputSocketThread.class);
 
-    public final static String ANDROID_INPUT_SOCKET_PRE = "android-scrcpy-input-socket-task-%s-%s-%s";
+    public final static String ANDROID_INPUT_SOCKET_PRE = "android-input-socket-task-%s-%s-%s";
 
     private IDevice iDevice;
 
-    private BlockingQueue<byte[]> dataQueue;
+    private Queue<byte[]> dataQueue;
 
     private ScrcpyLocalThread scrcpyLocalThread;
 
@@ -54,7 +37,7 @@ public class ScrcpyInputSocketThread extends Thread {
 
     private Session session;
 
-    public ScrcpyInputSocketThread(IDevice iDevice, BlockingQueue<byte[]> dataQueue, ScrcpyLocalThread scrcpyLocalThread, Session session) {
+    public ScrcpyInputSocketThread(IDevice iDevice, Queue<byte[]> dataQueue, ScrcpyLocalThread scrcpyLocalThread, Session session) {
         this.iDevice = iDevice;
         this.dataQueue = dataQueue;
         this.scrcpyLocalThread = scrcpyLocalThread;
@@ -68,7 +51,7 @@ public class ScrcpyInputSocketThread extends Thread {
         return iDevice;
     }
 
-    public BlockingQueue<byte[]> getDataQueue() {
+    public Queue<byte[]> getDataQueue() {
         return dataQueue;
     }
 
@@ -102,7 +85,7 @@ public class ScrcpyInputSocketThread extends Thread {
                 size.put("msg", "size");
                 size.put("width", sizeTotal.split("x")[0]);
                 size.put("height", sizeTotal.split("x")[1]);
-                BytesTool.sendText(session, size.toJSONString());
+                AgentTool.sendText(session, size.toJSONString());
             }
             int readLength;
             int naLuIndex;

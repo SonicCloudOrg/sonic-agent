@@ -66,4 +66,4 @@ mvn package -Pwindows-x86_64
 
 ## 开源许可协议
 
-[License](LICENSE)
+[MIT License](LICENSE)

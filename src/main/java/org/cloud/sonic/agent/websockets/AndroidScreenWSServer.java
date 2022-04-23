@@ -1,52 +1,55 @@
-/*
- *  Copyright (C) [SonicCloudOrg] Sonic Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
+import com.android.ddmlib.InstallException;
+import com.android.ddmlib.InstallReceiver;
+import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.automation.HandleDes;
+import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
-import org.cloud.sonic.agent.common.maps.ScreenMap;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.common.maps.*;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.tests.TaskManager;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tests.android.scrcpy.ScrcpyServerUtil;
-import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.*;
+import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.File;
 import java.io.IOException;
-import java.util.Map;
+import java.io.OutputStream;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Scrcpy方案
+ */
 @Component
 @ServerEndpoint(value = "/websockets/android/screen/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
-public class AndroidScreenWSServer implements IAndroidWSServer {
+public class AndroidScreenWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidScreenWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
+    private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<Session, Thread> rotationMap = new ConcurrentHashMap<>();
     private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
     private Map<Session, String> typeMap = new ConcurrentHashMap<>();
@@ -66,7 +69,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
-        saveUdIdMapAndSet(session, iDevice);
+        udIdMap.put(session, iDevice);
         int wait = 0;
         boolean isInstall = true;
         while (AndroidAPKMap.getMap().get(udId) == null || (!AndroidAPKMap.getMap().get(udId))) {
@@ -79,7 +82,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
         }
         if (!isInstall) {
             logger.info("等待安装超时！");
-            removeUdIdMapAndSet(session);
+            udIdMap.remove(session);
         }
     }
 
@@ -94,7 +97,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
         error.printStackTrace();
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
-        BytesTool.sendText(session, errMsg.toJSONString());
+        AgentTool.sendText(session, errMsg.toJSONString());
     }
 
     @OnMessage
@@ -127,7 +130,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                                                 JSONObject rotationJson = new JSONObject();
                                                 rotationJson.put("msg", "rotation");
                                                 rotationJson.put("value", Integer.parseInt(res) * 90);
-                                                BytesTool.sendText(session, rotationJson.toJSONString());
+                                                AgentTool.sendText(session, rotationJson.toJSONString());
                                                 startScreen(session);
                                             }
 
@@ -201,14 +204,12 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             }
             JSONObject picFinish = new JSONObject();
             picFinish.put("msg", "picFinish");
-            BytesTool.sendText(session, picFinish.toJSONString());
+            AgentTool.sendText(session, picFinish.toJSONString());
         }
     }
 
-
-
     private void exit(Session session) {
-        removeUdIdMapAndSet(session);
+        udIdMap.remove(session);
         if (rotationMap.get(session) != null) {
             rotationMap.get(session).interrupt();
         }
