@@ -49,17 +49,20 @@ public class AndroidBatteryThread extends Thread {
             List<JSONObject> detail = new ArrayList<>();
             for (IDevice iDevice : deviceList) {
                 JSONObject jsonObject = new JSONObject();
-                String temper = AndroidDeviceBridgeTool
+                String battery = AndroidDeviceBridgeTool
                         .executeCommand(iDevice, "dumpsys battery");
-                if (StringUtils.hasText(temper)) {
-                    String realTem = temper.substring(temper.indexOf("temperature")).trim();
-                    int tem = getInt(realTem.substring(13, realTem.indexOf("\n")));
-                    String realLevel = temper.substring(temper.indexOf("level")).trim();
-                    int level = getInt(realLevel.substring(7, realLevel.indexOf("\n")));
-                    jsonObject.put("udId", iDevice.getSerialNumber());
-                    jsonObject.put("tem", tem);
-                    jsonObject.put("level", level);
-                    detail.add(jsonObject);
+                if (StringUtils.hasText(battery)) {
+                    try {
+                        String realTem = battery.substring(battery.indexOf("temperature")).trim();
+                        int tem = getInt(realTem.substring(13, realTem.indexOf("\n")));
+                        String realLevel = battery.substring(battery.indexOf("level")).trim();
+                        int level = getInt(realLevel.substring(7, realLevel.indexOf("\n")));
+                        jsonObject.put("udId", iDevice.getSerialNumber());
+                        jsonObject.put("tem", tem);
+                        jsonObject.put("level", level);
+                        detail.add(jsonObject);
+                    } catch (Exception e) {
+                    }
                 }
             }
             DevicesService devicesService = SpringTool.getBean(DevicesService.class);
@@ -70,7 +73,7 @@ public class AndroidBatteryThread extends Thread {
             try {
                 devicesService.refreshDevicesBattery(result);
             } catch (Exception e) {
-                log.error("发送电量信息失败，错误信息：", e);
+                log.error("Send battery msg failed, cause: ", e);
             }
             try {
                 Thread.sleep(30000);

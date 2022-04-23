@@ -442,7 +442,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
     }
 
     public static void searchDevice(IDevice iDevice) {
-        executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SearchActivity");
+        executeCommand(iDevice, "am start -n org.cloud.sonic.android/.plugin.activityPlugin.SearchActivity");
     }
 
     public static void controlBattery(IDevice iDevice, int type) {

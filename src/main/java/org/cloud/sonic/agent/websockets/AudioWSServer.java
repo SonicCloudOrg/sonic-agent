@@ -78,7 +78,7 @@ public class AudioWSServer {
         IDevice iDevice = udIdMap.get(session);
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RECORD_AUDIO allow");
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.plugin.audioPlugin.AudioActivity");
         AndroidDeviceBridgeTool.pressKey(iDevice, 4);
         int appListPort = PortTool.getPort();
         Thread audio = new Thread(() -> {
