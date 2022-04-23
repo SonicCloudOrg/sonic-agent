@@ -312,7 +312,7 @@ public class TerminalWSServer {
                     if (appListSocket != null && appListSocket.isConnected()) {
                         try {
                             appListSocket.close();
-                            logger.info("appList socket已关闭");
+                            logger.info("appList socket closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -320,7 +320,7 @@ public class TerminalWSServer {
                     if (inputStream != null) {
                         try {
                             inputStream.close();
-                            logger.info("appList output流已关闭");
+                            logger.info("appList output stream closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -387,7 +387,7 @@ public class TerminalWSServer {
                     if (wifiListSocket != null && wifiListSocket.isConnected()) {
                         try {
                             wifiListSocket.close();
-                            logger.info("wifiList socket已关闭");
+                            logger.info("wifiList socket closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -395,7 +395,7 @@ public class TerminalWSServer {
                     if (inputStream != null) {
                         try {
                             inputStream.close();
-                            logger.info("wifiList output流已关闭");
+                            logger.info("wifiList output stream closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

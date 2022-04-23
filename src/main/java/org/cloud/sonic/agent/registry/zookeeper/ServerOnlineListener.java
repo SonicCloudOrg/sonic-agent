@@ -1,17 +1,18 @@
-/**
- * Copyright (C) [SonicCloudOrg] Sonic Project
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
  */
 package org.cloud.sonic.agent.registry.zookeeper;
 
@@ -45,12 +46,12 @@ public class ServerOnlineListener implements ApplicationListener<AgentRegistered
         String nodePath = "/dubbo/org.cloud.sonic.common.services.DevicesService/providers";
         CuratorCache curatorCache = CuratorCache.build(curatorFramework, nodePath);
         curatorCache.listenable().addListener((type, oldData, data) -> {
-            log.info("监听到server状态为：{}", type);
+            log.info("found server status: {}", type);
             if (CuratorCacheListener.Type.NODE_CREATED != type) {
                 return;
             }
             devicesService.correctionAllDevicesStatus();
-            log.info("监听到server上线，请求server刷新所有设备状态");
+            log.info("server online now. request refresh devices status");
         });
         curatorCache.start();
         log.info("start watch {}", nodePath);

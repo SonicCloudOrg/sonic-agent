@@ -134,12 +134,12 @@ public class ScrcpyInputSocketThread extends Thread {
         } finally {
             if (scrcpyLocalThread.isAlive()) {
                 scrcpyLocalThread.interrupt();
-                log.info("scrcpy thread已关闭");
+                log.info("scrcpy thread closed.");
             }
             if (videoSocket.isConnected()) {
                 try {
                     videoSocket.close();
-                    log.info("scrcpy video socket已关闭");
+                    log.info("scrcpy video socket closed.");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -147,7 +147,7 @@ public class ScrcpyInputSocketThread extends Thread {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                    log.info("scrcpy input流已关闭");
+                    log.info("scrcpy input stream closed.");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

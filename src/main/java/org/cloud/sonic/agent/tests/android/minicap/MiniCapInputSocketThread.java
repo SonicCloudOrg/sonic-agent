@@ -117,12 +117,12 @@ public class MiniCapInputSocketThread extends Thread {
         } finally {
             if (miniCapPro.isAlive()) {
                 miniCapPro.interrupt();
-                log.info("miniCap thread已关闭");
+                log.info("miniCap thread closed.");
             }
             if (capSocket != null && capSocket.isConnected()) {
                 try {
                     capSocket.close();
-                    log.info("miniCap socket已关闭");
+                    log.info("miniCap socket closed.");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -130,7 +130,7 @@ public class MiniCapInputSocketThread extends Thread {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                    log.info("miniCap input流已关闭");
+                    log.info("miniCap input stream closed.");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
