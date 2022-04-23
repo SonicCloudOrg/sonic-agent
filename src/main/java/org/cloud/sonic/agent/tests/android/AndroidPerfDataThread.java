@@ -35,29 +35,29 @@ public class AndroidPerfDataThread extends Thread {
     @Override
     public void run() {
 
-//        AndroidStepHandler androidStepHandler = androidTestTaskBootThread.getAndroidStepHandler();
-//        AndroidRunStepThread runStepThread = androidTestTaskBootThread.getRunStepThread();
+        AndroidStepHandler androidStepHandler = androidTestTaskBootThread.getAndroidStepHandler();
+        AndroidRunStepThread runStepThread = androidTestTaskBootThread.getRunStepThread();
 
-//        int tryTime = 0;
-//        while (runStepThread.isAlive()) {
-//            if (androidStepHandler.getAndroidDriver() == null) {
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e) {
-//                    log.error("获取driver失败，错误信息{}" + e.getMessage());
-//                    e.printStackTrace();
-//                }
-//                continue;
-//            }
-//            try {
-//                androidStepHandler.getPerform();
-//                Thread.sleep(30000);
-//            } catch (Exception e) {
-//                tryTime++;
-//            }
-//            if (tryTime > 10) {
-//                break;
-//            }
-//        }
+        int tryTime = 0;
+        while (runStepThread.isAlive()) {
+            if (androidStepHandler.getAndroidDriver() == null) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.error("获取driver失败，错误信息{}" + e.getMessage());
+                    e.printStackTrace();
+                }
+                continue;
+            }
+            try {
+                androidStepHandler.getPerform();
+                Thread.sleep(30000);
+            } catch (Exception e) {
+                tryTime++;
+            }
+            if (tryTime > 10) {
+                break;
+            }
+        }
     }
 }

@@ -1,26 +1,7 @@
-/*
- *  Copyright (C) [SonicCloudOrg] Sonic Project
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import io.appium.java_client.TouchAction;
-import io.appium.java_client.touch.WaitOptions;
-import io.appium.java_client.touch.offset.PointOption;
 import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
@@ -29,20 +10,19 @@ import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
+import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.PortTool;
-import org.cloud.sonic.agent.tools.SGMTool;
-import org.cloud.sonic.agent.tools.file.DownloadTool;
-import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.agent.tools.*;
+import io.appium.java_client.TouchAction;
+import io.appium.java_client.touch.WaitOptions;
+import io.appium.java_client.touch.offset.PointOption;
 import org.openqa.selenium.OutputType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -53,17 +33,21 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
-public class IOSWSServer implements IIOSWSServer {
+public class IOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
+    private Map<Session, String> udIdMap = new ConcurrentHashMap<>();
     @Value("${sonic.agent.key}")
     private String key;
+    @Value("${sonic.agent.host}")
+    private String host;
     @Value("${sonic.agent.port}")
     private int port;
-    @Autowired private AgentManagerTool agentManagerTool;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -81,16 +65,17 @@ public class IOSWSServer implements IIOSWSServer {
         }
         logger.info("ios上锁udId：{}", udId);
         IOSDeviceLocalStatus.startDebug(udId);
-
-        // 更新使用用户
-        agentManagerTool.updateDebugUser(udId, token);
-
+        JSONObject jsonDebug = new JSONObject();
+        jsonDebug.put("msg", "debugUser");
+        jsonDebug.put("token", token);
+        jsonDebug.put("udId", udId);
+        NettyThreadPool.send(jsonDebug);
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
             logger.info("设备未连接，请检查！");
             return;
         }
-        saveUdIdMapAndSet(session, udId);
+        udIdMap.put(session, udId);
         int[] ports = SibTool.startWda(udId);
         JSONObject picFinish = new JSONObject();
         picFinish.put("msg", "picFinish");
@@ -109,20 +94,20 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("height", iosStepHandler.getDriver().manage().window().getSize().height);
                 result.put("detail", "初始化Driver完成！");
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
-                JSONObject port = new JSONObject();
-                port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
-                port.put("msg", "appiumPort");
-                BytesTool.sendText(session, port.toJSONString());
             } catch (Exception e) {
                 logger.error(e.getMessage());
                 result.put("status", "error");
                 result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
-                iosStepHandler.closeIOSDriver();
             } finally {
                 result.put("msg", "openDriver");
                 sendText(session, result.toJSONString());
             }
         });
+
+        JSONObject port = new JSONObject();
+        port.put("port", AppiumServer.getPort());
+        port.put("msg", "appiumPort");
+        AgentTool.sendText(session, port.toJSONString());
     }
 
     @OnClose
@@ -160,7 +145,7 @@ public class IOSWSServer implements IIOSWSServer {
                 proxy.put("webPort", webPort);
                 proxy.put("port", pPort);
                 proxy.put("msg", "proxyResult");
-                BytesTool.sendText(session, proxy.toJSONString());
+                AgentTool.sendText(session, proxy.toJSONString());
                 break;
             }
             case "installCert": {
@@ -186,13 +171,13 @@ public class IOSWSServer implements IIOSWSServer {
                 break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
-                    JSONObject steps = agentManagerTool.findSteps(
-                            msg.getInteger("caseId"),
-                            session.getId(),
-                            "",
-                            udId
-                    );
-                    agentManagerTool.runIOSStep(steps);
+                    JSONObject jsonDebug = new JSONObject();
+                    jsonDebug.put("msg", "findSteps");
+                    jsonDebug.put("key", key);
+                    jsonDebug.put("udId", udId);
+                    jsonDebug.put("sessionId", session.getId());
+                    jsonDebug.put("caseId", msg.getInteger("caseId"));
+                    NettyThreadPool.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
@@ -334,7 +319,7 @@ public class IOSWSServer implements IIOSWSServer {
         SGMTool.stopProxy(udIdMap.get(session));
         IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);
-        removeUdIdMapAndSet(session);
+        udIdMap.remove(session);
         try {
             session.close();
         } catch (IOException e) {

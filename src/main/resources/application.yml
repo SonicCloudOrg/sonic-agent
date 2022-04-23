@@ -1,12 +1,7 @@
 spring:
   version: @project.version@
-  application:
-    name: @project.artifactId@
-    des: "Sonic云真机测试平台 - agent端"
-  main:
-    allow-bean-definition-overriding: true
   profiles:
-    active: @project.artifactId@,actuator,dubbo,feign,user,logging
+    active: prod,@profileActive@
 
 sonic:
   saa: 1.3.4
