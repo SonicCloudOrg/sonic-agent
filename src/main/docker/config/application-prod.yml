@@ -3,6 +3,9 @@ sonic:
     host: ${AGENT_HOST}
     port: ${AGENT_PORT}
     key: ${AGENT_KEY}
+    hub:
+      enable: ${HUB_ENABLE}
+      generation: ${HUB_GENERATION}
   server:
     host: ${SERVER_HOST}
     folder-port: ${SERVER_FOLDER_PORT}
@@ -17,11 +20,12 @@ modules:
     wda-bundle-id: ${WDA_BUNDLE_ID}
   appium:
     enable: ${APPIUM_ENABLE}
-    port: ${APPIUM_PORT}
   webview:
     enable: ${WEBVIEW_ENABLE}
     chrome-driver-debug-port: ${CHROME_DRIVER_PORT}
     chrome-driver-path: /usr/bin/chromedriver
+  sgm:
+    enable: ${SGM_ENABLE}
 
 logging:
   file:

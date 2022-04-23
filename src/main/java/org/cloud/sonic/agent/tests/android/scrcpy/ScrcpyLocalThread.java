@@ -1,3 +1,19 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.alibaba.fastjson.JSONObject;
@@ -12,7 +28,7 @@ import java.io.File;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import static org.cloud.sonic.agent.tools.AgentTool.sendText;
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 /**
  * 启动scrcpy等服务的线程
@@ -21,7 +37,7 @@ public class ScrcpyLocalThread extends Thread {
 
     private final Logger log = LoggerFactory.getLogger(ScrcpyLocalThread.class);
 
-    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-start-scrcpy-server-task-%s-%s-%s";
+    public final static String ANDROID_START_MINICAP_SERVER_PRE = "android-scrcpy-start-scrcpy-server-task-%s-%s-%s";
 
     private IDevice iDevice;
 

@@ -66,4 +66,4 @@ Thank you to all our sponsors!
 
 ## LICENSE
 
-[MIT License](LICENSE)
+[License](LICENSE)

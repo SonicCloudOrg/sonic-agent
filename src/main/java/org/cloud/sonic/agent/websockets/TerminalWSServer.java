@@ -1,3 +1,19 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
@@ -7,7 +23,7 @@ import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -288,7 +304,7 @@ public class TerminalWSServer {
                         JSONObject appListDetail = new JSONObject();
                         appListDetail.put("msg", "appListDetail");
                         appListDetail.put("detail", JSON.parseObject(dataJson));
-                        AgentTool.sendText(session, appListDetail.toJSONString());
+                        BytesTool.sendText(session, appListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -363,7 +379,7 @@ public class TerminalWSServer {
                         JSONObject wifiListDetail = new JSONObject();
                         wifiListDetail.put("msg", "wifiList");
                         wifiListDetail.put("detail", JSON.parseObject(dataJson));
-                        AgentTool.sendText(session, wifiListDetail.toJSONString());
+                        BytesTool.sendText(session, wifiListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
