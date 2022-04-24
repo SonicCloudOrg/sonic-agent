@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 调度agent的服务，跟{@link AgentsService}不同，{@link AgentsService}是操作数据库的接口，而这里是直接操作Agent的
@@ -74,12 +75,12 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         suiteList.add(xmlSuite);
         tng.setXmlSuites(suiteList);
         tng.addListener(new SuiteListener());
-        new Thread(tng::run).start();
+        CompletableFuture.runAsync(tng::run);
     }
 
     @Override
     public void stop() {
-        AgentManagerTool.stop();
+        CompletableFuture.runAsync(AgentManagerTool::stop);
     }
 
     @Override
