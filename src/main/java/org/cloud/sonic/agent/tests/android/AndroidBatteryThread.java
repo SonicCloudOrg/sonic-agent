@@ -32,6 +32,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Eason
+ * @date 2022/4/24 20:45
+ */
 @Slf4j
 public class AndroidBatteryThread implements Runnable {
 

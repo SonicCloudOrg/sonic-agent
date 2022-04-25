@@ -240,18 +240,18 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
 
     public static JSONObject getAppList(String udId) {
         String commandLine = "%s app list -u %s -j";
-        List<String> a = ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
-        if (a.size() > 0) {
-            return JSONObject.parseObject(a.get(0));
+        String a = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
+        if (a.length() > 0) {
+            return JSONObject.parseObject(a);
         } else {
             return new JSONObject();
         }
     }
 
-    public static List<JSONObject> getAllDevicesBattery() {
+    public static JSONObject getAllDevicesBattery() {
         String commandLine = "%s battery -j";
         String res = ProcessCommandTool.getProcessLocalCommandStr(commandLine.formatted(sib));
-        return JSONObject.parseArray(res, JSONObject.class);
+        return JSONObject.parseObject(res, JSONObject.class);
     }
 
     public static void launch(String udId, String pkg) {
