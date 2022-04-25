@@ -25,9 +25,11 @@ import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
+import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,6 +120,14 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
             }
             GlobalProcessMap.getMap().put(processName, listenProcess);
         });
+
+        ScheduleTool.scheduleAtFixedRate(
+                new IOSBatteryThread(),
+                IOSBatteryThread.DELAY,
+                IOSBatteryThread.DELAY,
+                IOSBatteryThread.TIME_UNIT
+        );
+
         logger.info("iOS devices listening...");
     }
 
@@ -236,6 +246,12 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         } else {
             return new JSONObject();
         }
+    }
+
+    public static List<JSONObject> getAllDevicesBattery() {
+        String commandLine = "%s battery -j";
+        String res = ProcessCommandTool.getProcessLocalCommandStr(commandLine.formatted(sib));
+        return JSONObject.parseArray(res, JSONObject.class);
     }
 
     public static void launch(String udId, String pkg) {

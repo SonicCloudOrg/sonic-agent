@@ -28,58 +28,62 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Slf4j
-public class AndroidBatteryThread extends Thread {
+public class AndroidBatteryThread implements Runnable {
+
+    /**
+     * second
+     */
+    public static final long DELAY = 30;
+
+    public static final String THREAD_NAME = "android-battery-thread";
+
+    public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
+
     @Override
     public void run() {
+        Thread.currentThread().setName(THREAD_NAME);
         AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
-        while (agentManagerTool.checkServerOnline()) {
-            IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
-            if (deviceList == null) {
+        if (!agentManagerTool.checkServerOnline()) {
+            return;
+        }
+
+        IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
+        if (deviceList == null || deviceList.length == 0) {
+            return;
+        }
+        List<JSONObject> detail = new ArrayList<>();
+        for (IDevice iDevice : deviceList) {
+            JSONObject jsonObject = new JSONObject();
+            String battery = AndroidDeviceBridgeTool
+                    .executeCommand(iDevice, "dumpsys battery");
+            if (StringUtils.hasText(battery)) {
                 try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                continue;
-            }
-            List<JSONObject> detail = new ArrayList<>();
-            for (IDevice iDevice : deviceList) {
-                JSONObject jsonObject = new JSONObject();
-                String battery = AndroidDeviceBridgeTool
-                        .executeCommand(iDevice, "dumpsys battery");
-                if (StringUtils.hasText(battery)) {
-                    try {
-                        String realTem = battery.substring(battery.indexOf("temperature")).trim();
-                        int tem = getInt(realTem.substring(13, realTem.indexOf("\n")));
-                        String realLevel = battery.substring(battery.indexOf("level")).trim();
-                        int level = getInt(realLevel.substring(7, realLevel.indexOf("\n")));
-                        jsonObject.put("udId", iDevice.getSerialNumber());
-                        jsonObject.put("tem", tem);
-                        jsonObject.put("level", level);
-                        detail.add(jsonObject);
-                    } catch (Exception e) {
-                    }
+                    String realTem = battery.substring(battery.indexOf("temperature")).trim();
+                    int tem = getInt(realTem.substring(13, realTem.indexOf("\n")));
+                    String realLevel = battery.substring(battery.indexOf("level")).trim();
+                    int level = getInt(realLevel.substring(7, realLevel.indexOf("\n")));
+                    jsonObject.put("udId", iDevice.getSerialNumber());
+                    jsonObject.put("tem", tem);
+                    jsonObject.put("level", level);
+                    detail.add(jsonObject);
+                } catch (Exception ignored) {
                 }
             }
-            DevicesService devicesService = SpringTool.getBean(DevicesService.class);
-            JSONObject result = new JSONObject();
-            result.put("msg", "battery");
-            result.put("detail", detail);
-            result.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
-            try {
-                devicesService.refreshDevicesBattery(result);
-            } catch (Exception e) {
-                log.error("Send battery msg failed, cause: ", e);
-            }
-            try {
-                Thread.sleep(30000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        }
+        DevicesService devicesService = SpringTool.getBean(DevicesService.class);
+        JSONObject result = new JSONObject();
+        result.put("msg", "battery");
+        result.put("detail", detail);
+        result.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        try {
+            devicesService.refreshDevicesBattery(result);
+        } catch (Exception e) {
+            log.error("Send battery msg failed, cause: ", e);
         }
     }
 
