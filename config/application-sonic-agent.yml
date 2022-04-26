@@ -24,9 +24,9 @@ sonic:
     key: 29002272-4659-4808-a804-08ce3388b136
     cabinet:
       # 是否使用Sonic机柜，可以前往https://sonic-cloud.gitee.io/#/Cabinet了解更多
-      enable: false
+      enable: true
       storey: 1
-      key: 29002272-4659-4808-a804-08ce3388b136
+      key: e33cd65c-a40e-431f-9e65-4a91bac6f487
 
 modules:
   android:

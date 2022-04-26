@@ -26,8 +26,10 @@ import org.apache.zookeeper.CreateMode;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.common.models.domain.Agents;
+import org.cloud.sonic.common.models.domain.Cabinet;
 import org.cloud.sonic.common.models.interfaces.AgentStatus;
 import org.cloud.sonic.common.services.AgentsService;
+import org.cloud.sonic.common.services.CabinetService;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.ObjectUtils;
@@ -62,6 +64,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
         }
 
         AgentsService agentsService = SpringTool.getBean(AgentsService.class);
+        CabinetService cabinetService = SpringTool.getBean(CabinetService.class);
         AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
         ApplicationEventPublisher publisher = SpringTool.getApplicationContext();
         int count = 1;
@@ -84,11 +87,21 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
         String secretKey = SpringTool.getPropertiesValue("sonic.agent.key");
         int webPort = Integer.parseInt(SpringTool.getPropertiesValue("sonic.agent.port"));
         String systemType = System.getProperty("os.name");
+        Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
+        String cabinetKey = SpringTool.getPropertiesValue("sonic.agent.cabinet.key");
+        int storey = Integer.parseInt(SpringTool.getPropertiesValue("sonic.agent.cabinet.storey"));
 
         // 保存记录
         Agents currentAgent = agentsService.findBySecretKey(secretKey);
         if (ObjectUtils.isEmpty(currentAgent)) {
             throw new RuntimeException("配置 sonic.agent.key 错误，请检查！");
+        }
+        if (cabinetEnable) {
+            Cabinet cabinet = cabinetService.getIdByKey(cabinetKey);
+            if (cabinet != null) {
+                currentAgent.setCabinetId(cabinet.getId());
+            }
+            currentAgent.setStorey(storey);
         }
         currentAgent.setHost(host)
                 .setPort(webPort)
