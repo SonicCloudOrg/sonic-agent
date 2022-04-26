@@ -131,9 +131,6 @@ public class ScrcpyInputSocketThread extends Thread {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            JSONObject errMsg = new JSONObject();
-            errMsg.put("msg", "error");
-            BytesTool.sendText(session, errMsg.toJSONString());
         } finally {
             if (scrcpyLocalThread.isAlive()) {
                 scrcpyLocalThread.interrupt();
