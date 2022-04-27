@@ -153,7 +153,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
      */
     public static void reboot(IDevice iDevice) {
         if (iDevice != null) {
-            executeCommand(iDevice, "reboot");
+            try {
+                iDevice.reboot(null);
+            } catch (TimeoutException e) {
+                e.printStackTrace();
+            } catch (AdbCommandRejectedException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

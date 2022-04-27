@@ -19,8 +19,10 @@ package org.cloud.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.interfaces.HubGear;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.common.services.DevicesService;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.springframework.util.CollectionUtils;
@@ -30,7 +32,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author JayWenStar
+ * @author JayWenStar, Eason
  * @date 2022/4/25 11:45 上午
  */
 @Slf4j
@@ -44,6 +46,8 @@ public class IOSBatteryThread implements Runnable {
     public static final String THREAD_NAME = "ios-battery-thread";
 
     public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
+
+    Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
 
     @Override
     public void run() {
@@ -59,7 +63,12 @@ public class IOSBatteryThread implements Runnable {
         }
 
         List<JSONObject> detail = new ArrayList<>();
-        JSONObject devicesBattery = SibTool.getAllDevicesBattery();
+        JSONObject devicesBattery;
+        try {
+            devicesBattery = SibTool.getAllDevicesBattery();
+        } catch (Exception e) {
+            return;
+        }
         List<JSONObject> batteryList = devicesBattery.getJSONArray("batteryList").toJavaList(JSONObject.class);
         for (JSONObject dB : batteryList) {
             JSONObject jsonObject = new JSONObject();
@@ -67,6 +76,15 @@ public class IOSBatteryThread implements Runnable {
             jsonObject.put("tem", dB.getInteger("temperature"));
             jsonObject.put("level", dB.getInteger("level"));
             detail.add(jsonObject);
+            //control
+            if (cabinetEnable) {
+                if (dB.getInteger("level") >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
+                    SHCService.setGear(dB.getString("serialNumber"), HubGear.LOW);
+                }
+                if (dB.getInteger("level") <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
+                    SHCService.setGear(dB.getString("serialNumber"), HubGear.HIGH);
+                }
+            }
         }
 
         DevicesService devicesService = SpringTool.getBean(DevicesService.class);

@@ -19,10 +19,7 @@ package org.cloud.sonic.agent.bridge.ios;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
-import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
-import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
-import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
@@ -153,6 +150,8 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
         SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static void sendOnlineStatus(JSONObject jsonObject) {
@@ -172,6 +171,8 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static String getName(String udId) {

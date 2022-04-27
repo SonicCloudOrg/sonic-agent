@@ -24,6 +24,7 @@ import org.cloud.sonic.agent.common.interfaces.HubGear;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.common.services.DevicesService;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.springframework.util.StringUtils;
@@ -82,43 +83,37 @@ public class AndroidBatteryThread implements Runnable {
                     //control
                     if (cabinetEnable) {
                         boolean needReset = false;
+                        Integer times = SHCService.getTemp(iDevice.getSerialNumber());
                         if (tem >= AgentZookeeperRegistry.currentCabinet.getHighTemp()) {
-                            Integer times = DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber());
                             if (times == null) {
+                                //Send Error Msg
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
-                                //low gear
+                                SHCService.setGear(iDevice.getSerialNumber(),HubGear.LOW);
                             } else {
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
                             }
                             int out = AgentZookeeperRegistry.currentCabinet.getHighTempTime();
-                            if (DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber()) >= (out / 2)) {
-                                //shutdown
+                            if (SHCService.getTemp(iDevice.getSerialNumber()) >= (out / 2)) {
+                                //Send shutdown Msg
+                                iDevice.reboot("-p");
+                                DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
+                                DevicesBatteryMap.getGearMap().remove(iDevice.getSerialNumber());
                             }
                             continue;
                         } else {
-                            Integer times = DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber());
                             if (times != null) {
-                                DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
+                                //Send Reset Msg
                                 needReset = true;
                                 DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
                             }
                         }
                         if (level >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
-                            Integer high = DevicesBatteryMap.getLevelMap().get(iDevice.getSerialNumber());
-                            if (high == null || high != HubGear.LOW) {
-                                //low gear
-                                DevicesBatteryMap.getLevelMap().put(iDevice.getSerialNumber(), HubGear.LOW);
-                            }
+                            SHCService.setGear(iDevice.getSerialNumber(), HubGear.LOW);
                         } else if (needReset) {
-                            //high gear
-                            DevicesBatteryMap.getLevelMap().put(iDevice.getSerialNumber(), HubGear.HIGH);
+                            SHCService.setGear(iDevice.getSerialNumber(), HubGear.HIGH);
                         }
                         if (level <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
-                            Integer low = DevicesBatteryMap.getLevelMap().get(iDevice.getSerialNumber());
-                            if (low == null || low != HubGear.HIGH) {
-                                //high gear
-                                DevicesBatteryMap.getLevelMap().put(iDevice.getSerialNumber(), HubGear.HIGH);
-                            }
+                            SHCService.setGear(iDevice.getSerialNumber(), HubGear.HIGH);
                         }
                     }
                 } catch (Exception ignored) {
