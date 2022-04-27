@@ -45,6 +45,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
     private boolean registered = false;
 
     public static Agents currentAgent;
+    public static Cabinet currentCabinet;
 
     public AgentZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
         super(url, zookeeperTransporter);
@@ -100,6 +101,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
             Cabinet cabinet = cabinetService.getIdByKey(cabinetKey);
             if (cabinet != null) {
                 currentAgent.setCabinetId(cabinet.getId());
+                AgentZookeeperRegistry.currentCabinet = cabinet;
             }
             currentAgent.setStorey(storey);
         }

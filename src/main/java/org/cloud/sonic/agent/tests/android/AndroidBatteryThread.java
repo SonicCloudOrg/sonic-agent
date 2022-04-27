@@ -20,6 +20,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.interfaces.HubGear;
+import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.common.services.DevicesService;
@@ -48,6 +50,8 @@ public class AndroidBatteryThread implements Runnable {
 
     public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
+    Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
+
     @Override
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
@@ -75,6 +79,48 @@ public class AndroidBatteryThread implements Runnable {
                     jsonObject.put("tem", tem);
                     jsonObject.put("level", level);
                     detail.add(jsonObject);
+                    //control
+                    if (cabinetEnable) {
+                        boolean needReset = false;
+                        if (tem >= AgentZookeeperRegistry.currentCabinet.getHighTemp()) {
+                            Integer times = DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber());
+                            if (times == null) {
+                                DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
+                                //low gear
+                            } else {
+                                DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
+                            }
+                            int out = AgentZookeeperRegistry.currentCabinet.getHighTempTime();
+                            if (DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber()) >= (out / 2)) {
+                                //shutdown
+                            }
+                            continue;
+                        } else {
+                            Integer times = DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber());
+                            if (times != null) {
+                                DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
+                                needReset = true;
+                                DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
+                            }
+                        }
+                        if (level >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
+                            Integer high = DevicesBatteryMap.getLevelMap().get(iDevice.getSerialNumber());
+                            if (high == null || high != HubGear.LOW) {
+                                //low gear
+                                DevicesBatteryMap.getLevelMap().put(iDevice.getSerialNumber(), HubGear.LOW);
+                            }
+                        } else if (needReset) {
+                            //high gear
+                            DevicesBatteryMap.getLevelMap().put(iDevice.getSerialNumber(), HubGear.HIGH);
+                        }
+                        if (level <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
+                            Integer low = DevicesBatteryMap.getLevelMap().get(iDevice.getSerialNumber());
+                            if (low == null || low != HubGear.HIGH) {
+                                //high gear
+                                DevicesBatteryMap.getLevelMap().put(iDevice.getSerialNumber(), HubGear.HIGH);
+                            }
+                        }
+                    }
                 } catch (Exception ignored) {
                 }
             }
