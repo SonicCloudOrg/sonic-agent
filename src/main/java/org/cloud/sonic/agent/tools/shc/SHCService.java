@@ -29,7 +29,7 @@ public class SHCService {
         Integer currentGear = getGear(udId);
         if (currentGear == null || currentGear != gear) {
             //set
-            log.info("Set!");
+            log.info("Set {}!",gear);
             DevicesBatteryMap.getGearMap().put(udId, gear);
         }
     }

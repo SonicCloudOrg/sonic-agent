@@ -104,6 +104,9 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
                 AgentZookeeperRegistry.currentCabinet = cabinet;
             }
             currentAgent.setStorey(storey);
+        }else{
+            currentAgent.setCabinetId(0);
+            currentAgent.setStorey(0);
         }
         currentAgent.setHost(host)
                 .setPort(webPort)

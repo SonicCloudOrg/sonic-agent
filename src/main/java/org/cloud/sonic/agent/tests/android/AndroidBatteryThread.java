@@ -84,11 +84,11 @@ public class AndroidBatteryThread implements Runnable {
                     if (cabinetEnable) {
                         boolean needReset = false;
                         Integer times = SHCService.getTemp(iDevice.getSerialNumber());
-                        if (tem >= AgentZookeeperRegistry.currentCabinet.getHighTemp()) {
+                        if (tem >= AgentZookeeperRegistry.currentCabinet.getHighTemp() * 10) {
                             if (times == null) {
                                 //Send Error Msg
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
-                                SHCService.setGear(iDevice.getSerialNumber(),HubGear.LOW);
+                                SHCService.setGear(iDevice.getSerialNumber(), HubGear.LOW);
                             } else {
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
                             }
