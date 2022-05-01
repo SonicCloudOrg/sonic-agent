@@ -77,7 +77,7 @@ public class IOSBatteryThread implements Runnable {
             jsonObject.put("level", dB.getInteger("level"));
             detail.add(jsonObject);
             //control
-            if (cabinetEnable) {
+            if (cabinetEnable && AgentZookeeperRegistry.currentCabinet != null) {
                 if (dB.getInteger("level") >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
                     SHCService.setGear(dB.getString("serialNumber"), HubGear.LOW);
                 }

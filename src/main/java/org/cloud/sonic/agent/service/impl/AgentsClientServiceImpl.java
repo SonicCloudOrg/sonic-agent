@@ -8,6 +8,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
@@ -16,6 +17,7 @@ import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.websockets.AndroidScreenWSServer;
 import org.cloud.sonic.agent.websockets.AndroidWSServer;
 import org.cloud.sonic.agent.websockets.IOSWSServer;
+import org.cloud.sonic.common.models.domain.Cabinet;
 import org.cloud.sonic.common.services.AgentsClientService;
 import org.cloud.sonic.common.services.AgentsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,9 +45,12 @@ import java.util.concurrent.CompletableFuture;
 @DubboService
 public class AgentsClientServiceImpl implements AgentsClientService {
 
-    @Autowired private AndroidScreenWSServer androidScreenWSServer;
-    @Autowired private AndroidWSServer androidWSServer;
-    @Autowired private IOSWSServer ioswsServer;
+    @Autowired
+    private AndroidScreenWSServer androidScreenWSServer;
+    @Autowired
+    private AndroidWSServer androidWSServer;
+    @Autowired
+    private IOSWSServer ioswsServer;
 
     @Override
     public void runSuite(JSONObject jsonObject) {
@@ -89,7 +94,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         for (JSONObject aCase : caseList) {
             int resultId = (int) aCase.get("rid");
             int caseId = (int) aCase.get("cid");
-            JSONArray devices =  aCase.getJSONArray("device");
+            JSONArray devices = aCase.getJSONArray("device");
             List<JSONObject> deviceList = devices.toJavaList(JSONObject.class);
             for (JSONObject device : deviceList) {
                 String udId = (String) device.get("udId");
@@ -126,7 +131,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         if (!StringUtils.hasText(udId) || platform == null) {
             return false;
         }
-        switch (platform)  {
+        switch (platform) {
             case PlatformType.ANDROID:
                 IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
                 return rebootDevice != null;
@@ -150,7 +155,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
 
     @Override
     public Boolean checkSuiteRunning(Integer rid) {
-        return SuiteListener.runningTestsMap.containsKey(rid+"");
+        return SuiteListener.runningTestsMap.containsKey(rid + "");
     }
 
     @Override
@@ -166,6 +171,11 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         } else {
             return DeviceStatus.OFFLINE;
         }
+    }
+
+    @Override
+    public void updateCabinetOption(Cabinet cabinet) {
+        AgentZookeeperRegistry.currentCabinet = cabinet;
     }
 
 }

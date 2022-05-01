@@ -25,6 +25,7 @@ import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
+import org.cloud.sonic.common.services.CabinetService;
 import org.cloud.sonic.common.services.DevicesService;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.springframework.util.StringUtils;
@@ -52,6 +53,7 @@ public class AndroidBatteryThread implements Runnable {
     public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
     Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
+    private CabinetService cabinetService = SpringTool.getBean(CabinetService.class);
 
     @Override
     public void run() {
@@ -81,12 +83,13 @@ public class AndroidBatteryThread implements Runnable {
                     jsonObject.put("level", level);
                     detail.add(jsonObject);
                     //control
-                    if (cabinetEnable) {
+                    if (cabinetEnable && AgentZookeeperRegistry.currentCabinet != null) {
                         boolean needReset = false;
                         Integer times = SHCService.getTemp(iDevice.getSerialNumber());
                         if (tem >= AgentZookeeperRegistry.currentCabinet.getHighTemp() * 10) {
                             if (times == null) {
                                 //Send Error Msg
+                                cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 1);
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
                                 SHCService.setGear(iDevice.getSerialNumber(), HubGear.LOW);
                             } else {
@@ -95,6 +98,7 @@ public class AndroidBatteryThread implements Runnable {
                             int out = AgentZookeeperRegistry.currentCabinet.getHighTempTime();
                             if (SHCService.getTemp(iDevice.getSerialNumber()) >= (out / 2)) {
                                 //Send shutdown Msg
+                                cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 2);
                                 iDevice.reboot("-p");
                                 DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
                                 DevicesBatteryMap.getGearMap().remove(iDevice.getSerialNumber());

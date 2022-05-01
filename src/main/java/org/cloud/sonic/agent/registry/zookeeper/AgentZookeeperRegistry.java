@@ -101,10 +101,12 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
             Cabinet cabinet = cabinetService.getIdByKey(cabinetKey);
             if (cabinet != null) {
                 currentAgent.setCabinetId(cabinet.getId());
+                currentAgent.setStorey(storey);
                 AgentZookeeperRegistry.currentCabinet = cabinet;
+            } else {
+                throw new RuntimeException("Cabinet no found!");
             }
-            currentAgent.setStorey(storey);
-        }else{
+        } else {
             currentAgent.setCabinetId(0);
             currentAgent.setStorey(0);
         }
