@@ -20,7 +20,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.common.interfaces.HubGear;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
@@ -91,7 +90,7 @@ public class AndroidBatteryThread implements Runnable {
                                 //Send Error Msg
                                 cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 1);
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
-                                SHCService.setGear(iDevice.getSerialNumber(), HubGear.LOW);
+                                SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getLowGear());
                             } else {
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
                             }
@@ -112,12 +111,12 @@ public class AndroidBatteryThread implements Runnable {
                             }
                         }
                         if (level >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
-                            SHCService.setGear(iDevice.getSerialNumber(), HubGear.LOW);
+                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getLowGear());
                         } else if (needReset) {
-                            SHCService.setGear(iDevice.getSerialNumber(), HubGear.HIGH);
+                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getHighGear());
                         }
                         if (level <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
-                            SHCService.setGear(iDevice.getSerialNumber(), HubGear.HIGH);
+                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getHighGear());
                         }
                     }
                 } catch (Exception ignored) {

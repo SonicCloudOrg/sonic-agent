@@ -19,7 +19,6 @@ package org.cloud.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
-import org.cloud.sonic.agent.common.interfaces.HubGear;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
@@ -79,10 +78,10 @@ public class IOSBatteryThread implements Runnable {
             //control
             if (cabinetEnable && AgentZookeeperRegistry.currentCabinet != null) {
                 if (dB.getInteger("level") >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
-                    SHCService.setGear(dB.getString("serialNumber"), HubGear.LOW);
+                    SHCService.setGear(dB.getString("serialNumber"), AgentZookeeperRegistry.currentCabinet.getLowGear());
                 }
                 if (dB.getInteger("level") <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
-                    SHCService.setGear(dB.getString("serialNumber"), HubGear.HIGH);
+                    SHCService.setGear(dB.getString("serialNumber"), AgentZookeeperRegistry.currentCabinet.getHighGear());
                 }
             }
         }

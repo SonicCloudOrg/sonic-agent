@@ -25,6 +25,7 @@ import org.apache.dubbo.remoting.zookeeper.ZookeeperTransporter;
 import org.apache.zookeeper.CreateMode;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.common.models.domain.Agents;
 import org.cloud.sonic.common.models.domain.Cabinet;
 import org.cloud.sonic.common.models.interfaces.AgentStatus;
@@ -100,9 +101,12 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
         if (cabinetEnable) {
             Cabinet cabinet = cabinetService.getIdByKey(cabinetKey);
             if (cabinet != null) {
-                currentAgent.setCabinetId(cabinet.getId());
-                currentAgent.setStorey(storey);
-                AgentZookeeperRegistry.currentCabinet = cabinet;
+                SHCService.connect();
+                if (SHCService.status == SHCService.SHCStatus.OPEN) {
+                    currentAgent.setCabinetId(cabinet.getId());
+                    currentAgent.setStorey(storey);
+                    AgentZookeeperRegistry.currentCabinet = cabinet;
+                }
             } else {
                 throw new RuntimeException("Cabinet no found!");
             }
