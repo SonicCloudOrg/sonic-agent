@@ -20,6 +20,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.common.services.DevicesService;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -35,6 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class SHCService {
     public static Map<String, Integer> positionMap = new ConcurrentHashMap<>();
+    public static DevicesService devicesService = SpringTool.getBean(DevicesService.class);
 
     public enum SHCStatus {
         OPEN, CLOSE
@@ -60,11 +64,15 @@ public class SHCService {
                 @Override
                 public void onMessage(String s) {
                     JSONObject result = JSON.parseObject(s);
+                    String udId = result.getString("udId");
+                    int position = result.getInteger("position");
+                    int gear = result.getInteger("gear");
                     if (result.getString("msg").equals("add")) {
-                        positionMap.put(result.getString("udId"), result.getInteger("position"));
+                        positionMap.put(udId, position);
                     } else {
                         positionMap.remove(result.getString("udId"));
                     }
+                    devicesService.updatePosition(updateMsg(udId, position, gear));
                 }
 
                 @Override
@@ -108,6 +116,15 @@ public class SHCService {
         return jsonObject.toJSONString();
     }
 
+    public static JSONObject updateMsg(String udId, Integer position, Integer gear) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        jsonObject.put("udId", udId);
+        jsonObject.put("position", position);
+        jsonObject.put("gear", gear);
+        return jsonObject;
+    }
+
     public static Integer getGear(String udId) {
         return DevicesBatteryMap.getGearMap().get(udId);
     }
@@ -119,6 +136,7 @@ public class SHCService {
                 shcClient.send(generateMsg("gear",
                         String.format("%d,%d", positionMap.get(udId), gear)));
                 log.info("Set {} to Gear {}!", udId, gear);
+                devicesService.updatePosition(updateMsg(udId, null, gear));
                 DevicesBatteryMap.getGearMap().put(udId, gear);
             }
         }
