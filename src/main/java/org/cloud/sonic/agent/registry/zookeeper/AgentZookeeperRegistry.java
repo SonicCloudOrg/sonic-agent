@@ -106,6 +106,8 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
                     currentAgent.setCabinetId(cabinet.getId());
                     currentAgent.setStorey(storey);
                     AgentZookeeperRegistry.currentCabinet = cabinet;
+                }else{
+                    throw new RuntimeException("shc connect failed!");
                 }
             } else {
                 throw new RuntimeException("Cabinet no found!");
