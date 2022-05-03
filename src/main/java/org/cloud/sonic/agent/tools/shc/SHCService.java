@@ -48,7 +48,7 @@ public class SHCService {
     public static SHCStatus status = SHCStatus.CLOSE;
 
     public static void connect() {
-        if (shcClient.isOpen()) {
+        if (shcClient != null && shcClient.isOpen()) {
             return;
         } else {
             status = SHCStatus.CLOSE;

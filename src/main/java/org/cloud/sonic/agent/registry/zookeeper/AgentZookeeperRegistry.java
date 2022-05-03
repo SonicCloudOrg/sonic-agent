@@ -102,13 +102,13 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
             Cabinet cabinet = cabinetService.getIdByKey(cabinetKey);
             if (cabinet != null) {
                 SHCService.connect();
-                if (SHCService.status == SHCService.SHCStatus.OPEN) {
+//                if (SHCService.status == SHCService.SHCStatus.OPEN) {
                     currentAgent.setCabinetId(cabinet.getId());
                     currentAgent.setStorey(storey);
                     AgentZookeeperRegistry.currentCabinet = cabinet;
-                }else{
-                    throw new RuntimeException("shc connect failed!");
-                }
+//                }else{
+//                    throw new RuntimeException("shc connect failed!");
+//                }
             } else {
                 throw new RuntimeException("Cabinet no found!");
             }

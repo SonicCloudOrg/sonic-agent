@@ -143,7 +143,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         Thread touchPro = new Thread(() -> {
             try {
                 //开始启动
-                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginTouchService", finalPath)
+                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.SonicTouchService", finalPath)
                         , new IShellOutputReceiver() {
                             @Override
                             public void addOutput(byte[] bytes, int i, int i1) {
