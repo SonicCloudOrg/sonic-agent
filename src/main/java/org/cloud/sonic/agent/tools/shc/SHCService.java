@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.common.models.domain.Devices;
 import org.cloud.sonic.common.services.DevicesService;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.java_websocket.client.WebSocketClient;
@@ -66,13 +67,10 @@ public class SHCService {
                     JSONObject result = JSON.parseObject(s);
                     String udId = result.getString("udId");
                     int position = result.getInteger("position");
-                    int gear = result.getInteger("gear");
                     if (result.getString("msg").equals("add")) {
                         positionMap.put(udId, position);
-                    } else {
-                        positionMap.remove(result.getString("udId"));
+                        devicesService.deviceStatus(updateMsg(udId, position, null));
                     }
-                    devicesService.updatePosition(updateMsg(udId, position, gear));
                 }
 
                 @Override
@@ -100,7 +98,6 @@ public class SHCService {
             }
             if (shcClient.isOpen()) {
                 status = SHCStatus.OPEN;
-                shcClient.send(generateMsg("status", "all"));
             }
         } catch (URISyntaxException e) {
             e.printStackTrace();
@@ -132,11 +129,21 @@ public class SHCService {
     public static void setGear(String udId, int gear) {
         Integer currentGear = getGear(udId);
         if (currentGear == null || currentGear != gear) {
+            int position = 0;
             if (positionMap.get(udId) != null) {
+                position = positionMap.get(udId);
+            } else {
+                Devices devices = devicesService.findByAgentIdAndUdId(AgentZookeeperRegistry.currentAgent.getId(), udId);
+                if (devices != null && devices.getPosition() != null && devices.getPosition() != 0) {
+                    positionMap.put(udId, devices.getPosition());
+                    position = devices.getPosition();
+                }
+            }
+            if (position != 0) {
                 shcClient.send(generateMsg("gear",
-                        String.format("%d,%d", positionMap.get(udId), gear)));
+                        String.format("%d,%d", position, gear)));
                 log.info("Set {} to Gear {}!", udId, gear);
-                devicesService.updatePosition(updateMsg(udId, null, gear));
+                devicesService.deviceStatus(updateMsg(udId, null, gear));
                 DevicesBatteryMap.getGearMap().put(udId, gear);
             }
         }
