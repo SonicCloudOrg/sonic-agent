@@ -98,7 +98,7 @@ public class AndroidBatteryThread implements Runnable {
                             if (SHCService.getTemp(iDevice.getSerialNumber()) >= (out / 2)) {
                                 //Send shutdown Msg
                                 cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 2);
-                                iDevice.reboot("-p");
+                                AndroidDeviceBridgeTool.shutdown(iDevice);
                                 DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
                                 DevicesBatteryMap.getGearMap().remove(iDevice.getSerialNumber());
                             }

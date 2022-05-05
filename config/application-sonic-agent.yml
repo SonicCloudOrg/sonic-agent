@@ -26,7 +26,7 @@ sonic:
       # 是否使用Sonic机柜，可以前往https://sonic-cloud.gitee.io/#/Cabinet了解更多
       enable: true
       storey: 3
-      key: 4e7733f3-2906-4920-b1ec-3f989a767427
+      key: e33cd65c-a40e-431f-9e65-4a91bac6f487
 
 modules:
   android:
