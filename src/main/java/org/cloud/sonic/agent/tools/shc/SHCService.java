@@ -55,7 +55,7 @@ public class SHCService {
             status = SHCStatus.CLOSE;
         }
         try {
-            URI ws = new URI("ws://localhost:8686");
+            URI ws = new URI("ws://localhost:8687");
             shcClient = new WebSocketClient(ws) {
                 @Override
                 public void onOpen(ServerHandshake serverHandshake) {

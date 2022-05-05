@@ -102,15 +102,16 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
             Cabinet cabinet = cabinetService.getIdByKey(cabinetKey);
             if (cabinet != null) {
                 SHCService.connect();
-//                if (SHCService.status == SHCService.SHCStatus.OPEN) {
+                if (SHCService.status == SHCService.SHCStatus.OPEN) {
                     currentAgent.setCabinetId(cabinet.getId());
                     currentAgent.setStorey(storey);
                     AgentZookeeperRegistry.currentCabinet = cabinet;
-//                }else{
-//                    throw new RuntimeException("shc connect failed!");
-//                }
+                } else {
+                    throw new RuntimeException("SHC连接失败！请确保您使用的是Sonic机柜，" +
+                            "如果仍然连接不上，请在对应Agent所在主机执行[sudo service shc restart]");
+                }
             } else {
-                throw new RuntimeException("Cabinet no found!");
+                throw new RuntimeException("机柜不存在！");
             }
         } else {
             currentAgent.setCabinetId(0);
