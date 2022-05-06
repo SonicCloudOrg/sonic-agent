@@ -10,5 +10,5 @@ spring:
 
 sonic:
   saa: 2.0.0
-  sgm: 0.1.7
+  sgm: 0.1.9
   sib: v1.0.4
