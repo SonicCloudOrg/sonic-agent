@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +28,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 public class CertController {
+    @Value("${sonic.sgm}")
+    private String version;
+
     @RequestMapping("/assets/download")
     public String download(Model model) {
         model.addAttribute("msg", "欢迎来到证书下载页面");
@@ -37,6 +41,7 @@ public class CertController {
         model.addAttribute("cerMsg", "👉 点击下载cer证书");
         model.addAttribute("cerName", "sonic-go-mitmproxy-ca-cert.cer");
         model.addAttribute("cerUrl", "/download/sonic-go-mitmproxy-ca-cert.cer");
+        model.addAttribute("version", "Version: "+version);
         return "download";
     }
 }

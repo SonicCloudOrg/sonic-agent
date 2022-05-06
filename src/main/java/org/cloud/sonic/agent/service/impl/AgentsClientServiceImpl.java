@@ -8,6 +8,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
@@ -16,6 +17,7 @@ import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.websockets.AndroidScreenWSServer;
 import org.cloud.sonic.agent.websockets.AndroidWSServer;
 import org.cloud.sonic.agent.websockets.IOSWSServer;
+import org.cloud.sonic.common.models.domain.Cabinet;
 import org.cloud.sonic.common.services.AgentsClientService;
 import org.cloud.sonic.common.services.AgentsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 调度agent的服务，跟{@link AgentsService}不同，{@link AgentsService}是操作数据库的接口，而这里是直接操作Agent的
@@ -42,9 +45,12 @@ import java.util.Map;
 @DubboService
 public class AgentsClientServiceImpl implements AgentsClientService {
 
-    @Autowired private AndroidScreenWSServer androidScreenWSServer;
-    @Autowired private AndroidWSServer androidWSServer;
-    @Autowired private IOSWSServer ioswsServer;
+    @Autowired
+    private AndroidScreenWSServer androidScreenWSServer;
+    @Autowired
+    private AndroidWSServer androidWSServer;
+    @Autowired
+    private IOSWSServer ioswsServer;
 
     @Override
     public void runSuite(JSONObject jsonObject) {
@@ -74,12 +80,12 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         suiteList.add(xmlSuite);
         tng.setXmlSuites(suiteList);
         tng.addListener(new SuiteListener());
-        new Thread(tng::run).start();
+        CompletableFuture.runAsync(tng::run);
     }
 
     @Override
     public void stop() {
-        AgentManagerTool.stop();
+        CompletableFuture.runAsync(AgentManagerTool::stop);
     }
 
     @Override
@@ -88,7 +94,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         for (JSONObject aCase : caseList) {
             int resultId = (int) aCase.get("rid");
             int caseId = (int) aCase.get("cid");
-            JSONArray devices =  aCase.getJSONArray("device");
+            JSONArray devices = aCase.getJSONArray("device");
             List<JSONObject> deviceList = devices.toJavaList(JSONObject.class);
             for (JSONObject device : deviceList) {
                 String udId = (String) device.get("udId");
@@ -125,7 +131,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         if (!StringUtils.hasText(udId) || platform == null) {
             return false;
         }
-        switch (platform)  {
+        switch (platform) {
             case PlatformType.ANDROID:
                 IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
                 return rebootDevice != null;
@@ -149,7 +155,7 @@ public class AgentsClientServiceImpl implements AgentsClientService {
 
     @Override
     public Boolean checkSuiteRunning(Integer rid) {
-        return SuiteListener.runningTestsMap.containsKey(rid+"");
+        return SuiteListener.runningTestsMap.containsKey(rid + "");
     }
 
     @Override
@@ -165,6 +171,11 @@ public class AgentsClientServiceImpl implements AgentsClientService {
         } else {
             return DeviceStatus.OFFLINE;
         }
+    }
+
+    @Override
+    public void updateCabinetOption(Cabinet cabinet) {
+        AgentZookeeperRegistry.currentCabinet = cabinet;
     }
 
 }

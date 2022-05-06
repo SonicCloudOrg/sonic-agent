@@ -1,12 +1,12 @@
 zookeeper:
   # zookeeper的ip地址 除了开发环境，不推荐填localhost、127.0.0.1之类的配置
-  registry-host: 127.0.0.1
+  registry-host: ${ZOOKEEPER_HOST:127.0.0.1}
   # zookeeper的端口
-  registry-port: 2181
+  registry-port: ${ZOOKEEPER_PORT:2181}
   # 本机网卡ip地址，开发、生产都禁止填localhost、127.0.0.1之类的配置
-  instance-host: 10.76.101.106
+  instance-host: ${AGENT_HOST:192.168.0.2}
 
-# 一般不需要动，懂的可以定制
+# 一般不需要改动
 spring:
   cloud:
     zookeeper:
@@ -19,13 +19,16 @@ spring:
 sonic:
   agent:
     # 替换为Agent服务的端口，可以自行更改
-    port: 7777
+    port: ${AGENT_PORT:7777}
     # 替换为前端新增Agent生成的key
-    key: 29002272-4659-4808-a804-08ce3388b136
-    hub:
-      # 是否为Sonic专属Hub，可以前往https://sonic-cloud.gitee.io/#/Hub了解更多
-      enable: false
-      generation: 1st
+    key: ${AGENT_KEY:235a35fd-5d0d-4533-905d-30d32902a12b}
+    cabinet:
+      # 是否使用Sonic机柜，可以前往https://sonic-cloud.gitee.io/#/Cabinet了解更多
+      enable: ${CABINET_ENABLE:false}
+      # 机柜层数
+      storey: ${CABINET_STOREY:1}
+      # 机柜key值
+      key: ${CABINET_KEY:e33cd65c-a40e-431f-9e65-4a91bac6f487}
 
 modules:
   android:

@@ -25,9 +25,12 @@ import org.apache.dubbo.remoting.zookeeper.ZookeeperTransporter;
 import org.apache.zookeeper.CreateMode;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.common.models.domain.Agents;
+import org.cloud.sonic.common.models.domain.Cabinet;
 import org.cloud.sonic.common.models.interfaces.AgentStatus;
 import org.cloud.sonic.common.services.AgentsService;
+import org.cloud.sonic.common.services.CabinetService;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.util.ObjectUtils;
@@ -43,6 +46,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
     private boolean registered = false;
 
     public static Agents currentAgent;
+    public static Cabinet currentCabinet;
 
     public AgentZookeeperRegistry(URL url, ZookeeperTransporter zookeeperTransporter) {
         super(url, zookeeperTransporter);
@@ -62,6 +66,7 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
         }
 
         AgentsService agentsService = SpringTool.getBean(AgentsService.class);
+        CabinetService cabinetService = SpringTool.getBean(CabinetService.class);
         AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
         ApplicationEventPublisher publisher = SpringTool.getApplicationContext();
         int count = 1;
@@ -84,11 +89,33 @@ public class AgentZookeeperRegistry extends ZookeeperRegistry {
         String secretKey = SpringTool.getPropertiesValue("sonic.agent.key");
         int webPort = Integer.parseInt(SpringTool.getPropertiesValue("sonic.agent.port"));
         String systemType = System.getProperty("os.name");
+        Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
+        String cabinetKey = SpringTool.getPropertiesValue("sonic.agent.cabinet.key");
+        int storey = Integer.parseInt(SpringTool.getPropertiesValue("sonic.agent.cabinet.storey"));
 
         // 保存记录
         Agents currentAgent = agentsService.findBySecretKey(secretKey);
         if (ObjectUtils.isEmpty(currentAgent)) {
             throw new RuntimeException("配置 sonic.agent.key 错误，请检查！");
+        }
+        if (cabinetEnable) {
+            Cabinet cabinet = cabinetService.getIdByKey(cabinetKey);
+            if (cabinet != null) {
+                SHCService.connect();
+                if (SHCService.status == SHCService.SHCStatus.OPEN) {
+                    currentAgent.setCabinetId(cabinet.getId());
+                    currentAgent.setStorey(storey);
+                    AgentZookeeperRegistry.currentCabinet = cabinet;
+                } else {
+                    throw new RuntimeException("SHC连接失败！请确保您使用的是Sonic机柜，" +
+                            "如果仍然连接不上，请在对应Agent所在主机执行[sudo service shc restart]");
+                }
+            } else {
+                throw new RuntimeException("机柜不存在！");
+            }
+        } else {
+            currentAgent.setCabinetId(0);
+            currentAgent.setStorey(0);
         }
         currentAgent.setHost(host)
                 .setPort(webPort)

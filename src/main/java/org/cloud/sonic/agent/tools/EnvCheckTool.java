@@ -216,7 +216,7 @@ public class EnvCheckTool {
      * 检查adbkit环境
      */
     public void checkAdbKit() throws IOException, InterruptedException {
-        String type = "检查 adbkit 环境";
+        String type = "检查 adbkit 环境 (即将弃用) ";
         String commandStr = "adbkit -V";
         try {
             adbKitPath = findCommandPath("adbkit");
@@ -224,7 +224,7 @@ public class EnvCheckTool {
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("提示：可使用npm i -g adbkit安装"));
+            throw new RuntimeException(String.format("提示：可使用[npm i -g adbkit]安装"));
         }
         printPass(type);
     }
@@ -233,7 +233,7 @@ public class EnvCheckTool {
      * 检查node环境
      */
     public void checkNode() throws IOException, InterruptedException {
-        String type = "检查 Node 环境";
+        String type = "检查 Node 环境 (即将弃用) ";
         String commandStr = "node -v";
         try {
             nodePath = findCommandPath("node");
@@ -250,7 +250,7 @@ public class EnvCheckTool {
      * 检查npm环境
      */
     public void checkNpm() throws IOException, InterruptedException {
-        String type = "检查 npm 环境";
+        String type = "检查 npm 环境 (即将弃用) ";
         String commandStr = "npm -v";
         try {
             npmPath = findCommandPath("npm");
@@ -267,7 +267,7 @@ public class EnvCheckTool {
      * 检查appium环境
      */
     public void checkAppium() throws IOException, InterruptedException {
-        String type = "检查 Appium 环境";
+        String type = "检查 Appium 环境 (即将弃用) ";
         String commandStr = "appium -v";
         try {
             appiumPath = findCommandPath("appium");
@@ -275,7 +275,7 @@ public class EnvCheckTool {
         } catch (RuntimeException e) {
             System.out.println(e.getMessage());
             printFail(type);
-            throw new RuntimeException(String.format("提示：可使用npm i -g appium命令安装"));
+            throw new RuntimeException(String.format("提示：可使用[npm i -g appium]命令安装"));
         }
         printPass(type);
     }

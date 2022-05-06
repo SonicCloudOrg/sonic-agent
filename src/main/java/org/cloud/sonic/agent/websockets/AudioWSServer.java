@@ -80,14 +80,14 @@ public class AudioWSServer {
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RECORD_AUDIO allow");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
         AndroidDeviceBridgeTool.pressKey(iDevice, 4);
-        int appListPort = PortTool.getPort();
+        int appAudioPort = PortTool.getPort();
         Thread audio = new Thread(() -> {
             try {
-                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
+                AndroidDeviceBridgeTool.forward(iDevice, appAudioPort, "sonicaudioservice");
                 Socket audioSocket = null;
                 InputStream inputStream = null;
                 try {
-                    audioSocket = new Socket("localhost", appListPort);
+                    audioSocket = new Socket("localhost", appAudioPort);
                     inputStream = audioSocket.getInputStream();
                     while (audioSocket.isConnected() && !Thread.interrupted()) {
                         byte[] lengthBytes = inputStream.readNBytes(32);
@@ -125,7 +125,7 @@ public class AudioWSServer {
                 }
             } catch (Exception e) {
             }
-            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
+            AndroidDeviceBridgeTool.removeForward(iDevice, appAudioPort, "sonicaudioservice");
         });
         audio.start();
         audioMap.put(session, audio);

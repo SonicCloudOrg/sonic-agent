@@ -20,63 +20,118 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.shc.SHCService;
+import org.cloud.sonic.common.services.CabinetService;
 import org.cloud.sonic.common.services.DevicesService;
 import org.cloud.sonic.common.tools.SpringTool;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Eason
+ * @date 2022/4/24 20:45
+ */
 @Slf4j
-public class AndroidBatteryThread extends Thread {
+public class AndroidBatteryThread implements Runnable {
+
+    /**
+     * second
+     */
+    public static final long DELAY = 30;
+
+    public static final String THREAD_NAME = "android-battery-thread";
+
+    public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
+
+    Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
+    private CabinetService cabinetService = SpringTool.getBean(CabinetService.class);
+
     @Override
     public void run() {
+        Thread.currentThread().setName(THREAD_NAME);
         AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
-        while (agentManagerTool.checkServerOnline()) {
-            IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
-            if (deviceList == null) {
+        if (!agentManagerTool.checkServerOnline()) {
+            return;
+        }
+
+        IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
+        if (deviceList == null || deviceList.length == 0) {
+            return;
+        }
+        List<JSONObject> detail = new ArrayList<>();
+        for (IDevice iDevice : deviceList) {
+            JSONObject jsonObject = new JSONObject();
+            String battery = AndroidDeviceBridgeTool
+                    .executeCommand(iDevice, "dumpsys battery");
+            if (StringUtils.hasText(battery)) {
                 try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                continue;
-            }
-            List<JSONObject> detail = new ArrayList<>();
-            for (IDevice iDevice : deviceList) {
-                JSONObject jsonObject = new JSONObject();
-                String temper = AndroidDeviceBridgeTool
-                        .executeCommand(iDevice, "dumpsys battery");
-                if (StringUtils.hasText(temper)) {
-                    String realTem = temper.substring(temper.indexOf("temperature")).trim();
+                    String realTem = battery.substring(battery.indexOf("temperature")).trim();
                     int tem = getInt(realTem.substring(13, realTem.indexOf("\n")));
-                    String realLevel = temper.substring(temper.indexOf("level")).trim();
+                    String realLevel = battery.substring(battery.indexOf("level")).trim();
                     int level = getInt(realLevel.substring(7, realLevel.indexOf("\n")));
                     jsonObject.put("udId", iDevice.getSerialNumber());
                     jsonObject.put("tem", tem);
                     jsonObject.put("level", level);
                     detail.add(jsonObject);
+                    //control
+                    if (cabinetEnable && AgentZookeeperRegistry.currentCabinet != null) {
+                        boolean needReset = false;
+                        Integer times = SHCService.getTemp(iDevice.getSerialNumber());
+                        if (tem >= AgentZookeeperRegistry.currentCabinet.getHighTemp() * 10) {
+                            if (times == null) {
+                                //Send Error Msg
+                                cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 1);
+                                DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
+                                SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getLowGear());
+                            } else {
+                                DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
+                            }
+                            int out = AgentZookeeperRegistry.currentCabinet.getHighTempTime();
+                            if (SHCService.getTemp(iDevice.getSerialNumber()) >= (out / 2)) {
+                                //Send shutdown Msg
+                                cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 2);
+                                AndroidDeviceBridgeTool.shutdown(iDevice);
+                                DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
+                                DevicesBatteryMap.getGearMap().remove(iDevice.getSerialNumber());
+                            }
+                            continue;
+                        } else {
+                            if (times != null) {
+                                //Send Reset Msg
+                                needReset = true;
+                                DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
+                            }
+                        }
+                        if (level >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
+                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getLowGear());
+                        } else if (needReset) {
+                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getHighGear());
+                        }
+                        if (level <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
+                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getHighGear());
+                        }
+                    }
+                } catch (Exception ignored) {
                 }
             }
-            DevicesService devicesService = SpringTool.getBean(DevicesService.class);
-            JSONObject result = new JSONObject();
-            result.put("msg", "battery");
-            result.put("detail", detail);
-            result.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
-            try {
-                devicesService.refreshDevicesBattery(result);
-            } catch (Exception e) {
-                log.error("发送电量信息失败，错误信息：", e);
-            }
-            try {
-                Thread.sleep(30000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        }
+        DevicesService devicesService = SpringTool.getBean(DevicesService.class);
+        JSONObject result = new JSONObject();
+        result.put("msg", "battery");
+        result.put("detail", detail);
+        result.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        try {
+            devicesService.refreshDevicesBattery(result);
+        } catch (Exception e) {
+            log.error("Send battery msg failed, cause: ", e);
         }
     }
 

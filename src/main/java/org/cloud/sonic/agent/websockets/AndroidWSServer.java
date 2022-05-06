@@ -152,7 +152,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 if (res.contains("Address already in use")) {
                                     NotStopSession.add(session);
                                 }
-                                if (res.contains("Server start")) {
+                                if (res.contains("starting：start()")) {
                                     isTouchFinish.release();
                                 }
                             }
@@ -214,12 +214,12 @@ public class AndroidWSServer implements IAndroidWSServer {
                 }
                 if (touchPro.isAlive()) {
                     touchPro.interrupt();
-                    logger.info("touch thread已关闭");
+                    logger.info("touch thread closed.");
                 }
                 if (touchSocket != null && touchSocket.isConnected()) {
                     try {
                         touchSocket.close();
-                        logger.info("touch socket已关闭");
+                        logger.info("touch socket closed.");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -227,7 +227,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 if (outputStream != null) {
                     try {
                         outputStream.close();
-                        logger.info("touch output流已关闭");
+                        logger.info("touch output stream closed.");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -434,8 +434,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                     try {
                         outputStream.write(msg.getString("detail").getBytes());
                         outputStream.flush();
-                        outputStream.write("c\n".getBytes());
-                        outputStream.flush();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -576,9 +574,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 result.put("msg", "tree");
                                 result.put("detail", finalAndroidStepHandler.getResource());
                                 HandleDes handleDes = new HandleDes();
-                                if (!msg.getBoolean("hasScreen")) {
-                                    result.put("img", finalAndroidStepHandler.stepScreen(handleDes));
-                                }
                                 if (handleDes.getE() != null) {
                                     logger.error(handleDes.getE().getMessage());
                                     JSONObject resultFail = new JSONObject();

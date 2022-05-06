@@ -20,6 +20,7 @@ import com.android.ddmlib.*;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
+import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.tools.file.FileTool;
@@ -121,10 +122,12 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
                 break;
             }
         }
-        if (androidBatteryThread == null || !androidBatteryThread.isAlive()) {
-            androidBatteryThread = new AndroidBatteryThread();
-            androidBatteryThread.start();
-        }
+        ScheduleTool.scheduleAtFixedRate(
+                new AndroidBatteryThread(),
+                AndroidBatteryThread.DELAY,
+                AndroidBatteryThread.DELAY,
+                AndroidBatteryThread.TIME_UNIT
+        );
     }
 
     /**
@@ -154,6 +157,12 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         }
     }
 
+    public static void shutdown(IDevice iDevice) {
+        if (iDevice != null) {
+            executeCommand(iDevice, "reboot -p");
+        }
+    }
+
     /**
      * @param udId 设备序列号
      * @return com.android.ddmlib.IDevice
@@ -176,7 +185,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
             }
         }
         if (iDevice == null) {
-            logger.info("Device has not connected!");
+            logger.info("Device 「{}」 has not connected!", udId);
         }
         return iDevice;
     }

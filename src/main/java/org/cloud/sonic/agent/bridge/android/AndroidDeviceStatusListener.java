@@ -21,6 +21,7 @@ import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
+import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.common.tools.SpringTool;
@@ -63,6 +64,8 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
     public void deviceConnected(IDevice device) {
         logger.info("Android device: " + device.getSerialNumber() + " ONLINE！");
         AndroidDeviceManagerMap.getMap().remove(device.getSerialNumber());
+        DevicesBatteryMap.getTempMap().remove(device.getSerialNumber());
+        DevicesBatteryMap.getGearMap().remove(device.getSerialNumber());
         send(device);
     }
 
@@ -70,13 +73,15 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
     public void deviceDisconnected(IDevice device) {
         logger.info("Android device: " + device.getSerialNumber() + " OFFLINE！");
         AndroidDeviceManagerMap.getMap().remove(device.getSerialNumber());
+        DevicesBatteryMap.getTempMap().remove(device.getSerialNumber());
+        DevicesBatteryMap.getGearMap().remove(device.getSerialNumber());
         send(device);
     }
 
     @Override
     public void deviceChanged(IDevice device, int changeMask) {
         IDevice.DeviceState state = device.getState();
-        if (state == IDevice.DeviceState.ONLINE || state == IDevice.DeviceState.OFFLINE) {
+        if (state == IDevice.DeviceState.OFFLINE) {
             return;
         }
         send(device);

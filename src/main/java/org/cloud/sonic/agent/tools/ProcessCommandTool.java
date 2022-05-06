@@ -6,6 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProcessCommandTool {
+
+    public static String getProcessLocalCommandStr(String commandLine) {
+        List<String> processLocalCommand = getProcessLocalCommand(commandLine);
+        StringBuilder stringBuilder = new StringBuilder("");
+        for (String s : processLocalCommand) {
+            stringBuilder.append(s);
+        }
+        return stringBuilder.toString();
+    }
+
     public static List<String> getProcessLocalCommand(String commandLine) {
         Process process = null;
         InputStreamReader inputStreamReader = null;
