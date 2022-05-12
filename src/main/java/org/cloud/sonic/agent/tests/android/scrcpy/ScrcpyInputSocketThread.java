@@ -84,7 +84,7 @@ public class ScrcpyInputSocketThread extends Thread {
         return session;
     }
 
-    private static final int BUFFER_SIZE = 1024 * 1024;
+    private static final int BUFFER_SIZE = 1024 * 1024 * 10;
     private static final int READ_BUFFER_SIZE = 1024 * 5;
 
     @Override
