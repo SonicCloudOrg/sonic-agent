@@ -22,6 +22,6 @@ jobs:
     - name: login docker hub
       run: echo "${{ secrets.ACCESS_TOKEN_ALIYUN }}" | docker login --username=小虫哔哔 registry.cn-hangzhou.aliyuncs.com --password-stdin
     - name: Build the Docker image
-      run: docker build -t registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.3.2-release -f src/main/docker/Dockerfile .
+      run: docker build -t registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.0-beta -f src/main/docker/Dockerfile .
     - name: push
-      run: docker push registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.3.2-release
+      run: docker push registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.0-beta
