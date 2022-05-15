@@ -195,7 +195,7 @@ public class AndroidStepHandler {
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
-        }finally {
+        } finally {
             AppiumServer.close(udId);
         }
     }
@@ -457,6 +457,7 @@ public class AndroidStepHandler {
 
     public void install(HandleDes handleDes, String path) {
         handleDes.setStepDes("安装应用");
+        path = TextHandler.replaceTrans(path, globalParams);
         handleDes.setDetail("App安装路径： " + path);
 //        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
 //        String manufacturer = iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER);
@@ -563,6 +564,7 @@ public class AndroidStepHandler {
 
     public void uninstall(HandleDes handleDes, String appPackage) {
         handleDes.setStepDes("卸载应用");
+        appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
             androidDriver.removeApp(appPackage);
@@ -580,6 +582,7 @@ public class AndroidStepHandler {
      */
     public void terminate(HandleDes handleDes, String packageName) {
         handleDes.setStepDes("终止应用");
+        packageName = TextHandler.replaceTrans(packageName, globalParams);
         handleDes.setDetail("应用包名： " + packageName);
         try {
             androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
@@ -600,6 +603,7 @@ public class AndroidStepHandler {
 
     public void openApp(HandleDes handleDes, String appPackage) {
         handleDes.setStepDes("打开应用");
+        appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
             testPackage = appPackage;
@@ -752,15 +756,7 @@ public class AndroidStepHandler {
     }
 
     public void sendKeys(HandleDes handleDes, String des, String selector, String pathValue, String keys) {
-        if (keys.contains("{{random}}")) {
-            String random = (int) (Math.random() * 10 + Math.random() * 10 * 2) + 5 + "";
-            keys = keys.replace("{{random}}", random);
-        }
-        if (keys.contains("{{timestamp}}")) {
-            String timeMillis = Calendar.getInstance().getTimeInMillis() + "";
-            keys = keys.replace("{{timestamp}}", timeMillis);
-        }
-        keys = replaceTrans(keys);
+        keys = TextHandler.replaceTrans(keys, globalParams);
         handleDes.setStepDes("对" + des + "输入内容");
         handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
         try {
@@ -777,7 +773,7 @@ public class AndroidStepHandler {
             String s = findEle(selector, pathValue).getText();
             log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
             try {
-                expect = replaceTrans(expect);
+                expect = TextHandler.replaceTrans(expect, globalParams);
                 assertEquals(s, expect);
                 log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
             } catch (AssertionError e) {
@@ -1044,22 +1040,6 @@ public class AndroidStepHandler {
             e.printStackTrace();
         }
         return resultFile;
-    }
-
-    public String replaceTrans(String text) {
-        if (text.contains("{{") && text.contains("}}")) {
-            String tail = text.substring(text.indexOf("{{") + 2);
-            if (tail.contains("}}")) {
-                String child = tail.substring(tail.indexOf("}}") + 2);
-                String middle = tail.substring(0, tail.indexOf("}}"));
-                text = text.substring(0, text.indexOf("}}") + 2);
-                if (globalParams.getString(middle) != null) {
-                    text = text.replace("{{" + middle + "}}", globalParams.getString(middle));
-                }
-                text = text + replaceTrans(child);
-            }
-        }
-        return text;
     }
 
     public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
@@ -1436,6 +1416,7 @@ public class AndroidStepHandler {
 
     public WebElement findEle(String selector, String pathValue) {
         WebElement we = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "id":
                 we = androidDriver.findElementById(pathValue);
@@ -1596,8 +1577,8 @@ public class AndroidStepHandler {
             case "assertEquals":
             case "assertTrue":
             case "assertNotTrue":
-                String actual = replaceTrans(step.getString("text"));
-                String expect = replaceTrans(step.getString("content"));
+                String actual = TextHandler.replaceTrans(step.getString("text"), globalParams);
+                String expect = TextHandler.replaceTrans(step.getString("content"), globalParams);
                 asserts(handleDes, actual, expect, step.getString("stepType"));
                 break;
             case "getTextValue":
