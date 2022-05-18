@@ -26,10 +26,10 @@ RUN apt-get -qqy update && \
 
 RUN wget -O java.tar.gz https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz && \
     tar zxvf java.tar.gz && rm java.tar.gz && \
-    chmod a+x -R /root/jdk-17.0.2 && \
-    chown -R root:root /root/jdk-17.0.2
+    chmod a+x -R /root/jdk-17.0.3.1 && \
+    chown -R root:root /root/jdk-17.0.3.1
 
-ENV JAVA_HOME="/root/jdk-17.0.2" \
+ENV JAVA_HOME="/root/jdk-17.0.3.1" \
     PATH=$PATH:$JAVA_HOME/bin
 
 ENV ANDROID_HOME=/root
@@ -86,4 +86,4 @@ ADD /plugins /root/plugins
 ADD /src/main/docker/config /root/config
 ADD /target/sonic-agent-linux-x86_64.jar /root
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-ENTRYPOINT ["/root/jdk-17.0.2/bin/java","-server","-Dfile.encoding=utf-8","-XX:-UseGCOverheadLimit","-XX:+DisableExplicitGC","-XX:SurvivorRatio=1","-XX:LargePageSizeInBytes=128M","-XX:SoftRefLRUPolicyMSPerMB=0","-Djava.security.egd=file:/dev/./urandom","-jar","sonic-agent-linux-x86_64.jar"]
+ENTRYPOINT ["/root/jdk-17.0.3.1/bin/java","-server","-Dfile.encoding=utf-8","-XX:-UseGCOverheadLimit","-XX:+DisableExplicitGC","-XX:SurvivorRatio=1","-XX:LargePageSizeInBytes=128M","-XX:SoftRefLRUPolicyMSPerMB=0","-Djava.security.egd=file:/dev/./urandom","-jar","sonic-agent-linux-x86_64.jar"]
