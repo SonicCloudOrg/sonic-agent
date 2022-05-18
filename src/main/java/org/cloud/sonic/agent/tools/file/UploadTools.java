@@ -59,6 +59,7 @@ public class UploadTools {
                         .outputQuality(0.25f).toFile(folder + File.separator + timeMillis + "transfer.jpg");
             } catch (IOException e) {
                 logger.error(e.getMessage());
+                throw new RuntimeException("Thumbnails.of(uploadFile) failed: " + e.getMessage());
             }
             transfer = new File(folder + File.separator + timeMillis + "transfer.jpg");
         } else {
@@ -71,10 +72,12 @@ public class UploadTools {
             RespModel<String> respModel = SpringTool.getBean(FolderFeignClient.class).uploadFiles(multipartFile, type);
             if (respModel.getCode() != RespEnum.UPLOAD_OK.getCode()) {
                 logger.error("upload failed: {}", respModel);
+                throw new RuntimeException("upload failed:" + respModel);
             }
             resData = respModel.getData();
         } catch (Exception e) {
             logger.error("upload failed:", e);
+            throw new RuntimeException("upload failed:" + e.getMessage());
         }finally {
             transfer.delete();
         }
