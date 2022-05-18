@@ -5,6 +5,8 @@ services:
 #    image: "sonicorg/sonic-agent-linux:v1.3.2-release"
     image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.0-beta"
     environment:
+      - ZOOKEEPER_HOST=192.168.1.1
+      - ZOOKEEPER_PORT=2181
       # 替换为部署Agent机器的ipv4
       - AGENT_HOST=192.168.1.1
       # 替换为Agent服务的端口，可以自行更改
@@ -15,12 +17,6 @@ services:
       - CABINET_ENABLE=true
       - CABINET_STOREY=1
       - CABINET_KEY=e33cd65c-a40e-431f-9e65-4a91bac6f487
-      # 这个host改成后端的host
-      - SERVER_HOST=192.168.1.1
-      # 这个port改成后端文件中心的port（一般不变）
-      - SERVER_FOLDER_PORT=8094
-      # 这个port改成后端传输中心的port（一般不变）
-      - SERVER_TRANSPORT_PORT=8095
       # 是否使用安卓模块
       - ANDROID_ENABLE=true
       # 是否开启远程adb调试功能

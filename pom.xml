@@ -384,8 +384,11 @@
         <finalName>${project.artifactId}-${profileActive}</finalName>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <configuration>
+                    <skipDocker>true</skipDocker>
+                </configuration>
             </plugin>
         </plugins>
     </build>
