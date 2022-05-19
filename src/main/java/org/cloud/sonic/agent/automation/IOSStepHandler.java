@@ -111,7 +111,7 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
         desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME, SibTool.getName(udId));
         desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
-        desiredCapabilities.setCapability("wdaConnectionTimeout", 60000);
+        desiredCapabilities.setCapability("wdaConnectionTimeout", 10000);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.WEB_DRIVER_AGENT_URL, "http://127.0.0.1:" + wdaPort);
         desiredCapabilities.setCapability("useXctestrunFile", false);
         desiredCapabilities.setCapability(IOSMobileCapabilityType.SHOW_IOS_LOG, false);
