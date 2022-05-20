@@ -1,6 +1,6 @@
 zookeeper:
   # zookeeper的ip地址，对应server的zookeeper，不能填localhost、127.0.0.1之类的无效ipv4
-  registry-host: 127.0.0.1
+  registry-host: 192.168.0.2
   # zookeeper的端口
   registry-port: 2181
   # 本机网卡ip地址，不能填localhost、127.0.0.1之类的无效ipv4
