@@ -1,9 +1,9 @@
 zookeeper:
-  # zookeeper的ip地址 除了开发环境，不推荐填localhost、127.0.0.1之类的配置
+  # zookeeper的ip地址，对应server的zookeeper，不能填localhost、127.0.0.1之类的无效ipv4
   registry-host: 127.0.0.1
   # zookeeper的端口
   registry-port: 2181
-  # 本机网卡ip地址，开发、生产都禁止填localhost、127.0.0.1之类的配置
+  # 本机网卡ip地址，不能填localhost、127.0.0.1之类的无效ipv4
   instance-host: 192.168.0.2
 
 # 一般不需要改动
