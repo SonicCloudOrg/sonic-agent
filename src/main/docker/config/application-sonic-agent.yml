@@ -50,6 +50,6 @@ modules:
     # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
     chrome-driver-debug-port: ${CHROME_DRIVER_PORT:0}
     # 替换为Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
-    chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
+    chrome-driver-path: /usr/bin/chromedriver
   sgm:
     enable: ${SGM_ENABLE:true}
