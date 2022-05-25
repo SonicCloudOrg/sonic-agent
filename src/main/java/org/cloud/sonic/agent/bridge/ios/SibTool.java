@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.bridge.ios;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
@@ -40,6 +41,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import javax.websocket.Session;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +49,8 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 @DependsOn({"iOSThreadPoolInit"})
@@ -239,13 +243,33 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, path));
     }
 
-    public static JSONObject getAppList(String udId) {
-        String commandLine = "%s app list -u %s -j";
-        String a = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
-        if (a.length() > 0) {
-            return JSONObject.parseObject(a);
-        } else {
-            return new JSONObject();
+    public static void getAppList(String udId, Session session) {
+        Process wdaProcess = null;
+        String commandLine = "%s app list -u %s -j -i";
+        String system = System.getProperty("os.name").toLowerCase();
+        try {
+            if (system.contains("win")) {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+            }
+            BufferedReader stdInput = new BufferedReader(new
+                    InputStreamReader(wdaProcess.getInputStream()));
+            String s;
+            while (wdaProcess.isAlive()) {
+                if ((s = stdInput.readLine()) != null) {
+                    try {
+                        JSONObject appList = new JSONObject();
+                        appList.put("msg", "appListDetail");
+                        appList.put("detail", JSON.parseObject(s));
+                        sendText(session, appList.toJSONString());
+                    } catch (Exception e) {
+                        logger.info(s);
+                    }
+                }
+            }
+        } catch (Exception e) {
+
         }
     }
 

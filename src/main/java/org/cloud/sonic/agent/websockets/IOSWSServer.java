@@ -63,7 +63,8 @@ public class IOSWSServer implements IIOSWSServer {
     private String key;
     @Value("${sonic.agent.port}")
     private int port;
-    @Autowired private AgentManagerTool agentManagerTool;
+    @Autowired
+    private AgentManagerTool agentManagerTool;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -172,11 +173,7 @@ public class IOSWSServer implements IIOSWSServer {
                 break;
             }
             case "appList":
-                JSONObject appList = SibTool.getAppList(udId);
-                if (appList.get("appList") != null) {
-                    appList.put("msg", "appListDetail");
-                    sendText(session, appList.toJSONString());
-                }
+                SibTool.getAppList(udId, session);
                 break;
             case "launch":
                 SibTool.launch(udId, msg.getString("pkg"));
