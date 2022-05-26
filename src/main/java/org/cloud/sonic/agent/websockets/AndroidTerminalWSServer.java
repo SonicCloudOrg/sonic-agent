@@ -47,10 +47,10 @@ import java.util.concurrent.TimeUnit;
  * @date 2021/10/30 23:35
  */
 @Component
-@ServerEndpoint(value = "/websockets/terminal/{key}/{udId}", configurator = MyEndpointConfigure.class)
-public class TerminalWSServer {
+@ServerEndpoint(value = "/websockets/android/terminal/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+public class AndroidTerminalWSServer {
 
-    private final Logger logger = LoggerFactory.getLogger(TerminalWSServer.class);
+    private final Logger logger = LoggerFactory.getLogger(AndroidTerminalWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
@@ -60,8 +60,9 @@ public class TerminalWSServer {
     private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
-        if (secretKey.length() == 0 || (!secretKey.equals(key))) {
+    public void onOpen(Session session, @PathParam("key") String secretKey,
+                       @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
             logger.info("拦截访问！");
             return;
         }
