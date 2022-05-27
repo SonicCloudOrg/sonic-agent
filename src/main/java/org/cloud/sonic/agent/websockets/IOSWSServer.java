@@ -154,7 +154,7 @@ public class IOSWSServer implements IIOSWSServer {
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "location": {
-                if (msg.getString("type").equals("set")) {
+                if (msg.getString("detail").equals("set")) {
                     SibTool.locationSet(udId, msg.getString("long"), msg.getString("lat"));
                 } else {
                     SibTool.locationUnset(udId);
