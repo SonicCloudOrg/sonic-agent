@@ -321,6 +321,16 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         }
     }
 
+    public static void locationUnset(String udId) {
+        String commandLine = "%s location unset -u %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
+    }
+
+    public static void locationSet(String udId, String longitude, String latitude) {
+        String commandLine = "%s location set -u %s --long %s --lat %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, longitude, latitude));
+    }
+
     public static JSONObject getAllDevicesBattery() {
         String commandLine = "%s battery -j";
         String res = ProcessCommandTool.getProcessLocalCommandStr(commandLine.formatted(sib));

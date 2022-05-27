@@ -153,6 +153,13 @@ public class IOSWSServer implements IIOSWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "location": {
+                if (msg.getString("type").equals("set")) {
+                    SibTool.locationSet(udId, msg.getString("long"), msg.getString("lat"));
+                } else {
+                    SibTool.locationUnset(udId);
+                }
+            }
             case "proxy": {
                 Socket portSocket = PortTool.getBindSocket();
                 Socket webPortSocket = PortTool.getBindSocket();
