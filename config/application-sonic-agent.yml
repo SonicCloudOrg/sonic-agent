@@ -40,7 +40,7 @@ modules:
     # 如果不需要连接iOS设备，请将true改为false。开启的windows用户请确保本机已安装iTunes
     enable: true
     # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
-    wda-bundle-id: com.facebook.WebDriverAgentRunner.xctrunner
+    wda-bundle-id: com.sonic.WebDriverAgentRunner.xctrunner
   appium:
     # 是否开启Appium功能
     enable: true

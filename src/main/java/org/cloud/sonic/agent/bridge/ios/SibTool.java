@@ -243,20 +243,68 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, path));
     }
 
+    public static void stopSysLog(String udId) {
+        String processName = String.format("process-%s-syslog", udId);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+    }
+
+    public static void getSysLog(String udId, String filter, Session session) {
+        new Thread(() -> {
+            stopSysLog(udId);
+            String system = System.getProperty("os.name").toLowerCase();
+            Process ps = null;
+            String commandLine = "%s syslog -u %s";
+            if (filter != null && filter.length() > 0) {
+                commandLine += String.format(" -f %s", filter);
+            }
+            try {
+                if (system.contains("win")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                } else if (system.contains("linux") || system.contains("mac")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                }
+                String processName = String.format("process-%s-syslog", udId);
+                GlobalProcessMap.getMap().put(processName, ps);
+                BufferedReader stdInput = new BufferedReader(new
+                        InputStreamReader(ps.getInputStream()));
+                String s;
+                while (ps.isAlive()) {
+                    if ((s = stdInput.readLine()) != null) {
+                        logger.info(s);
+                        try {
+                            JSONObject appList = new JSONObject();
+                            appList.put("msg", "logDetail");
+                            appList.put("detail", s);
+                            sendText(session, appList.toJSONString());
+                        } catch (Exception e) {
+                            logger.info(s);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     public static void getAppList(String udId, Session session) {
-        Process wdaProcess = null;
+        Process appListProcess = null;
         String commandLine = "%s app list -u %s -j -i";
         String system = System.getProperty("os.name").toLowerCase();
         try {
             if (system.contains("win")) {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                appListProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                appListProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
             }
             BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(wdaProcess.getInputStream()));
+                    InputStreamReader(appListProcess.getInputStream()));
             String s;
-            while (wdaProcess.isAlive()) {
+            while (appListProcess.isAlive()) {
                 if ((s = stdInput.readLine()) != null) {
                     try {
                         JSONObject appList = new JSONObject();
