@@ -251,9 +251,11 @@ public class TaskManager {
         // 清理map
         bootThreadsMap.remove(key);
         Set<Thread> removed = childThreadsMap.remove(key);
-        for (Thread thread : removed) {
-            if (thread instanceof RunStepThread) {
-                ((RunStepThread) thread).setStopped(true);
+        if (!CollectionUtils.isEmpty(removed)) {
+            for (Thread thread : removed) {
+                if (thread instanceof RunStepThread) {
+                    ((RunStepThread) thread).setStopped(true);
+                }
             }
         }
         runningTestsMap.remove(resultId + "");
