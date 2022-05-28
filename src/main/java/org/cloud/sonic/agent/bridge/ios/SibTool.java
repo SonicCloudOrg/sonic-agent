@@ -151,6 +151,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         deviceStatus.put("status", DeviceStatus.DISCONNECTED);
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        deviceStatus.put("platform", PlatformType.IOS);
         logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
         SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
