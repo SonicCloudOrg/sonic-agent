@@ -108,6 +108,7 @@ public class IOSStepHandler {
         desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_NAME, Platform.IOS);
         desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME, AutomationName.IOS_XCUI_TEST);
         desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 3600);
+        desiredCapabilities.setCapability(IOSMobileCapabilityType.COMMAND_TIMEOUTS, 3600);
         desiredCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
         desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME, SibTool.getName(udId));
         desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
