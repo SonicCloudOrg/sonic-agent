@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.bridge.ios;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
@@ -40,6 +41,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import javax.websocket.Session;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +49,8 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 @DependsOn({"iOSThreadPoolInit"})
@@ -147,6 +151,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         deviceStatus.put("status", DeviceStatus.DISCONNECTED);
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        deviceStatus.put("platform", PlatformType.IOS);
         logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
         SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
@@ -239,14 +244,92 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, path));
     }
 
-    public static JSONObject getAppList(String udId) {
-        String commandLine = "%s app list -u %s -j";
-        String a = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
-        if (a.length() > 0) {
-            return JSONObject.parseObject(a);
-        } else {
-            return new JSONObject();
+    public static void stopSysLog(String udId) {
+        String processName = String.format("process-%s-syslog", udId);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
         }
+    }
+
+    public static void getSysLog(String udId, String filter, Session session) {
+        new Thread(() -> {
+            stopSysLog(udId);
+            String system = System.getProperty("os.name").toLowerCase();
+            Process ps = null;
+            String commandLine = "%s syslog -u %s";
+            if (filter != null && filter.length() > 0) {
+                commandLine += String.format(" -f %s", filter);
+            }
+            try {
+                if (system.contains("win")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                } else if (system.contains("linux") || system.contains("mac")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                }
+                String processName = String.format("process-%s-syslog", udId);
+                GlobalProcessMap.getMap().put(processName, ps);
+                BufferedReader stdInput = new BufferedReader(new
+                        InputStreamReader(ps.getInputStream()));
+                String s;
+                while (ps.isAlive()) {
+                    if ((s = stdInput.readLine()) != null) {
+                        logger.info(s);
+                        try {
+                            JSONObject appList = new JSONObject();
+                            appList.put("msg", "logDetail");
+                            appList.put("detail", s);
+                            sendText(session, appList.toJSONString());
+                        } catch (Exception e) {
+                            logger.info(s);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public static void getAppList(String udId, Session session) {
+        Process appListProcess = null;
+        String commandLine = "%s app list -u %s -j -i";
+        String system = System.getProperty("os.name").toLowerCase();
+        try {
+            if (system.contains("win")) {
+                appListProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                appListProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+            }
+            BufferedReader stdInput = new BufferedReader(new
+                    InputStreamReader(appListProcess.getInputStream()));
+            String s;
+            while (appListProcess.isAlive()) {
+                if ((s = stdInput.readLine()) != null) {
+                    try {
+                        JSONObject appList = new JSONObject();
+                        appList.put("msg", "appListDetail");
+                        appList.put("detail", JSON.parseObject(s));
+                        sendText(session, appList.toJSONString());
+                    } catch (Exception e) {
+                        logger.info(s);
+                    }
+                }
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    public static void locationUnset(String udId) {
+        String commandLine = "%s location unset -u %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
+    }
+
+    public static void locationSet(String udId, String longitude, String latitude) {
+        String commandLine = "%s location set -u %s --long %s --lat %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, longitude, latitude));
     }
 
     public static JSONObject getAllDevicesBattery() {

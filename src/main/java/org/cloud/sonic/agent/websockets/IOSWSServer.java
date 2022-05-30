@@ -55,6 +55,8 @@ import java.net.Socket;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
+
 @Component
 @ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
 public class IOSWSServer implements IIOSWSServer {
@@ -63,7 +65,8 @@ public class IOSWSServer implements IIOSWSServer {
     private String key;
     @Value("${sonic.agent.port}")
     private int port;
-    @Autowired private AgentManagerTool agentManagerTool;
+    @Autowired
+    private AgentManagerTool agentManagerTool;
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -112,7 +115,7 @@ public class IOSWSServer implements IIOSWSServer {
                 JSONObject port = new JSONObject();
                 port.put("port", AppiumServer.serviceMap.get(udId).getUrl().getPort());
                 port.put("msg", "appiumPort");
-                BytesTool.sendText(session, port.toJSONString());
+                sendText(session, port.toJSONString());
             } catch (Exception e) {
                 logger.error(e.getMessage());
                 result.put("status", "error");
@@ -150,6 +153,13 @@ public class IOSWSServer implements IIOSWSServer {
         logger.info(session.getId() + " 发送 " + msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "location": {
+                if (msg.getString("detail").equals("set")) {
+                    SibTool.locationSet(udId, msg.getString("long"), msg.getString("lat"));
+                } else {
+                    SibTool.locationUnset(udId);
+                }
+            }
             case "proxy": {
                 Socket portSocket = PortTool.getBindSocket();
                 Socket webPortSocket = PortTool.getBindSocket();
@@ -160,7 +170,7 @@ public class IOSWSServer implements IIOSWSServer {
                 proxy.put("webPort", webPort);
                 proxy.put("port", pPort);
                 proxy.put("msg", "proxyResult");
-                BytesTool.sendText(session, proxy.toJSONString());
+                sendText(session, proxy.toJSONString());
                 break;
             }
             case "installCert": {
@@ -171,13 +181,6 @@ public class IOSWSServer implements IIOSWSServer {
                 iosStepHandler.getDriver().activateApp("com.apple.mobilesafari");
                 break;
             }
-            case "appList":
-                JSONObject appList = SibTool.getAppList(udId);
-                if (appList.get("appList") != null) {
-                    appList.put("msg", "appListDetail");
-                    sendText(session, appList.toJSONString());
-                }
-                break;
             case "launch":
                 SibTool.launch(udId, msg.getString("pkg"));
                 break;
@@ -310,16 +313,6 @@ public class IOSWSServer implements IIOSWSServer {
                     }
                 }
                 break;
-        }
-    }
-
-    private void sendText(Session session, String message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IllegalStateException | IOException e) {
-                logger.error("webSocket发送失败!连接已关闭！");
-            }
         }
     }
 
