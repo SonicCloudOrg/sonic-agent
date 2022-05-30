@@ -122,7 +122,8 @@ public class AndroidWSServer implements IAndroidWSServer {
             }
             try {
                 iDevice.installPackage("plugins/sonic-android-apk.apk",
-                        true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES);
+                        true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                        , "-r", "-t", "-g");
                 logger.info("Sonic插件安装完毕");
             } catch (InstallException e) {
                 e.printStackTrace();
@@ -533,7 +534,8 @@ public class AndroidWSServer implements IAndroidWSServer {
                             try {
                                 File localFile = DownloadTool.download(msg.getString("apk"));
                                 iDevice.installPackage(localFile.getAbsolutePath()
-                                        , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES);
+                                        , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                                        , "-r", "-t", "-g");
                                 result.put("status", "success");
                             } catch (IOException | InstallException e) {
                                 result.put("status", "fail");

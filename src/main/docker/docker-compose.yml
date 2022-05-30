@@ -1,7 +1,7 @@
 version: '3'
 services:
   sonic-agent:
-    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.0-beta"
+    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.0-rc"
     environment:
       - ZOOKEEPER_HOST=192.168.1.1
       - ZOOKEEPER_PORT=2181
