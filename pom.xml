@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>sonic-agent</artifactId>
-    <version>1.4.0-rc</version>
+    <version>1.4.0-release</version>
     <packaging>jar</packaging>
 
     <dependencies>
