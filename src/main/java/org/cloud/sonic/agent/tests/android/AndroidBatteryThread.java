@@ -18,15 +18,14 @@ package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
-import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.netty.NettyClientHandler;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
-import org.cloud.sonic.common.services.CabinetService;
-import org.cloud.sonic.common.services.DevicesService;
-import org.cloud.sonic.common.tools.SpringTool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -39,9 +38,8 @@ import java.util.regex.Pattern;
  * @author Eason
  * @date 2022/4/24 20:45
  */
-@Slf4j
 public class AndroidBatteryThread implements Runnable {
-
+    private static final Logger logger = LoggerFactory.getLogger(AndroidBatteryThread.class);
     /**
      * second
      */
@@ -57,8 +55,7 @@ public class AndroidBatteryThread implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
-        AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
-        if (!agentManagerTool.checkServerOnline()) {
+        if (NettyClientHandler.channel == null) {
             return;
         }
 
@@ -131,7 +128,7 @@ public class AndroidBatteryThread implements Runnable {
         try {
             devicesService.refreshDevicesBattery(result);
         } catch (Exception e) {
-            log.error("Send battery msg failed, cause: ", e);
+            logger.error("Send battery msg failed, cause: ", e);
         }
     }
 

@@ -15,6 +15,10 @@ import java.nio.ByteBuffer;
 public class BytesTool {
     private static final Logger log = LoggerFactory.getLogger(BytesTool.class);
 
+    public static int agentId = 0;
+    public static int cabinetId = 0;
+    public static int storey = 0;
+
     public static int toInt(byte[] b) {
         int res = 0;
         for (int i = 0; i < b.length; i++) {

@@ -23,7 +23,7 @@ import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.common.services.DevicesService;
-import org.cloud.sonic.common.tools.SpringTool;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;

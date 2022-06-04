@@ -23,7 +23,7 @@ import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.common.models.domain.Devices;
 import org.cloud.sonic.common.services.DevicesService;
-import org.cloud.sonic.common.tools.SpringTool;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 

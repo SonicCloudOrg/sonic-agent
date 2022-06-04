@@ -21,7 +21,7 @@ import org.cloud.sonic.agent.automation.HandleDes;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
-import org.cloud.sonic.common.tools.SpringTool;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

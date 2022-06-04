@@ -24,7 +24,7 @@ import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.common.tools.SpringTool;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
