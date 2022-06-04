@@ -67,7 +67,12 @@
             <artifactId>ddmlib</artifactId>
             <version>30.0.4</version>
         </dependency>
-
+        <!-- lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.20</version>
+        </dependency>
         <!--    json对象    -->
         <dependency>
             <groupId>com.alibaba</groupId>

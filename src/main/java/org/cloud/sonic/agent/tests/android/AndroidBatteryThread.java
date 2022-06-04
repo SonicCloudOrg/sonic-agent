@@ -21,7 +21,9 @@ import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.netty.NettyClientHandler;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.slf4j.Logger;
@@ -50,7 +52,6 @@ public class AndroidBatteryThread implements Runnable {
     public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
     Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
-    private CabinetService cabinetService = SpringTool.getBean(CabinetService.class);
 
     @Override
     public void run() {
@@ -79,22 +80,22 @@ public class AndroidBatteryThread implements Runnable {
                     jsonObject.put("level", level);
                     detail.add(jsonObject);
                     //control
-                    if (cabinetEnable && AgentZookeeperRegistry.currentCabinet != null) {
+                    if (cabinetEnable && BytesTool.currentCabinet != null) {
                         boolean needReset = false;
                         Integer times = SHCService.getTemp(iDevice.getSerialNumber());
-                        if (tem >= AgentZookeeperRegistry.currentCabinet.getHighTemp() * 10) {
+                        if (tem >= BytesTool.currentCabinet.getHighTemp() * 10) {
                             if (times == null) {
                                 //Send Error Msg
-                                cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 1);
+                                cabinetService.errorCall(BytesTool.currentCabinet, iDevice.getSerialNumber(), tem, 1);
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
-                                SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getLowGear());
+                                SHCService.setGear(iDevice.getSerialNumber(), BytesTool.currentCabinet.getLowGear());
                             } else {
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
                             }
-                            int out = AgentZookeeperRegistry.currentCabinet.getHighTempTime();
+                            int out = BytesTool.currentCabinet.getHighTempTime();
                             if (SHCService.getTemp(iDevice.getSerialNumber()) >= (out / 2)) {
                                 //Send shutdown Msg
-                                cabinetService.errorCall(AgentZookeeperRegistry.currentCabinet, iDevice.getSerialNumber(), tem, 2);
+                                cabinetService.errorCall(BytesTool.currentCabinet, iDevice.getSerialNumber(), tem, 2);
                                 AndroidDeviceBridgeTool.shutdown(iDevice);
                                 DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
                                 DevicesBatteryMap.getGearMap().remove(iDevice.getSerialNumber());
@@ -107,26 +108,24 @@ public class AndroidBatteryThread implements Runnable {
                                 DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
                             }
                         }
-                        if (level >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
-                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getLowGear());
+                        if (level >= BytesTool.currentCabinet.getHighLevel()) {
+                            SHCService.setGear(iDevice.getSerialNumber(), BytesTool.currentCabinet.getLowGear());
                         } else if (needReset) {
-                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getHighGear());
+                            SHCService.setGear(iDevice.getSerialNumber(), BytesTool.currentCabinet.getHighGear());
                         }
-                        if (level <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
-                            SHCService.setGear(iDevice.getSerialNumber(), AgentZookeeperRegistry.currentCabinet.getHighGear());
+                        if (level <= BytesTool.currentCabinet.getLowLevel()) {
+                            SHCService.setGear(iDevice.getSerialNumber(), BytesTool.currentCabinet.getHighGear());
                         }
                     }
                 } catch (Exception ignored) {
                 }
             }
         }
-        DevicesService devicesService = SpringTool.getBean(DevicesService.class);
         JSONObject result = new JSONObject();
         result.put("msg", "battery");
         result.put("detail", detail);
-        result.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
         try {
-            devicesService.refreshDevicesBattery(result);
+            NettyThreadPool.send(result);
         } catch (Exception e) {
             logger.error("Send battery msg failed, cause: ", e);
         }

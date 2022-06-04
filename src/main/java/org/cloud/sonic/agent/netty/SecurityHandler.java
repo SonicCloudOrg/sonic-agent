@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.cloud.sonic.agent.models.Cabinet;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.slf4j.Logger;
@@ -36,7 +37,9 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
         JSONObject auth = new JSONObject();
         auth.put("msg", "auth");
         auth.put("agentKey", agentKey);
-        auth.put("cabinetKey", cabinetKey);
+        if (cabinetEnable) {
+            auth.put("cabinetKey", cabinetKey);
+        }
         ctx.channel().writeAndFlush(auth.toJSONString());
     }
 
@@ -51,7 +54,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
                 if (jsonMsg.getString("cabinetAuth") != null && jsonMsg.getString("cabinetAuth").equals("pass")) {
                     SHCService.connect();
                     if (SHCService.status != SHCService.SHCStatus.OPEN) {
-                        BytesTool.cabinetId = jsonMsg.getInteger("cabinetId");
+                        BytesTool.currentCabinet = JSON.parseObject("cabinet", Cabinet.class);
                         BytesTool.storey = storey;
                     } else {
                         logger.info("SHC连接失败！请确保您使用的是Sonic机柜，" +
@@ -75,7 +78,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
             agentInfo.put("version", "v" + version);
             agentInfo.put("systemType", System.getProperty("os.name"));
             agentInfo.put("host", host);
-            agentInfo.put("cabinetId", BytesTool.cabinetId);
+            agentInfo.put("cabinetId", BytesTool.currentCabinet.getId());
             agentInfo.put("storey", BytesTool.storey);
             channel.writeAndFlush(agentInfo.toJSONString());
             NettyThreadPool.readQueue();
