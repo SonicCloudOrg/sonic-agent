@@ -20,10 +20,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
-import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
-import org.cloud.sonic.common.models.domain.Devices;
-import org.cloud.sonic.common.services.DevicesService;
-import org.cloud.sonic.common.tools.SpringTool;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -39,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class SHCService {
     public static Map<String, Integer> positionMap = new ConcurrentHashMap<>();
-    public static DevicesService devicesService = SpringTool.getBean(DevicesService.class);
 
     public enum SHCStatus {
         OPEN, CLOSE
@@ -69,7 +66,7 @@ public class SHCService {
                     int position = result.getInteger("position");
                     if (result.getString("msg").equals("add")) {
                         positionMap.put(udId, position);
-                        devicesService.deviceStatus(updateMsg(udId, position, null));
+                        NettyThreadPool.send(updateMsg(udId, position, null));
                     }
                 }
 
@@ -115,7 +112,7 @@ public class SHCService {
 
     public static JSONObject updateMsg(String udId, Integer position, Integer gear) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        jsonObject.put("msg", "deviceDetail");
         jsonObject.put("udId", udId);
         jsonObject.put("position", position);
         jsonObject.put("gear", gear);
@@ -132,18 +129,12 @@ public class SHCService {
             int position = 0;
             if (positionMap.get(udId) != null) {
                 position = positionMap.get(udId);
-            } else {
-                Devices devices = devicesService.findByAgentIdAndUdId(AgentZookeeperRegistry.currentAgent.getId(), udId);
-                if (devices != null && devices.getPosition() != null && devices.getPosition() != 0) {
-                    positionMap.put(udId, devices.getPosition());
-                    position = devices.getPosition();
-                }
             }
             if (position != 0) {
                 shcClient.send(generateMsg("gear",
                         String.format("%d,%d", position, gear)));
                 log.info("Set {} to Gear {}!", udId, gear);
-                devicesService.deviceStatus(updateMsg(udId, null, gear));
+                NettyThreadPool.send(updateMsg(udId, null, gear));
                 DevicesBatteryMap.getGearMap().put(udId, gear);
             }
         }

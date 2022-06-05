@@ -31,6 +31,7 @@ import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
@@ -86,7 +87,11 @@ public class IOSWSServer implements IIOSWSServer {
         IOSDeviceLocalStatus.startDebug(udId);
 
         // 更新使用用户
-        agentManagerTool.updateDebugUser(udId, token);
+        JSONObject jsonDebug = new JSONObject();
+        jsonDebug.put("msg", "debugUser");
+        jsonDebug.put("token", token);
+        jsonDebug.put("udId", udId);
+        NettyThreadPool.send(jsonDebug);
 
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
@@ -189,13 +194,13 @@ public class IOSWSServer implements IIOSWSServer {
                 break;
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
-                    JSONObject steps = agentManagerTool.findSteps(
-                            msg.getInteger("caseId"),
-                            session.getId(),
-                            "",
-                            udId
-                    );
-                    agentManagerTool.runIOSStep(steps);
+                    JSONObject jsonDebug = new JSONObject();
+                    jsonDebug.put("msg", "findSteps");
+                    jsonDebug.put("key", key);
+                    jsonDebug.put("udId", udId);
+                    jsonDebug.put("sessionId", session.getId());
+                    jsonDebug.put("caseId", msg.getInteger("caseId"));
+                    NettyThreadPool.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(

@@ -1,5 +1,6 @@
 package org.cloud.sonic.agent.tools;
 
+import org.cloud.sonic.agent.models.Cabinet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,11 @@ import java.nio.ByteBuffer;
  */
 public class BytesTool {
     private static final Logger log = LoggerFactory.getLogger(BytesTool.class);
+
+    public static int agentId = 0;
+    public static String agentHost = "";
+    public static Cabinet currentCabinet = new Cabinet();
+    public static int storey = 0;
 
     public static int toInt(byte[] b) {
         int res = 0;
