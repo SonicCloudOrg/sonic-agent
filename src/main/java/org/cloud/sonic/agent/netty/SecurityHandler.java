@@ -93,12 +93,13 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("Agent: {} error,cause {}", ctx.channel().remoteAddress(), cause.getMessage());
+        logger.info("Server: {} error,cause", ctx.channel().remoteAddress());
+        cause.fillInStackTrace();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("Agent: {} disconnected.", ctx.channel().remoteAddress());
+        logger.info("Server: {} disconnected.", ctx.channel().remoteAddress());
         NettyThreadPool.isPassSecurity = false;
         ctx.close();
     }

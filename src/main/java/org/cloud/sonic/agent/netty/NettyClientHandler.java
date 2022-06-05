@@ -146,12 +146,13 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("server: {} error {}", ctx.channel().remoteAddress(), cause.fillInStackTrace());
+        logger.info("Server: {} error,cause", ctx.channel().remoteAddress());
+        cause.fillInStackTrace();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("server: {} disconnected.", ctx.channel().remoteAddress());
+        logger.info("Server: {} disconnected.", ctx.channel().remoteAddress());
         NettyThreadPool.isPassSecurity = false;
         serverOnline = false;
         if (channel != null) {
