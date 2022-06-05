@@ -129,12 +129,6 @@ public class SHCService {
             int position = 0;
             if (positionMap.get(udId) != null) {
                 position = positionMap.get(udId);
-            } else {
-                Devices devices = devicesService.findByAgentIdAndUdId(AgentZookeeperRegistry.currentAgent.getId(), udId);
-                if (devices != null && devices.getPosition() != null && devices.getPosition() != 0) {
-                    positionMap.put(udId, devices.getPosition());
-                    position = devices.getPosition();
-                }
             }
             if (position != 0) {
                 shcClient.send(generateMsg("gear",

@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.cloud.sonic.agent.tools.shc.SHCService.positionMap;
+
 public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     private final Logger logger = LoggerFactory.getLogger(NettyClientHandler.class);
     private static Map<String, Session> sessionMap = new ConcurrentHashMap<String, Session>();
@@ -62,6 +64,10 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
         logger.info("Agent:{} 收到服务器 {} 消息: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonObject);
         NettyThreadPool.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
+                case "position": {
+                    positionMap.put(jsonObject.getString("udId"), jsonObject.getInteger("position"));
+                    break;
+                }
                 case "shutdown": {
                     AgentManagerTool.stop();
                     break;
