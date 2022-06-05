@@ -69,6 +69,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
                 }
             }
             BytesTool.agentId = jsonMsg.getInteger("id");
+            BytesTool.agentHost = host;
             ctx.pipeline().remove(SecurityHandler.class);
             channel = ctx.channel();
             JSONObject agentInfo = new JSONObject();

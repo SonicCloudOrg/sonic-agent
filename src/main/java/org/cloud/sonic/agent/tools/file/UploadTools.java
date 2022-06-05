@@ -17,10 +17,6 @@
 package org.cloud.sonic.agent.tools.file;
 
 import net.coobird.thumbnailator.Thumbnails;
-import org.cloud.sonic.common.feign.FolderFeignClient;
-import org.cloud.sonic.common.http.RespEnum;
-import org.cloud.sonic.common.http.RespModel;
-import org.cloud.sonic.common.tools.FileTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

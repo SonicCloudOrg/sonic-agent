@@ -16,7 +16,6 @@
  */
 package org.cloud.sonic.agent.automation;
 
-import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -29,6 +28,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 
 /**
@@ -38,7 +38,7 @@ import org.springframework.lang.NonNull;
  */
 @ConditionalOnProperty(value = "modules.webview.enable", havingValue = "true")
 @Configuration
-public class RemoteDebugDriver implements ApplicationListener<AgentRegisteredEvent> {
+public class RemoteDebugDriver implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
     private static String chromePath;
     public static int chromePort;
@@ -55,7 +55,7 @@ public class RemoteDebugDriver implements ApplicationListener<AgentRegisteredEve
     }
 
     @Override
-    public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
+    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         startChromeDriver();
     }
 

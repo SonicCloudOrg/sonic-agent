@@ -1,7 +1,7 @@
 package org.cloud.sonic.agent.websockets;
 
 import com.android.ddmlib.IDevice;
-import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.springframework.util.ObjectUtils;
 
 import javax.websocket.Session;
@@ -20,7 +20,7 @@ public interface IAndroidWSServer {
     Set<String> udIdSet = Collections.synchronizedSet(new HashSet<>());
 
     default String getHost() {
-        return AgentZookeeperRegistry.currentAgent.getHost();
+        return BytesTool.agentHost;
     }
 
     default Map<Session, IDevice> getUdIdMap() {

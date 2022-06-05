@@ -16,13 +16,13 @@
  */
 package org.cloud.sonic.agent.tests.android;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.netty.NettyClientHandler;
 import org.cloud.sonic.agent.netty.NettyThreadPool;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
@@ -86,7 +86,13 @@ public class AndroidBatteryThread implements Runnable {
                         if (tem >= BytesTool.currentCabinet.getHighTemp() * 10) {
                             if (times == null) {
                                 //Send Error Msg
-                                cabinetService.errorCall(BytesTool.currentCabinet, iDevice.getSerialNumber(), tem, 1);
+                                JSONObject errCall = new JSONObject();
+                                errCall.put("msg", "errCall");
+                                errCall.put("cabinet", JSON.toJSONString(BytesTool.currentCabinet));
+                                errCall.put("udId", iDevice.getSerialNumber());
+                                errCall.put("tem", tem);
+                                errCall.put("type", 1);
+                                NettyThreadPool.send(errCall);
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
                                 SHCService.setGear(iDevice.getSerialNumber(), BytesTool.currentCabinet.getLowGear());
                             } else {
@@ -95,7 +101,13 @@ public class AndroidBatteryThread implements Runnable {
                             int out = BytesTool.currentCabinet.getHighTempTime();
                             if (SHCService.getTemp(iDevice.getSerialNumber()) >= (out / 2)) {
                                 //Send shutdown Msg
-                                cabinetService.errorCall(BytesTool.currentCabinet, iDevice.getSerialNumber(), tem, 2);
+                                JSONObject errCall = new JSONObject();
+                                errCall.put("msg", "errCall");
+                                errCall.put("cabinet", JSON.toJSONString(BytesTool.currentCabinet));
+                                errCall.put("udId", iDevice.getSerialNumber());
+                                errCall.put("tem", tem);
+                                errCall.put("type", 2);
+                                NettyThreadPool.send(errCall);
                                 AndroidDeviceBridgeTool.shutdown(iDevice);
                                 DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
                                 DevicesBatteryMap.getGearMap().remove(iDevice.getSerialNumber());
