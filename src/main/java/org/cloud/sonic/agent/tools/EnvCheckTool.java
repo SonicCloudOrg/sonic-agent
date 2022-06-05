@@ -80,7 +80,7 @@ public class EnvCheckTool {
 
     @Bean
     public boolean checkEnv(ConfigurableApplicationContext context) {
-        System.out.println("===================== 开始检查配置环境 =====================");
+        System.out.println("===================== Checking the Environment =====================");
         try {
             if (androidEnAble) {
                 checkSDK();
@@ -104,13 +104,13 @@ public class EnvCheckTool {
             checkFiles();
         } catch (Exception e) {
             System.out.println(printInfo(e.getMessage()));
-            System.out.println("===================== 配置环境检查结束 =====================");
+            System.out.println("========================== Check Completed ==========================");
             context.close();
             System.exit(0);
         }
-        System.out.println("===================== 配置环境检查结果 =====================");
+        System.out.println("=========================== Check results ===========================");
         System.out.println(this);
-        System.out.println("===================== 配置环境检查结束 =====================");
+        System.out.println("========================== Check Completed ==========================");
         return true;
     }
 
@@ -118,7 +118,7 @@ public class EnvCheckTool {
      * 检查本地文件
      */
     public void checkFiles() {
-        String type = "校验 本地文件夹 ";
+        String type = "Check local resource";
         File webview = new File("webview");
         File config = new File("config/application-sonic-agent.yml");
         File mini = new File("mini");
@@ -146,7 +146,7 @@ public class EnvCheckTool {
      * 检查java环境
      */
     public void checkJavaHome() {
-        String type = "检查 JAVA_HOME 环境变量";
+        String type = "Check JAVA_HOME Path";
         javaPath = System.getenv("JAVA_HOME");
         javaVersion = System.getProperty("java.version");
         if (!StringUtils.hasText(javaPath)) {
@@ -161,7 +161,7 @@ public class EnvCheckTool {
      * 检查chromedriver环境
      */
     public void checkChromeDriver() throws IOException, InterruptedException {
-        String type = "检查 chromeDriver 环境";
+        String type = "Check chromeDriver env";
         if (system.contains("win")) {
             chromeDriverPath = "\"" + chromeDriverPath + "\"";
         } else {
@@ -184,7 +184,7 @@ public class EnvCheckTool {
      * 检查sdk环境
      */
     public void checkSDK() {
-        String type = "检查 ANDROID_HOME 环境变量";
+        String type = "Check ANDROID_HOME Path";
         sdkPath = System.getenv("ANDROID_HOME");
         if (!StringUtils.hasText(sdkPath)) {
             System.out.println("系统变量【ANDROID_HOME】返回值为空！");
@@ -199,7 +199,7 @@ public class EnvCheckTool {
      * 检查adb环境
      */
     public void checkAdb() throws IOException, InterruptedException {
-        String type = "检查 ADB 环境";
+        String type = "Check ADB env";
         String commandStr = "adb version";
         try {
             adbPath = findCommandPath("adb");
@@ -216,7 +216,7 @@ public class EnvCheckTool {
      * 检查adbkit环境
      */
     public void checkAdbKit() throws IOException, InterruptedException {
-        String type = "检查 adbkit 环境 (即将弃用) ";
+        String type = "Check adbkit env (Next version deprecated) ";
         String commandStr = "adbkit -V";
         try {
             adbKitPath = findCommandPath("adbkit");
@@ -233,7 +233,7 @@ public class EnvCheckTool {
      * 检查node环境
      */
     public void checkNode() throws IOException, InterruptedException {
-        String type = "检查 Node 环境 (即将弃用) ";
+        String type = "Check Node env (Next version deprecated) ";
         String commandStr = "node -v";
         try {
             nodePath = findCommandPath("node");
@@ -250,7 +250,7 @@ public class EnvCheckTool {
      * 检查npm环境
      */
     public void checkNpm() throws IOException, InterruptedException {
-        String type = "检查 npm 环境 (即将弃用) ";
+        String type = "Check npm env (Next version deprecated) ";
         String commandStr = "npm -v";
         try {
             npmPath = findCommandPath("npm");
@@ -267,7 +267,7 @@ public class EnvCheckTool {
      * 检查appium环境
      */
     public void checkAppium() throws IOException, InterruptedException {
-        String type = "检查 Appium 环境 (即将弃用) ";
+        String type = "Check Appium env (Next version deprecated) ";
         String commandStr = "appium -v";
         try {
             appiumPath = findCommandPath("appium");
@@ -300,17 +300,17 @@ public class EnvCheckTool {
 
     public void printPass(String s) {
         if (system.contains("win")) {
-            System.out.println("→ " + s + "通过 √");
+            System.out.println("→ " + s + " Pass √");
         } else {
-            System.out.println("\33[32;1m👉 " + s + "通过 ✔\033[0m");
+            System.out.println("\33[32;1m👉 " + s + " Pass ✔\033[0m");
         }
     }
 
     public void printFail(String s) {
         if (system.contains("win")) {
-            System.out.println("→ " + s + "不通过 ×");
+            System.out.println("→ " + s + " Fail ×");
         } else {
-            System.out.println("\33[31;1m👉 " + s + "不通过 ❌\033[0m");
+            System.out.println("\33[31;1m👉 " + s + " Fail ❌\033[0m");
         }
     }
 
@@ -359,9 +359,9 @@ public class EnvCheckTool {
 
     @Override
     public String toString() {
-        return printInfo("JAVA_HOME（系统PATH环境变量）: ") + javaPath + "\n" +
-                printInfo("java version（运行当前jar的java版本）: ") + javaVersion + "\n" +
-                printInfo("ANDROID_HOME（系统PATH环境变量）: ") + sdkPath + "\n" +
+        return printInfo("JAVA_HOME: ") + javaPath + "\n" +
+                printInfo("java version: ") + javaVersion + "\n" +
+                printInfo("ANDROID_HOME: ") + sdkPath + "\n" +
                 printInfo("ADB path: ") + adbPath +
                 printInfo("ADB version: ") + adbVersion +
                 printInfo("chromeDriver path: ") + chromeDriverPath + "\n" +
