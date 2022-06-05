@@ -19,7 +19,10 @@ package org.cloud.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.netty.NettyClientHandler;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.springframework.util.CollectionUtils;
@@ -49,8 +52,7 @@ public class IOSBatteryThread implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
-        AgentManagerTool agentManagerTool = SpringTool.getBean(AgentManagerTool.class);
-        if (!agentManagerTool.checkServerOnline()) {
+        if (NettyClientHandler.channel == null) {
             return;
         }
 
@@ -74,23 +76,21 @@ public class IOSBatteryThread implements Runnable {
             jsonObject.put("level", dB.getInteger("level"));
             detail.add(jsonObject);
             //control
-            if (cabinetEnable && AgentZookeeperRegistry.currentCabinet != null) {
-                if (dB.getInteger("level") >= AgentZookeeperRegistry.currentCabinet.getHighLevel()) {
-                    SHCService.setGear(dB.getString("serialNumber"), AgentZookeeperRegistry.currentCabinet.getLowGear());
+            if (cabinetEnable && BytesTool.currentCabinet != null) {
+                if (dB.getInteger("level") >= BytesTool.currentCabinet.getHighLevel()) {
+                    SHCService.setGear(dB.getString("serialNumber"), BytesTool.currentCabinet.getLowGear());
                 }
-                if (dB.getInteger("level") <= AgentZookeeperRegistry.currentCabinet.getLowLevel()) {
-                    SHCService.setGear(dB.getString("serialNumber"), AgentZookeeperRegistry.currentCabinet.getHighGear());
+                if (dB.getInteger("level") <= BytesTool.currentCabinet.getLowLevel()) {
+                    SHCService.setGear(dB.getString("serialNumber"), BytesTool.currentCabinet.getHighGear());
                 }
             }
         }
 
-        DevicesService devicesService = SpringTool.getBean(DevicesService.class);
         JSONObject result = new JSONObject();
         result.put("msg", "battery");
         result.put("detail", detail);
-        result.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
         try {
-            devicesService.refreshDevicesBattery(result);
+            NettyThreadPool.send(result);
         } catch (Exception e) {
             log.error("Send battery msg failed, cause: ", e);
         }

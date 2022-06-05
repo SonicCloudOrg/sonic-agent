@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.tests.android;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.netty.NettyClientHandler;
@@ -40,8 +41,8 @@ import java.util.regex.Pattern;
  * @author Eason
  * @date 2022/4/24 20:45
  */
+@Slf4j
 public class AndroidBatteryThread implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger(AndroidBatteryThread.class);
     /**
      * second
      */
@@ -139,7 +140,7 @@ public class AndroidBatteryThread implements Runnable {
         try {
             NettyThreadPool.send(result);
         } catch (Exception e) {
-            logger.error("Send battery msg failed, cause: ", e);
+            log.error("Send battery msg failed, cause: ", e);
         }
     }
 
