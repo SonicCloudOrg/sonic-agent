@@ -1,14 +1,34 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.bridge.ios;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
-import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
-import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
-import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.common.maps.*;
+import org.cloud.sonic.agent.event.AgentRegisteredEvent;
+import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
+import org.cloud.sonic.agent.tools.ScheduleTool;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +36,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import javax.websocket.Session;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -28,10 +50,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
+
 @ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
-@DependsOn({"iOSThreadPoolInit", "nettyMsgInit"})
+@DependsOn({"iOSThreadPoolInit"})
 @Component
-public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
+public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
     private static final Logger logger = LoggerFactory.getLogger(SibTool.class);
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
@@ -46,14 +71,15 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     @Override
-    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
-        logger.info("开启iOS相关功能");
+    public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
+        init();
+        logger.info("Enable iOS Module");
     }
 
     public void init() {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
         if (ver.size() == 0 || !ver.get(0).equals(sibVersion)) {
-            logger.info(String.format("启动sonic-ios-bridge失败！请执行 chmod -R 777 %s，仍然失败可加上sudo尝试", new File("plugins").getAbsolutePath()));
+            logger.info(String.format("Start sonic-ios-bridge failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
             System.exit(0);
         }
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
@@ -95,7 +121,15 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             }
             GlobalProcessMap.getMap().put(processName, listenProcess);
         });
-        logger.info("iOS设备监听已开启");
+
+        ScheduleTool.scheduleAtFixedRate(
+                new IOSBatteryThread(),
+                IOSBatteryThread.DELAY,
+                IOSBatteryThread.DELAY,
+                IOSBatteryThread.TIME_UNIT
+        );
+
+        logger.info("iOS devices listening...");
     }
 
     public static List<String> getDeviceList() {
@@ -103,6 +137,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String commandLine = "%s devices";
         List<String> data = ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib));
         for (String a : data) {
+            if (a.length() == 0) {
+                break;
+            }
             result.add(a.substring(0, a.indexOf(" ")));
         }
         return result;
@@ -110,32 +147,37 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
 
     public static void sendDisConnectStatus(JSONObject jsonObject) {
         JSONObject deviceStatus = new JSONObject();
-        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
-        deviceStatus.put("status", "DISCONNECTED");
+        deviceStatus.put("status", DeviceStatus.DISCONNECTED);
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
-        logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 下线！");
-        NettyThreadPool.send(deviceStatus);
+        deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        deviceStatus.put("platform", PlatformType.IOS);
+        logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
+        SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static void sendOnlineStatus(JSONObject jsonObject) {
         JSONObject detail = jsonObject.getJSONObject("deviceDetail");
         JSONObject deviceStatus = new JSONObject();
-        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
         deviceStatus.put("name", detail.getString("deviceName"));
         deviceStatus.put("model", detail.getString("generationName"));
-        deviceStatus.put("status", "ONLINE");
+        deviceStatus.put("status", DeviceStatus.ONLINE);
         deviceStatus.put("platform", PlatformType.IOS);
         deviceStatus.put("version", detail.getString("productVersion"));
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
         deviceStatus.put("manufacturer", "APPLE");
-        logger.info("iOS设备：" + jsonObject.getString("serialNumber") + " 上线！");
-        NettyThreadPool.send(deviceStatus);
+        deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
+        logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
+        SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
+        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static String getName(String udId) {
@@ -181,7 +223,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 Thread.sleep(500);
                 wait++;
                 if (wait >= 120) {
-                    logger.info(udId + " WebDriverAgent启动超时！");
+                    logger.info(udId + " WebDriverAgent start timeout!");
                     return new int[]{0, 0};
                 }
             }
@@ -202,14 +244,98 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, path));
     }
 
-    public static JSONObject getAppList(String udId) {
-        String commandLine = "%s app list -u %s -j";
-        List<String> a = ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
-        if (a.size() > 0) {
-            return JSONObject.parseObject(a.get(0));
-        } else {
-            return new JSONObject();
+    public static void stopSysLog(String udId) {
+        String processName = String.format("process-%s-syslog", udId);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
         }
+    }
+
+    public static void getSysLog(String udId, String filter, Session session) {
+        new Thread(() -> {
+            stopSysLog(udId);
+            String system = System.getProperty("os.name").toLowerCase();
+            Process ps = null;
+            String commandLine = "%s syslog -u %s";
+            if (filter != null && filter.length() > 0) {
+                commandLine += String.format(" -f %s", filter);
+            }
+            try {
+                if (system.contains("win")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                } else if (system.contains("linux") || system.contains("mac")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                }
+                String processName = String.format("process-%s-syslog", udId);
+                GlobalProcessMap.getMap().put(processName, ps);
+                BufferedReader stdInput = new BufferedReader(new
+                        InputStreamReader(ps.getInputStream()));
+                String s;
+                while (ps.isAlive()) {
+                    if ((s = stdInput.readLine()) != null) {
+                        logger.info(s);
+                        try {
+                            JSONObject appList = new JSONObject();
+                            appList.put("msg", "logDetail");
+                            appList.put("detail", s);
+                            sendText(session, appList.toJSONString());
+                        } catch (Exception e) {
+                            logger.info(s);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public static void getAppList(String udId, Session session) {
+        Process appListProcess = null;
+        String commandLine = "%s app list -u %s -j -i";
+        String system = System.getProperty("os.name").toLowerCase();
+        try {
+            if (system.contains("win")) {
+                appListProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                appListProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+            }
+            BufferedReader stdInput = new BufferedReader(new
+                    InputStreamReader(appListProcess.getInputStream()));
+            String s;
+            while (appListProcess.isAlive()) {
+                if ((s = stdInput.readLine()) != null) {
+                    try {
+                        JSONObject appList = new JSONObject();
+                        appList.put("msg", "appListDetail");
+                        appList.put("detail", JSON.parseObject(s));
+                        sendText(session, appList.toJSONString());
+                    } catch (Exception e) {
+                        logger.info(s);
+                    }
+                }
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    public static void locationUnset(String udId) {
+        String commandLine = "%s location unset -u %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
+    }
+
+    public static void locationSet(String udId, String longitude, String latitude) {
+        String commandLine = "%s location set -u %s --long %s --lat %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, longitude, latitude));
+    }
+
+    public static JSONObject getAllDevicesBattery() {
+        String commandLine = "%s battery -j";
+        String res = ProcessCommandTool.getProcessLocalCommandStr(commandLine.formatted(sib));
+        return JSONObject.parseObject(res, JSONObject.class);
     }
 
     public static void launch(String udId, String pkg) {

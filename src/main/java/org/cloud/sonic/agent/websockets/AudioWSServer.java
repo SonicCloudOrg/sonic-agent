@@ -1,16 +1,35 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.websockets;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.*;
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
@@ -61,30 +80,30 @@ public class AudioWSServer {
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RECORD_AUDIO allow");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
         AndroidDeviceBridgeTool.pressKey(iDevice, 4);
-        int appListPort = PortTool.getPort();
+        int appAudioPort = PortTool.getPort();
         Thread audio = new Thread(() -> {
             try {
-                AndroidDeviceBridgeTool.forward(iDevice, appListPort, "sonicaudioservice");
+                AndroidDeviceBridgeTool.forward(iDevice, appAudioPort, "sonicaudioservice");
                 Socket audioSocket = null;
                 InputStream inputStream = null;
                 try {
-                    audioSocket = new Socket("localhost", appListPort);
+                    audioSocket = new Socket("localhost", appAudioPort);
                     inputStream = audioSocket.getInputStream();
-                    int len = 1024;
                     while (audioSocket.isConnected() && !Thread.interrupted()) {
-                        byte[] buffer = new byte[len];
-                        int realLen;
-                        realLen = inputStream.read(buffer);
-                        if (buffer.length != realLen && realLen >= 0) {
-                            buffer = AgentTool.subByteArray(buffer, 0, realLen);
+                        byte[] lengthBytes = inputStream.readNBytes(32);
+                        if (Thread.interrupted() || lengthBytes.length == 0) {
+                            break;
                         }
-                        if (realLen >= 0) {
-                            ByteBuffer byteBuffer = ByteBuffer.allocate(buffer.length);
-                            byteBuffer.put(buffer);
-                            byteBuffer.flip();
-                            //bug
-                            AgentTool.sendByte(session, byteBuffer);
+                        StringBuffer binStr = new StringBuffer();
+                        for (byte lengthByte : lengthBytes) {
+                            binStr.append(lengthByte);
                         }
+                        Integer readLen = Integer.valueOf(binStr.toString(), 2);
+                        byte[] dataBytes = inputStream.readNBytes(readLen);
+                        ByteBuffer byteBuffer = ByteBuffer.allocate(dataBytes.length);
+                        byteBuffer.put(dataBytes);
+                        byteBuffer.flip();
+                        BytesTool.sendByte(session, byteBuffer);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -106,7 +125,7 @@ public class AudioWSServer {
                 }
             } catch (Exception e) {
             }
-            AndroidDeviceBridgeTool.removeForward(iDevice, appListPort, "sonicaudioservice");
+            AndroidDeviceBridgeTool.removeForward(iDevice, appAudioPort, "sonicaudioservice");
         });
         audio.start();
         audioMap.put(session, audio);

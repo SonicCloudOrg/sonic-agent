@@ -1,10 +1,9 @@
-package org.cloud.sonic.agent.tools;
+package org.cloud.sonic.agent.tools.file;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Calendar;
@@ -24,27 +23,13 @@ public class DownloadTool {
         }
         String filename = "test-output" + File.separator + "download-" + time + "." + tail;
         File file = new File(filename);
-        FileOutputStream os = null;
-        try {
-            os = new FileOutputStream(file, true);
-            while ((len = is.read(bs)) != -1) {
-                os.write(bs, 0, len);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        } finally {
-            try {
-                os.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        FileOutputStream os;
+        os = new FileOutputStream(file, true);
+        while ((len = is.read(bs)) != -1) {
+            os.write(bs, 0, len);
         }
+        os.close();
+        is.close();
         return file;
     }
 }

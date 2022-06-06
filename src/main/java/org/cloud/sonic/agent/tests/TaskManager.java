@@ -1,3 +1,19 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.tests;
 
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
@@ -8,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +53,25 @@ public class TaskManager {
      */
     private static ConcurrentHashMap<String, Set<Thread>> childThreadsMap = new ConcurrentHashMap<>();
 
+    /**
+     * 记录正在运行的rid记录
+     */
+    private static Set<Integer> runningRidSet =  Collections.synchronizedSet(new HashSet<>());
+
+    /**
+     * 记录正在运行的udId记录
+     */
+    private static Set<String> runningUdIdSet =  Collections.synchronizedSet(new HashSet<>());
+
     private static final Lock lock = new ReentrantLock();
+
+    public static boolean ridRunning(Integer rid) {
+        return runningRidSet.contains(rid);
+    }
+
+    public static boolean udIdRunning(String udId) {
+        return runningUdIdSet.contains(udId);
+    }
 
     /**
      * 启动boot线程
@@ -46,6 +81,10 @@ public class TaskManager {
     public static void startBootThread(Thread bootThread) {
         bootThread.start();
         addBootThread(bootThread.getName(), bootThread);
+
+        String[] split = bootThread.getName().split("-");
+        runningRidSet.add(Integer.parseInt(split[split.length-3]));
+        runningUdIdSet.add(split[split.length-1]);
     }
 
     /**
@@ -156,6 +195,10 @@ public class TaskManager {
             thread.interrupt();
         }
         childThreadsMap.remove(key);
+
+        String[] split = key.split("-");
+        runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+        runningUdIdSet.remove(split[split.length-1]);
     }
 
     /**
@@ -171,10 +214,17 @@ public class TaskManager {
         terminatedThread.forEach((k, v) -> {
             v.interrupt();
             bootThreadsMap.remove(k);
+
+            String[] split = k.split("-");
+            runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+            runningUdIdSet.remove(split[split.length-1]);
         });
         // 删除boot衍生的线程
         terminatedThread.forEach((key, value) -> {
             childThreadsMap.remove(key);
+            String[] split = key.split("-");
+            runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+            runningUdIdSet.remove(split[split.length-1]);
         });
     }
 
@@ -200,8 +250,18 @@ public class TaskManager {
         }
         // 清理map
         bootThreadsMap.remove(key);
-        childThreadsMap.remove(key);
+        Set<Thread> removed = childThreadsMap.remove(key);
+        if (!CollectionUtils.isEmpty(removed)) {
+            for (Thread thread : removed) {
+                if (thread instanceof RunStepThread) {
+                    ((RunStepThread) thread).setStopped(true);
+                }
+            }
+        }
         runningTestsMap.remove(resultId + "");
+
+        runningRidSet.remove(resultId);
+        runningUdIdSet.remove(udId);
     }
 
     /**

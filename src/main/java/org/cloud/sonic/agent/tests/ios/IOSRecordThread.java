@@ -25,39 +25,39 @@ public class IOSRecordThread extends Thread {
 
     @Override
     public void run() {
-        IOSStepHandler iosStepHandler = iosTestTaskBootThread.getIosStepHandler();
-        IOSRunStepThread runStepThread = iosTestTaskBootThread.getRunStepThread();
-
-        while (runStepThread.isAlive()) {
-            if (iosStepHandler.getDriver() == null) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage());
-                }
-                continue;
-            }
-            try {
-                iosStepHandler.startRecord();
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
-            int w = 0;
-            while (w < 10 && (runStepThread.isAlive())) {
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage());
-                }
-                w++;
-            }
-            //处理录像
-            if (iosStepHandler.getStatus() == 3) {
-                iosStepHandler.stopRecord();
-                return;
-            } else {
-                iosStepHandler.getDriver().stopRecordingScreen();
-            }
-        }
+//        IOSStepHandler iosStepHandler = iosTestTaskBootThread.getIosStepHandler();
+//        IOSRunStepThread runStepThread = iosTestTaskBootThread.getRunStepThread();
+//
+//        while (runStepThread.isAlive()) {
+//            if (iosStepHandler.getDriver() == null) {
+//                try {
+//                    Thread.sleep(500);
+//                } catch (InterruptedException e) {
+//                    log.error(e.getMessage());
+//                }
+//                continue;
+//            }
+//            try {
+//                iosStepHandler.startRecord();
+//            } catch (Exception e) {
+//                log.error(e.getMessage());
+//            }
+//            int w = 0;
+//            while (w < 10 && (runStepThread.isAlive())) {
+//                try {
+//                    Thread.sleep(10000);
+//                } catch (InterruptedException e) {
+//                    log.error(e.getMessage());
+//                }
+//                w++;
+//            }
+//            //处理录像
+//            if (iosStepHandler.getStatus() == 3) {
+//                iosStepHandler.stopRecord();
+//                return;
+//            } else {
+//                iosStepHandler.getDriver().stopRecordingScreen();
+//            }
+//        }
     }
 }

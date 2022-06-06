@@ -1,23 +1,26 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
-import org.cloud.sonic.agent.enums.ConditionEnum;
-import org.cloud.sonic.agent.enums.SonicEnum;
-import org.cloud.sonic.agent.tests.common.RunStepThread;
-import org.cloud.sonic.agent.tests.handlers.StepHandlers;
-import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
-import org.cloud.sonic.agent.tools.cv.SIFTFinder;
-import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
-import org.cloud.sonic.agent.tools.cv.TemMatcher;
-import org.cloud.sonic.agent.common.interfaces.ErrorType;
-import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
-import org.cloud.sonic.agent.common.interfaces.StepType;
-import org.cloud.sonic.agent.tools.*;
-import io.appium.java_client.*;
+import io.appium.java_client.MultiTouchAction;
+import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
 import io.appium.java_client.android.appmanagement.AndroidInstallApplicationOptions;
@@ -29,13 +32,32 @@ import io.appium.java_client.remote.AutomationName;
 import io.appium.java_client.remote.MobileCapabilityType;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.common.interfaces.ErrorType;
+import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.tests.LogUtil;
+import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
+import org.cloud.sonic.agent.tools.cv.SIFTFinder;
+import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
+import org.cloud.sonic.agent.tools.cv.TemMatcher;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.util.*;
+import org.springframework.util.Base64Utils;
+import org.springframework.util.FileCopyUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -53,7 +75,7 @@ import static org.testng.Assert.*;
  * @date 2021/8/16 20:10
  */
 public class AndroidStepHandler {
-    public LogTool log = new LogTool();
+    public LogUtil log = new LogUtil();
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
     //包版本
@@ -66,7 +88,7 @@ public class AndroidStepHandler {
     //测试状态
     private int status = ResultDetailStatus.PASS;
 
-    public LogTool getLog() {
+    public LogUtil getLog() {
         return log;
     }
 
@@ -137,7 +159,8 @@ public class AndroidStepHandler {
         desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT, PortTool.getPort());
         desiredCapabilities.setCapability("skipLogcatCapture", true);
         try {
-            androidDriver = new AndroidDriver(AppiumServer.service.getUrl(), desiredCapabilities);
+            AppiumServer.start(udId);
+            androidDriver = new AndroidDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
             androidDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
@@ -172,6 +195,8 @@ public class AndroidStepHandler {
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
+        } finally {
+            AppiumServer.close(udId);
         }
     }
 
@@ -432,6 +457,7 @@ public class AndroidStepHandler {
 
     public void install(HandleDes handleDes, String path) {
         handleDes.setStepDes("安装应用");
+        path = TextHandler.replaceTrans(path, globalParams);
         handleDes.setDetail("App安装路径： " + path);
 //        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
 //        String manufacturer = iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER);
@@ -538,6 +564,7 @@ public class AndroidStepHandler {
 
     public void uninstall(HandleDes handleDes, String appPackage) {
         handleDes.setStepDes("卸载应用");
+        appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
             androidDriver.removeApp(appPackage);
@@ -555,6 +582,7 @@ public class AndroidStepHandler {
      */
     public void terminate(HandleDes handleDes, String packageName) {
         handleDes.setStepDes("终止应用");
+        packageName = TextHandler.replaceTrans(packageName, globalParams);
         handleDes.setDetail("应用包名： " + packageName);
         try {
             androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
@@ -575,6 +603,7 @@ public class AndroidStepHandler {
 
     public void openApp(HandleDes handleDes, String appPackage) {
         handleDes.setStepDes("打开应用");
+        appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
             testPackage = appPackage;
@@ -662,7 +691,7 @@ public class AndroidStepHandler {
 
     public void asserts(HandleDes handleDes, String actual, String expect, String type) {
         handleDes.setDetail("真实值： " + actual + " 期望值： " + expect);
-        handleDes.setDetail("");
+        handleDes.setStepDes("");
         try {
             switch (type) {
                 case "assertEquals":
@@ -727,15 +756,7 @@ public class AndroidStepHandler {
     }
 
     public void sendKeys(HandleDes handleDes, String des, String selector, String pathValue, String keys) {
-        if (keys.contains("{{random}}")) {
-            String random = (int) (Math.random() * 10 + Math.random() * 10 * 2) + 5 + "";
-            keys = keys.replace("{{random}}", random);
-        }
-        if (keys.contains("{{timestamp}}")) {
-            String timeMillis = Calendar.getInstance().getTimeInMillis() + "";
-            keys = keys.replace("{{timestamp}}", timeMillis);
-        }
-        keys = replaceTrans(keys);
+        keys = TextHandler.replaceTrans(keys, globalParams);
         handleDes.setStepDes("对" + des + "输入内容");
         handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
         try {
@@ -752,7 +773,7 @@ public class AndroidStepHandler {
             String s = findEle(selector, pathValue).getText();
             log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
             try {
-                expect = replaceTrans(expect);
+                expect = TextHandler.replaceTrans(expect, globalParams);
                 assertEquals(s, expect);
                 log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
             } catch (AssertionError e) {
@@ -1019,22 +1040,6 @@ public class AndroidStepHandler {
             e.printStackTrace();
         }
         return resultFile;
-    }
-
-    public String replaceTrans(String text) {
-        if (text.contains("{{") && text.contains("}}")) {
-            String tail = text.substring(text.indexOf("{{") + 2);
-            if (tail.contains("}}")) {
-                String child = tail.substring(tail.indexOf("}}") + 2);
-                String middle = tail.substring(0, tail.indexOf("}}"));
-                text = text.substring(0, text.indexOf("}}") + 2);
-                if (globalParams.getString(middle) != null) {
-                    text = text.replace("{{" + middle + "}}", globalParams.getString(middle));
-                }
-                text = text + replaceTrans(child);
-            }
-        }
-        return text;
     }
 
     public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
@@ -1411,6 +1416,7 @@ public class AndroidStepHandler {
 
     public WebElement findEle(String selector, String pathValue) {
         WebElement we = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "id":
                 we = androidDriver.findElementById(pathValue);
@@ -1571,8 +1577,8 @@ public class AndroidStepHandler {
             case "assertEquals":
             case "assertTrue":
             case "assertNotTrue":
-                String actual = replaceTrans(step.getString("text"));
-                String expect = replaceTrans(step.getString("content"));
+                String actual = TextHandler.replaceTrans(step.getString("text"), globalParams);
+                String expect = TextHandler.replaceTrans(step.getString("content"), globalParams);
                 asserts(handleDes, actual, expect, step.getString("stepType"));
                 break;
             case "getTextValue":

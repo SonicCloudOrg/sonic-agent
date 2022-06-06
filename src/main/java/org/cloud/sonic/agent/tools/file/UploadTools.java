@@ -1,20 +1,33 @@
-package org.cloud.sonic.agent.tools;
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+package org.cloud.sonic.agent.tools.file;
 
-import com.alibaba.fastjson.JSONObject;
 import net.coobird.thumbnailator.Thumbnails;
+import org.cloud.sonic.common.feign.FolderFeignClient;
+import org.cloud.sonic.common.http.RespEnum;
+import org.cloud.sonic.common.http.RespModel;
+import org.cloud.sonic.common.tools.FileTool;
+import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Calendar;
@@ -28,21 +41,11 @@ import java.util.UUID;
 @Component
 public class UploadTools {
     private final static Logger logger = LoggerFactory.getLogger(UploadTools.class);
-    @Value("${sonic.server.host}")
-    private String host;
-    @Value("${sonic.server.folder-port}")
-    private String port;
-    private static String baseUrl;
-
-    private static RestTemplate restTemplate;
-
-    @Autowired
-    public void setRestTemplate(RestTemplate restTemplate) {
-        UploadTools.restTemplate = restTemplate;
-        baseUrl = "http://" + host + ":" + port + "/api/folder";
-    }
 
     public static String upload(File uploadFile, String type) {
+        if(uploadFile.isDirectory()){
+            return null;
+        }
         File folder = new File("test-output");
         if (!folder.exists()) {//判断文件目录是否存在
             folder.mkdirs();
@@ -56,23 +59,29 @@ public class UploadTools {
                         .outputQuality(0.25f).toFile(folder + File.separator + timeMillis + "transfer.jpg");
             } catch (IOException e) {
                 logger.error(e.getMessage());
+                throw new RuntimeException("Thumbnails.of(uploadFile) failed: " + e.getMessage());
             }
             transfer = new File(folder + File.separator + timeMillis + "transfer.jpg");
         } else {
             transfer = uploadFile;
         }
-        FileSystemResource resource = new FileSystemResource(transfer);
-        MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
-        param.add("file", resource);
-        param.add("type", type);
-        ResponseEntity<JSONObject> responseEntity =
-                restTemplate.postForEntity(baseUrl + "/upload", param, JSONObject.class);
-        if (responseEntity.getBody().getInteger("code") == 2000) {
+
+        String resData = "upload failed, not url";
+        try {
+            MultipartFile multipartFile = FileTool.fileToMultipartFile("file", transfer);
+            RespModel<String> respModel = SpringTool.getBean(FolderFeignClient.class).uploadFiles(multipartFile, type);
+            if (respModel.getCode() != RespEnum.UPLOAD_OK.getCode()) {
+                logger.error("upload failed: {}", respModel);
+                throw new RuntimeException("upload failed:" + respModel);
+            }
+            resData = respModel.getData();
+        } catch (Exception e) {
+            logger.error("upload failed:", e);
+            throw new RuntimeException("upload failed:" + e.getMessage());
+        }finally {
             transfer.delete();
-        } else {
-            logger.info("发送失败！" + responseEntity.getBody());
         }
-        return responseEntity.getBody().getString("data");
+        return resData;
     }
 
     public static String uploadPatchRecord(File uploadFile) {
@@ -108,19 +117,14 @@ public class UploadTools {
                         break;
                 }
                 branch.close();
-                FileSystemResource resource = new FileSystemResource(branchFile);
-                MultiValueMap<String, Object> param = new LinkedMultiValueMap<>();
-                param.add("file", resource);
-                param.add("uuid", uuid);
-                param.add("index", i + "");
-                param.add("total", num + "");
-                ResponseEntity<JSONObject> responseEntity = restTemplate.postForEntity(baseUrl + "/upload/recordFiles", param, JSONObject.class);
-                if (responseEntity.getBody().getInteger("code") == 2000) {
-                    successNum++;
+                MultipartFile multipartFile = FileTool.fileToMultipartFile("file", branchFile);
+                RespModel<String> respModel = SpringTool.getBean(FolderFeignClient.class)
+                        .uploadRecord(multipartFile, uuid, i, num);
+                if (respModel.getCode() != RespEnum.UPLOAD_OK.getCode()) {
+                    logger.error("upload failed: {}", respModel);
                 }
-                if (responseEntity.getBody().getString("data") != null) {
-                    url = responseEntity.getBody().getString("data");
-                }
+                url = respModel.getData();
+                successNum++;
                 branchFile.delete();
                 try {
                     Thread.sleep(1000);
@@ -135,10 +139,8 @@ public class UploadTools {
             } else {
                 logger.info("上传缺失！");
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("upload failed:", e);
         }
         return url;
     }

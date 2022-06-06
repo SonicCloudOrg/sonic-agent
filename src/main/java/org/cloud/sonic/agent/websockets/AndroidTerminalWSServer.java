@@ -1,3 +1,19 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
@@ -7,7 +23,7 @@ import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
-import org.cloud.sonic.agent.tools.AgentTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +47,10 @@ import java.util.concurrent.TimeUnit;
  * @date 2021/10/30 23:35
  */
 @Component
-@ServerEndpoint(value = "/websockets/terminal/{key}/{udId}", configurator = MyEndpointConfigure.class)
-public class TerminalWSServer {
+@ServerEndpoint(value = "/websockets/android/terminal/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+public class AndroidTerminalWSServer {
 
-    private final Logger logger = LoggerFactory.getLogger(TerminalWSServer.class);
+    private final Logger logger = LoggerFactory.getLogger(AndroidTerminalWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
@@ -44,8 +60,9 @@ public class TerminalWSServer {
     private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
 
     @OnOpen
-    public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
-        if (secretKey.length() == 0 || (!secretKey.equals(key))) {
+    public void onOpen(Session session, @PathParam("key") String secretKey,
+                       @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
             logger.info("拦截访问！");
             return;
         }
@@ -288,7 +305,7 @@ public class TerminalWSServer {
                         JSONObject appListDetail = new JSONObject();
                         appListDetail.put("msg", "appListDetail");
                         appListDetail.put("detail", JSON.parseObject(dataJson));
-                        AgentTool.sendText(session, appListDetail.toJSONString());
+                        BytesTool.sendText(session, appListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -296,7 +313,7 @@ public class TerminalWSServer {
                     if (appListSocket != null && appListSocket.isConnected()) {
                         try {
                             appListSocket.close();
-                            logger.info("appList socket已关闭");
+                            logger.info("appList socket closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -304,7 +321,7 @@ public class TerminalWSServer {
                     if (inputStream != null) {
                         try {
                             inputStream.close();
-                            logger.info("appList output流已关闭");
+                            logger.info("appList output stream closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -363,7 +380,7 @@ public class TerminalWSServer {
                         JSONObject wifiListDetail = new JSONObject();
                         wifiListDetail.put("msg", "wifiList");
                         wifiListDetail.put("detail", JSON.parseObject(dataJson));
-                        AgentTool.sendText(session, wifiListDetail.toJSONString());
+                        BytesTool.sendText(session, wifiListDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -371,7 +388,7 @@ public class TerminalWSServer {
                     if (wifiListSocket != null && wifiListSocket.isConnected()) {
                         try {
                             wifiListSocket.close();
-                            logger.info("wifiList socket已关闭");
+                            logger.info("wifiList socket closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -379,7 +396,7 @@ public class TerminalWSServer {
                     if (inputStream != null) {
                         try {
                             inputStream.close();
-                            logger.info("wifiList output流已关闭");
+                            logger.info("wifiList output stream closed.");
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

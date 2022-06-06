@@ -1,8 +1,29 @@
+/*
+ *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
-import org.cloud.sonic.agent.tests.android.AndroidTemperThread;
-import org.cloud.sonic.agent.tools.DownloadTool;
+import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
+import org.cloud.sonic.agent.event.AgentRegisteredEvent;
+import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
+import org.cloud.sonic.agent.tools.ScheduleTool;
+import org.cloud.sonic.agent.tools.file.DownloadTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.agent.tools.file.FileTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,13 +31,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
-import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author ZhouYiXun
@@ -24,12 +49,13 @@ import java.util.concurrent.TimeUnit;
  * @date 2021/08/16 19:26
  */
 @ConditionalOnProperty(value = "modules.android.enable", havingValue = "true")
-@DependsOn({"androidThreadPoolInit", "nettyMsgInit"})
+@DependsOn({"androidThreadPoolInit"})
 @Component
-public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
+@Order(value = Ordered.HIGHEST_PRECEDENCE)
+public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegisteredEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
-    private AndroidTemperThread androidTemperThread = null;
+    private AndroidBatteryThread androidBatteryThread = null;
     private static String apkVersion;
     @Value("${sonic.saa}")
     private String ver;
@@ -39,8 +65,9 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
 
     @Override
-    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
-        logger.info("开启安卓相关功能");
+    public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
+        init();
+        logger.info("Enable Android Module");
     }
 
     /**
@@ -54,7 +81,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         if (path != null) {
             path += File.separator + "platform-tools" + File.separator + "adb";
         } else {
-            logger.error("获取ANDROID_HOME环境变量失败！");
+            logger.error("Get ANDROID_HOME env failed!");
             return null;
         }
         return path;
@@ -71,16 +98,16 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         //获取系统SDK路径
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
-        androidDebugBridge.addDeviceChangeListener(androidDeviceStatusListener);
+        AndroidDebugBridge.addDeviceChangeListener(androidDeviceStatusListener);
         try {
             AndroidDebugBridge.init(false);
         } catch (IllegalStateException e) {
-            logger.warn("AndroidDebugBridge已经初始化过，无需再初始化");
+            logger.warn("AndroidDebugBridge has been init!");
         }
         //开始创建ADB
         androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         if (androidDebugBridge != null) {
-            logger.info("安卓设备监听已开启");
+            logger.info("Android devices listening...");
         }
         int count = 0;
         //获取设备列表，超时后退出
@@ -95,10 +122,12 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 break;
             }
         }
-        if (androidTemperThread == null || !androidTemperThread.isAlive()) {
-            androidTemperThread = new AndroidTemperThread();
-            androidTemperThread.start();
-        }
+        ScheduleTool.scheduleAtFixedRate(
+                new AndroidBatteryThread(),
+                AndroidBatteryThread.DELAY,
+                AndroidBatteryThread.DELAY,
+                AndroidBatteryThread.TIME_UNIT
+        );
     }
 
     /**
@@ -128,8 +157,14 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
+    public static void shutdown(IDevice iDevice) {
+        if (iDevice != null) {
+            executeCommand(iDevice, "reboot -p");
+        }
+    }
+
     /**
-     * @param udId
+     * @param udId 设备序列号
      * @return com.android.ddmlib.IDevice
      * @author ZhouYiXun
      * @des 根据udId获取iDevice对象
@@ -150,7 +185,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             }
         }
         if (iDevice == null) {
-            logger.info("设备未连接！");
+            logger.info("Device 「{}」 has not connected!", udId);
         }
         return iDevice;
     }
@@ -179,10 +214,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     .replace("\n", "")
                     .replace(" ", "");
             if (size.length() > 20) {
-                size = "未知";
+                size = "unknown";
             }
         } catch (Exception e) {
-            logger.info("获取屏幕尺寸失败！拔插瞬间可忽略该错误...");
+            logger.info("Get screen size failed, ignore when plug in moment...");
         }
         return size;
     }
@@ -200,7 +235,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         try {
             iDevice.executeShellCommand(command, output, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            logger.info("发送shell指令 {} 给设备 {} 异常！"
+            logger.info("Send shell command {} to device {} failed."
                     , command, iDevice.getSerialNumber());
             logger.error(e.getMessage());
         }
@@ -227,8 +262,17 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public static void forward(IDevice iDevice, int port, String service) {
         try {
-            logger.info("{} 设备 {} 服务端口转发到：{}", iDevice.getSerialNumber(), service, port);
+            logger.info("{} device {} port forward to {}", iDevice.getSerialNumber(), service, port);
             iDevice.createForward(port, service, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    public static void forward(IDevice iDevice, int port, int target) {
+        try {
+            logger.info("{} device {} forward to {}", iDevice.getSerialNumber(), target, port);
+            iDevice.createForward(port, target);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -245,8 +289,17 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public static void removeForward(IDevice iDevice, int port, String serviceName) {
         try {
-            logger.info("{} 设备 {} 服务端口取消转发到：{}", iDevice.getSerialNumber(), serviceName, port);
+            logger.info("cancel {} device {} port forward to {}", iDevice.getSerialNumber(), serviceName, port);
             iDevice.removeForward(port, serviceName, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    public static void removeForward(IDevice iDevice, int port, int target) {
+        try {
+            logger.info("cancel {} device {} forward to {}", iDevice.getSerialNumber(), target, port);
+            iDevice.removeForward(port, target);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -398,7 +451,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     }
 
     public static void searchDevice(IDevice iDevice) {
-        executeCommand(iDevice, "am start -n com.sonic.plugins.assist/com.sonic.plugins.assist.SearchActivity");
+        executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SearchActivity");
     }
 
     public static void controlBattery(IDevice iDevice, int type) {
@@ -408,6 +461,63 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         if (type == 1) {
             executeCommand(iDevice, "dumpsys battery reset");
         }
+    }
+
+    public static String pullFile(IDevice iDevice, String path) {
+        String result = null;
+        File base = new File("test-output" + File.separator + "pull");
+        String filename = base.getAbsolutePath() + File.separator + UUID.randomUUID();
+        File file = new File(filename);
+        file.mkdirs();
+        String system = System.getProperty("os.name").toLowerCase();
+        String processName = String.format("process-%s-pull-file", iDevice.getSerialNumber());
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+        try {
+            Process process = null;
+            String command = String.format("%s pull %s %s", getADBPathFromSystemEnv(), path, file.getAbsolutePath());
+            if (system.contains("win")) {
+                process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                process = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
+            }
+            GlobalProcessMap.getMap().put(processName, process);
+            boolean isRunning;
+            int wait = 0;
+            do {
+                Thread.sleep(500);
+                wait++;
+                isRunning = false;
+                List<ProcessHandle> processHandleList = process.children().collect(Collectors.toList());
+                if (processHandleList.size() == 0) {
+                    if (process.isAlive()) {
+                        isRunning = true;
+                    }
+                } else {
+                    for (ProcessHandle p : processHandleList) {
+                        if (p.isAlive()) {
+                            isRunning = true;
+                            break;
+                        }
+                    }
+                }
+                if (wait >= 20) {
+                    process.children().forEach(ProcessHandle::destroy);
+                    process.destroy();
+                    break;
+                }
+            } while (isRunning);
+            File re = new File(filename + File.separator + (path.lastIndexOf("/") == -1 ? path : path.substring(path.lastIndexOf("/"))));
+            result = UploadTools.upload(re, "packageFiles");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            FileTool.deleteDir(file);
+        }
+        return result;
     }
 
     /**
