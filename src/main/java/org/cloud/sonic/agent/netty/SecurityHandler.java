@@ -94,7 +94,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.info("Server: {} error,cause", ctx.channel().remoteAddress());
-        cause.fillInStackTrace();
+        cause.printStackTrace();
     }
 
     @Override

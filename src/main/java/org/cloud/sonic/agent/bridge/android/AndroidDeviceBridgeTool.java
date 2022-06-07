@@ -101,13 +101,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         AndroidDebugBridge.addDeviceChangeListener(androidDeviceStatusListener);
         try {
             AndroidDebugBridge.init(false);
+            //开始创建ADB
+            androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            if (androidDebugBridge != null) {
+                logger.info("Android devices listening...");
+            }
         } catch (IllegalStateException e) {
             logger.warn("AndroidDebugBridge has been init!");
-        }
-        //开始创建ADB
-        androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        if (androidDebugBridge != null) {
-            logger.info("Android devices listening...");
         }
         int count = 0;
         //获取设备列表，超时后退出

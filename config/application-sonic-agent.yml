@@ -5,7 +5,7 @@ sonic:
     # 替换为Agent服务的端口，可以自行更改
     port: 7777
     # 替换为前端新增Agent生成的key
-    key: 29002272-4659-4808-a804-08ce3388b136
+    key: 0f8f6d9a-0c6c-418b-a831-627f1f27603b
     cabinet:
       # 是否使用Sonic机柜，可以前往https://sonic-cloud.gitee.io/#/Cabinet了解更多
       enable: false
