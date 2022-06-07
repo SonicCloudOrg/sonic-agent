@@ -33,7 +33,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("Agent:{} 请求连接到服务器 {} !", ctx.channel().localAddress(), ctx.channel().remoteAddress());
+        logger.info("Agent：{} request connection to server.", ctx.channel().localAddress(), ctx.channel().remoteAddress());
         JSONObject auth = new JSONObject();
         auth.put("msg", "auth");
         auth.put("agentKey", agentKey);
@@ -46,7 +46,7 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         JSONObject jsonMsg = JSON.parseObject((String) msg);
-        logger.info("Agent:{} 收到服务器 {} 返回验证消息: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonMsg);
+        logger.info("Agent:{} <- {} auth result: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonMsg);
         if (jsonMsg.getString("msg") != null && jsonMsg.getString("msg").equals("auth") && jsonMsg.getString("result").equals("pass")) {
             logger.info("server auth successful!");
             logger.info("sonic-agent version: " + version);
@@ -93,12 +93,13 @@ public class SecurityHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("Agent: {} 发生异常 {}", ctx.channel().remoteAddress(), cause.getMessage());
+        logger.info("Server: {} error,cause", ctx.channel().remoteAddress());
+        cause.fillInStackTrace();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("Agent: {} 连接断开", ctx.channel().remoteAddress());
+        logger.info("Server: {} disconnected.", ctx.channel().remoteAddress());
         NettyThreadPool.isPassSecurity = false;
         ctx.close();
     }

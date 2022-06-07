@@ -55,13 +55,13 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         serverOnline = true;
-        logger.info("Agent:{} 连接到服务器 {} 成功!", ctx.channel().localAddress(), ctx.channel().remoteAddress());
+        logger.info("Agent:{} connect to {} successful!", ctx.channel().localAddress(), ctx.channel().remoteAddress());
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         JSONObject jsonObject = JSON.parseObject((String) msg);
-        logger.info("Agent:{} 收到服务器 {} 消息: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonObject);
+        logger.info("Agent:{} <- {} message: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonObject);
         NettyThreadPool.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
                 case "position": {
@@ -146,12 +146,13 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("服务器: {} 发生异常 {}", ctx.channel().remoteAddress(), cause.fillInStackTrace());
+        logger.info("Server: {} error,cause", ctx.channel().remoteAddress());
+        cause.fillInStackTrace();
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("服务器: {} 连接断开", ctx.channel().remoteAddress());
+        logger.info("Server: {} disconnected.", ctx.channel().remoteAddress());
         NettyThreadPool.isPassSecurity = false;
         serverOnline = false;
         if (channel != null) {

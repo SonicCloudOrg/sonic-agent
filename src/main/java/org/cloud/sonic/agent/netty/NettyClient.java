@@ -78,7 +78,7 @@ public class NettyClient implements ApplicationRunner {
                     SpringTool.getBean(SibTool.class).init();
                 }
             } else {
-                logger.info("连接到服务器{}:{}失败！10s后重连...", serverHost, serverPort);
+                logger.info("connect to server {}:{} failed. retry in 10s...", serverHost, serverPort);
                 futureListener.channel().eventLoop().schedule(this::doConnect, 10, TimeUnit.SECONDS);
             }
         });
