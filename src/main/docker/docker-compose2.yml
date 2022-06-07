@@ -1,7 +1,7 @@
 version: '3'
 services:
   sonic-agent:
-    image: "sonicorg/sonic-agent-linux:v1.4.0-rc"
+    image: "sonicorg/sonic-agent-linux:v1.4.0-release"
     environment:
       - ZOOKEEPER_HOST=192.168.1.1
       - ZOOKEEPER_PORT=2181
