@@ -1,7 +1,7 @@
 sonic:
   agent:
     # 替换为部署Agent机器的ipv4
-    host: 192.168.2.104
+    host: 192.168.1.25
     # 替换为Agent服务的端口，可以自行更改
     port: 7777
     # 替换为前端新增Agent生成的key
@@ -15,7 +15,7 @@ sonic:
       key: e33cd65c-a40e-431f-9e65-4a91bac6f487
   server:
     # 这个host改成后端的host
-    host: 192.168.2.104
+    host: 192.168.1.25
     # 这个port改成后端文件中心的port（一般不变）
     folder-port: 8094
     # 这个port改成后端传输中心的port（一般不变）
