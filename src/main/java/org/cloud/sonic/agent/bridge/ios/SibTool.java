@@ -145,6 +145,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
 
     public static void sendDisConnectStatus(JSONObject jsonObject) {
         JSONObject deviceStatus = new JSONObject();
+        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
         deviceStatus.put("status", DeviceStatus.DISCONNECTED);
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
@@ -159,6 +160,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     public static void sendOnlineStatus(JSONObject jsonObject) {
         JSONObject detail = jsonObject.getJSONObject("deviceDetail");
         JSONObject deviceStatus = new JSONObject();
+        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
         deviceStatus.put("name", detail.getString("deviceName"));
         deviceStatus.put("model", detail.getString("generationName"));

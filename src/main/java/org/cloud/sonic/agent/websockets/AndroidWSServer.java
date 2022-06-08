@@ -652,8 +652,8 @@ public class AndroidWSServer implements IAndroidWSServer {
                 }
             }
             SGMTool.stopProxy(iDevice.getSerialNumber());
+            AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         }
-        AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);
         removeUdIdMapAndSet(session);
         WebSocketSessionMap.removeSession(session);
