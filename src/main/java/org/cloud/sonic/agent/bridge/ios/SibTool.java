@@ -21,14 +21,11 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
-import org.cloud.sonic.agent.event.AgentRegisteredEvent;
-import org.cloud.sonic.agent.registry.zookeeper.AgentZookeeperRegistry;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.ScheduleTool;
-import org.cloud.sonic.common.tools.SpringTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +33,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
@@ -56,7 +54,7 @@ import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 @DependsOn({"iOSThreadPoolInit"})
 @Component
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
-public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
+public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(SibTool.class);
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
@@ -71,7 +69,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
     }
 
     @Override
-    public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
+    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         init();
         logger.info("Enable iOS Module");
     }
@@ -147,13 +145,13 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
 
     public static void sendDisConnectStatus(JSONObject jsonObject) {
         JSONObject deviceStatus = new JSONObject();
+        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
         deviceStatus.put("status", DeviceStatus.DISCONNECTED);
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
-        deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
         deviceStatus.put("platform", PlatformType.IOS);
         logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
-        SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
+        NettyThreadPool.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
@@ -162,6 +160,7 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
     public static void sendOnlineStatus(JSONObject jsonObject) {
         JSONObject detail = jsonObject.getJSONObject("deviceDetail");
         JSONObject deviceStatus = new JSONObject();
+        deviceStatus.put("msg", "deviceDetail");
         deviceStatus.put("udId", jsonObject.getString("serialNumber"));
         deviceStatus.put("name", detail.getString("deviceName"));
         deviceStatus.put("model", detail.getString("generationName"));
@@ -171,9 +170,8 @@ public class SibTool implements ApplicationListener<AgentRegisteredEvent> {
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
         deviceStatus.put("manufacturer", "APPLE");
-        deviceStatus.put("agentId", AgentZookeeperRegistry.currentAgent.getId());
         logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
-        SpringTool.getBean(AgentManagerTool.class).devicesStatus(deviceStatus);
+        NettyThreadPool.send(deviceStatus);
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));

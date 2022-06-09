@@ -48,7 +48,7 @@ import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
 import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
-import org.cloud.sonic.common.tools.SpringTool;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;

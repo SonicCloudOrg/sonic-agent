@@ -30,6 +30,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
+import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tools.*;
@@ -96,7 +97,11 @@ public class AndroidWSServer implements IAndroidWSServer {
         AndroidDeviceLocalStatus.startDebug(udId);
 
         // 更新使用用户
-        agentManagerTool.updateDebugUser(udId, token);
+        JSONObject jsonDebug = new JSONObject();
+        jsonDebug.put("msg", "debugUser");
+        jsonDebug.put("token", token);
+        jsonDebug.put("udId", udId);
+        NettyThreadPool.send(jsonDebug);
 
         WebSocketSessionMap.addSession(session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
@@ -476,13 +481,14 @@ public class AndroidWSServer implements IAndroidWSServer {
             }
             case "debug":
                 if (msg.getString("detail").equals("runStep")) {
-                    JSONObject steps = agentManagerTool.findSteps(
-                            msg.getInteger("caseId"),
-                            session.getId(),
-                            msg.getString("pwd"),
-                            iDevice.getSerialNumber()
-                    );
-                    agentManagerTool.runAndroidStep(steps);
+                    JSONObject jsonDebug = new JSONObject();
+                    jsonDebug.put("msg", "findSteps");
+                    jsonDebug.put("key", key);
+                    jsonDebug.put("udId", iDevice.getSerialNumber());
+                    jsonDebug.put("pwd", msg.getString("pwd"));
+                    jsonDebug.put("sessionId", session.getId());
+                    jsonDebug.put("caseId", msg.getInteger("caseId"));
+                    NettyThreadPool.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
@@ -646,8 +652,8 @@ public class AndroidWSServer implements IAndroidWSServer {
                 }
             }
             SGMTool.stopProxy(iDevice.getSerialNumber());
+            AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         }
-        AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         outputMap.remove(session);
         removeUdIdMapAndSet(session);
         WebSocketSessionMap.removeSession(session);

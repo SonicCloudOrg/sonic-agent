@@ -18,7 +18,6 @@ package org.cloud.sonic.agent.bridge.android;
 
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
-import org.cloud.sonic.agent.event.AgentRegisteredEvent;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
@@ -31,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 @DependsOn({"androidThreadPoolInit"})
 @Component
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
-public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegisteredEvent> {
+public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
     private AndroidBatteryThread androidBatteryThread = null;
@@ -65,7 +65,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
 
 
     @Override
-    public void onApplicationEvent(@NonNull AgentRegisteredEvent event) {
+    public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         init();
         logger.info("Enable Android Module");
     }
@@ -101,13 +101,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<AgentRegiste
         AndroidDebugBridge.addDeviceChangeListener(androidDeviceStatusListener);
         try {
             AndroidDebugBridge.init(false);
+            //开始创建ADB
+            androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            if (androidDebugBridge != null) {
+                logger.info("Android devices listening...");
+            }
         } catch (IllegalStateException e) {
             logger.warn("AndroidDebugBridge has been init!");
-        }
-        //开始创建ADB
-        androidDebugBridge = AndroidDebugBridge.createBridge(systemADBPath, true, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        if (androidDebugBridge != null) {
-            logger.info("Android devices listening...");
         }
         int count = 0;
         //获取设备列表，超时后退出
