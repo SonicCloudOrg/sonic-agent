@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.automation;
+package org.cloud.sonic.agent.models;
 
 /**
  * @author ZhouYiXun

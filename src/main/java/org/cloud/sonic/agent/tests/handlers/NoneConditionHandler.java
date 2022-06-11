@@ -18,7 +18,7 @@ package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.HandleDes;
+import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.enums.ConditionEnum;

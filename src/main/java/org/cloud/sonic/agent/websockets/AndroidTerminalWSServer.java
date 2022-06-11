@@ -22,6 +22,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
@@ -47,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2021/10/30 23:35
  */
 @Component
-@ServerEndpoint(value = "/websockets/android/terminal/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/terminal/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class AndroidTerminalWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidTerminalWSServer.class);

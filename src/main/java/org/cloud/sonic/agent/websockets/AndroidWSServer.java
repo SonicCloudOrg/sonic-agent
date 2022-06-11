@@ -22,11 +22,12 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.AppiumServer;
-import org.cloud.sonic.agent.automation.HandleDes;
+import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
@@ -59,7 +60,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @Component
-@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}/{isAutoInit}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}/{isAutoInit}", configurator = WsEndpointConfigure.class)
 public class AndroidWSServer implements IAndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);

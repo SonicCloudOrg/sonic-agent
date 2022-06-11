@@ -22,11 +22,12 @@ import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
 import org.cloud.sonic.agent.automation.AppiumServer;
-import org.cloud.sonic.agent.automation.HandleDes;
+import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
@@ -35,7 +36,6 @@ import org.cloud.sonic.agent.netty.NettyThreadPool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SGMTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 @Component
-@ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class IOSWSServer implements IIOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
     @Value("${sonic.agent.key}")

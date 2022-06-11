@@ -18,6 +18,7 @@ package org.cloud.sonic.agent.websockets;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
@@ -40,7 +41,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@ServerEndpoint(value = "/websockets/audio/{key}/{udId}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/audio/{key}/{udId}", configurator = WsEndpointConfigure.class)
 public class AudioWSServer {
     private final Logger logger = LoggerFactory.getLogger(AudioWSServer.class);
     @Value("${sonic.agent.key}")

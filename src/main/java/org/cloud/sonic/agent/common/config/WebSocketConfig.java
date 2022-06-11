@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.websockets;
+package org.cloud.sonic.agent.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +12,7 @@ public class WebSocketConfig {
     }
 
     @Bean
-    public MyEndpointConfigure  newMyEndpointConfigure (){
-        return new MyEndpointConfigure ();
+    public WsEndpointConfigure newMyEndpointConfigure (){
+        return new WsEndpointConfigure();
     }
 }

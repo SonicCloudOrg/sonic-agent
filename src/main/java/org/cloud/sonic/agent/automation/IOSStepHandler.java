@@ -39,6 +39,8 @@ import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.models.FindResult;
+import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;

@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.websockets;
 
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -37,7 +38,7 @@ import java.util.Map;
  * @date 2021/10/25 23:03
  */
 @Component
-@ServerEndpoint(value = "/websockets/webView/{key}/{port}/{id}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/webView/{key}/{port}/{id}", configurator = WsEndpointConfigure.class)
 public class WebViewWSServer {
     private final Logger logger = LoggerFactory.getLogger(WebViewWSServer.class);
     @Value("${sonic.agent.key}")
