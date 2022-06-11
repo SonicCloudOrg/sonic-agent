@@ -22,13 +22,10 @@ import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
-import org.cloud.sonic.agent.netty.NettyClientHandler;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -57,7 +54,7 @@ public class AndroidBatteryThread implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
-        if (NettyClientHandler.channel == null) {
+        if (TransportWorker.client == null) {
             return;
         }
 
@@ -93,7 +90,7 @@ public class AndroidBatteryThread implements Runnable {
                                 errCall.put("udId", iDevice.getSerialNumber());
                                 errCall.put("tem", tem);
                                 errCall.put("type", 1);
-                                NettyThreadPool.send(errCall);
+                                TransportWorker.send(errCall);
                                 DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
                                 SHCService.setGear(iDevice.getSerialNumber(), BytesTool.currentCabinet.getLowGear());
                             } else {
@@ -108,7 +105,7 @@ public class AndroidBatteryThread implements Runnable {
                                 errCall.put("udId", iDevice.getSerialNumber());
                                 errCall.put("tem", tem);
                                 errCall.put("type", 2);
-                                NettyThreadPool.send(errCall);
+                                TransportWorker.send(errCall);
                                 AndroidDeviceBridgeTool.shutdown(iDevice);
                                 DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
                                 DevicesBatteryMap.getGearMap().remove(iDevice.getSerialNumber());
@@ -138,7 +135,7 @@ public class AndroidBatteryThread implements Runnable {
         result.put("msg", "battery");
         result.put("detail", detail);
         try {
-            NettyThreadPool.send(result);
+            TransportWorker.send(result);
         } catch (Exception e) {
             log.error("Send battery msg failed, cause: ", e);
         }

@@ -32,7 +32,7 @@ import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
@@ -91,7 +91,7 @@ public class IOSWSServer implements IIOSWSServer {
         jsonDebug.put("msg", "debugUser");
         jsonDebug.put("token", token);
         jsonDebug.put("udId", udId);
-        NettyThreadPool.send(jsonDebug);
+        TransportWorker.send(jsonDebug);
 
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
@@ -200,7 +200,7 @@ public class IOSWSServer implements IIOSWSServer {
                     jsonDebug.put("udId", udId);
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
-                    NettyThreadPool.send(jsonDebug);
+                    TransportWorker.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(

@@ -19,9 +19,7 @@ package org.cloud.sonic.agent.bridge.android;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 
 /**
  * @author ZhouYiXun
@@ -43,7 +41,7 @@ public class AndroidDeviceLocalStatus {
         deviceDetail.put("msg", "deviceDetail");
         deviceDetail.put("udId", udId);
         deviceDetail.put("status", status);
-        NettyThreadPool.send(deviceDetail);
+        TransportWorker.send(deviceDetail);
     }
 
     /**

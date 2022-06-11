@@ -20,8 +20,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
-import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
@@ -66,7 +65,7 @@ public class SHCService {
                     int position = result.getInteger("position");
                     if (result.getString("msg").equals("add")) {
                         positionMap.put(udId, position);
-                        NettyThreadPool.send(updateMsg(udId, position, null));
+                        TransportWorker.send(updateMsg(udId, position, null));
                     }
                 }
 
@@ -134,7 +133,7 @@ public class SHCService {
                 shcClient.send(generateMsg("gear",
                         String.format("%d,%d", position, gear)));
                 log.info("Set {} to Gear {}!", udId, gear);
-                NettyThreadPool.send(updateMsg(udId, null, gear));
+                TransportWorker.send(updateMsg(udId, null, gear));
                 DevicesBatteryMap.getGearMap().put(udId, gear);
             }
         }
