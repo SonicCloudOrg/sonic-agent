@@ -1,12 +1,10 @@
-package org.cloud.sonic.agent.netty;
+package org.cloud.sonic.agent.transport;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
@@ -14,6 +12,7 @@ import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
+import org.cloud.sonic.agent.models.Cabinet;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
@@ -23,49 +22,80 @@ import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.agent.tools.shc.SHCService;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
 import org.testng.TestNG;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
-import javax.websocket.Session;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import static org.cloud.sonic.agent.tools.shc.SHCService.positionMap;
+@Slf4j
+public class TransportClient extends WebSocketClient {
+    String host = String.valueOf(SpringTool.getPropertiesValue("sonic.agent.host"));
+    String version = String.valueOf(SpringTool.getPropertiesValue("spring.version"));
+    Integer storey = Integer.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.storey"));
+    Integer port = Integer.valueOf(SpringTool.getPropertiesValue("sonic.agent.port"));
 
-public class NettyClientHandler extends ChannelInboundHandlerAdapter {
-    private final Logger logger = LoggerFactory.getLogger(NettyClientHandler.class);
-    private static Map<String, Session> sessionMap = new ConcurrentHashMap<String, Session>();
-    private NettyClient nettyClient;
-    public static Channel channel = null;
-
-    public static volatile boolean serverOnline = false;
-
-    public NettyClientHandler(NettyClient nettyClient, Channel channel) {
-        this.nettyClient = nettyClient;
-        this.channel = channel;
+    public TransportClient(URI serverUri) {
+        super(serverUri);
     }
 
     @Override
-    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        serverOnline = true;
-        logger.info("Agent:{} connect to {} successful!", ctx.channel().localAddress(), ctx.channel().remoteAddress());
+    public void onOpen(ServerHandshake serverHandshake) {
+        log.info("Connected and auth...");
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        JSONObject jsonObject = JSON.parseObject((String) msg);
-        logger.info("Agent:{} <- {} message: {}", ctx.channel().localAddress(), ctx.channel().remoteAddress(), jsonObject);
-        NettyThreadPool.cachedThreadPool.execute(() -> {
+    public void onMessage(String s) {
+        JSONObject jsonObject = JSON.parseObject(s);
+        log.info("Agent <- Server message: {}", jsonObject);
+        TransportWorker.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
+                case "auth": {
+                    if (jsonObject.getString("result").equals("pass")) {
+                        log.info("server auth successful!");
+                        if (jsonObject.getString("cabinetAuth") != null && jsonObject.getString("cabinetAuth").equals("pass")) {
+                            SHCService.connect();
+                            if (SHCService.status != SHCService.SHCStatus.OPEN) {
+                                BytesTool.currentCabinet = JSON.parseObject("cabinet", Cabinet.class);
+                                BytesTool.storey = storey;
+                            } else {
+                                log.info("SHC连接失败！请确保您使用的是Sonic机柜，" +
+                                        "如果仍然连接不上，请在对应Agent所在主机执行[sudo service shc restart]");
+                            }
+                        } else {
+                            log.info("cabinet not found!");
+                        }
+                        BytesTool.agentId = jsonObject.getInteger("id");
+                        BytesTool.agentHost = host;
+                        TransportWorker.client = this;
+                        JSONObject agentInfo = new JSONObject();
+                        agentInfo.put("msg", "agentInfo");
+                        agentInfo.put("agentId", jsonObject.getInteger("id"));
+                        agentInfo.put("port", port);
+                        agentInfo.put("version", "v" + version);
+                        agentInfo.put("systemType", System.getProperty("os.name"));
+                        agentInfo.put("host", host);
+                        agentInfo.put("cabinetId", BytesTool.currentCabinet.getId());
+                        agentInfo.put("storey", BytesTool.storey);
+                        TransportWorker.client.send(agentInfo.toJSONString());
+                    } else {
+                        TransportWorker.isKeyAuth = false;
+                        log.info("server auth failed!");
+                    }
+                    break;
+                }
                 case "position": {
-                    positionMap.put(jsonObject.getString("udId"), jsonObject.getInteger("position"));
+                    SHCService.positionMap.put(jsonObject.getString("udId"), jsonObject.getInteger("position"));
                     break;
                 }
                 case "shutdown": {
@@ -89,7 +119,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
                     JSONObject heartBeat = new JSONObject();
                     heartBeat.put("msg", "heartBeat");
                     heartBeat.put("status", "alive");
-                    NettyThreadPool.send(heartBeat);
+                    TransportWorker.send(heartBeat);
                     break;
                 case "runStep":
                     if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
@@ -145,25 +175,14 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.info("Server: {} error,cause", ctx.channel().remoteAddress());
-        cause.printStackTrace();
+    public void onClose(int i, String s, boolean b) {
+        log.info("Server disconnected. Retry in 10s...");
+        TransportWorker.client = null;
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        logger.info("Server: {} disconnected.", ctx.channel().remoteAddress());
-        NettyThreadPool.isPassSecurity = false;
-        serverOnline = false;
-        if (channel != null) {
-            channel.close();
-        }
-        channel = null;
-        nettyClient.doConnect();
-    }
-
-    public static Map<String, Session> getMap() {
-        return sessionMap;
+    public void onError(Exception e) {
+        log.info(e.getMessage());
     }
 
     /**
