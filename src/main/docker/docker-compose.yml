@@ -1,7 +1,7 @@
 version: '3'
 services:
   sonic-agent:
-    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.0-alpha1"
+    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.1-alpha1"
     environment:
       # 对应server的env配置，注意防火墙关闭对应端口
       - SERVER_HOST=192.168.1.1
