@@ -1,11 +1,11 @@
 sonic:
   agent:
     # 替换为部署Agent机器的ipv4
-    host: 192.168.1.1
+    host: 192.168.1.2
     # 替换为Agent服务的端口，可以自行更改
     port: 7777
     # 替换为前端新增Agent生成的key
-    key: 29002272-4659-4808-a804-08ce3388b1361
+    key: 29002272-4659-4808-a804-08ce3388b136
     cabinet:
       # 是否使用Sonic机柜，可以前往https://sonic-cloud.gitee.io/#/Cabinet了解更多
       enable: false

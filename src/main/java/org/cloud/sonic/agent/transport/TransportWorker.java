@@ -39,9 +39,9 @@ public class TransportWorker {
 
     public static void readQueue() {
         cachedThreadPool.execute(() -> {
-            while (client != null) {
+            while (isKeyAuth) {
                 try {
-                    if (client.isOpen()) {
+                    if (client != null && client.isOpen()) {
                         if (!dataQueue.isEmpty()) {
                             JSONObject m = dataQueue.poll();
                             m.put("agentId", BytesTool.agentId);

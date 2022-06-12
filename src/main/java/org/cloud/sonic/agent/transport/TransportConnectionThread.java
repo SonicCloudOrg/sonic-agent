@@ -45,12 +45,13 @@ public class TransportConnectionThread implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
-        if (TransportWorker.client == null && TransportWorker.isKeyAuth) {
+        if (TransportWorker.client == null) {
+            if(!TransportWorker.isKeyAuth){
+                return;
+            }
             URI uri = URI.create(String.format("ws://%s:%d/websockets/agent/%s/1", serverHost, serverPort, key));
             TransportClient transportClient = new TransportClient(uri);
             transportClient.connect();
-        }else{
-            log.info("client health.");
         }
     }
 }

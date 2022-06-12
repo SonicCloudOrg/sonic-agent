@@ -192,7 +192,9 @@ public class TransportClient extends WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
-        log.info("Server disconnected. Retry in 10s...");
+        if(TransportWorker.isKeyAuth) {
+            log.info("Server disconnected. Retry in 10s...");
+        }
         TransportWorker.client = null;
     }
 
