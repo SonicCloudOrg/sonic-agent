@@ -17,6 +17,7 @@
 package org.cloud.sonic.agent.websockets;
 
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.slf4j.Logger;
@@ -60,7 +61,7 @@ public class WebViewWSServer {
 
             @Override
             public void onMessage(String s) {
-                sendText(session, s);
+                BytesTool.sendText(session, s);
             }
 
             @Override
@@ -97,15 +98,5 @@ public class WebViewWSServer {
     @OnError
     public void onError(Session session, Throwable error) {
         logger.error(error.getMessage());
-    }
-
-    private void sendText(Session session, String message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IllegalStateException | IOException e) {
-                logger.error("webSocket发送失败!连接已关闭！");
-            }
-        }
     }
 }

@@ -19,9 +19,7 @@ package org.cloud.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
-import org.cloud.sonic.agent.netty.NettyClientHandler;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.agent.tools.SpringTool;
@@ -52,7 +50,7 @@ public class IOSBatteryThread implements Runnable {
     @Override
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
-        if (NettyClientHandler.channel == null) {
+        if (TransportWorker.client == null) {
             return;
         }
 
@@ -90,7 +88,7 @@ public class IOSBatteryThread implements Runnable {
         result.put("msg", "battery");
         result.put("detail", detail);
         try {
-            NettyThreadPool.send(result);
+            TransportWorker.send(result);
         } catch (Exception e) {
             log.error("Send battery msg failed, cause: ", e);
         }

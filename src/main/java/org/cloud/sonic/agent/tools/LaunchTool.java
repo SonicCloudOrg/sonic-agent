@@ -21,6 +21,8 @@ import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.RemoteDebugDriver;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
+import org.cloud.sonic.agent.transport.TransportConnectionThread;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +47,13 @@ public class LaunchTool implements ApplicationRunner {
         if (!testFile.exists()) {
             testFile.mkdirs();
         }
+        ScheduleTool.scheduleAtFixedRate(
+                new TransportConnectionThread(),
+                TransportConnectionThread.DELAY,
+                TransportConnectionThread.DELAY,
+                TransportConnectionThread.TIME_UNIT
+        );
+        TransportWorker.readQueue();
         if (isEnableSgm) {
             // fixme 本地调试环境忽略
             SGMTool.init();

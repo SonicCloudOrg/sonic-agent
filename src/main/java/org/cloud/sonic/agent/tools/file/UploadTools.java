@@ -30,7 +30,7 @@ public class UploadTools {
     private final static Logger logger = LoggerFactory.getLogger(UploadTools.class);
     @Value("${sonic.server.host}")
     private String host;
-    @Value("${sonic.server.folder-port}")
+    @Value("${sonic.server.port}")
     private String port;
     private static String baseUrl;
 

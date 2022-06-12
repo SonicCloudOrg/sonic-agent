@@ -31,7 +31,7 @@ import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tools.*;
@@ -102,7 +102,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         jsonDebug.put("msg", "debugUser");
         jsonDebug.put("token", token);
         jsonDebug.put("udId", udId);
-        NettyThreadPool.send(jsonDebug);
+        TransportWorker.send(jsonDebug);
 
         WebSocketSessionMap.addSession(session);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
@@ -489,7 +489,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     jsonDebug.put("pwd", msg.getString("pwd"));
                     jsonDebug.put("sessionId", session.getId());
                     jsonDebug.put("caseId", msg.getInteger("caseId"));
-                    NettyThreadPool.send(jsonDebug);
+                    TransportWorker.send(jsonDebug);
                 } else if (msg.getString("detail").equals("stopStep")) {
                     TaskManager.forceStopDebugStepThread(
                             AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(

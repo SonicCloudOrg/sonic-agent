@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
-    private AndroidBatteryThread androidBatteryThread = null;
     private static String apkVersion;
     @Value("${sonic.saa}")
     private String ver;

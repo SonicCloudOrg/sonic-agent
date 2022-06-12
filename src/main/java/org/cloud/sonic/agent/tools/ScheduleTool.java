@@ -16,8 +16,6 @@
  */
 package org.cloud.sonic.agent.tools;
 
-import io.netty.util.concurrent.DefaultThreadFactory;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,8 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class ScheduleTool {
 
     private static final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(
-            Runtime.getRuntime().availableProcessors() << 1,
-            new DefaultThreadFactory("agent-scheduled")
+            Runtime.getRuntime().availableProcessors() << 1
     );
 
     public static void scheduleAtFixedRate(Runnable command,
