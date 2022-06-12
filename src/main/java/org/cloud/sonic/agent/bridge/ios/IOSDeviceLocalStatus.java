@@ -20,7 +20,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 
 public class IOSDeviceLocalStatus {
 
@@ -30,7 +30,7 @@ public class IOSDeviceLocalStatus {
         deviceDetail.put("size", IOSInfoMap.getSizeMap().get(udId));
         deviceDetail.put("udId", udId);
         deviceDetail.put("status", status);
-        NettyThreadPool.send(deviceDetail);
+        TransportWorker.send(deviceDetail);
     }
 
     public static boolean startTest(String udId) {

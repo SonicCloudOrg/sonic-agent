@@ -21,7 +21,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
@@ -151,7 +151,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("platform", PlatformType.IOS);
         logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
-        NettyThreadPool.send(deviceStatus);
+        TransportWorker.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
@@ -171,7 +171,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
         deviceStatus.put("manufacturer", "APPLE");
         logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
-        NettyThreadPool.send(deviceStatus);
+        TransportWorker.send(deviceStatus);
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));

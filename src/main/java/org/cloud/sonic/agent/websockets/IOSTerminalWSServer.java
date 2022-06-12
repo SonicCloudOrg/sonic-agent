@@ -3,6 +3,7 @@ package org.cloud.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ import java.io.IOException;
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 @Component
-@ServerEndpoint(value = "/websockets/ios/terminal/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/ios/terminal/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class IOSTerminalWSServer implements IIOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(AndroidTerminalWSServer.class);
     @Value("${sonic.agent.key}")

@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.websockets;
+package org.cloud.sonic.agent.common.config;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -7,7 +7,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import javax.websocket.server.ServerEndpointConfig;
 
-public class MyEndpointConfigure extends ServerEndpointConfig.Configurator implements ApplicationContextAware {
+public class WsEndpointConfigure extends ServerEndpointConfig.Configurator implements ApplicationContextAware {
 
     private static volatile BeanFactory context;
 
@@ -18,6 +18,6 @@ public class MyEndpointConfigure extends ServerEndpointConfig.Configurator imple
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        MyEndpointConfigure.context = applicationContext;
+        WsEndpointConfigure.context = applicationContext;
     }
 }

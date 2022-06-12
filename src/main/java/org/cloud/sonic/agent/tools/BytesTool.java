@@ -68,7 +68,7 @@ public class BytesTool {
             try {
                 session.getBasicRemote().sendBinary(ByteBuffer.wrap(message));
             } catch (IllegalStateException | IOException e) {
-                log.error("WebSocket发送失败!连接已关闭！");
+                log.error("WebSocket send msg error...connection has been closed.");
             }
         }
     }
@@ -81,7 +81,7 @@ public class BytesTool {
             try {
                 session.getBasicRemote().sendBinary(message);
             } catch (IllegalStateException | IOException e) {
-                log.error("WebSocket发送失败!连接已关闭！");
+                log.error("WebSocket send msg error...connection has been closed.");
             }
         }
     }
@@ -94,7 +94,7 @@ public class BytesTool {
             try {
                 session.getBasicRemote().sendText(message);
             } catch (IllegalStateException | IOException e) {
-                log.error("WebSocket发送失败!连接已关闭！");
+                log.error("WebSocket send msg error...connection has been closed.");
             }
         }
     }
