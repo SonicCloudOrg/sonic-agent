@@ -50,7 +50,9 @@ public class TransportConnectionThread implements Runnable {
                 return;
             }
             //开发环境去掉/server
-            URI uri = URI.create(String.format("ws://%s:%d/server/websockets/agent/%s/1", serverHost, serverPort, key));
+            String url = String.format("ws://%s:%d/server/websockets/agent/%s/1",
+                    serverHost, serverPort, key).replace(":80/","/");
+            URI uri = URI.create(url);
             TransportClient transportClient = new TransportClient(uri);
             transportClient.connect();
         }
