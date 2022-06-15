@@ -49,7 +49,8 @@ public class TransportConnectionThread implements Runnable {
             if(!TransportWorker.isKeyAuth){
                 return;
             }
-            URI uri = URI.create(String.format("ws://%s:%d/websockets/agent/%s/1", serverHost, serverPort, key));
+            //开发环境去掉/server
+            URI uri = URI.create(String.format("ws://%s:%d/server/websockets/agent/%s/1", serverHost, serverPort, key));
             TransportClient transportClient = new TransportClient(uri);
             transportClient.connect();
         }
