@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author ZhouYiXun
@@ -97,6 +99,13 @@ public class BytesTool {
                 log.error("WebSocket send msg error...connection has been closed.");
             }
         }
+    }
+
+    public static int getInt(String a) {
+        String regEx = "[^0-9]";
+        Pattern p = Pattern.compile(regEx);
+        Matcher m = p.matcher(a);
+        return Integer.parseInt(m.replaceAll("").trim());
     }
 
 }

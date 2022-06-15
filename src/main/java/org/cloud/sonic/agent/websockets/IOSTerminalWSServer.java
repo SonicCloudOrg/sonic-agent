@@ -74,6 +74,9 @@ public class IOSTerminalWSServer implements IIOSWSServer {
     }
 
     private void exit(Session session) {
+        if (udIdMap.get(session) != null) {
+            SibTool.stopSysLog(udIdMap.get(session));
+        }
         WebSocketSessionMap.removeSession(session);
         removeUdIdMapAndSet(session);
         try {

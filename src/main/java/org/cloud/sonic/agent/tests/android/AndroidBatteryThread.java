@@ -70,9 +70,9 @@ public class AndroidBatteryThread implements Runnable {
             if (StringUtils.hasText(battery)) {
                 try {
                     String realTem = battery.substring(battery.indexOf("temperature")).trim();
-                    int tem = getInt(realTem.substring(13, realTem.indexOf("\n")));
+                    int tem = BytesTool.getInt(realTem.substring(13, realTem.indexOf("\n")));
                     String realLevel = battery.substring(battery.indexOf("level")).trim();
-                    int level = getInt(realLevel.substring(7, realLevel.indexOf("\n")));
+                    int level = BytesTool.getInt(realLevel.substring(7, realLevel.indexOf("\n")));
                     jsonObject.put("udId", iDevice.getSerialNumber());
                     jsonObject.put("tem", tem);
                     jsonObject.put("level", level);
@@ -139,12 +139,5 @@ public class AndroidBatteryThread implements Runnable {
         } catch (Exception e) {
             log.error("Send battery msg failed, cause: ", e);
         }
-    }
-
-    public int getInt(String a) {
-        String regEx = "[^0-9]";
-        Pattern p = Pattern.compile(regEx);
-        Matcher m = p.matcher(a);
-        return Integer.parseInt(m.replaceAll("").trim());
     }
 }
