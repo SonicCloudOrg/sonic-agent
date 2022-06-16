@@ -75,13 +75,13 @@ public class AndroidTerminalWSServer {
             JSONObject ter = new JSONObject();
             ter.put("msg", "terminal");
             ter.put("user", username);
-            sendText(session, ter.toJSONString());
+            BytesTool.sendText(session, ter.toJSONString());
         });
         Future<?> logcat = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
             logger.info(udId + "开启logcat");
             JSONObject ter = new JSONObject();
             ter.put("msg", "logcat");
-            sendText(session, ter.toJSONString());
+            BytesTool.sendText(session, ter.toJSONString());
         });
         terminalMap.put(session, terminal);
         logcatMap.put(session, logcat);
@@ -103,7 +103,7 @@ public class AndroidTerminalWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
+        logger.info("{} send: {}",session.getId(), msg);
         switch (msg.getString("type")) {
             case "appList":
                 getAppList(udIdMap.get(session), session);
@@ -127,7 +127,7 @@ public class AndroidTerminalWSServer {
                         || msg.getString("detail").contains("su ")) {
                     JSONObject done = new JSONObject();
                     done.put("msg", "terDone");
-                    sendText(session, done.toJSONString());
+                    BytesTool.sendText(session, done.toJSONString());
                     return;
                 }
                 ter = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
@@ -139,7 +139,7 @@ public class AndroidTerminalWSServer {
                                 JSONObject resp = new JSONObject();
                                 resp.put("msg", "terResp");
                                 resp.put("detail", res);
-                                sendText(session, resp.toJSONString());
+                                BytesTool.sendText(session, resp.toJSONString());
                             }
 
                             @Override
@@ -156,7 +156,7 @@ public class AndroidTerminalWSServer {
                     }
                     JSONObject done = new JSONObject();
                     done.put("msg", "terDone");
-                    sendText(session, done.toJSONString());
+                    BytesTool.sendText(session, done.toJSONString());
                 });
                 terminalMap.put(session, ter);
                 break;
@@ -192,7 +192,7 @@ public class AndroidTerminalWSServer {
                                 JSONObject resp = new JSONObject();
                                 resp.put("msg", "logcatResp");
                                 resp.put("detail", res);
-                                sendText(session, resp.toJSONString());
+                                BytesTool.sendText(session, resp.toJSONString());
                             }
 
                             @Override
@@ -224,7 +224,7 @@ public class AndroidTerminalWSServer {
         logger.error(error.getMessage());
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
-        sendText(session, errMsg.toJSONString());
+        BytesTool.sendText(session, errMsg.toJSONString());
     }
 
     private void exit(Session session) {
@@ -252,17 +252,7 @@ public class AndroidTerminalWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
-    }
-
-    private void sendText(Session session, String message) {
-        synchronized (session) {
-            try {
-                session.getBasicRemote().sendText(message);
-            } catch (IllegalStateException | IOException e) {
-                logger.error("webSocket发送失败!连接已关闭！");
-            }
-        }
+        logger.info("{} : quit.",session.getId());
     }
 
     public void getAppList(IDevice iDevice, Session session) {

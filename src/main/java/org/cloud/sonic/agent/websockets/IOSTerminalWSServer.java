@@ -45,7 +45,7 @@ public class IOSTerminalWSServer implements IIOSWSServer {
     @OnMessage
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
+        logger.info("{} send: {}",session.getId(), msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "appList":
@@ -84,6 +84,6 @@ public class IOSTerminalWSServer implements IIOSWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
+        logger.info("{} : quit.",session.getId());
     }
 }

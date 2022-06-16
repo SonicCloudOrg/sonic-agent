@@ -94,7 +94,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             logger.info("30s内获取设备锁失败，请确保设备无人使用");
             return;
         }
-        logger.info("android上锁udId：{}", udId);
+        logger.info("android lock udId：{}", udId);
         AndroidDeviceLocalStatus.startDebug(udId);
 
         // 更新使用用户
@@ -289,7 +289,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             exit(session);
         } finally {
             DevicesLockMap.unlockAndRemoveByUdId(udId);
-            logger.info("android解锁udId：{}", udId);
+            logger.info("android unlock udId：{}", udId);
         }
     }
 
@@ -305,7 +305,7 @@ public class AndroidWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
+        logger.info("{} send: {}",session.getId(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "poco": {
@@ -675,6 +675,6 @@ public class AndroidWSServer implements IAndroidWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
+        logger.info("{} : quit.",session.getId());
     }
 }

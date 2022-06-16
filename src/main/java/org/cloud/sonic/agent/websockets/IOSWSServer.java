@@ -83,7 +83,7 @@ public class IOSWSServer implements IIOSWSServer {
             logger.info("30s内获取设备锁失败，请确保设备无人使用");
             return;
         }
-        logger.info("ios上锁udId：{}", udId);
+        logger.info("ios lock udId：{}", udId);
         IOSDeviceLocalStatus.startDebug(udId);
 
         // 更新使用用户
@@ -105,6 +105,9 @@ public class IOSWSServer implements IIOSWSServer {
         picFinish.put("wda", ports[0]);
         picFinish.put("port", ports[1]);
         sendText(session, picFinish.toJSONString());
+        if (ports[0] != 0) {
+            SibTool.orientationWatcher(udId, session);
+        }
 
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             IOSStepHandler iosStepHandler = new IOSStepHandler();
@@ -140,7 +143,7 @@ public class IOSWSServer implements IIOSWSServer {
             exit(session);
         } finally {
             DevicesLockMap.unlockAndRemoveByUdId(udId);
-            logger.info("ios解锁udId：{}", udId);
+            logger.info("ios unlock udId：{}", udId);
         }
     }
 
@@ -155,7 +158,7 @@ public class IOSWSServer implements IIOSWSServer {
     @OnMessage
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
+        logger.info("{} send: {}",session.getId(), msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "location": {
@@ -350,6 +353,7 @@ public class IOSWSServer implements IIOSWSServer {
     }
 
     private void exit(Session session) {
+        SibTool.stopOrientationWatcher(udIdMap.get(session));
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
         } catch (Exception e) {
@@ -366,6 +370,6 @@ public class IOSWSServer implements IIOSWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
+        logger.info("{} : quit.",session.getId());
     }
 }

@@ -154,7 +154,7 @@ public class AudioWSServer {
 //    @OnMessage
 //    public void onMessage(String message, Session session) {
 //        JSONObject msg = JSON.parseObject(message);
-//        logger.info(session.getId() + " 发送 " + msg);
+//        logger.info("{} send: {}",session.getId(), msg);
 //        switch (msg.getString("type")) {
 //            case "start":
 //                startAudio(session);
@@ -183,6 +183,6 @@ public class AudioWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
+        logger.info("{} : quit.",session.getId());
     }
 }

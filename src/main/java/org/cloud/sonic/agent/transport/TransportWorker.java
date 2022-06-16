@@ -50,7 +50,7 @@ public class TransportWorker {
                             Thread.sleep(1000);
                         }
                     } else {
-                        Thread.sleep(10000);
+                        Thread.sleep(5000);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
