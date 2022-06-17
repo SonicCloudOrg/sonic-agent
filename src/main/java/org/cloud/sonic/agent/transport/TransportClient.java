@@ -28,7 +28,6 @@ import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
-import org.cloud.sonic.agent.models.Cabinet;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
@@ -40,7 +39,6 @@ import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.SpringTool;
-import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.testng.TestNG;
@@ -58,7 +56,6 @@ import java.util.Map;
 public class TransportClient extends WebSocketClient {
     String host = String.valueOf(SpringTool.getPropertiesValue("sonic.agent.host"));
     String version = String.valueOf(SpringTool.getPropertiesValue("spring.version"));
-    Integer storey = Integer.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.storey"));
     Integer port = Integer.valueOf(SpringTool.getPropertiesValue("sonic.agent.port"));
 
     public TransportClient(URI serverUri) {
@@ -79,39 +76,23 @@ public class TransportClient extends WebSocketClient {
                 case "auth": {
                     if (jsonObject.getString("result").equals("pass")) {
                         log.info("server auth successful!");
-                        if (jsonObject.getString("cabinetAuth") != null && jsonObject.getString("cabinetAuth").equals("pass")) {
-                            SHCService.connect();
-                            if (SHCService.status != SHCService.SHCStatus.OPEN) {
-                                BytesTool.currentCabinet = JSON.parseObject("cabinet", Cabinet.class);
-                                BytesTool.storey = storey;
-                            } else {
-                                log.info("SHC连接失败！请确保您使用的是Sonic机柜，" +
-                                        "如果仍然连接不上，请在对应Agent所在主机执行[sudo service shc restart]");
-                            }
-                        } else {
-                            log.info("cabinet not found!");
-                        }
                         BytesTool.agentId = jsonObject.getInteger("id");
+                        BytesTool.highTemp = jsonObject.getInteger("highTemp");
+                        BytesTool.errCallTimeOut = jsonObject.getInteger("errCallTimeOut");
                         BytesTool.agentHost = host;
                         TransportWorker.client = this;
                         JSONObject agentInfo = new JSONObject();
                         agentInfo.put("msg", "agentInfo");
-                        agentInfo.put("agentId", jsonObject.getInteger("id"));
+                        agentInfo.put("agentId", BytesTool.agentId);
                         agentInfo.put("port", port);
                         agentInfo.put("version", "v" + version);
                         agentInfo.put("systemType", System.getProperty("os.name"));
                         agentInfo.put("host", host);
-                        agentInfo.put("cabinetId", BytesTool.currentCabinet.getId());
-                        agentInfo.put("storey", BytesTool.storey);
                         TransportWorker.client.send(agentInfo.toJSONString());
                     } else {
                         TransportWorker.isKeyAuth = false;
                         log.info("server auth failed!");
                     }
-                    break;
-                }
-                case "position": {
-                    SHCService.positionMap.put(jsonObject.getString("udId"), jsonObject.getInteger("position"));
                     break;
                 }
                 case "shutdown": {
@@ -192,7 +173,7 @@ public class TransportClient extends WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
-        if(TransportWorker.isKeyAuth) {
+        if (TransportWorker.isKeyAuth) {
             log.info("Server disconnected. Retry in 10s...");
         }
         TransportWorker.client = null;
