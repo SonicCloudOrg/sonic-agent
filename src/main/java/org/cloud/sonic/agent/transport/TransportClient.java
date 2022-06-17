@@ -78,7 +78,7 @@ public class TransportClient extends WebSocketClient {
                         log.info("server auth successful!");
                         BytesTool.agentId = jsonObject.getInteger("id");
                         BytesTool.highTemp = jsonObject.getInteger("highTemp");
-                        BytesTool.errCallTimeOut = jsonObject.getInteger("errCallTimeOut");
+                        BytesTool.highTempTime = jsonObject.getInteger("highTempTime");
                         BytesTool.agentHost = host;
                         TransportWorker.client = this;
                         JSONObject agentInfo = new JSONObject();

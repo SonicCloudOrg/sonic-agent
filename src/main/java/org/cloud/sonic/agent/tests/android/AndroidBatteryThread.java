@@ -85,7 +85,7 @@ public class AndroidBatteryThread implements Runnable {
                         DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
                     }
                     times = DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber());
-                    if (times >= (BytesTool.errCallTimeOut * 2)) {
+                    if (times >= (BytesTool.highTempTime * 2)) {
                         //Send shutdown Msg
                         JSONObject errCall = new JSONObject();
                         errCall.put("msg", "errCall");

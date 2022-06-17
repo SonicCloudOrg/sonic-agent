@@ -20,7 +20,7 @@ public class BytesTool {
     public static int agentId = 0;
     public static String agentHost = "";
     public static int highTemp = 0;
-    public static int errCallTimeOut = 0;
+    public static int highTempTime = 0;
 
     public static int toInt(byte[] b) {
         int res = 0;
