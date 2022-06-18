@@ -924,6 +924,17 @@ public class AndroidStepHandler {
         }
     }
 
+    public void isExistAct(HandleDes handleDes, String des, String pathValue, boolean expect) {
+        handleDes.setStepDes("判断Activity " + des + " 是否存在");
+        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+        boolean hasAct = getCurrentActivity().equals(pathValue);
+        try {
+            assertEquals(hasAct, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void getTitle(HandleDes handleDes, String expect) {
         String title = androidDriver.getTitle();
         handleDes.setStepDes("验证网页标题");
@@ -1498,6 +1509,10 @@ public class AndroidStepHandler {
             case "isExistEle":
                 isExistEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+                break;
+            case "isExistAct":
+                isExistAct(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                        , step.getBoolean("content"));
                 break;
             case "clear":
                 clear(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
