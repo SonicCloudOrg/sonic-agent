@@ -155,7 +155,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         TransportWorker.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
-        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static void sendOnlineStatus(JSONObject jsonObject) {
@@ -176,7 +175,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
-        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static String getName(String udId) {

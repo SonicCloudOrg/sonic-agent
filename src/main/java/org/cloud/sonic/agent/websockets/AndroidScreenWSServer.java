@@ -118,7 +118,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                         Thread rotationPro = new Thread(() -> {
                             try {
                                 //开始启动
-                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.RotationMonitorService", finalPath)
+                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginMonitorService", finalPath)
                                         , new IShellOutputReceiver() {
                                             @Override
                                             public void addOutput(byte[] bytes, int i, int i1) {
