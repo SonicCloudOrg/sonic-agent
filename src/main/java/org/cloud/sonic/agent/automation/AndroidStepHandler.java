@@ -935,6 +935,18 @@ public class AndroidStepHandler {
         }
     }
 
+    public void getActivity(HandleDes handleDes, String expect) {
+        expect = TextHandler.replaceTrans(expect, globalParams);
+        String currentActivity = getCurrentActivity();
+        handleDes.setStepDes("验证当前Activity");
+        handleDes.setDetail("activity：" + currentActivity + "，期望值：" + expect);
+        try {
+            assertEquals(currentActivity, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
         handleDes.setStepDes("点击图片" + des);
         handleDes.setDetail(pathValue);
@@ -1486,6 +1498,9 @@ public class AndroidStepHandler {
                 break;
             case "getTitle":
                 getTitle(handleDes, step.getString("content"));
+                break;
+            case "getActivity":
+                getActivity(handleDes, step.getString("content"));
                 break;
             case "sendKeys":
                 sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
