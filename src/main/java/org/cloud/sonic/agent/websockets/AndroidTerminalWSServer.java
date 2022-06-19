@@ -61,8 +61,6 @@ public class AndroidTerminalWSServer {
     private Map<Session, Future<?>> terminalMap = new ConcurrentHashMap<>();
     private Map<Session, Thread> socketMap = new ConcurrentHashMap<>();
     private Map<Session, OutputStream> outputStreamMap = new ConcurrentHashMap<>();
-    //    private Map<Session, Future<?>> appListMap = new ConcurrentHashMap<>();
-//    private Map<Session, Future<?>> wifiListMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
 
     @OnOpen
@@ -119,11 +117,19 @@ public class AndroidTerminalWSServer {
                         e.printStackTrace();
                     }
                 }
+                break;
             }
-            break;
-//            case "wifiList":
-//                getWifiList(udIdMap.get(session), session);
-//                break;
+            case "wifiList": {
+                startService(udIdMap.get(session), session);
+                if (outputStreamMap.get(session) != null) {
+                    try {
+                        outputStreamMap.get(session).write("action_get_all_wifi_info".getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            }
             case "stopCmd":
                 Future<?> ter = terminalMap.get(session);
                 if (!ter.isDone() || !ter.isCancelled()) {
@@ -318,15 +324,20 @@ public class AndroidTerminalWSServer {
                         // 根据长度读取数据体
                         byte[] dataBytes = inputStream.readNBytes(readLen);
                         String dataJson = new String(dataBytes);
-
-                        JSONObject appListDetail = new JSONObject();
-                        appListDetail.put("msg", "appListDetail");
-                        appListDetail.put("detail", JSON.parseObject(dataJson));
-                        BytesTool.sendText(session, appListDetail.toJSONString());
+                        JSONObject managerDetail = new JSONObject();
+//                        JSONObject data = JSON.parseObject(dataJson);
+//                        if (data.getString("appName") != null) {
+                        managerDetail.put("msg", "appListDetail");
+//                        } else {
+//                            managerDetail.put("msg", "wifiListDetail");
+//                        }
+                        managerDetail.put("detail", JSON.parseObject(dataJson));
+                        BytesTool.sendText(session, managerDetail.toJSONString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
+                    managerSocket.getOutputStream().write("org.cloud.sonic.android.STOP".getBytes(StandardCharsets.UTF_8));
                     if (managerSocket != null && managerSocket.isConnected()) {
                         try {
                             managerSocket.close();
@@ -337,6 +348,13 @@ public class AndroidTerminalWSServer {
                     if (inputStream != null) {
                         try {
                             inputStream.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if (managerSocket.getOutputStream() != null) {
+                        try {
+                            managerSocket.getOutputStream().close();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
