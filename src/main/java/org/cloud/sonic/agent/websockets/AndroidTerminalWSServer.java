@@ -20,6 +20,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
@@ -52,6 +53,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @date 2021/10/30 23:35
  */
 @Component
+@Slf4j
 @ServerEndpoint(value = "/websockets/android/terminal/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class AndroidTerminalWSServer {
 
@@ -364,7 +366,7 @@ public class AndroidTerminalWSServer {
                     BytesTool.sendText(session, managerDetail.toJSONString());
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                log.info("error: {}",e.getMessage());
             } finally {
                 stopManager();
             }
