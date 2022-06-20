@@ -307,6 +307,7 @@ public class AndroidTerminalWSServer {
                     managerSocket = new Socket("localhost", managerPort);
                     inputStream = managerSocket.getInputStream();
                     outputStreamMap.put(session, managerSocket.getOutputStream());
+                    //kill
                     while (managerSocket.isConnected() && !Thread.interrupted()) {
                         if (Thread.interrupted()) {
                             break;
