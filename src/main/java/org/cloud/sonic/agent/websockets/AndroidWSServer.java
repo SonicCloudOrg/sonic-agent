@@ -305,7 +305,7 @@ public class AndroidWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info("{} send: {}",session.getId(), msg);
+        logger.info("{} send: {}", session.getId(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "poco": {
@@ -648,6 +648,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
         if (iDevice != null) {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
             AndroidDeviceBridgeTool.clearProxy(iDevice);
             List<JSONObject> has = webViewForwardMap.get(iDevice);
             if (has != null && has.size() > 0) {
@@ -675,6 +676,6 @@ public class AndroidWSServer implements IAndroidWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info("{} : quit.",session.getId());
+        logger.info("{} : quit.", session.getId());
     }
 }
