@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.bridge.android;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -414,6 +415,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             logger.error(e.getMessage());
             return 0;
         }
+    }
+
+    public static int getOrientation(IDevice iDevice) {
+        String inputs = executeCommand(iDevice, "dumpsys input");
+        String orientationS = inputs.substring(inputs.indexOf("SurfaceOrientation")).trim();
+        int o = BytesTool.getInt(orientationS.substring(20, orientationS.indexOf("\n")));
+        return o;
     }
 
     public static void pushYadb(IDevice iDevice) {
