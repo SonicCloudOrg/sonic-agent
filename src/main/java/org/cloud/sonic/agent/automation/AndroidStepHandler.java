@@ -947,9 +947,7 @@ public class AndroidStepHandler {
         }
     }
 
-    public void getElementAttr(HandleDes handleDes, String des, String selector, String pathValue, JSONObject contentObj) {
-        String attr = contentObj.getString("attr");
-        String expect = contentObj.getString("expect");
+    public void getElementAttr(HandleDes handleDes, String des, String selector, String pathValue, String attr, String expect) {
         handleDes.setStepDes("验证控件 " + des + " 属性");
         handleDes.setDetail("属性：" + attr + "，期望值：" + expect);
         try {
@@ -1522,7 +1520,7 @@ public class AndroidStepHandler {
                 break;
             case "getElementAttr":
                 getElementAttr(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                        , eleList.getJSONObject(0).getString("eleValue"), step.getJSONObject("content"));
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
                 break;
             case "sendKeys":
                 sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
