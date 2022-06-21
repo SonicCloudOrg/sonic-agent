@@ -1472,6 +1472,21 @@ public class AndroidStepHandler {
             case "partialLinkText":
                 we = androidDriver.findElementByPartialLinkText(pathValue);
                 break;
+            case "cssSelector&text":
+                // 新增H5页面通过className+text定位控件元素
+                // value格式：van-button--default|购物车
+                List<String> values = new ArrayList<>(Arrays.asList(pathValue.split("\\|")));
+                if(values.size() >= 2) {
+                    // findElementsByClassName在高版本的chromedriver有bug，只能用cssSelector才能找到控件元素
+                    List<WebElement> els =   androidDriver.findElements(By.cssSelector(values.get(0)));
+                    for(WebElement el: els) {
+                        if(el.getText().equals(values.get(1))) {
+                            we = el;
+                            break;
+                        }
+                    }
+                }
+                break;
             default:
                 log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
                 break;
