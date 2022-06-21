@@ -1458,7 +1458,7 @@ public class AndroidStepHandler {
                 we = androidDriver.findElementByXPath(pathValue);
                 break;
             case "cssSelector":
-                we = androidDriver.findElementByCssSelector(pathValue);
+                we = androidDriver.findElement(By.cssSelector(pathValue));
                 break;
             case "className":
                 we = androidDriver.findElementByClassName(pathValue);
