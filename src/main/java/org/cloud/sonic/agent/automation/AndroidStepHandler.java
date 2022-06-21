@@ -57,6 +57,7 @@ import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.FileCopyUtils;
@@ -768,6 +769,18 @@ public class AndroidStepHandler {
         }
     }
 
+    public void sendKeysByActions(HandleDes handleDes, String des, String selector, String pathValue, String keys) {
+        keys = TextHandler.replaceTrans(keys, globalParams);
+        handleDes.setStepDes("对" + des + "输入内容");
+        handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
+        try {
+            // 修复flutter应用输入框无法sendKey的问题
+            new Actions(androidDriver).sendKeys(findEle(selector, pathValue),keys).perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void getTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
         handleDes.setStepDes("获取" + des + "文本");
         handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
@@ -1435,6 +1448,9 @@ public class AndroidStepHandler {
             case "id":
                 we = androidDriver.findElementById(pathValue);
                 break;
+            case "accessibilityId":
+                we = androidDriver.findElementByAccessibilityId(pathValue);
+                break;
             case "name":
                 we = androidDriver.findElementByName(pathValue);
                 break;
@@ -1504,6 +1520,10 @@ public class AndroidStepHandler {
                 break;
             case "sendKeys":
                 sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "sendKeysByActions":
+                sendKeysByActions(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
                 break;
             case "getText":
