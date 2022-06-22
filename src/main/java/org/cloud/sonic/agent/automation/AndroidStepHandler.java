@@ -947,6 +947,22 @@ public class AndroidStepHandler {
         }
     }
 
+    public void getElementAttr(HandleDes handleDes, String des, String selector, String pathValue, String attr, String expect) {
+        handleDes.setStepDes("验证控件 " + des + " 属性");
+        handleDes.setDetail("属性：" + attr + "，期望值：" + expect);
+        try {
+            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            try {
+                assertEquals(attrValue, expect);
+            } catch (AssertionError e) {
+                handleDes.setE(e);
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
         handleDes.setStepDes("点击图片" + des);
         handleDes.setDetail(pathValue);
@@ -1501,6 +1517,10 @@ public class AndroidStepHandler {
                 break;
             case "getActivity":
                 getActivity(handleDes, step.getString("content"));
+                break;
+            case "getElementAttr":
+                getElementAttr(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
                 break;
             case "sendKeys":
                 sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
