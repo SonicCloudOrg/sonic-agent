@@ -57,6 +57,7 @@ import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.FileCopyUtils;
@@ -768,6 +769,18 @@ public class AndroidStepHandler {
         }
     }
 
+    public void sendKeysByActions(HandleDes handleDes, String des, String selector, String pathValue, String keys) {
+        keys = TextHandler.replaceTrans(keys, globalParams);
+        handleDes.setStepDes("对" + des + "输入内容");
+        handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
+        try {
+            // 修复flutter应用输入框无法sendKey的问题
+            new Actions(androidDriver).sendKeys(findEle(selector, pathValue),keys).perform();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void getTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
         handleDes.setStepDes("获取" + des + "文本");
         handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
@@ -931,6 +944,34 @@ public class AndroidStepHandler {
         try {
             assertEquals(title, expect);
         } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void getActivity(HandleDes handleDes, String expect) {
+        expect = TextHandler.replaceTrans(expect, globalParams);
+        String currentActivity = getCurrentActivity();
+        handleDes.setStepDes("验证当前Activity");
+        handleDes.setDetail("activity：" + currentActivity + "，期望值：" + expect);
+        try {
+            assertEquals(currentActivity, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void getElementAttr(HandleDes handleDes, String des, String selector, String pathValue, String attr, String expect) {
+        handleDes.setStepDes("验证控件 " + des + " 属性");
+        handleDes.setDetail("属性：" + attr + "，期望值：" + expect);
+        try {
+            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            try {
+                assertEquals(attrValue, expect);
+            } catch (AssertionError e) {
+                handleDes.setE(e);
+            }
+        } catch (Exception e) {
             handleDes.setE(e);
         }
     }
@@ -1423,6 +1464,9 @@ public class AndroidStepHandler {
             case "id":
                 we = androidDriver.findElementById(pathValue);
                 break;
+            case "accessibilityId":
+                we = androidDriver.findElementByAccessibilityId(pathValue);
+                break;
             case "name":
                 we = androidDriver.findElementByName(pathValue);
                 break;
@@ -1430,7 +1474,7 @@ public class AndroidStepHandler {
                 we = androidDriver.findElementByXPath(pathValue);
                 break;
             case "cssSelector":
-                we = androidDriver.findElementByCssSelector(pathValue);
+                we = androidDriver.findElement(By.cssSelector(pathValue));
                 break;
             case "className":
                 we = androidDriver.findElementByClassName(pathValue);
@@ -1444,11 +1488,32 @@ public class AndroidStepHandler {
             case "partialLinkText":
                 we = androidDriver.findElementByPartialLinkText(pathValue);
                 break;
+            case "cssSelectorAndText":
+                we = getWebElementByCssAndText(pathValue);
+                break;
             default:
                 log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
                 break;
         }
         return we;
+    }
+
+    private WebElement getWebElementByCssAndText(String pathValue) {
+        // 新增H5页面通过className+text定位控件元素
+        // value格式：van-button--default,购物车
+        WebElement element = null;
+        List<String> values = new ArrayList<>(Arrays.asList(pathValue.split(",")));
+        if(values.size() >= 2) {
+            // findElementsByClassName在高版本的chromedriver有bug，只能用cssSelector才能找到控件元素
+            List<WebElement> els =   androidDriver.findElements(By.cssSelector(values.get(0)));
+            for(WebElement el: els) {
+                if(el.getText().equals(values.get(1))) {
+                    element = el;
+                    break;
+                }
+            }
+        }
+        return element;
     }
 
     public void stepHold(HandleDes handleDes, int time) {
@@ -1487,8 +1552,19 @@ public class AndroidStepHandler {
             case "getTitle":
                 getTitle(handleDes, step.getString("content"));
                 break;
+            case "getActivity":
+                getActivity(handleDes, step.getString("content"));
+                break;
+            case "getElementAttr":
+                getElementAttr(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
+                break;
             case "sendKeys":
                 sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "sendKeysByActions":
+                sendKeysByActions(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
                 break;
             case "getText":

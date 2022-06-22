@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.shc.SHCService;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.springframework.util.CollectionUtils;
 
@@ -44,8 +43,6 @@ public class IOSBatteryThread implements Runnable {
     public static final String THREAD_NAME = "ios-battery-thread";
 
     public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
-
-    Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
 
     @Override
     public void run() {
@@ -73,15 +70,6 @@ public class IOSBatteryThread implements Runnable {
             jsonObject.put("tem", dB.getInteger("temperature"));
             jsonObject.put("level", dB.getInteger("level"));
             detail.add(jsonObject);
-            //control
-            if (cabinetEnable && BytesTool.currentCabinet != null) {
-                if (dB.getInteger("level") >= BytesTool.currentCabinet.getHighLevel()) {
-                    SHCService.setGear(dB.getString("serialNumber"), BytesTool.currentCabinet.getLowGear());
-                }
-                if (dB.getInteger("level") <= BytesTool.currentCabinet.getLowLevel()) {
-                    SHCService.setGear(dB.getString("serialNumber"), BytesTool.currentCabinet.getHighGear());
-                }
-            }
         }
 
         JSONObject result = new JSONObject();

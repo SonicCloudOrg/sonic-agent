@@ -6,7 +6,7 @@
 
     <groupId>org.cloud.sonic</groupId>
     <artifactId>sonic-agent</artifactId>
-    <version>1.4.1-alpha1</version>
+    <version>1.4.1-beta</version>
     <packaging>jar</packaging>
 
     <properties>

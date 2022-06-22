@@ -37,7 +37,6 @@ public class TransportConnectionThread implements Runnable {
 
     public static final TimeUnit TIME_UNIT = TimeUnit.SECONDS;
 
-    Boolean cabinetEnable = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.agent.cabinet.enable"));
     String serverHost = String.valueOf(SpringTool.getPropertiesValue("sonic.server.host"));
     Integer serverPort = Integer.valueOf(SpringTool.getPropertiesValue("sonic.server.port"));
     String key = String.valueOf(SpringTool.getPropertiesValue("sonic.agent.key"));
@@ -49,7 +48,10 @@ public class TransportConnectionThread implements Runnable {
             if(!TransportWorker.isKeyAuth){
                 return;
             }
-            URI uri = URI.create(String.format("ws://%s:%d/websockets/agent/%s/1", serverHost, serverPort, key));
+            //开发环境去掉/server
+            String url = String.format("ws://%s:%d/server/websockets/agent/%s",
+                    serverHost, serverPort, key).replace(":80/","/");
+            URI uri = URI.create(url);
             TransportClient transportClient = new TransportClient(uri);
             transportClient.connect();
         }

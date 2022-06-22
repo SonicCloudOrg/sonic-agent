@@ -94,7 +94,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             logger.info("30s内获取设备锁失败，请确保设备无人使用");
             return;
         }
-        logger.info("android上锁udId：{}", udId);
+        logger.info("android lock udId：{}", udId);
         AndroidDeviceLocalStatus.startDebug(udId);
 
         // 更新使用用户
@@ -142,14 +142,16 @@ public class AndroidWSServer implements IAndroidWSServer {
                     .replaceAll("\t", "");
         }
         AndroidAPKMap.getMap().put(udId, true);
-        AndroidDeviceBridgeTool.pressKey(iDevice, 3);
+        if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
+            AndroidDeviceBridgeTool.pressKey(iDevice, 3);
+        }
         Semaphore isTouchFinish = new Semaphore(0);
         String finalPath = path;
 
         Thread touchPro = new Thread(() -> {
             try {
                 //开始启动
-                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.SonicTouchService", finalPath)
+                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginTouchService", finalPath)
                         , new IShellOutputReceiver() {
                             @Override
                             public void addOutput(byte[] bytes, int i, int i1) {
@@ -289,7 +291,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             exit(session);
         } finally {
             DevicesLockMap.unlockAndRemoveByUdId(udId);
-            logger.info("android解锁udId：{}", udId);
+            logger.info("android unlock udId：{}", udId);
         }
     }
 
@@ -305,7 +307,7 @@ public class AndroidWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
+        logger.info("{} send: {}", session.getId(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "poco": {
@@ -481,60 +483,59 @@ public class AndroidWSServer implements IAndroidWSServer {
                 break;
             }
             case "debug":
-                if (msg.getString("detail").equals("runStep")) {
-                    JSONObject jsonDebug = new JSONObject();
-                    jsonDebug.put("msg", "findSteps");
-                    jsonDebug.put("key", key);
-                    jsonDebug.put("udId", iDevice.getSerialNumber());
-                    jsonDebug.put("pwd", msg.getString("pwd"));
-                    jsonDebug.put("sessionId", session.getId());
-                    jsonDebug.put("caseId", msg.getInteger("caseId"));
-                    TransportWorker.send(jsonDebug);
-                } else if (msg.getString("detail").equals("stopStep")) {
-                    TaskManager.forceStopDebugStepThread(
-                            AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
-                                    0, msg.getInteger("caseId"), msg.getString("udId")
-                            )
-                    );
-                } else if (msg.getString("detail").equals("openApp")) {
-                    AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                        AndroidDeviceBridgeTool.executeCommand(iDevice,
-                                String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
-                    });
-                } else {
-                    AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
-                    if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
-                        if (msg.getString("detail").equals("openDriver")) {
-                            openDriver(iDevice, session);
-                        }
+                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
+                switch (msg.getString("detail")) {
+                    case "runStep": {
+                        JSONObject jsonDebug = new JSONObject();
+                        jsonDebug.put("msg", "findSteps");
+                        jsonDebug.put("key", key);
+                        jsonDebug.put("udId", iDevice.getSerialNumber());
+                        jsonDebug.put("pwd", msg.getString("pwd"));
+                        jsonDebug.put("sessionId", session.getId());
+                        jsonDebug.put("caseId", msg.getInteger("caseId"));
+                        TransportWorker.send(jsonDebug);
                         break;
                     }
-                    try {
-                        if (msg.getString("detail").equals("tap")) {
-                            String xy = msg.getString("point");
-                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input tap " + x + " " + y);
-                        }
-                        if (msg.getString("detail").equals("longPress")) {
-                            String xy = msg.getString("point");
-                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x + " " + y + " " + x + " " + y + " 1500");
-                        }
-                        if (msg.getString("detail").equals("swipe")) {
-                            String xy1 = msg.getString("pointA");
-                            String xy2 = msg.getString("pointB");
-                            int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-                            int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-                            int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-                            int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-                            AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 200");
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    case "stopStep": {
+                        TaskManager.forceStopDebugStepThread(
+                                AndroidRunStepThread.ANDROID_RUN_STEP_TASK_PRE.formatted(
+                                        0, msg.getInteger("caseId"), msg.getString("udId")
+                                )
+                        );
+                        break;
                     }
-                    if (msg.getString("detail").equals("install")) {
+                    case "openApp": {
+                        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                            AndroidDeviceBridgeTool.executeCommand(iDevice,
+                                    String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
+                        });
+                        break;
+                    }
+                    case "tap": {
+                        String xy = msg.getString("point");
+                        int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                        int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+                        AndroidDeviceBridgeTool.executeCommand(iDevice, "input tap " + x + " " + y);
+                        break;
+                    }
+                    case "longPress": {
+                        String xy = msg.getString("point");
+                        int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                        int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+                        AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x + " " + y + " " + x + " " + y + " 1500");
+                        break;
+                    }
+                    case "swipe": {
+                        String xy1 = msg.getString("pointA");
+                        String xy2 = msg.getString("pointB");
+                        int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
+                        int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
+                        int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
+                        int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
+                        AndroidDeviceBridgeTool.executeCommand(iDevice, "input swipe " + x1 + " " + y1 + " " + x2 + " " + y2 + " 200");
+                        break;
+                    }
+                    case "install": {
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
@@ -550,45 +551,58 @@ public class AndroidWSServer implements IAndroidWSServer {
                             }
                             BytesTool.sendText(session, result.toJSONString());
                         });
+                        break;
                     }
-                    if (msg.getString("detail").equals("tree")) {
-                        AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
-                        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            try {
-                                JSONObject result = new JSONObject();
-                                result.put("msg", "tree");
-                                result.put("detail", finalAndroidStepHandler.getResource());
-                                HandleDes handleDes = new HandleDes();
-                                if (handleDes.getE() != null) {
-                                    logger.error(handleDes.getE().getMessage());
-                                    JSONObject resultFail = new JSONObject();
-                                    resultFail.put("msg", "treeFail");
-                                    BytesTool.sendText(session, resultFail.toJSONString());
-                                } else {
-                                    result.put("webView", finalAndroidStepHandler.getWebView());
-                                    result.put("activity", finalAndroidStepHandler.getCurrentActivity());
+                    case "openDriver": {
+                        if (androidStepHandler == null || androidStepHandler.getAndroidDriver() == null) {
+                            openDriver(iDevice, session);
+                        }
+                        break;
+                    }
+                    case "tree": {
+                        if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
+                            AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
+                            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                try {
+                                    JSONObject result = new JSONObject();
+                                    result.put("msg", "tree");
+                                    result.put("detail", finalAndroidStepHandler.getResource());
+                                    HandleDes handleDes = new HandleDes();
+                                    if (handleDes.getE() != null) {
+                                        logger.error(handleDes.getE().getMessage());
+                                        JSONObject resultFail = new JSONObject();
+                                        resultFail.put("msg", "treeFail");
+                                        BytesTool.sendText(session, resultFail.toJSONString());
+                                    } else {
+                                        result.put("webView", finalAndroidStepHandler.getWebView());
+                                        result.put("activity", finalAndroidStepHandler.getCurrentActivity());
+                                        BytesTool.sendText(session, result.toJSONString());
+                                    }
+                                } catch (Throwable e) {
+                                    logger.error(e.getMessage());
+                                    JSONObject result = new JSONObject();
+                                    result.put("msg", "treeFail");
                                     BytesTool.sendText(session, result.toJSONString());
                                 }
-                            } catch (Throwable e) {
-                                logger.error(e.getMessage());
-                                JSONObject result = new JSONObject();
-                                result.put("msg", "treeFail");
-                                BytesTool.sendText(session, result.toJSONString());
-                            }
-                        });
+                            });
+                        }
+                        break;
                     }
-                    if (msg.getString("detail").equals("eleScreen")) {
-                        AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
-                        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            JSONObject result = new JSONObject();
-                            result.put("msg", "eleScreen");
-                            try {
-                                result.put("img", UploadTools.upload(finalAndroidStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
-                            } catch (Exception e) {
-                                result.put("errMsg", "获取元素截图失败！");
-                            }
-                            BytesTool.sendText(session, result.toJSONString());
-                        });
+                    case "eleScreen": {
+                        if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
+                            AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
+                            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                JSONObject result = new JSONObject();
+                                result.put("msg", "eleScreen");
+                                try {
+                                    result.put("img", UploadTools.upload(finalAndroidStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
+                                } catch (Exception e) {
+                                    result.put("errMsg", "获取元素截图失败！");
+                                }
+                                BytesTool.sendText(session, result.toJSONString());
+                            });
+                        }
+                        break;
                     }
                 }
                 break;
@@ -636,6 +650,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
         if (iDevice != null) {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
             AndroidDeviceBridgeTool.clearProxy(iDevice);
             List<JSONObject> has = webViewForwardMap.get(iDevice);
             if (has != null && has.size() > 0) {
@@ -663,6 +678,6 @@ public class AndroidWSServer implements IAndroidWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
+        logger.info("{} : quit.", session.getId());
     }
 }
