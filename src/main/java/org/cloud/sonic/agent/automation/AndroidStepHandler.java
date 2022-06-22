@@ -1484,9 +1484,9 @@ public class AndroidStepHandler {
 
     private WebElement getWebElementByCssAndText(String pathValue) {
         // 新增H5页面通过className+text定位控件元素
-        // value格式：van-button--default|购物车
+        // value格式：van-button--default,购物车
         WebElement element = null;
-        List<String> values = new ArrayList<>(Arrays.asList(pathValue.split("\\|")));
+        List<String> values = new ArrayList<>(Arrays.asList(pathValue.split(",")));
         if(values.size() >= 2) {
             // findElementsByClassName在高版本的chromedriver有bug，只能用cssSelector才能找到控件元素
             List<WebElement> els =   androidDriver.findElements(By.cssSelector(values.get(0)));
