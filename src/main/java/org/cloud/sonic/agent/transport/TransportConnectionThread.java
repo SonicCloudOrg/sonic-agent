@@ -49,7 +49,7 @@ public class TransportConnectionThread implements Runnable {
                 return;
             }
             //开发环境去掉/server
-            String url = String.format("ws://%s:%d/websockets/agent/%s",
+            String url = String.format("ws://%s:%d/server/websockets/agent/%s",
                     serverHost, serverPort, key).replace(":80/","/");
             URI uri = URI.create(url);
             TransportClient transportClient = new TransportClient(uri);

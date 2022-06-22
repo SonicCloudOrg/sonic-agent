@@ -9,10 +9,8 @@ sonic:
   server:
     # 改成server的SERVER_HOST
     host: ${SERVER_HOST:192.168.1.1}
-    # 改成server的SONIC_GATEWAY_PORT（一般不变）
-    port: ${SONIC_GATEWAY_PORT:8094}
-    # 改成server的SONIC_TRANSPORT_PORT（一般不变）
-    transport-port: ${SONIC_TRANSPORT_PORT:8095}
+    # 改成server的SERVER_PORT
+    port: ${SERVER_PORT:3000}
 
 modules:
   android:

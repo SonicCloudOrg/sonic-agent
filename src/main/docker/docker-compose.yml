@@ -5,8 +5,7 @@ services:
     environment:
       # 对应server的env配置，注意防火墙关闭对应端口
       - SERVER_HOST=192.168.1.1
-      - SONIC_GATEWAY_PORT=8094
-      - SONIC_TRANSPORT_PORT=8095
+      - SERVER_PORT=3000
       # 替换为部署Agent机器的ipv4
       - AGENT_HOST=192.168.1.1
       # 替换为Agent服务的端口，可以自行更改
