@@ -7,9 +7,9 @@ sonic:
     # 替换为前端新增Agent生成的key
     key: 29002272-4659-4808-a804-08ce3388b136
   server:
-    # 改成server的SERVER_HOST
+    # 改成server的SONIC_SERVER_HOST
     host: 192.168.1.6
-    # 改成server的SERVER_PORT
+    # 改成server的SONIC_SERVER_PORT
     port: 3000
 
 modules:

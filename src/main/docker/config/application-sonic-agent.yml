@@ -7,10 +7,10 @@ sonic:
     # 替换为前端新增Agent生成的key
     key: ${AGENT_KEY:235a35fd-5d0d-4533-905d-30d32902a12b}
   server:
-    # 改成server的SERVER_HOST
-    host: ${SERVER_HOST:192.168.1.1}
-    # 改成server的SERVER_PORT
-    port: ${SERVER_PORT:3000}
+    # 改成server的SONIC_SERVER_HOST
+    host: ${SONIC_SERVER_HOST:192.168.1.1}
+    # 改成server的SONIC_SERVER_PORT
+    port: ${SONIC_SERVER_PORT:3000}
 
 modules:
   android:
