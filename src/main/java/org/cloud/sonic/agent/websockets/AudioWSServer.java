@@ -18,6 +18,7 @@ package org.cloud.sonic.agent.websockets;
 
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
@@ -40,7 +41,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
-@ServerEndpoint(value = "/websockets/audio/{key}/{udId}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/audio/{key}/{udId}", configurator = WsEndpointConfigure.class)
 public class AudioWSServer {
     private final Logger logger = LoggerFactory.getLogger(AudioWSServer.class);
     @Value("${sonic.agent.key}")
@@ -78,8 +79,21 @@ public class AudioWSServer {
         IDevice iDevice = udIdMap.get(session);
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RECORD_AUDIO allow");
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.AudioActivity");
-        AndroidDeviceBridgeTool.pressKey(iDevice, 4);
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/org.cloud.sonic.android.plugin.audioPlugin.AudioActivity");
+        int wait = 0;
+        String has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicaudioservice");
+        while (!has.contains("sonicaudioservice")) {
+            wait++;
+            if (wait > 8) {
+                return;
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicaudioservice");
+        }
         int appAudioPort = PortTool.getPort();
         Thread audio = new Thread(() -> {
             try {
@@ -153,7 +167,7 @@ public class AudioWSServer {
 //    @OnMessage
 //    public void onMessage(String message, Session session) {
 //        JSONObject msg = JSON.parseObject(message);
-//        logger.info(session.getId() + " 发送 " + msg);
+//        logger.info("{} send: {}",session.getId(), msg);
 //        switch (msg.getString("type")) {
 //            case "start":
 //                startAudio(session);
@@ -182,6 +196,6 @@ public class AudioWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
+        logger.info("{} : quit.",session.getId());
     }
 }

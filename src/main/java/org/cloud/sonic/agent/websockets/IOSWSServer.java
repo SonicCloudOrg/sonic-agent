@@ -22,20 +22,20 @@ import io.appium.java_client.TouchAction;
 import io.appium.java_client.touch.WaitOptions;
 import io.appium.java_client.touch.offset.PointOption;
 import org.cloud.sonic.agent.automation.AppiumServer;
-import org.cloud.sonic.agent.automation.HandleDes;
+import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SGMTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 @Component
-@ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class IOSWSServer implements IIOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
     @Value("${sonic.agent.key}")
@@ -83,7 +83,7 @@ public class IOSWSServer implements IIOSWSServer {
             logger.info("30s内获取设备锁失败，请确保设备无人使用");
             return;
         }
-        logger.info("ios上锁udId：{}", udId);
+        logger.info("ios lock udId：{}", udId);
         IOSDeviceLocalStatus.startDebug(udId);
 
         // 更新使用用户
@@ -91,7 +91,7 @@ public class IOSWSServer implements IIOSWSServer {
         jsonDebug.put("msg", "debugUser");
         jsonDebug.put("token", token);
         jsonDebug.put("udId", udId);
-        NettyThreadPool.send(jsonDebug);
+        TransportWorker.send(jsonDebug);
 
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
@@ -105,6 +105,9 @@ public class IOSWSServer implements IIOSWSServer {
         picFinish.put("wda", ports[0]);
         picFinish.put("port", ports[1]);
         sendText(session, picFinish.toJSONString());
+        if (ports[0] != 0) {
+            SibTool.orientationWatcher(udId, session);
+        }
 
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             IOSStepHandler iosStepHandler = new IOSStepHandler();
@@ -140,7 +143,7 @@ public class IOSWSServer implements IIOSWSServer {
             exit(session);
         } finally {
             DevicesLockMap.unlockAndRemoveByUdId(udId);
-            logger.info("ios解锁udId：{}", udId);
+            logger.info("ios unlock udId：{}", udId);
         }
     }
 
@@ -155,7 +158,7 @@ public class IOSWSServer implements IIOSWSServer {
     @OnMessage
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
+        logger.info("{} send: {}",session.getId(), msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "location": {
@@ -164,6 +167,7 @@ public class IOSWSServer implements IIOSWSServer {
                 } else {
                     SibTool.locationUnset(udId);
                 }
+                break;
             }
             case "proxy": {
                 Socket portSocket = PortTool.getBindSocket();
@@ -193,77 +197,141 @@ public class IOSWSServer implements IIOSWSServer {
                 SibTool.uninstall(udId, msg.getString("detail"));
                 break;
             case "debug":
-                if (msg.getString("detail").equals("runStep")) {
-                    JSONObject jsonDebug = new JSONObject();
-                    jsonDebug.put("msg", "findSteps");
-                    jsonDebug.put("key", key);
-                    jsonDebug.put("udId", udId);
-                    jsonDebug.put("sessionId", session.getId());
-                    jsonDebug.put("caseId", msg.getInteger("caseId"));
-                    NettyThreadPool.send(jsonDebug);
-                } else if (msg.getString("detail").equals("stopStep")) {
-                    TaskManager.forceStopDebugStepThread(
-                            IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
-                                    0, msg.getInteger("caseId"), msg.getString("udId")
-                            )
-                    );
-                } else {
-                    IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
-                    if (iosStepHandler == null || iosStepHandler.getDriver() == null) {
+                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
+                switch (msg.getString("detail")) {
+                    case "runStep": {
+                        JSONObject jsonDebug = new JSONObject();
+                        jsonDebug.put("msg", "findSteps");
+                        jsonDebug.put("key", key);
+                        jsonDebug.put("udId", udId);
+                        jsonDebug.put("sessionId", session.getId());
+                        jsonDebug.put("caseId", msg.getInteger("caseId"));
+                        TransportWorker.send(jsonDebug);
                         break;
                     }
-                    try {
-                        if (msg.getString("detail").equals("tap")) {
-                            TouchAction ta = new TouchAction(iosStepHandler.getDriver());
-                            String xy = msg.getString("point");
-                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            ta.tap(PointOption.point(x, y)).perform();
-                        }
-                        if (msg.getString("detail").equals("longPress")) {
-                            TouchAction ta = new TouchAction(iosStepHandler.getDriver());
-                            String xy = msg.getString("point");
-                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(1500))).release().perform();
-                        }
-                        if (msg.getString("detail").equals("swipe")) {
-                            TouchAction ta = new TouchAction(iosStepHandler.getDriver());
-                            String xy1 = msg.getString("pointA");
-                            String xy2 = msg.getString("pointB");
-                            int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-                            int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-                            int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-                            int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-                            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    case "stopStep": {
+                        TaskManager.forceStopDebugStepThread(
+                                IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
+                                        0, msg.getInteger("caseId"), msg.getString("udId")
+                                )
+                        );
+                        break;
                     }
-                    if (msg.getString("detail").equals("keyEvent")) {
-                        try {
-                            if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
-                                iosStepHandler.getDriver().executeScript("mobile:pressButton", JSON.parse("{name: \"" + msg.getString("key") + "\"}"));
-                            } else if (msg.getString("key").equals("lock")) {
-                                if (iosStepHandler.getDriver().isDeviceLocked()) {
-                                    iosStepHandler.unLock(new HandleDes());
-                                } else {
-                                    iosStepHandler.lock(new HandleDes());
+                    case "tap": {
+                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                TouchAction ta = new TouchAction(iosStepHandler.getDriver());
+                                String xy = msg.getString("point");
+                                int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                                int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+                                ta.tap(PointOption.point(x, y)).perform();
+                            });
+                        }
+                        break;
+                    }
+                    case "longPress": {
+                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                TouchAction ta = new TouchAction(iosStepHandler.getDriver());
+                                String xy = msg.getString("point");
+                                int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                                int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+                                ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(1500))).release().perform();
+                            });
+                        }
+                        break;
+                    }
+                    case "swipe": {
+                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                TouchAction ta = new TouchAction(iosStepHandler.getDriver());
+                                String xy1 = msg.getString("pointA");
+                                String xy2 = msg.getString("pointB");
+                                int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
+                                int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
+                                int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
+                                int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
+                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+                            });
+                        }
+                        break;
+                    }
+                    case "keyEvent": {
+                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                try {
+                                    if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
+                                        iosStepHandler.getDriver().executeScript("mobile:pressButton", JSON.parse("{name: \"" + msg.getString("key") + "\"}"));
+                                    } else if (msg.getString("key").equals("lock")) {
+                                        if (iosStepHandler.getDriver().isDeviceLocked()) {
+                                            iosStepHandler.unLock(new HandleDes());
+                                        } else {
+                                            iosStepHandler.lock(new HandleDes());
+                                        }
+                                    } else {
+                                        iosStepHandler.openApp(new HandleDes(), "com.apple." + msg.getString("key"));
+                                    }
+                                } catch (Throwable e) {
+                                    e.printStackTrace();
                                 }
-                            } else {
-                                iosStepHandler.openApp(new HandleDes(), "com.apple." + msg.getString("key"));
-                            }
-                        } catch (Throwable e) {
-                            e.printStackTrace();
+                            });
                         }
+                        break;
                     }
-                    if (msg.getString("detail").equals("siri")) {
-                        IOSStepHandler finalIOSStepHandler = iosStepHandler;
-                        IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            finalIOSStepHandler.siriCommand(new HandleDes(), msg.getString("command"));
-                        });
+                    case "siri": {
+                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                            IOSStepHandler finalIOSStepHandler = iosStepHandler;
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                finalIOSStepHandler.siriCommand(new HandleDes(), msg.getString("command"));
+                            });
+                        }
+                        break;
                     }
-                    if (msg.getString("detail").equals("install")) {
+                    case "tree": {
+                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                            IOSStepHandler finalIOSStepHandler = iosStepHandler;
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                try {
+                                    JSONObject result = new JSONObject();
+                                    result.put("msg", "tree");
+                                    result.put("detail", finalIOSStepHandler.getResource());
+                                    HandleDes handleDes = new HandleDes();
+                                    result.put("img", finalIOSStepHandler.stepScreen(handleDes));
+                                    if (handleDes.getE() != null) {
+                                        logger.error(handleDes.getE().getMessage());
+                                        JSONObject resultFail = new JSONObject();
+                                        resultFail.put("msg", "treeFail");
+                                        sendText(session, resultFail.toJSONString());
+                                    } else {
+                                        sendText(session, result.toJSONString());
+                                    }
+                                } catch (Throwable e) {
+                                    logger.error(e.getMessage());
+                                    JSONObject result = new JSONObject();
+                                    result.put("msg", "treeFail");
+                                    sendText(session, result.toJSONString());
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    case "eleScreen": {
+                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                            IOSStepHandler finalIOSStepHandler = iosStepHandler;
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                JSONObject result = new JSONObject();
+                                result.put("msg", "eleScreen");
+                                try {
+                                    result.put("img", UploadTools.upload(finalIOSStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
+                                } catch (Exception e) {
+                                    result.put("errMsg", "获取元素截图失败！");
+                                }
+                                sendText(session, result.toJSONString());
+                            });
+                        }
+                        break;
+                    }
+                    case "install": {
                         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
@@ -277,44 +345,7 @@ public class IOSWSServer implements IIOSWSServer {
                             }
                             sendText(session, result.toJSONString());
                         });
-                    }
-                    if (msg.getString("detail").equals("tree")) {
-                        IOSStepHandler finalIOSStepHandler = iosStepHandler;
-                        IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            try {
-                                JSONObject result = new JSONObject();
-                                result.put("msg", "tree");
-                                result.put("detail", finalIOSStepHandler.getResource());
-                                HandleDes handleDes = new HandleDes();
-                                result.put("img", finalIOSStepHandler.stepScreen(handleDes));
-                                if (handleDes.getE() != null) {
-                                    logger.error(handleDes.getE().getMessage());
-                                    JSONObject resultFail = new JSONObject();
-                                    resultFail.put("msg", "treeFail");
-                                    sendText(session, resultFail.toJSONString());
-                                } else {
-                                    sendText(session, result.toJSONString());
-                                }
-                            } catch (Throwable e) {
-                                logger.error(e.getMessage());
-                                JSONObject result = new JSONObject();
-                                result.put("msg", "treeFail");
-                                sendText(session, result.toJSONString());
-                            }
-                        });
-                    }
-                    if (msg.getString("detail").equals("eleScreen")) {
-                        IOSStepHandler finalIOSStepHandler = iosStepHandler;
-                        IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            JSONObject result = new JSONObject();
-                            result.put("msg", "eleScreen");
-                            try {
-                                result.put("img", UploadTools.upload(finalIOSStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
-                            } catch (Exception e) {
-                                result.put("errMsg", "获取元素截图失败！");
-                            }
-                            sendText(session, result.toJSONString());
-                        });
+                        break;
                     }
                 }
                 break;
@@ -322,6 +353,7 @@ public class IOSWSServer implements IIOSWSServer {
     }
 
     private void exit(Session session) {
+        SibTool.stopOrientationWatcher(udIdMap.get(session));
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
         } catch (Exception e) {
@@ -338,6 +370,6 @@ public class IOSWSServer implements IIOSWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info(session.getId() + "退出");
+        logger.info("{} : quit.",session.getId());
     }
 }

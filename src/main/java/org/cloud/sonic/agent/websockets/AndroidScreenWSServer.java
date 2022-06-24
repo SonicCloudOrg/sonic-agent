@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
-@ServerEndpoint(value = "/websockets/android/screen/{key}/{udId}/{token}", configurator = MyEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/screen/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class AndroidScreenWSServer implements IAndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidScreenWSServer.class);
@@ -100,7 +101,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info(session.getId() + " 发送 " + msg);
+        logger.info("{} send: {}",session.getId(), msg);
         switch (msg.getString("type")) {
             case "switch": {
                 typeMap.put(session, msg.getString("detail"));
@@ -117,12 +118,12 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                         Thread rotationPro = new Thread(() -> {
                             try {
                                 //开始启动
-                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.RotationMonitorService", finalPath)
+                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginMonitorService", finalPath)
                                         , new IShellOutputReceiver() {
                                             @Override
                                             public void addOutput(byte[] bytes, int i, int i1) {
                                                 String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
-                                                logger.info(iDevice.getSerialNumber() + "旋转到：" + res);
+                                                logger.info(iDevice.getSerialNumber() + " rotation: " + res);
                                                 rotationStatusMap.put(session, Integer.parseInt(res));
                                                 JSONObject rotationJson = new JSONObject();
                                                 rotationJson.put("msg", "rotation");

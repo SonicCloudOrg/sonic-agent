@@ -18,7 +18,7 @@ package org.cloud.sonic.agent.tools.cv;
 
 import org.bytedeco.javacpp.DoublePointer;
 import org.bytedeco.opencv.opencv_core.*;
-import org.cloud.sonic.agent.automation.FindResult;
+import org.cloud.sonic.agent.models.FindResult;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

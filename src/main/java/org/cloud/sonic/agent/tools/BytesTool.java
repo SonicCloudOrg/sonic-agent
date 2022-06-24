@@ -1,12 +1,13 @@
 package org.cloud.sonic.agent.tools;
 
-import org.cloud.sonic.agent.models.Cabinet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author ZhouYiXun
@@ -18,8 +19,8 @@ public class BytesTool {
 
     public static int agentId = 0;
     public static String agentHost = "";
-    public static Cabinet currentCabinet = new Cabinet();
-    public static int storey = 0;
+    public static int highTemp = 0;
+    public static int highTempTime = 0;
 
     public static int toInt(byte[] b) {
         int res = 0;
@@ -68,7 +69,7 @@ public class BytesTool {
             try {
                 session.getBasicRemote().sendBinary(ByteBuffer.wrap(message));
             } catch (IllegalStateException | IOException e) {
-                log.error("WebSocket发送失败!连接已关闭！");
+                log.error("WebSocket send msg error...connection has been closed.");
             }
         }
     }
@@ -81,7 +82,7 @@ public class BytesTool {
             try {
                 session.getBasicRemote().sendBinary(message);
             } catch (IllegalStateException | IOException e) {
-                log.error("WebSocket发送失败!连接已关闭！");
+                log.error("WebSocket send msg error...connection has been closed.");
             }
         }
     }
@@ -94,9 +95,16 @@ public class BytesTool {
             try {
                 session.getBasicRemote().sendText(message);
             } catch (IllegalStateException | IOException e) {
-                log.error("WebSocket发送失败!连接已关闭！");
+                log.error("WebSocket send msg error...connection has been closed.");
             }
         }
+    }
+
+    public static int getInt(String a) {
+        String regEx = "[^0-9]";
+        Pattern p = Pattern.compile(regEx);
+        Matcher m = p.matcher(a);
+        return Integer.parseInt(m.replaceAll("").trim());
     }
 
 }

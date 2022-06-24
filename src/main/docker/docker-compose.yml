@@ -1,22 +1,17 @@
 version: '3'
 services:
   sonic-agent:
-    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.0-release"
+    image: "registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:v1.4.1-beta"
     environment:
       # 对应server的env配置，注意防火墙关闭对应端口
       - SERVER_HOST=192.168.1.1
-      - SONIC_GATEWAY_PORT=8094
-      - SONIC_TRANSPORT_PORT=8095
+      - SERVER_PORT=3000
       # 替换为部署Agent机器的ipv4
       - AGENT_HOST=192.168.1.1
       # 替换为Agent服务的端口，可以自行更改
       - AGENT_PORT=7777
       # 替换为前端新增Agent生成的key
       - AGENT_KEY=29002272-4659-4808-a804-08ce3388b136
-      # 是否使用Sonic机柜，可以前往https://sonic-cloud.gitee.io/#/Cabinet了解更多
-      - CABINET_ENABLE=true
-      - CABINET_STOREY=1
-      - CABINET_KEY=e33cd65c-a40e-431f-9e65-4a91bac6f487
       # 是否使用安卓模块
       - ANDROID_ENABLE=true
       # 是否开启远程adb调试功能

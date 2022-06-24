@@ -22,9 +22,7 @@ import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -57,7 +55,7 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("size", AndroidDeviceBridgeTool.getScreenSize(device));
         deviceDetail.put("cpu", device.getProperty(IDevice.PROP_DEVICE_CPU_ABI));
         deviceDetail.put("manufacturer", device.getProperty(IDevice.PROP_DEVICE_MANUFACTURER));
-        NettyThreadPool.send(deviceDetail);
+        TransportWorker.send(deviceDetail);
     }
 
     @Override
@@ -65,7 +63,6 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         logger.info("Android device: " + device.getSerialNumber() + " ONLINE！");
         AndroidDeviceManagerMap.getMap().remove(device.getSerialNumber());
         DevicesBatteryMap.getTempMap().remove(device.getSerialNumber());
-        DevicesBatteryMap.getGearMap().remove(device.getSerialNumber());
         send(device);
     }
 
@@ -74,7 +71,6 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         logger.info("Android device: " + device.getSerialNumber() + " OFFLINE！");
         AndroidDeviceManagerMap.getMap().remove(device.getSerialNumber());
         DevicesBatteryMap.getTempMap().remove(device.getSerialNumber());
-        DevicesBatteryMap.getGearMap().remove(device.getSerialNumber());
         send(device);
     }
 

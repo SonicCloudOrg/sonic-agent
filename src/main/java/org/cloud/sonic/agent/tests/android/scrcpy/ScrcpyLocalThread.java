@@ -27,6 +27,7 @@ import javax.websocket.Session;
 import java.io.File;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
@@ -94,6 +95,7 @@ public class ScrcpyLocalThread extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        AtomicBoolean isRetry = new AtomicBoolean(false);
         try {
             iDevice.executeShellCommand("CLASSPATH=/data/local/tmp/sonic-android-scrcpy.jar app_process / com.genymobile.scrcpy.Server 1.23 log_level=info max_size=0 max_fps=60 tunnel_forward=true send_frame_meta=false control=false show_touches=false stay_awake=false power_off_on_close=false clipboard_autosync=false",
                     new IShellOutputReceiver() {
@@ -103,7 +105,8 @@ public class ScrcpyLocalThread extends Thread {
                             log.info(res);
                             if (res.contains("Device")) {
                                 isFinish.release();
-                            }else {
+                                isRetry.set(true);
+                            }else if(!isRetry.get()){
                                 log.info("scrcpy服务启动失败！");
                                 JSONObject support = new JSONObject();
                                 support.put("msg", "support");

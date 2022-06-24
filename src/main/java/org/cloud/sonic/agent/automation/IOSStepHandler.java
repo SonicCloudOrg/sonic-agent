@@ -39,6 +39,8 @@ import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
+import org.cloud.sonic.agent.models.FindResult;
+import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
@@ -124,7 +126,6 @@ public class IOSStepHandler {
             iosDriver = new IOSDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
             iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
             iosDriver.setSetting(Setting.MJPEG_SERVER_FRAMERATE, 50);
-            iosDriver.setSetting(Setting.MJPEG_SCALING_FACTOR, 50);
             iosDriver.setSetting(Setting.MJPEG_SERVER_SCREENSHOT_QUALITY, 10);
             iosDriver.setSetting("snapshotMaxDepth", 30);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");

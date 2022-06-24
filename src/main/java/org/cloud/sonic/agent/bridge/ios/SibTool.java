@@ -21,7 +21,8 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
-import org.cloud.sonic.agent.netty.NettyThreadPool;
+import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
@@ -151,10 +152,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
         deviceStatus.put("platform", PlatformType.IOS);
         logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
-        NettyThreadPool.send(deviceStatus);
+        TransportWorker.send(deviceStatus);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
-        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static void sendOnlineStatus(JSONObject jsonObject) {
@@ -171,11 +171,10 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
         deviceStatus.put("manufacturer", "APPLE");
         logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
-        NettyThreadPool.send(deviceStatus);
+        TransportWorker.send(deviceStatus);
         IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
         IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
         DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
-        DevicesBatteryMap.getGearMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static String getName(String udId) {
@@ -281,6 +280,67 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                             sendText(session, appList.toJSONString());
                         } catch (Exception e) {
                             logger.info(s);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public static void stopOrientationWatcher(String udId) {
+        String processName = String.format("process-%s-orientation", udId);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+    }
+
+    public static void orientationWatcher(String udId, Session session) {
+        new Thread(() -> {
+            String system = System.getProperty("os.name").toLowerCase();
+            Process ps = null;
+            String commandLine = "%s orientation -w -u %s";
+            try {
+                if (system.contains("win")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                } else if (system.contains("linux") || system.contains("mac")) {
+                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                }
+                String processName = String.format("process-%s-orientation", udId);
+                GlobalProcessMap.getMap().put(processName, ps);
+                BufferedReader stdInput = new BufferedReader(new
+                        InputStreamReader(ps.getInputStream()));
+                String s;
+                while (ps.isAlive()) {
+                    if ((s = stdInput.readLine()) != null) {
+                        logger.info(s);
+                        if (s.contains("orientation") && (!s.contains("0")) && (!s.contains("failed"))) {
+                            try {
+                                int result = 0;
+                                switch (BytesTool.getInt(s)){
+                                    case 1:
+                                        result = 0;
+                                        break;
+                                    case 2:
+                                        result = 180;
+                                        break;
+                                    case 3:
+                                        result = 270;
+                                        break;
+                                    case 4:
+                                        result = 90;
+                                        break;
+                                }
+                                JSONObject rotation = new JSONObject();
+                                rotation.put("msg", "rotation");
+                                rotation.put("value", result);
+                                sendText(session, rotation.toJSONString());
+                            } catch (Exception e) {
+                                logger.info(s);
+                            }
                         }
                     }
                 }

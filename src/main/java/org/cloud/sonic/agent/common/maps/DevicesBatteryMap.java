@@ -8,9 +8,4 @@ public class DevicesBatteryMap {
     public static Map<String, Integer> getTempMap() {
         return deviceTempMap;
     }
-
-    private static Map<String, Integer> deviceGearMap = new ConcurrentHashMap<>();
-    public static Map<String, Integer> getGearMap() {
-        return deviceGearMap;
-    }
 }

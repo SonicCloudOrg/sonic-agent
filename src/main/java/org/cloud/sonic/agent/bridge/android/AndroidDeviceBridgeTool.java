@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.bridge.android;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -55,7 +56,6 @@ import java.util.stream.Collectors;
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
-    private AndroidBatteryThread androidBatteryThread = null;
     private static String apkVersion;
     @Value("${sonic.saa}")
     private String ver;
@@ -417,6 +417,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
+    public static int getOrientation(IDevice iDevice) {
+        String inputs = executeCommand(iDevice, "dumpsys input");
+        String orientationS = inputs.substring(inputs.indexOf("SurfaceOrientation")).trim();
+        int o = BytesTool.getInt(orientationS.substring(20, orientationS.indexOf("\n")));
+        return o;
+    }
+
     public static void pushYadb(IDevice iDevice) {
         executeCommand(iDevice, "rm -rf /data/local/tmp/yadb");
         File yadbLocalFile = new File("plugins" + File.separator + "yadb");
@@ -451,7 +458,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     }
 
     public static void searchDevice(IDevice iDevice) {
-        executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SearchActivity");
+        executeCommand(iDevice, "am start -n org.cloud.sonic.android/.plugin.activityPlugin.SearchActivity");
     }
 
     public static void controlBattery(IDevice iDevice, int type) {
