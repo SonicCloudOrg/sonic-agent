@@ -1,14 +1,14 @@
 sonic:
   agent:
     # 替换为部署Agent机器的ipv4
-    host: 192.168.1.6
+    host: 192.168.1.4
     # 替换为Agent服务的端口，可以自行更改
     port: 7777
     # 替换为前端新增Agent生成的key
     key: 29002272-4659-4808-a804-08ce3388b136
   server:
     # 改成server的SONIC_SERVER_HOST
-    host: 192.168.1.6
+    host: 192.168.1.4
     # 改成server的SONIC_SERVER_PORT
     port: 3000
 
@@ -20,7 +20,7 @@ modules:
     use-adbkit: true
   ios:
     # 如果不需要连接iOS设备，请将true改为false。开启的windows用户请确保本机已安装iTunes
-    enable: true
+    enable: false
     # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
     wda-bundle-id: com.sonic.WebDriverAgentRunner.xctrunner
   appium:
