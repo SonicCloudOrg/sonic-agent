@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.transport;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.tools.SpringTool;
 
@@ -31,7 +32,7 @@ public class TransportConnectionThread implements Runnable {
     /**
      * second
      */
-    public static final long DELAY = 10;
+    public static final long DELAY = 30;
 
     public static final String THREAD_NAME = "transport-connection-thread";
 
@@ -45,15 +46,19 @@ public class TransportConnectionThread implements Runnable {
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
         if (TransportWorker.client == null) {
-            if(!TransportWorker.isKeyAuth){
+            if (!TransportWorker.isKeyAuth) {
                 return;
             }
             //开发环境去掉/server
             String url = String.format("ws://%s:%d/server/websockets/agent/%s",
-                    serverHost, serverPort, key).replace(":80/","/");
+                    serverHost, serverPort, key).replace(":80/", "/");
             URI uri = URI.create(url);
             TransportClient transportClient = new TransportClient(uri);
             transportClient.connect();
+        } else {
+            JSONObject ping = new JSONObject();
+            ping.put("msg", "ping");
+            TransportWorker.send(ping);
         }
     }
 }
