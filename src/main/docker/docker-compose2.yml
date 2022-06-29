@@ -1,11 +1,11 @@
 version: '3'
 services:
   sonic-agent:
-    image: "sonicorg/sonic-agent-linux:v1.4.1-beta"
+    image: "sonicorg/sonic-agent-linux:v1.4.1-rc"
     environment:
       # 对应server的env配置，注意防火墙关闭对应端口
-      - SERVER_HOST=192.168.1.1
-      - SERVER_PORT=3000
+      - SONIC_SERVER_HOST=192.168.1.1
+      - SONIC_SERVER_PORT=3000
       # 替换为部署Agent机器的ipv4
       - AGENT_HOST=192.168.1.1
       # 替换为Agent服务的端口，可以自行更改
