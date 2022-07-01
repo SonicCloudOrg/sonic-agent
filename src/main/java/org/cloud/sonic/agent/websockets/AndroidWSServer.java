@@ -598,6 +598,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                     result.put("img", UploadTools.upload(finalAndroidStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
                                 } catch (Exception e) {
                                     result.put("errMsg", "获取元素截图失败！");
+                                    e.printStackTrace();
                                 }
                                 BytesTool.sendText(session, result.toJSONString());
                             });
