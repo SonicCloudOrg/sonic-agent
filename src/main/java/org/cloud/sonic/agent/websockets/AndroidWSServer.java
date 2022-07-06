@@ -644,7 +644,10 @@ public class AndroidWSServer implements IAndroidWSServer {
         AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         IDevice iDevice = udIdMap.get(session);
         try {
-            HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
+            AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
+            if (androidStepHandler != null) {
+                androidStepHandler.closeAndroidDriver();
+            }
         } catch (Exception e) {
             logger.info("关闭driver异常!");
         } finally {
