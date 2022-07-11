@@ -598,6 +598,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                     result.put("img", UploadTools.upload(finalAndroidStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
                                 } catch (Exception e) {
                                     result.put("errMsg", "获取元素截图失败！");
+                                    e.printStackTrace();
                                 }
                                 BytesTool.sendText(session, result.toJSONString());
                             });
@@ -643,7 +644,10 @@ public class AndroidWSServer implements IAndroidWSServer {
         AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         IDevice iDevice = udIdMap.get(session);
         try {
-            HandlerMap.getAndroidMap().get(session.getId()).closeAndroidDriver();
+            AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
+            if (androidStepHandler != null) {
+                androidStepHandler.closeAndroidDriver();
+            }
         } catch (Exception e) {
             logger.info("关闭driver异常!");
         } finally {
