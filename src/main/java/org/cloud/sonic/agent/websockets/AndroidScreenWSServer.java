@@ -142,7 +142,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                                             }
                                         }, 0, TimeUnit.MILLISECONDS);
                             } catch (Exception e) {
-                                logger.info("{} 设备方向监听启动异常！"
+                                logger.info("{} rotation service stopped."
                                         , iDevice.getSerialNumber());
                                 logger.error(e.getMessage());
                             }

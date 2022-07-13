@@ -123,7 +123,7 @@ public class ScrcpyLocalThread extends Thread {
                         }
                     }, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            log.info("{} scrcpy服务启动异常！", iDevice.getSerialNumber());
+            log.info("{} scrcpy service stopped.", iDevice.getSerialNumber());
             log.error(e.getMessage());
         }
     }
