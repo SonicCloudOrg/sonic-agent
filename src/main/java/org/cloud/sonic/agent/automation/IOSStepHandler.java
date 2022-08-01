@@ -272,14 +272,7 @@ public class IOSStepHandler {
         path = TextHandler.replaceTrans(path, globalParams);
         handleDes.setDetail("App安装路径： " + path);
         try {
-            iosDriver.installApp(path, new BaseInstallApplicationOptions() {
-                @Override
-                public Map<String, Object> build() {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("timeout", 180000);
-                    return map;
-                }
-            });
+            SibTool.install(udId, path);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -290,7 +283,7 @@ public class IOSStepHandler {
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
-            iosDriver.removeApp(appPackage);
+            SibTool.uninstall(udId, appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
         }
