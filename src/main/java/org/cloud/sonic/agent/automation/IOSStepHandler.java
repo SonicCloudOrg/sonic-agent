@@ -19,18 +19,6 @@ package org.cloud.sonic.agent.automation;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import io.appium.java_client.MultiTouchAction;
-import io.appium.java_client.Setting;
-import io.appium.java_client.TouchAction;
-import io.appium.java_client.appmanagement.BaseInstallApplicationOptions;
-import io.appium.java_client.appmanagement.BaseTerminateApplicationOptions;
-import io.appium.java_client.ios.IOSDriver;
-import io.appium.java_client.ios.IOSStartScreenRecordingOptions;
-import io.appium.java_client.remote.AutomationName;
-import io.appium.java_client.remote.IOSMobileCapabilityType;
-import io.appium.java_client.remote.MobileCapabilityType;
-import io.appium.java_client.touch.WaitOptions;
-import io.appium.java_client.touch.offset.PointOption;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
@@ -51,25 +39,27 @@ import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.core.ios.IOSDriver;
+import org.cloud.sonic.core.ios.enums.IOSSelector;
+import org.cloud.sonic.core.ios.models.TouchActions;
+import org.cloud.sonic.core.ios.service.WebElement;
+import org.cloud.sonic.core.tool.SonicRespException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.FileCopyUtils;
 
+import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.*;
@@ -104,31 +94,10 @@ public class IOSStepHandler {
         globalParams = jsonObject;
     }
 
-    public void startIOSDriver(String udId, int wdaPort) throws InterruptedException, IOException {
+    public void startIOSDriver(String udId, int wdaPort) throws Exception {
         this.udId = udId;
-        DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-        desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_NAME, Platform.IOS);
-        desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME, AutomationName.IOS_XCUI_TEST);
-        desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 3600);
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.COMMAND_TIMEOUTS, 3600);
-        desiredCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
-        desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME, SibTool.getName(udId));
-        desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
-        desiredCapabilities.setCapability("wdaConnectionTimeout", 60000);
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.WEB_DRIVER_AGENT_URL, "http://127.0.0.1:" + wdaPort);
-        desiredCapabilities.setCapability("useXctestrunFile", false);
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.SHOW_IOS_LOG, false);
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.SHOW_XCODE_LOG, false);
-        desiredCapabilities.setCapability("skipLogCapture", true);
-        desiredCapabilities.setCapability(IOSMobileCapabilityType.USE_PREBUILT_WDA, false);
         try {
-            AppiumServer.start(udId);
-            iosDriver = new IOSDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
-            iosDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
-            iosDriver.setSetting(Setting.MJPEG_SERVER_FRAMERATE, 50);
-            iosDriver.setSetting(Setting.MJPEG_SCALING_FACTOR, 50);
-            iosDriver.setSetting(Setting.MJPEG_SERVER_SCREENSHOT_QUALITY, 10);
-            iosDriver.setSetting("snapshotMaxDepth", 30);
+            iosDriver = new IOSDriver("http://127.0.0.1:" + wdaPort);
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
@@ -136,15 +105,15 @@ public class IOSStepHandler {
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
-        int width = iosDriver.manage().window().getSize().width;
-        int height = iosDriver.manage().window().getSize().height;
+        int width = iosDriver.getWindowSize().getWidth();
+        int height = iosDriver.getWindowSize().getHeight();
         IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
     }
 
     public void closeIOSDriver() {
         try {
             if (iosDriver != null) {
-                iosDriver.quit();
+                iosDriver.closeDriver();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
                 if (IOSProcessMap.getMap().get(udId) != null) {
                     List<Process> processList = IOSProcessMap.getMap().get(udId);
@@ -162,8 +131,6 @@ public class IOSStepHandler {
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
-        } finally {
-            AppiumServer.close(udId);
         }
     }
 
@@ -215,12 +182,17 @@ public class IOSStepHandler {
     private int xpathId = 1;
 
     public JSONArray getResource() {
-        JSONArray elementList = new JSONArray();
-        Document doc = Jsoup.parse(iosDriver.getPageSource());
-        String xpath = "";
-        elementList.addAll(getChild(doc.body().children().get(0).children(), xpath));
-        xpathId = 1;
-        return elementList;
+        try {
+            JSONArray elementList = new JSONArray();
+            Document doc = Jsoup.parse(iosDriver.getPageSource());
+            String xpath = "";
+            elementList.addAll(getChild(doc.body().children().get(0).children(), xpath));
+            xpathId = 1;
+            return elementList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public JSONArray getChild(org.jsoup.select.Elements elements, String xpath) {
@@ -260,40 +232,40 @@ public class IOSStepHandler {
         return elementList;
     }
 
-    public void startRecord() {
-        try {
-            IOSStartScreenRecordingOptions recordOption = new IOSStartScreenRecordingOptions();
-            recordOption.withTimeLimit(Duration.ofMinutes(30));
-            recordOption.withVideoQuality(IOSStartScreenRecordingOptions.VideoQuality.LOW);
-            recordOption.enableForcedRestart();
-            recordOption.withFps(20);
-            recordOption.withVideoType("h264");
-            iosDriver.startRecordingScreen(recordOption);
-        } catch (Exception e) {
-            log.sendRecordLog(false, "", "");
-        }
-    }
-
-    public void stopRecord() {
-        File recordDir = new File("./test-output/record");
-        if (!recordDir.exists()) {//判断文件目录是否存在
-            recordDir.mkdirs();
-        }
-        long timeMillis = Calendar.getInstance().getTimeInMillis();
-        String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
-        File uploadFile = new File(recordDir + File.separator + fileName);
-        try {
-            synchronized (IOSStepHandler.class) {
-                FileOutputStream fileOutputStream = new FileOutputStream(uploadFile);
-                byte[] bytes = Base64Utils.decodeFromString((iosDriver.stopRecordingScreen()));
-                fileOutputStream.write(bytes);
-                fileOutputStream.close();
-            }
-            log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
-        } catch (Exception e) {
-            log.sendRecordLog(false, fileName, "");
-        }
-    }
+//    public void startRecord() {
+//        try {
+//            IOSStartScreenRecordingOptions recordOption = new IOSStartScreenRecordingOptions();
+//            recordOption.withTimeLimit(Duration.ofMinutes(30));
+//            recordOption.withVideoQuality(IOSStartScreenRecordingOptions.VideoQuality.LOW);
+//            recordOption.enableForcedRestart();
+//            recordOption.withFps(20);
+//            recordOption.withVideoType("h264");
+//            iosDriver.startRecordingScreen(recordOption);
+//        } catch (Exception e) {
+//            log.sendRecordLog(false, "", "");
+//        }
+//    }
+//
+//    public void stopRecord() {
+//        File recordDir = new File("./test-output/record");
+//        if (!recordDir.exists()) {//判断文件目录是否存在
+//            recordDir.mkdirs();
+//        }
+//        long timeMillis = Calendar.getInstance().getTimeInMillis();
+//        String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
+//        File uploadFile = new File(recordDir + File.separator + fileName);
+//        try {
+//            synchronized (IOSStepHandler.class) {
+//                FileOutputStream fileOutputStream = new FileOutputStream(uploadFile);
+//                byte[] bytes = Base64Utils.decodeFromString((iosDriver.stopRecordingScreen()));
+//                fileOutputStream.write(bytes);
+//                fileOutputStream.close();
+//            }
+//            log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
+//        } catch (Exception e) {
+//            log.sendRecordLog(false, fileName, "");
+//        }
+//    }
 
     public void install(HandleDes handleDes, String path) {
         handleDes.setStepDes("安装应用");
@@ -329,14 +301,7 @@ public class IOSStepHandler {
         packageName = TextHandler.replaceTrans(packageName, globalParams);
         handleDes.setDetail("应用包名： " + packageName);
         try {
-            iosDriver.terminateApp(packageName, new BaseTerminateApplicationOptions() {
-                @Override
-                public Map<String, Object> build() {
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("timeout", 2000);
-                    return map;
-                }
-            });
+            iosDriver.appTerminate(packageName);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -346,7 +311,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("后台运行应用");
         handleDes.setDetail("后台运行App " + time + " ms");
         try {
-            iosDriver.runAppInBackground(Duration.ofMillis(time));
+            iosDriver.appRunBackground((int) (time / 1000));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -358,7 +323,7 @@ public class IOSStepHandler {
         handleDes.setDetail("App包名： " + appPackage);
         try {
             testPackage = appPackage;
-            iosDriver.activateApp(appPackage);
+            iosDriver.appActivate(appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -368,7 +333,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("锁定屏幕");
         handleDes.setDetail("");
         try {
-            iosDriver.lockDevice();
+            iosDriver.lock();
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -378,7 +343,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("解锁屏幕");
         handleDes.setDetail("");
         try {
-            iosDriver.unlockDevice();
+            iosDriver.unlock();
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -420,15 +385,15 @@ public class IOSStepHandler {
         return s;
     }
 
-    public void hideKey(HandleDes handleDes) {
-        handleDes.setStepDes("隐藏键盘");
-        handleDes.setDetail("隐藏弹出键盘");
-        try {
-            iosDriver.hideKeyboard();
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
+//    public void hideKey(HandleDes handleDes) {
+//        handleDes.setStepDes("隐藏键盘");
+//        handleDes.setDetail("隐藏弹出键盘");
+//        try {
+//            iosDriver.hideKeyboard();
+//        } catch (Exception e) {
+//            handleDes.setE(e);
+//        }
+//    }
 
     public void click(HandleDes handleDes, String des, String selector, String pathValue) {
         handleDes.setStepDes("点击" + des);
@@ -476,8 +441,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按坐标" + time + "毫秒 (" + x + "," + y + ")");
         try {
-            TouchAction ta = new TouchAction(iosDriver);
-            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(time))).release().perform();
+            iosDriver.longPress(x, y, time);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -487,7 +451,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("按系统按键" + key + "键");
         handleDes.setDetail("");
         try {
-            iosDriver.executeScript("mobile:pressButton", JSON.parse("{name: \"" + key + "\"}"));
+            iosDriver.pressButton(key);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -525,8 +489,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("点击" + des);
         handleDes.setDetail("点击坐标(" + x + "," + y + ")");
         try {
-            TouchAction ta = new TouchAction(iosDriver);
-            ta.tap(PointOption.point(x, y)).perform();
+            iosDriver.tap(x, y);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -540,25 +503,23 @@ public class IOSStepHandler {
         handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
         handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
         try {
-            TouchAction ta = new TouchAction(iosDriver);
-            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+            iosDriver.swipe(x1, y1, x2, y2);
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
     public void swipe(HandleDes handleDes, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
-        WebElement webElement = findEle(selector, pathValue);
-        WebElement webElement2 = findEle(selector2, pathValue2);
-        int x1 = webElement.getLocation().getX();
-        int y1 = webElement.getLocation().getY();
-        int x2 = webElement2.getLocation().getX();
-        int y2 = webElement2.getLocation().getY();
-        handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
-        handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
         try {
-            TouchAction ta = new TouchAction(iosDriver);
-            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+            WebElement webElement = findEle(selector, pathValue);
+            WebElement webElement2 = findEle(selector2, pathValue2);
+            int x1 = webElement.getRect().getCenter().getX();
+            int y1 = webElement.getRect().getCenter().getY();
+            int x2 = webElement2.getRect().getCenter().getX();
+            int y2 = webElement2.getRect().getCenter().getY();
+            handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
+            handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+            iosDriver.swipe(x1, y1, x2, y2);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -568,12 +529,10 @@ public class IOSStepHandler {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按控件元素" + time + "毫秒 ");
         try {
-            TouchAction ta = new TouchAction(iosDriver);
             WebElement webElement = findEle(selector, pathValue);
-            int x = webElement.getLocation().getX();
-            int y = webElement.getLocation().getY();
-            Duration duration = Duration.ofMillis(time);
-            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(duration)).release().perform();
+            int x = webElement.getRect().getCenter().getX();
+            int y = webElement.getRect().getCenter().getY();
+            iosDriver.longPress(x, y, time);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -607,16 +566,16 @@ public class IOSStepHandler {
         }
     }
 
-    public void getTitle(HandleDes handleDes, String expect) {
-        String title = iosDriver.getTitle();
-        handleDes.setStepDes("验证网页标题");
-        handleDes.setDetail("标题：" + title + "，期望值：" + expect);
-        try {
-            assertEquals(title, expect);
-        } catch (AssertionError e) {
-            handleDes.setE(e);
-        }
-    }
+//    public void getTitle(HandleDes handleDes, String expect) {
+//        String title = iosDriver.getTitle();
+//        handleDes.setStepDes("验证网页标题");
+//        handleDes.setDetail("标题：" + title + "，期望值：" + expect);
+//        try {
+//            assertEquals(title, expect);
+//        } catch (AssertionError e) {
+//            handleDes.setE(e);
+//        }
+//    }
 
     public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
         handleDes.setStepDes("点击图片" + des);
@@ -674,8 +633,7 @@ public class IOSStepHandler {
         }
         if (findResult != null) {
             try {
-                TouchAction ta = new TouchAction(iosDriver);
-                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
+                iosDriver.tap(findResult.getX(), findResult.getY());
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
                 handleDes.setE(e);
@@ -698,14 +656,20 @@ public class IOSStepHandler {
     }
 
     public File getScreenToLocal() {
-        File file = ((TakesScreenshot) iosDriver).getScreenshotAs(OutputType.FILE);
-        File resultFile = new File("test-output/" + log.udId + Calendar.getInstance().getTimeInMillis() + ".jpg");
+        File folder = new File("test-output");
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        File output = new File(folder + File.separator + log.udId + Calendar.getInstance().getTimeInMillis() + ".png");
         try {
-            FileCopyUtils.copy(file, resultFile);
-        } catch (IOException e) {
+            byte[] bt = iosDriver.screenshot();
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return resultFile;
+        return output;
     }
 
     public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
@@ -728,7 +692,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("siri指令");
         handleDes.setDetail("对siri发送指令： " + command);
         try {
-            iosDriver.executeScript("mobile:siriCommand", JSON.parse("{text: \"" + command + "\"}"));
+            iosDriver.sendSiriCommand(command);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -740,9 +704,17 @@ public class IOSStepHandler {
 
     public void errorScreen() {
         try {
-            iosDriver.context("NATIVE_APP");//先切换回app
+            File folder = new File("test-output");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            byte[] bt = iosDriver.screenshot();
+            File output = new File(folder + File.separator + UUID.randomUUID() + ".png");
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
             log.sendStepLog(StepType.WARN, "获取异常截图", UploadTools
-                    .upload(((TakesScreenshot) iosDriver).getScreenshotAs(OutputType.FILE), "imageFiles"));
+                    .upload(output, "imageFiles"));
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "捕获截图失败", "");
         }
@@ -789,39 +761,36 @@ public class IOSStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
-    public WebElement findEle(String selector, String pathValue) {
+    public WebElement findEle(String selector, String pathValue) throws SonicRespException {
         WebElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "id":
-                we = iosDriver.findElementById(pathValue);
+                we = iosDriver.findElement(IOSSelector.Id, pathValue);
                 break;
             case "accessibilityId":
-                we = iosDriver.findElementByAccessibilityId(pathValue);
+                we = iosDriver.findElement(IOSSelector.ACCESSIBILITY_ID, pathValue);
                 break;
             case "nsPredicate":
-                we = iosDriver.findElementByIosNsPredicate(pathValue);
+                we = iosDriver.findElement(IOSSelector.PREDICATE, pathValue);
                 break;
             case "name":
-                we = iosDriver.findElementByName(pathValue);
+                we = iosDriver.findElement(IOSSelector.NAME, pathValue);
                 break;
             case "xpath":
-                we = iosDriver.findElementByXPath(pathValue);
+                we = iosDriver.findElement(IOSSelector.XPATH, pathValue);
                 break;
-            case "cssSelector":
-                we = iosDriver.findElementByCssSelector(pathValue);
+            case "classChain":
+                we = iosDriver.findElement(IOSSelector.CLASS_CHAIN, pathValue);
                 break;
             case "className":
-                we = iosDriver.findElementByClassName(pathValue);
-                break;
-            case "tagName":
-                we = iosDriver.findElementByTagName(pathValue);
+                we = iosDriver.findElement(IOSSelector.CLASS_NAME, pathValue);
                 break;
             case "linkText":
-                we = iosDriver.findElementByLinkText(pathValue);
+                we = iosDriver.findElement(IOSSelector.LINK_TEXT, pathValue);
                 break;
             case "partialLinkText":
-                we = iosDriver.findElementByPartialLinkText(pathValue);
+                we = iosDriver.findElement(IOSSelector.PARTIAL_LINK_TEXT, pathValue);
                 break;
             default:
                 log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
@@ -860,9 +829,9 @@ public class IOSStepHandler {
                 click(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
-            case "getTitle":
-                getTitle(handleDes, step.getString("content"));
-                break;
+//            case "getTitle":
+//                getTitle(handleDes, step.getString("content"));
+//                break;
             case "sendKeys":
                 sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
@@ -949,9 +918,9 @@ public class IOSStepHandler {
                 globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
                 break;
-            case "hideKey":
-                hideKey(handleDes);
-                break;
+//            case "hideKey":
+//                hideKey(handleDes);
+//                break;
 //            case "monkey":
 //                runMonkey(handleDes, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
 //                break;

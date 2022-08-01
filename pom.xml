@@ -62,6 +62,12 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.79</version>
         </dependency>
+        <!--     Sonic UIAutomation Driver   -->
+        <dependency>
+            <groupId>io.github.soniccloudorg</groupId>
+            <artifactId>sonic-driver-core</artifactId>
+            <version>1.0.8</version>
+        </dependency>
         <!--  appium java api      -->
         <dependency>
             <groupId>io.appium</groupId>
