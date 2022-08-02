@@ -405,4 +405,10 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String commandLine = "%s app uninstall -u %s -b %s";
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));
     }
+
+    public static int battery(String udId){
+        String commandLine = "%s battery -u %s -j";
+        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
+        return JSON.parseObject(re).getInteger("level");
+    }
 }

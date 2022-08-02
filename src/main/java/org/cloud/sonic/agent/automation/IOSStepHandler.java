@@ -115,22 +115,23 @@ public class IOSStepHandler {
             if (iosDriver != null) {
                 iosDriver.closeDriver();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
-                if (IOSProcessMap.getMap().get(udId) != null) {
-                    List<Process> processList = IOSProcessMap.getMap().get(udId);
-                    for (Process p : processList) {
-                        if (p != null) {
-                            p.children().forEach(ProcessHandle::destroy);
-                            p.destroy();
-                        }
-                    }
-                    IOSProcessMap.getMap().remove(udId);
-                }
             }
         } catch (Exception e) {
             log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", "");
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
+        } finally {
+            if (IOSProcessMap.getMap().get(udId) != null) {
+                List<Process> processList = IOSProcessMap.getMap().get(udId);
+                for (Process p : processList) {
+                    if (p != null) {
+                        p.children().forEach(ProcessHandle::destroy);
+                        p.destroy();
+                    }
+                }
+                IOSProcessMap.getMap().remove(udId);
+            }
         }
     }
 
@@ -169,15 +170,14 @@ public class IOSStepHandler {
     }
 
     public boolean getBattery() {
-        double battery = iosDriver.getBatteryInfo().getLevel();
-        if (battery <= 0.1) {
+        int battery = SibTool.battery(udId);
+        if (battery <= 10) {
             log.sendStepLog(StepType.ERROR, "设备电量过低!", "跳过本次测试...");
             return true;
         } else {
             return false;
         }
     }
-
 
     private int xpathId = 1;
 
@@ -450,32 +450,6 @@ public class IOSStepHandler {
         }
     }
 
-    public void multiAction(HandleDes handleDes, String des1, String xy1, String des2, String xy2, String des3, String xy3, String des4, String xy4) {
-        int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-        int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-        int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-        int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-        int x3 = Integer.parseInt(xy3.substring(0, xy3.indexOf(",")));
-        int y3 = Integer.parseInt(xy3.substring(xy3.indexOf(",") + 1));
-        int x4 = Integer.parseInt(xy4.substring(0, xy4.indexOf(",")));
-        int y4 = Integer.parseInt(xy4.substring(xy4.indexOf(",") + 1));
-        String detail = "坐标" + des1 + "( " + x1 + ", " + y1 + " )移动到坐标" + des2 + "( " + x2 + ", " + y2 + " ),同时坐标" + des3 + "( " + x3 + ", " + y3 + " )移动到坐标" + des4 + "( " + x4 + ", " + y4 + " )";
-        handleDes.setStepDes("双指操作");
-        handleDes.setDetail(detail);
-        try {
-            TouchAction hand1 = new TouchAction(iosDriver);
-            TouchAction hand2 = new TouchAction(iosDriver);
-            MultiTouchAction multiTouchAction = new MultiTouchAction(iosDriver);
-            hand1.press(PointOption.point(x1, y1)).moveTo(PointOption.point(x2, y2)).release();
-            hand2.press(PointOption.point(x3, y3)).moveTo(PointOption.point(x4, y4)).release();
-            multiTouchAction.add(hand1);
-            multiTouchAction.add(hand2);
-            multiTouchAction.perform();
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
     public void tap(HandleDes handleDes, String des, String xy) {
         int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
         int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
@@ -718,8 +692,16 @@ public class IOSStepHandler {
         handleDes.setDetail("");
         String url = "";
         try {
-            url = UploadTools.upload(((TakesScreenshot) iosDriver)
-                    .getScreenshotAs(OutputType.FILE), "imageFiles");
+            File folder = new File("test-output");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
+            byte[] bt = iosDriver.screenshot();
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
+            url = UploadTools.upload(output, "imageFiles");
             handleDes.setDetail(url);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -890,12 +872,6 @@ public class IOSStepHandler {
                 break;
             case "unLock":
                 unLock(handleDes);
-                break;
-            case "zoom":
-                multiAction(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
-                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue")
-                        , eleList.getJSONObject(2).getString("eleName"), eleList.getJSONObject(2).getString("eleValue")
-                        , eleList.getJSONObject(3).getString("eleName"), eleList.getJSONObject(3).getString("eleValue"));
                 break;
             case "keyCode":
                 keyCode(handleDes, step.getString("content"));
