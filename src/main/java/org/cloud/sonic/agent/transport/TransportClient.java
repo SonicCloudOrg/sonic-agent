@@ -70,12 +70,12 @@ public class TransportClient extends WebSocketClient {
     @Override
     public void onMessage(String s) {
         JSONObject jsonObject = JSON.parseObject(s);
+        if (jsonObject.getString("msg").equals("pong")) {
+            return;
+        }
         log.info("Agent <- Server message: {}", jsonObject);
         TransportWorker.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
-                case "pong":{
-                    break;
-                }
                 case "auth": {
                     if (jsonObject.getString("result").equals("pass")) {
                         log.info("server auth successful!");
@@ -177,7 +177,7 @@ public class TransportClient extends WebSocketClient {
     @Override
     public void onClose(int i, String s, boolean b) {
         if (TransportWorker.isKeyAuth) {
-            log.info("Server disconnected. Retry in 30s...");
+            log.info("Server disconnected. Retry in 10s...");
         }
         TransportWorker.client = null;
     }

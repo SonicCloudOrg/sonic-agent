@@ -220,141 +220,127 @@ public class IOSWSServer implements IIOSWSServer {
                     }
                     case "tap": {
                         if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                String xy = msg.getString("point");
-                                int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                                int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                                try {
-                                    iosStepHandler.getDriver().tap(x, y);
-                                } catch (SonicRespException e) {
-                                    e.printStackTrace();
-                                }
-                            });
+                            String xy = msg.getString("point");
+                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+                            try {
+                                iosStepHandler.getDriver().tap(x, y);
+                            } catch (SonicRespException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     }
                     case "longPress": {
                         if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                String xy = msg.getString("point");
-                                int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                                int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                                try {
-                                    iosStepHandler.getDriver().longPress(x, y, 1500);
-                                } catch (SonicRespException e) {
-                                    e.printStackTrace();
-                                }
-                            });
+                            String xy = msg.getString("point");
+                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+                            try {
+                                iosStepHandler.getDriver().longPress(x, y, 1500);
+                            } catch (SonicRespException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     }
                     case "swipe": {
                         if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                String xy1 = msg.getString("pointA");
-                                String xy2 = msg.getString("pointB");
-                                int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-                                int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-                                int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-                                int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-                                try {
-                                    iosStepHandler.getDriver().swipe(x1, y1, x2, y2);
-                                } catch (SonicRespException e) {
-                                    e.printStackTrace();
-                                }
-                            });
+                            String xy1 = msg.getString("pointA");
+                            String xy2 = msg.getString("pointB");
+                            int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
+                            int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
+                            int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
+                            int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
+                            try {
+                                iosStepHandler.getDriver().swipe(x1, y1, x2, y2);
+                            } catch (SonicRespException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     }
                     case "keyEvent": {
                         if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                try {
-                                    if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
-                                        iosStepHandler.getDriver().pressButton(msg.getString("key"));
-                                    } else if (msg.getString("key").equals("lock")) {
-                                        if (iosStepHandler.getDriver().isLocked()) {
-                                            iosStepHandler.getDriver().unlock();
-                                        } else {
-                                            iosStepHandler.getDriver().lock();
-                                        }
+                            try {
+                                if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
+                                    iosStepHandler.getDriver().pressButton(msg.getString("key"));
+                                } else if (msg.getString("key").equals("lock")) {
+                                    if (iosStepHandler.getDriver().isLocked()) {
+                                        iosStepHandler.getDriver().unlock();
                                     } else {
-                                        iosStepHandler.getDriver().appActivate("com.apple." + msg.getString("key"));
+                                        iosStepHandler.getDriver().lock();
                                     }
-                                } catch (Throwable e) {
-                                    e.printStackTrace();
+                                } else {
+                                    iosStepHandler.getDriver().appActivate("com.apple." + msg.getString("key"));
                                 }
-                            });
+                            } catch (Throwable e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     }
                     case "siri": {
                         if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
                             IOSStepHandler finalIOSStepHandler = iosStepHandler;
-                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                try {
-                                    finalIOSStepHandler.getDriver().sendSiriCommand(msg.getString("command"));
-                                } catch (SonicRespException e) {
-                                    e.printStackTrace();
-                                }
-                            });
+                            try {
+                                finalIOSStepHandler.getDriver().sendSiriCommand(msg.getString("command"));
+                            } catch (SonicRespException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                     }
                     case "tree": {
                         if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
                             IOSStepHandler finalIOSStepHandler = iosStepHandler;
-                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                try {
-                                    JSONObject result = new JSONObject();
-                                    result.put("msg", "tree");
-                                    result.put("detail", finalIOSStepHandler.getResource());
-                                    HandleDes handleDes = new HandleDes();
-                                    result.put("img", finalIOSStepHandler.stepScreen(handleDes));
-                                    if (handleDes.getE() != null) {
-                                        logger.error(handleDes.getE().getMessage());
-                                        JSONObject resultFail = new JSONObject();
-                                        resultFail.put("msg", "treeFail");
-                                        sendText(session, resultFail.toJSONString());
-                                    } else {
-                                        sendText(session, result.toJSONString());
-                                    }
-                                } catch (Throwable e) {
-                                    logger.error(e.getMessage());
-                                    JSONObject result = new JSONObject();
-                                    result.put("msg", "treeFail");
+                            try {
+                                JSONObject result = new JSONObject();
+                                result.put("msg", "tree");
+                                result.put("detail", finalIOSStepHandler.getResource());
+                                HandleDes handleDes = new HandleDes();
+                                result.put("img", finalIOSStepHandler.stepScreen(handleDes));
+                                if (handleDes.getE() != null) {
+                                    logger.error(handleDes.getE().getMessage());
+                                    JSONObject resultFail = new JSONObject();
+                                    resultFail.put("msg", "treeFail");
+                                    sendText(session, resultFail.toJSONString());
+                                } else {
                                     sendText(session, result.toJSONString());
                                 }
-                            });
+                            } catch (Throwable e) {
+                                logger.error(e.getMessage());
+                                JSONObject result = new JSONObject();
+                                result.put("msg", "treeFail");
+                                sendText(session, result.toJSONString());
+                            }
                         }
                         break;
                     }
                     case "eleScreen": {
                         if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
                             IOSStepHandler finalIOSStepHandler = iosStepHandler;
-                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                JSONObject result = new JSONObject();
-                                result.put("msg", "eleScreen");
-                                try {
-                                    File folder = new File("test-output");
-                                    if (!folder.exists()) {
-                                        folder.mkdirs();
-                                    }
-                                    File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
-                                    try {
-                                        byte[] bt = finalIOSStepHandler.findEle("xpath", msg.getString("xpath")).screenshot();
-                                        FileImageOutputStream imageOutput = new FileImageOutputStream(output);
-                                        imageOutput.write(bt, 0, bt.length);
-                                        imageOutput.close();
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
-                                    }
-                                    result.put("img", UploadTools.upload(output, "keepFiles"));
-                                } catch (Exception e) {
-                                    result.put("errMsg", "获取元素截图失败！");
+                            JSONObject result = new JSONObject();
+                            result.put("msg", "eleScreen");
+                            try {
+                                File folder = new File("test-output");
+                                if (!folder.exists()) {
+                                    folder.mkdirs();
                                 }
-                                sendText(session, result.toJSONString());
-                            });
+                                File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
+                                try {
+                                    byte[] bt = finalIOSStepHandler.findEle("xpath", msg.getString("xpath")).screenshot();
+                                    FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+                                    imageOutput.write(bt, 0, bt.length);
+                                    imageOutput.close();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                result.put("img", UploadTools.upload(output, "keepFiles"));
+                            } catch (Exception e) {
+                                result.put("errMsg", "获取元素截图失败！");
+                            }
+                            sendText(session, result.toJSONString());
                         }
                         break;
                     }

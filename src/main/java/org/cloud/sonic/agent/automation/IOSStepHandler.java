@@ -98,6 +98,7 @@ public class IOSStepHandler {
         this.udId = udId;
         try {
             iosDriver = new IOSDriver("http://127.0.0.1:" + wdaPort);
+            iosDriver.disableLog();
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
@@ -107,6 +108,12 @@ public class IOSStepHandler {
         }
         int width = iosDriver.getWindowSize().getWidth();
         int height = iosDriver.getWindowSize().getHeight();
+        JSONObject appiumSettings = new JSONObject();
+        appiumSettings.put("mjpegServerFramerate", 50);
+        appiumSettings.put("mjpegScalingFactor", 50);
+        appiumSettings.put("mjpegServerScreenshotQuality", 10);
+        appiumSettings.put("snapshotMaxDepth", 30);
+//        appiumSettings(appiumSettings);
         IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
     }
 
@@ -133,6 +140,10 @@ public class IOSStepHandler {
                 IOSProcessMap.getMap().remove(udId);
             }
         }
+    }
+
+    public void appiumSettings(JSONObject jsonObject) throws SonicRespException {
+        iosDriver.setAppiumSettings(jsonObject);
     }
 
     public void waitDevice(int waitCount) {
