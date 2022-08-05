@@ -109,11 +109,11 @@ public class IOSStepHandler {
         int width = iosDriver.getWindowSize().getWidth();
         int height = iosDriver.getWindowSize().getHeight();
         JSONObject appiumSettings = new JSONObject();
-        appiumSettings.put("mjpegServerFramerate", 50);
-        appiumSettings.put("mjpegScalingFactor", 50);
-        appiumSettings.put("mjpegServerScreenshotQuality", 10);
+//        appiumSettings.put("mjpegServerFramerate", 50);
+//        appiumSettings.put("mjpegScalingFactor", 50);
+//        appiumSettings.put("mjpegServerScreenshotQuality", 10);
         appiumSettings.put("snapshotMaxDepth", 30);
-//        appiumSettings(appiumSettings);
+        appiumSettings(appiumSettings);
         IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
     }
 
@@ -197,7 +197,7 @@ public class IOSStepHandler {
             JSONArray elementList = new JSONArray();
             Document doc = Jsoup.parse(iosDriver.getPageSource());
             String xpath = "";
-            elementList.addAll(getChild(doc.body().children().get(0).children(), xpath));
+            elementList.addAll(getChild(doc.body().children(), xpath));
             xpathId = 1;
             return elementList;
         } catch (Exception e) {
