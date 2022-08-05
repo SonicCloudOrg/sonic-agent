@@ -50,8 +50,14 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("name", device.getProperty("ro.product.name"));
         deviceDetail.put("model", device.getProperty(IDevice.PROP_DEVICE_MODEL));
         deviceDetail.put("status", device.getState() == null ? null : device.getState().toString());
-        deviceDetail.put("platform", PlatformType.ANDROID);
-        deviceDetail.put("version", device.getProperty(IDevice.PROP_BUILD_VERSION));
+        if(device.getProperty("hw_sc.build.os.enable") != null){
+            deviceDetail.put("version", device.getProperty("hw_sc.build.platform.version"));
+            deviceDetail.put("platform", PlatformType.HARMONYOS);
+        }else{
+            deviceDetail.put("version", device.getProperty(IDevice.PROP_BUILD_VERSION));
+            deviceDetail.put("platform", PlatformType.ANDROID);
+        }
+
         deviceDetail.put("size", AndroidDeviceBridgeTool.getScreenSize(device));
         deviceDetail.put("cpu", device.getProperty(IDevice.PROP_DEVICE_CPU_ABI));
         deviceDetail.put("manufacturer", device.getProperty(IDevice.PROP_DEVICE_MANUFACTURER));
