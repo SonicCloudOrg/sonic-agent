@@ -36,6 +36,7 @@ import org.cloud.sonic.agent.tools.SGMTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.transport.TransportWorker;
+import org.cloud.sonic.core.ios.IOSDriver;
 import org.cloud.sonic.core.tool.SonicRespException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,6 +158,11 @@ public class IOSWSServer implements IIOSWSServer {
         JSONObject msg = JSON.parseObject(message);
         logger.info("{} send: {}", session.getId(), msg);
         String udId = udIdMap.get(session);
+        IOSDriver iosDriver = null;
+        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
+        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+            iosDriver = iosStepHandler.getDriver();
+        }
         switch (msg.getString("type")) {
             case "location": {
                 if (msg.getString("detail").equals("set")) {
@@ -179,18 +185,9 @@ public class IOSWSServer implements IIOSWSServer {
                 sendText(session, proxy.toJSONString());
                 break;
             }
-            case "installCert": {
-                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
-                if (iosStepHandler == null || iosStepHandler.getDriver() == null) {
-                    break;
-                }
-                try {
-                    iosStepHandler.getDriver().appActivate("com.apple.mobilesafari");
-                } catch (SonicRespException e) {
-                    e.printStackTrace();
-                }
+            case "installCert":
+                SibTool.launch(udId, "com.apple.mobilesafari");
                 break;
-            }
             case "launch":
                 SibTool.launch(udId, msg.getString("pkg"));
                 break;
@@ -198,7 +195,6 @@ public class IOSWSServer implements IIOSWSServer {
                 SibTool.uninstall(udId, msg.getString("detail"));
                 break;
             case "debug":
-                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
                 switch (msg.getString("detail")) {
                     case "runStep": {
                         JSONObject jsonDebug = new JSONObject();
@@ -219,12 +215,12 @@ public class IOSWSServer implements IIOSWSServer {
                         break;
                     }
                     case "tap": {
-                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                        if (iosDriver != null) {
                             String xy = msg.getString("point");
                             int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
                             int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
                             try {
-                                iosStepHandler.getDriver().tap(x, y);
+                                iosDriver.tap(x, y);
                             } catch (SonicRespException e) {
                                 e.printStackTrace();
                             }
@@ -232,12 +228,12 @@ public class IOSWSServer implements IIOSWSServer {
                         break;
                     }
                     case "longPress": {
-                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                        if (iosDriver != null) {
                             String xy = msg.getString("point");
                             int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
                             int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
                             try {
-                                iosStepHandler.getDriver().longPress(x, y, 1500);
+                                iosDriver.longPress(x, y, 1500);
                             } catch (SonicRespException e) {
                                 e.printStackTrace();
                             }
@@ -245,7 +241,7 @@ public class IOSWSServer implements IIOSWSServer {
                         break;
                     }
                     case "swipe": {
-                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                        if (iosDriver != null) {
                             String xy1 = msg.getString("pointA");
                             String xy2 = msg.getString("pointB");
                             int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
@@ -253,7 +249,7 @@ public class IOSWSServer implements IIOSWSServer {
                             int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
                             int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
                             try {
-                                iosStepHandler.getDriver().swipe(x1, y1, x2, y2);
+                                iosDriver.swipe(x1, y1, x2, y2);
                             } catch (SonicRespException e) {
                                 e.printStackTrace();
                             }
@@ -261,18 +257,18 @@ public class IOSWSServer implements IIOSWSServer {
                         break;
                     }
                     case "keyEvent": {
-                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                        if (iosDriver != null) {
                             try {
                                 if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
-                                    iosStepHandler.getDriver().pressButton(msg.getString("key"));
+                                    iosDriver.pressButton(msg.getString("key"));
                                 } else if (msg.getString("key").equals("lock")) {
-                                    if (iosStepHandler.getDriver().isLocked()) {
-                                        iosStepHandler.getDriver().unlock();
+                                    if (iosDriver.isLocked()) {
+                                        iosDriver.unlock();
                                     } else {
-                                        iosStepHandler.getDriver().lock();
+                                        iosDriver.lock();
                                     }
                                 } else {
-                                    iosStepHandler.getDriver().appActivate("com.apple." + msg.getString("key"));
+                                    iosDriver.appActivate("com.apple." + msg.getString("key"));
                                 }
                             } catch (Throwable e) {
                                 e.printStackTrace();
@@ -281,10 +277,9 @@ public class IOSWSServer implements IIOSWSServer {
                         break;
                     }
                     case "siri": {
-                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                            IOSStepHandler finalIOSStepHandler = iosStepHandler;
+                        if (iosDriver != null) {
                             try {
-                                finalIOSStepHandler.getDriver().sendSiriCommand(msg.getString("command"));
+                                iosDriver.sendSiriCommand(msg.getString("command"));
                             } catch (SonicRespException e) {
                                 e.printStackTrace();
                             }
@@ -292,14 +287,13 @@ public class IOSWSServer implements IIOSWSServer {
                         break;
                     }
                     case "tree": {
-                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                            IOSStepHandler finalIOSStepHandler = iosStepHandler;
+                        if (iosDriver != null) {
                             try {
                                 JSONObject result = new JSONObject();
                                 result.put("msg", "tree");
-                                result.put("detail", finalIOSStepHandler.getResource());
+                                result.put("detail", iosStepHandler.getResource());
                                 HandleDes handleDes = new HandleDes();
-                                result.put("img", finalIOSStepHandler.stepScreen(handleDes));
+                                result.put("img", iosStepHandler.stepScreen(handleDes));
                                 if (handleDes.getE() != null) {
                                     logger.error(handleDes.getE().getMessage());
                                     JSONObject resultFail = new JSONObject();
@@ -318,8 +312,7 @@ public class IOSWSServer implements IIOSWSServer {
                         break;
                     }
                     case "eleScreen": {
-                        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                            IOSStepHandler finalIOSStepHandler = iosStepHandler;
+                        if (iosDriver != null) {
                             JSONObject result = new JSONObject();
                             result.put("msg", "eleScreen");
                             try {
@@ -329,7 +322,7 @@ public class IOSWSServer implements IIOSWSServer {
                                 }
                                 File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
                                 try {
-                                    byte[] bt = finalIOSStepHandler.findEle("xpath", msg.getString("xpath")).screenshot();
+                                    byte[] bt = iosStepHandler.findEle("xpath", msg.getString("xpath")).screenshot();
                                     FileImageOutputStream imageOutput = new FileImageOutputStream(output);
                                     imageOutput.write(bt, 0, bt.length);
                                     imageOutput.close();

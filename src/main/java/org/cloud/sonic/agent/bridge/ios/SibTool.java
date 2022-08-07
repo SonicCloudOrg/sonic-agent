@@ -48,6 +48,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
@@ -199,7 +200,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         int mjpegPort = PortTool.releaseAndGetPort(mjpeg);
         Process wdaProcess = null;
         String commandLine = "%s run wda -u %s -b %s --mjpeg-remote-port 9100" +
-                " --server-remote-port 8200 --mjpeg-local-port %d --server-local-port %d";
+                " --server-remote-port 8100 --mjpeg-local-port %d --server-local-port %d";
         String system = System.getProperty("os.name").toLowerCase();
         if (system.contains("win")) {
             wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
@@ -208,21 +209,37 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
         BufferedReader stdInput = new BufferedReader(new
                 InputStreamReader(wdaProcess.getInputStream()));
-        String s;
+        Process finalWdaProcess = wdaProcess;
+        Semaphore isFinish = new Semaphore(0);
+        Thread wdaThread = new Thread(() -> {
+            String s;
+            while (finalWdaProcess.isAlive()) {
+                try {
+                    if ((s = stdInput.readLine()) != null) {
+                        logger.info(s);
+                        if (s.contains("WebDriverAgent server start successful")) {
+                            isFinish.release();
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("WebDriverAgent print thread shutdown.");
+        });
+        wdaThread.start();
         int wait = 0;
-        while (wdaProcess.isAlive()) {
-            if ((s = stdInput.readLine()) != null) {
-                logger.info(s);
-                if (s.contains("WebDriverAgent server start successful")) {
-                    break;
-                }
-            } else {
-                Thread.sleep(500);
-                wait++;
-                if (wait >= 120) {
-                    logger.info(udId + " WebDriverAgent start timeout!");
-                    return new int[]{0, 0};
-                }
+        while (!isFinish.tryAcquire()) {
+            Thread.sleep(500);
+            wait++;
+            if (wait >= 120) {
+                logger.info(udId + " WebDriverAgent start timeout!");
+                return new int[]{0, 0};
             }
         }
         processList = new ArrayList<>();
@@ -320,7 +337,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                         if (s.contains("orientation") && (!s.contains("0")) && (!s.contains("failed"))) {
                             try {
                                 int result = 0;
-                                switch (BytesTool.getInt(s)){
+                                switch (BytesTool.getInt(s)) {
                                     case 1:
                                         result = 0;
                                         break;
@@ -406,7 +423,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));
     }
 
-    public static int battery(String udId){
+    public static int battery(String udId) {
         String commandLine = "%s battery -u %s -j";
         String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
         return JSON.parseObject(re).getInteger("level");
