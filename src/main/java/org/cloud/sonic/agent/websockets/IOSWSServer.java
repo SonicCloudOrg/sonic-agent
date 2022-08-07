@@ -37,6 +37,9 @@ import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.core.ios.IOSDriver;
+import org.cloud.sonic.core.ios.RespHandler;
+import org.cloud.sonic.core.ios.enums.PasteboardType;
+import org.cloud.sonic.core.ios.enums.SystemButton;
 import org.cloud.sonic.core.tool.SonicRespException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +54,7 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
@@ -158,187 +162,235 @@ public class IOSWSServer implements IIOSWSServer {
         JSONObject msg = JSON.parseObject(message);
         logger.info("{} send: {}", session.getId(), msg);
         String udId = udIdMap.get(session);
-        IOSDriver iosDriver = null;
-        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
-        if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-            iosDriver = iosStepHandler.getDriver();
-        }
-        switch (msg.getString("type")) {
-            case "location": {
-                if (msg.getString("detail").equals("set")) {
-                    SibTool.locationSet(udId, msg.getString("long"), msg.getString("lat"));
-                } else {
-                    SibTool.locationUnset(udId);
+        IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+            IOSDriver iosDriver = null;
+            IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getId());
+            if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
+                iosDriver = iosStepHandler.getDriver();
+            }
+            switch (msg.getString("type")) {
+                case "setPasteboard": {
+                    if (iosDriver != null) {
+                        try {
+                            iosDriver.appActivate("com.apple.springboard");
+                            iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
+                            Thread.sleep(2000);
+                            iosDriver.setPasteboard(PasteboardType.PLAIN_TEXT, msg.getString("detail"));
+                            iosDriver.pressButton(SystemButton.HOME);
+                            JSONObject setPaste = new JSONObject();
+                            setPaste.put("msg", "setPaste");
+                            sendText(session, setPaste.toJSONString());
+                        } catch (SonicRespException | InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
                 }
-                break;
-            }
-            case "proxy": {
-                Socket portSocket = PortTool.getBindSocket();
-                Socket webPortSocket = PortTool.getBindSocket();
-                int pPort = PortTool.releaseAndGetPort(portSocket);
-                int webPort = PortTool.releaseAndGetPort(webPortSocket);
-                SGMTool.startProxy(udId, SGMTool.getCommand(pPort, webPort));
-                JSONObject proxy = new JSONObject();
-                proxy.put("webPort", webPort);
-                proxy.put("port", pPort);
-                proxy.put("msg", "proxyResult");
-                sendText(session, proxy.toJSONString());
-                break;
-            }
-            case "installCert":
-                SibTool.launch(udId, "com.apple.mobilesafari");
-                break;
-            case "launch":
-                SibTool.launch(udId, msg.getString("pkg"));
-                break;
-            case "uninstallApp":
-                SibTool.uninstall(udId, msg.getString("detail"));
-                break;
-            case "debug":
-                switch (msg.getString("detail")) {
-                    case "runStep": {
-                        JSONObject jsonDebug = new JSONObject();
-                        jsonDebug.put("msg", "findSteps");
-                        jsonDebug.put("key", key);
-                        jsonDebug.put("udId", udId);
-                        jsonDebug.put("sessionId", session.getId());
-                        jsonDebug.put("caseId", msg.getInteger("caseId"));
-                        TransportWorker.send(jsonDebug);
-                        break;
-                    }
-                    case "stopStep": {
-                        TaskManager.forceStopDebugStepThread(
-                                IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
-                                        0, msg.getInteger("caseId"), msg.getString("udId")
-                                )
-                        );
-                        break;
-                    }
-                    case "tap": {
-                        if (iosDriver != null) {
-                            String xy = msg.getString("point");
-                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            try {
-                                iosDriver.tap(x, y);
-                            } catch (SonicRespException e) {
-                                e.printStackTrace();
-                            }
+                case "getPasteboard": {
+                    if (iosDriver != null) {
+                        try {
+                            iosDriver.appActivate("com.apple.springboard");
+                            iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
+                            Thread.sleep(2000);
+                            JSONObject paste = new JSONObject();
+                            paste.put("msg", "paste");
+                            paste.put("detail", new String(iosDriver.getPasteboard(PasteboardType.PLAIN_TEXT), StandardCharsets.UTF_8));
+                            sendText(session, paste.toJSONString());
+                            iosDriver.pressButton(SystemButton.HOME);
+                        } catch (SonicRespException | InterruptedException e) {
+                            e.printStackTrace();
                         }
-                        break;
                     }
-                    case "longPress": {
-                        if (iosDriver != null) {
-                            String xy = msg.getString("point");
-                            int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-                            int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-                            try {
-                                iosDriver.longPress(x, y, 1500);
-                            } catch (SonicRespException e) {
-                                e.printStackTrace();
-                            }
+                    break;
+                }
+                case "send": {
+                    RespHandler sendHandler = new RespHandler();
+                    sendHandler.setRequestTimeOut(2000);
+                    RespHandler respHandler = iosDriver.getWdaClient().getRespHandler();
+                    iosDriver.getWdaClient().setRespHandler(sendHandler);
+                    try {
+                        iosDriver.sendKeys(msg.getString("detail"));
+                    } catch (SonicRespException e) {
+                        e.printStackTrace();
+                    } finally {
+                        iosDriver.getWdaClient().setRespHandler(respHandler);
+                    }
+                    break;
+                }
+                case "location": {
+                    if (msg.getString("detail").equals("set")) {
+                        SibTool.locationSet(udId, msg.getString("long"), msg.getString("lat"));
+                    } else {
+                        SibTool.locationUnset(udId);
+                    }
+                    break;
+                }
+                case "proxy": {
+                    Socket portSocket = PortTool.getBindSocket();
+                    Socket webPortSocket = PortTool.getBindSocket();
+                    int pPort = PortTool.releaseAndGetPort(portSocket);
+                    int webPort = PortTool.releaseAndGetPort(webPortSocket);
+                    SGMTool.startProxy(udId, SGMTool.getCommand(pPort, webPort));
+                    JSONObject proxy = new JSONObject();
+                    proxy.put("webPort", webPort);
+                    proxy.put("port", pPort);
+                    proxy.put("msg", "proxyResult");
+                    sendText(session, proxy.toJSONString());
+                    break;
+                }
+                case "installCert":
+                    SibTool.launch(udId, "com.apple.mobilesafari");
+                    break;
+                case "launch":
+                    SibTool.launch(udId, msg.getString("pkg"));
+                    break;
+                case "uninstallApp":
+                    SibTool.uninstall(udId, msg.getString("detail"));
+                    break;
+                case "debug":
+                    switch (msg.getString("detail")) {
+                        case "runStep": {
+                            JSONObject jsonDebug = new JSONObject();
+                            jsonDebug.put("msg", "findSteps");
+                            jsonDebug.put("key", key);
+                            jsonDebug.put("udId", udId);
+                            jsonDebug.put("sessionId", session.getId());
+                            jsonDebug.put("caseId", msg.getInteger("caseId"));
+                            TransportWorker.send(jsonDebug);
+                            break;
                         }
-                        break;
-                    }
-                    case "swipe": {
-                        if (iosDriver != null) {
-                            String xy1 = msg.getString("pointA");
-                            String xy2 = msg.getString("pointB");
-                            int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-                            int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-                            int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-                            int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-                            try {
-                                iosDriver.swipe(x1, y1, x2, y2);
-                            } catch (SonicRespException e) {
-                                e.printStackTrace();
-                            }
+                        case "stopStep": {
+                            TaskManager.forceStopDebugStepThread(
+                                    IOSRunStepThread.IOS_RUN_STEP_TASK_PRE.formatted(
+                                            0, msg.getInteger("caseId"), msg.getString("udId")
+                                    )
+                            );
+                            break;
                         }
-                        break;
-                    }
-                    case "keyEvent": {
-                        if (iosDriver != null) {
-                            try {
-                                if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
-                                    iosDriver.pressButton(msg.getString("key"));
-                                } else if (msg.getString("key").equals("lock")) {
-                                    if (iosDriver.isLocked()) {
-                                        iosDriver.unlock();
-                                    } else {
-                                        iosDriver.lock();
-                                    }
-                                } else {
-                                    iosDriver.appActivate("com.apple." + msg.getString("key"));
-                                }
-                            } catch (Throwable e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    }
-                    case "siri": {
-                        if (iosDriver != null) {
-                            try {
-                                iosDriver.sendSiriCommand(msg.getString("command"));
-                            } catch (SonicRespException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        break;
-                    }
-                    case "tree": {
-                        if (iosDriver != null) {
-                            try {
-                                JSONObject result = new JSONObject();
-                                result.put("msg", "tree");
-                                result.put("detail", iosStepHandler.getResource());
-                                HandleDes handleDes = new HandleDes();
-                                result.put("img", iosStepHandler.stepScreen(handleDes));
-                                if (handleDes.getE() != null) {
-                                    logger.error(handleDes.getE().getMessage());
-                                    JSONObject resultFail = new JSONObject();
-                                    resultFail.put("msg", "treeFail");
-                                    sendText(session, resultFail.toJSONString());
-                                } else {
-                                    sendText(session, result.toJSONString());
-                                }
-                            } catch (Throwable e) {
-                                logger.error(e.getMessage());
-                                JSONObject result = new JSONObject();
-                                result.put("msg", "treeFail");
-                                sendText(session, result.toJSONString());
-                            }
-                        }
-                        break;
-                    }
-                    case "eleScreen": {
-                        if (iosDriver != null) {
-                            JSONObject result = new JSONObject();
-                            result.put("msg", "eleScreen");
-                            try {
-                                File folder = new File("test-output");
-                                if (!folder.exists()) {
-                                    folder.mkdirs();
-                                }
-                                File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
+                        case "tap": {
+                            if (iosDriver != null) {
+                                String xy = msg.getString("point");
+                                int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                                int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
                                 try {
-                                    byte[] bt = iosStepHandler.findEle("xpath", msg.getString("xpath")).screenshot();
-                                    FileImageOutputStream imageOutput = new FileImageOutputStream(output);
-                                    imageOutput.write(bt, 0, bt.length);
-                                    imageOutput.close();
-                                } catch (Exception e) {
+                                    iosDriver.tap(x, y);
+                                } catch (SonicRespException e) {
                                     e.printStackTrace();
                                 }
-                                result.put("img", UploadTools.upload(output, "keepFiles"));
-                            } catch (Exception e) {
-                                result.put("errMsg", "获取元素截图失败！");
                             }
-                            sendText(session, result.toJSONString());
+                            break;
                         }
-                        break;
-                    }
-                    case "install": {
-                        IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                        case "longPress": {
+                            if (iosDriver != null) {
+                                String xy = msg.getString("point");
+                                int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
+                                int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
+                                try {
+                                    iosDriver.longPress(x, y, 1500);
+                                } catch (SonicRespException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            break;
+                        }
+                        case "swipe": {
+                            if (iosDriver != null) {
+                                String xy1 = msg.getString("pointA");
+                                String xy2 = msg.getString("pointB");
+                                int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
+                                int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
+                                int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
+                                int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
+                                try {
+                                    iosDriver.swipe(x1, y1, x2, y2);
+                                } catch (SonicRespException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            break;
+                        }
+                        case "keyEvent": {
+                            if (iosDriver != null) {
+                                try {
+                                    if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
+                                        iosDriver.pressButton(msg.getString("key"));
+                                    } else if (msg.getString("key").equals("lock")) {
+                                        if (iosDriver.isLocked()) {
+                                            iosDriver.unlock();
+                                        } else {
+                                            iosDriver.lock();
+                                        }
+                                    } else {
+                                        iosDriver.appActivate("com.apple." + msg.getString("key"));
+                                    }
+                                } catch (Throwable e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            break;
+                        }
+                        case "siri": {
+                            if (iosDriver != null) {
+                                try {
+                                    iosDriver.sendSiriCommand(msg.getString("command"));
+                                } catch (SonicRespException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            break;
+                        }
+                        case "tree": {
+                            if (iosDriver != null) {
+                                try {
+                                    JSONObject result = new JSONObject();
+                                    result.put("msg", "tree");
+                                    result.put("detail", iosStepHandler.getResource());
+                                    HandleDes handleDes = new HandleDes();
+                                    result.put("img", iosStepHandler.stepScreen(handleDes));
+                                    if (handleDes.getE() != null) {
+                                        logger.error(handleDes.getE().getMessage());
+                                        JSONObject resultFail = new JSONObject();
+                                        resultFail.put("msg", "treeFail");
+                                        sendText(session, resultFail.toJSONString());
+                                    } else {
+                                        sendText(session, result.toJSONString());
+                                    }
+                                } catch (Throwable e) {
+                                    logger.error(e.getMessage());
+                                    JSONObject result = new JSONObject();
+                                    result.put("msg", "treeFail");
+                                    sendText(session, result.toJSONString());
+                                }
+                            }
+                            break;
+                        }
+                        case "eleScreen": {
+                            if (iosDriver != null) {
+                                JSONObject result = new JSONObject();
+                                result.put("msg", "eleScreen");
+                                try {
+                                    File folder = new File("test-output");
+                                    if (!folder.exists()) {
+                                        folder.mkdirs();
+                                    }
+                                    File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
+                                    try {
+                                        byte[] bt = iosStepHandler.findEle("xpath", msg.getString("xpath")).screenshot();
+                                        FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+                                        imageOutput.write(bt, 0, bt.length);
+                                        imageOutput.close();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                    result.put("img", UploadTools.upload(output, "keepFiles"));
+                                } catch (Exception e) {
+                                    result.put("errMsg", "获取元素截图失败！");
+                                }
+                                sendText(session, result.toJSONString());
+                            }
+                            break;
+                        }
+                        case "install": {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
@@ -350,12 +402,12 @@ public class IOSWSServer implements IIOSWSServer {
                                 e.printStackTrace();
                             }
                             sendText(session, result.toJSONString());
-                        });
-                        break;
+                            break;
+                        }
                     }
-                }
-                break;
-        }
+                    break;
+            }
+        });
     }
 
     private void exit(Session session) {
