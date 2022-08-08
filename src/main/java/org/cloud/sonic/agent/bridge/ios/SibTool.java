@@ -397,6 +397,39 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
     }
 
+    public static void getProcessList(String udId, Session session) {
+        Process appProcess = null;
+        String commandLine = "%s ps -u %s -j";
+        String system = System.getProperty("os.name").toLowerCase();
+        try {
+            if (system.contains("win")) {
+                appProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                appProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+            }
+            BufferedReader stdInput = new BufferedReader(new
+                    InputStreamReader(appProcess.getInputStream()));
+            String s;
+            while (appProcess.isAlive()) {
+                if ((s = stdInput.readLine()) != null) {
+                    try {
+                        List<JSONObject> pList = JSON.parseArray(s, JSONObject.class);
+                        for (JSONObject p : pList) {
+                            JSONObject processListDetail = new JSONObject();
+                            processListDetail.put("msg", "processListDetail");
+                            processListDetail.put("detail", p);
+                            sendText(session, processListDetail.toJSONString());
+                        }
+                    } catch (Exception e) {
+                        logger.info(s);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void locationUnset(String udId) {
         String commandLine = "%s location unset -u %s";
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
