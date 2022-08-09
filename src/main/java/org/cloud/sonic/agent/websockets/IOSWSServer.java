@@ -121,6 +121,11 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("width", iosStepHandler.getDriver().getWindowSize().getWidth());
                 result.put("height", iosStepHandler.getDriver().getWindowSize().getHeight());
                 result.put("detail", "初始化Driver完成！");
+                JSONObject appiumSettings = new JSONObject();
+                appiumSettings.put("mjpegServerFramerate", 100);
+                appiumSettings.put("mjpegScalingFactor", 100);
+                appiumSettings.put("mjpegServerScreenshotQuality", 25);
+                iosStepHandler.appiumSettings(appiumSettings);
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
                 JSONObject port = new JSONObject();
                 port.put("port", 0);
@@ -158,7 +163,7 @@ public class IOSWSServer implements IIOSWSServer {
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) throws InterruptedException {
+    public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
         logger.info("{} send: {}", session.getId(), msg);
         String udId = udIdMap.get(session);
@@ -169,6 +174,24 @@ public class IOSWSServer implements IIOSWSServer {
                 iosDriver = iosStepHandler.getDriver();
             }
             switch (msg.getString("type")) {
+                case "screen": {
+                    JSONObject appiumSettings = new JSONObject();
+                    if (msg.getString("detail").equals("low")) {
+                        appiumSettings.put("mjpegServerFramerate", 50);
+                        appiumSettings.put("mjpegScalingFactor", 50);
+                        appiumSettings.put("mjpegServerScreenshotQuality", 10);
+                    } else {
+                        appiumSettings.put("mjpegServerFramerate", 100);
+                        appiumSettings.put("mjpegScalingFactor", 100);
+                        appiumSettings.put("mjpegServerScreenshotQuality", 25);
+                    }
+                    try {
+                        iosStepHandler.appiumSettings(appiumSettings);
+                    } catch (SonicRespException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                }
                 case "setPasteboard": {
                     if (iosDriver != null) {
                         try {
