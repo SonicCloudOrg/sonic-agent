@@ -101,8 +101,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(listenProcess.getInputStream()));
+            InputStreamReader inputStreamReader = new InputStreamReader(listenProcess.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
             while (listenProcess.isAlive()) {
                 try {
@@ -118,6 +118,16 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             GlobalProcessMap.getMap().put(processName, listenProcess);
         });
@@ -207,8 +217,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         } else if (system.contains("linux") || system.contains("mac")) {
             wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
         }
-        BufferedReader stdInput = new BufferedReader(new
-                InputStreamReader(wdaProcess.getInputStream()));
+        InputStreamReader inputStreamReader = new InputStreamReader(wdaProcess.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
         Process finalWdaProcess = wdaProcess;
         Semaphore isFinish = new Semaphore(0);
         Thread wdaThread = new Thread(() -> {
@@ -227,6 +237,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             }
             try {
                 stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -284,8 +299,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 }
                 String processName = String.format("process-%s-syslog", udId);
                 GlobalProcessMap.getMap().put(processName, ps);
-                BufferedReader stdInput = new BufferedReader(new
-                        InputStreamReader(ps.getInputStream()));
+                InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+                BufferedReader stdInput = new BufferedReader(inputStreamReader);
                 String s;
                 while (ps.isAlive()) {
                     if ((s = stdInput.readLine()) != null) {
@@ -300,6 +315,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                         }
                     }
                 }
+                stdInput.close();
+                inputStreamReader.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -328,8 +345,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 }
                 String processName = String.format("process-%s-orientation", udId);
                 GlobalProcessMap.getMap().put(processName, ps);
-                BufferedReader stdInput = new BufferedReader(new
-                        InputStreamReader(ps.getInputStream()));
+                InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+                BufferedReader stdInput = new BufferedReader(inputStreamReader);
                 String s;
                 while (ps.isAlive()) {
                     if ((s = stdInput.readLine()) != null) {
@@ -361,6 +378,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                         }
                     }
                 }
+                stdInput.close();
+                inputStreamReader.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -377,8 +396,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } else if (system.contains("linux") || system.contains("mac")) {
                 appListProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
             }
-            BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(appListProcess.getInputStream()));
+            InputStreamReader inputStreamReader = new InputStreamReader(appListProcess.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
             while (appListProcess.isAlive()) {
                 if ((s = stdInput.readLine()) != null) {
@@ -392,8 +411,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                     }
                 }
             }
+            stdInput.close();
+            inputStreamReader.close();
         } catch (Exception e) {
-
         }
     }
 
@@ -407,8 +427,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } else if (system.contains("linux") || system.contains("mac")) {
                 appProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
             }
-            BufferedReader stdInput = new BufferedReader(new
-                    InputStreamReader(appProcess.getInputStream()));
+            InputStreamReader inputStreamReader = new InputStreamReader(appProcess.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
             while (appProcess.isAlive()) {
                 if ((s = stdInput.readLine()) != null) {
@@ -425,6 +445,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                     }
                 }
             }
+            stdInput.close();
+            inputStreamReader.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
