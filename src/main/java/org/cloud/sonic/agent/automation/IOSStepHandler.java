@@ -75,7 +75,7 @@ public class IOSStepHandler {
     private JSONObject globalParams = new JSONObject();
     private String testPackage = "";
     private String udId = "";
-    //测试状态
+
     private int status = ResultDetailStatus.PASS;
 
     public LogUtil getLog() {
