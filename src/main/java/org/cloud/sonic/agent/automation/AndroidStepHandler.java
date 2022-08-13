@@ -604,6 +604,16 @@ public class AndroidStepHandler {
         }
     }
 
+    public void appReset(HandleDes handleDes, String bundleId) {
+        handleDes.setStepDes("清空App内存缓存");
+        bundleId = TextHandler.replaceTrans(bundleId, globalParams);
+        handleDes.setDetail("清空 " + bundleId);
+        IDevice device = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+        if (device != null) {
+            AndroidDeviceBridgeTool.executeCommand(device, "pm clear " + bundleId);
+        }
+    }
+
     public void openApp(HandleDes handleDes, String appPackage) {
         handleDes.setStepDes("打开应用");
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
@@ -818,6 +828,19 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         try {
             androidDriver.pressKey(new KeyEvent().withKey(AndroidKey.valueOf(key)));
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void keyCode(HandleDes handleDes, int key) {
+        handleDes.setStepDes("按系统按键" + key + "键");
+        handleDes.setDetail("");
+        try {
+            IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+            if (iDevice != null) {
+                AndroidDeviceBridgeTool.pressKey(iDevice, key);
+            }
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -1519,15 +1542,6 @@ public class AndroidStepHandler {
         return element;
     }
 
-    public void appReset(HandleDes handleDes, String bundleId) {
-        handleDes.setStepDes("清空App内存缓存");
-        handleDes.setDetail("清空 " + bundleId);
-        IDevice device = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        if (device != null) {
-            AndroidDeviceBridgeTool.executeCommand(device, "pm clear " + bundleId);
-        }
-    }
-
     public void stepHold(HandleDes handleDes, int time) {
         handleDes.setStepDes("设置全局步骤间隔");
         handleDes.setDetail("间隔" + time + " ms");
@@ -1542,7 +1556,7 @@ public class AndroidStepHandler {
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
             case "appReset":
-                appReset(handleDes, step.getString("content"));
+                appReset(handleDes, step.getString("text"));
                 break;
             case "stepHold":
                 stepHold(handleDes, Integer.parseInt(step.getString("content")));
@@ -1666,6 +1680,9 @@ public class AndroidStepHandler {
                 break;
             case "keyCode":
                 keyCode(handleDes, step.getString("content"));
+                break;
+            case "keyCodeSelf":
+                keyCode(handleDes, step.getInteger("content"));
                 break;
             case "assertEquals":
             case "assertTrue":
