@@ -792,6 +792,7 @@ public class IOSStepHandler {
     }
 
     public void sendKeyForce(HandleDes handleDes, String text) {
+        text = TextHandler.replaceTrans(text, globalParams);
         handleDes.setStepDes("键盘输入文本");
         handleDes.setDetail("键盘输入" + text);
         try {
