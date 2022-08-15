@@ -109,9 +109,6 @@ public class IOSStepHandler {
         int width = iosDriver.getWindowSize().getWidth();
         int height = iosDriver.getWindowSize().getHeight();
         JSONObject appiumSettings = new JSONObject();
-//        appiumSettings.put("mjpegServerFramerate", 50);
-//        appiumSettings.put("mjpegScalingFactor", 50);
-//        appiumSettings.put("mjpegServerScreenshotQuality", 10);
         appiumSettings.put("snapshotMaxDepth", 30);
         appiumSettings(appiumSettings);
         IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
