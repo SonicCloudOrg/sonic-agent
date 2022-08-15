@@ -791,6 +791,16 @@ public class IOSStepHandler {
         holdTime = time;
     }
 
+    public void sendKeyForce(HandleDes handleDes, String text) {
+        handleDes.setStepDes("键盘输入文本");
+        handleDes.setDetail("键盘输入" + text);
+        try {
+            iosDriver.sendKeys(text);
+        } catch (SonicRespException e) {
+            handleDes.setE(e);
+        }
+    }
+
     private int holdTime = 0;
 
     public void runStep(JSONObject stepJSON, HandleDes handleDes) throws Throwable {
@@ -897,6 +907,9 @@ public class IOSStepHandler {
             case "getTextValue":
                 globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
+                break;
+            case "sendKeyForce":
+                sendKeyForce(handleDes, step.getString("content"));
                 break;
 //            case "hideKey":
 //                hideKey(handleDes);
