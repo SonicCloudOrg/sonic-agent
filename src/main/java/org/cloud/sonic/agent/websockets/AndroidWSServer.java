@@ -654,7 +654,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
         if (iDevice != null) {
-            AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
+//            AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
             AndroidDeviceBridgeTool.clearProxy(iDevice);
             List<JSONObject> has = webViewForwardMap.get(iDevice);
             if (has != null && has.size() > 0) {
