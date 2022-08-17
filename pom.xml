@@ -60,7 +60,13 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.79</version>
+            <version>1.2.83</version>
+        </dependency>
+        <!--     Sonic UIAutomation Driver   -->
+        <dependency>
+            <groupId>io.github.soniccloudorg</groupId>
+            <artifactId>sonic-driver-core</artifactId>
+            <version>1.0.11</version>
         </dependency>
         <!--  appium java api      -->
         <dependency>

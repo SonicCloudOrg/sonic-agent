@@ -285,7 +285,7 @@ public class AndroidTerminalWSServer {
         if (socketMap.get(session) != null && socketMap.get(session).isAlive()) {
             return;
         }
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.MainActivity");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SonicServiceActivity");
         int wait = 0;
         String has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicmanagersocket");
         while (!has.contains("sonicmanagersocket")) {
@@ -366,9 +366,7 @@ public class AndroidTerminalWSServer {
                     BytesTool.sendText(session, managerDetail.toJSONString());
                 }
             } catch (IOException e) {
-                log.info("error: {}",e.getMessage());
-            } finally {
-                stopManager();
+                log.info("error: {}", e.getMessage());
             }
             AndroidDeviceBridgeTool.removeForward(iDevice, managerPort, "sonicmanagersocket");
             outputStreamMap.remove(session);
@@ -389,16 +387,17 @@ public class AndroidTerminalWSServer {
                     e.printStackTrace();
                 }
             }
-            if (managerSocket != null && managerSocket.isConnected()) {
+            if (inputStream != null) {
                 try {
-                    managerSocket.close();
+                    inputStream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            if (inputStream != null) {
+            if (managerSocket != null && managerSocket.isConnected()) {
                 try {
-                    inputStream.close();
+                    managerSocket.close();
+                    log.info("manager socket closed.");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
