@@ -1515,8 +1515,8 @@ public class AndroidStepHandler {
                 we = getWebElementByCssAndText(pathValue);
                 break;
             case "androidUIAutomator":
-                //仅限自动化引擎为UIAutomator2时生效
                 we = androidDriver.findElementByAndroidUIAutomator(pathValue);
+                break;
             default:
                 log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
                 break;
