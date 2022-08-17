@@ -417,13 +417,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
-    public static int getOrientation(IDevice iDevice) {
-        String inputs = executeCommand(iDevice, "dumpsys input");
-        String orientationS = inputs.substring(inputs.indexOf("SurfaceOrientation")).trim();
-        int o = BytesTool.getInt(orientationS.substring(20, orientationS.indexOf("\n")));
-        return o;
-    }
-
     public static void pushYadb(IDevice iDevice) {
         executeCommand(iDevice, "rm -rf /data/local/tmp/yadb");
         File yadbLocalFile = new File("plugins" + File.separator + "yadb");

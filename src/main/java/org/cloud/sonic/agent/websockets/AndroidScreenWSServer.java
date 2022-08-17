@@ -36,6 +36,8 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +54,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
     private Map<Session, String> typeMap = new ConcurrentHashMap<>();
     private Map<Session, String> picMap = new ConcurrentHashMap<>();
+    private List<String> initOriList = new ArrayList<>();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -101,7 +104,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info("{} send: {}",session.getId(), msg);
+        logger.info("{} send: {}", session.getId(), msg);
         switch (msg.getString("type")) {
             case "switch": {
                 typeMap.put(session, msg.getString("detail"));
@@ -128,6 +131,10 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                                                 JSONObject rotationJson = new JSONObject();
                                                 rotationJson.put("msg", "rotation");
                                                 rotationJson.put("value", Integer.parseInt(res) * 90);
+                                                if ((!initOriList.contains(session.getId())) && Integer.parseInt(res) != 0) {
+                                                    AndroidDeviceBridgeTool.pressKey(iDevice, 3);
+                                                    initOriList.add(session.getId());
+                                                }
                                                 BytesTool.sendText(session, rotationJson.toJSONString());
                                                 startScreen(session);
                                             }
@@ -207,9 +214,9 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     }
 
 
-
     private void exit(Session session) {
         removeUdIdMapAndSet(session);
+        initOriList.remove(session.getId());
         if (rotationMap.get(session) != null) {
             rotationMap.get(session).interrupt();
         }

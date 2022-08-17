@@ -142,9 +142,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                     .replaceAll("\t", "");
         }
         AndroidAPKMap.getMap().put(udId, true);
-        if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
-            AndroidDeviceBridgeTool.pressKey(iDevice, 3);
-        }
         Semaphore isTouchFinish = new Semaphore(0);
         String finalPath = path;
 
