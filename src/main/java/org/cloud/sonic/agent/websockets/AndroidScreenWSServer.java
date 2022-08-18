@@ -54,7 +54,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
     private Map<Session, String> typeMap = new ConcurrentHashMap<>();
     private Map<Session, String> picMap = new ConcurrentHashMap<>();
-    private List<String> initOriList = new ArrayList<>();
+    private List<Session> initOriList = new ArrayList<>();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -131,9 +131,9 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                                                 JSONObject rotationJson = new JSONObject();
                                                 rotationJson.put("msg", "rotation");
                                                 rotationJson.put("value", Integer.parseInt(res) * 90);
-                                                if ((!initOriList.contains(session.getId())) && Integer.parseInt(res) != 0) {
+                                                if ((!initOriList.contains(session)) && Integer.parseInt(res) != 0) {
                                                     AndroidDeviceBridgeTool.pressKey(iDevice, 3);
-                                                    initOriList.add(session.getId());
+                                                    initOriList.add(session);
                                                 }
                                                 BytesTool.sendText(session, rotationJson.toJSONString());
                                                 startScreen(session);
@@ -216,7 +216,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
 
     private void exit(Session session) {
         removeUdIdMapAndSet(session);
-        initOriList.remove(session.getId());
+        initOriList.remove(session);
         if (rotationMap.get(session) != null) {
             rotationMap.get(session).interrupt();
         }

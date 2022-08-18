@@ -478,7 +478,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
         try {
             Process process = null;
-            String command = String.format("%s pull %s %s", getADBPathFromSystemEnv(), path, file.getAbsolutePath());
+            String command = String.format("%s -s %s pull %s %s", getADBPathFromSystemEnv(), iDevice.getSerialNumber(), path, file.getAbsolutePath());
             if (system.contains("win")) {
                 process = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
             } else if (system.contains("linux") || system.contains("mac")) {
