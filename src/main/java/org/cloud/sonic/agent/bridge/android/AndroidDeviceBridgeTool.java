@@ -418,6 +418,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     }
 
     public static int getOrientation(IDevice iDevice) {
+        //fix
         String inputs = executeCommand(iDevice, "dumpsys input");
         String orientationS = inputs.substring(inputs.indexOf("SurfaceOrientation")).trim();
         int o = BytesTool.getInt(orientationS.substring(20, orientationS.indexOf("\n")));
