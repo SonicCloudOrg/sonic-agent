@@ -7,9 +7,9 @@ spring:
     active: @project.artifactId@
 
 sonic:
-  saa: 2.0.2
+  saa: 2.0.1
   sgm: 0.1.9
-  sib: 1.1.6
+  sib: 1.1.8
 
 logging:
   file:

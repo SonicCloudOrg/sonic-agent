@@ -13,6 +13,7 @@ WORKDIR /root
 RUN apt-get -qqy update && \
     apt-get -qqy --no-install-recommends install \
     ca-certificates \
+    usbmuxd \
     zip \
     unzip \
     curl \
@@ -50,6 +51,13 @@ RUN mkdir -p ~/.android && \
     echo y | sdkmanager "build-tools;$ANDROID_BUILD_TOOLS_VERSION"
 
 ENV PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools
+
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+  && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+  && apt-get update -qqy \
+  && apt-get -qqy install \
+    ${CHROME_VERSION} \
+  && rm /etc/apt/sources.list.d/google-chrome.list
 
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
   && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \

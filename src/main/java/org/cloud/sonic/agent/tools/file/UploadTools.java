@@ -39,7 +39,7 @@ public class UploadTools {
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate) {
         UploadTools.restTemplate = restTemplate;
-        baseUrl = "http://" + host + ":" + port + "/api/folder".replace(":80/", "/");;
+        baseUrl = "http://" + host + ":" + port + "/server/api/folder".replace(":80/", "/");
     }
 
     public static String upload(File uploadFile, String type) {

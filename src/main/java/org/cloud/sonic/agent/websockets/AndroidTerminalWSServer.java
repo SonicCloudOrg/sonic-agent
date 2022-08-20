@@ -285,7 +285,7 @@ public class AndroidTerminalWSServer {
         if (socketMap.get(session) != null && socketMap.get(session).isAlive()) {
             return;
         }
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SonicServiceActivity");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.MainActivity");
         int wait = 0;
         String has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicmanagersocket");
         while (!has.contains("sonicmanagersocket")) {
