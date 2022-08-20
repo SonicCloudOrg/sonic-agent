@@ -10,7 +10,7 @@ sonic:
     # 改成server的SONIC_SERVER_HOST
     host: 192.168.1.7
     # 改成server的SONIC_SERVER_PORT
-    port: 8094
+    port: 3000
 
 modules:
   android:
