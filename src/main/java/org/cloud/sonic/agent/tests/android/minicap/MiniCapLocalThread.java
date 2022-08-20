@@ -164,7 +164,7 @@ public class MiniCapLocalThread extends Thread {
             }, 0, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             isSuc.set(false);
-            log.info("{} 设备miniCap启动异常！"
+            log.info("{} minicap stopped."
                     , iDevice.getSerialNumber());
             log.error(e.getMessage());
         }

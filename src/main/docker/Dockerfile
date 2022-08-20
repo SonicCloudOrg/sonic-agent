@@ -13,6 +13,7 @@ WORKDIR /root
 RUN apt-get -qqy update && \
     apt-get -qqy --no-install-recommends install \
     ca-certificates \
+    usbmuxd \
     zip \
     unzip \
     curl \

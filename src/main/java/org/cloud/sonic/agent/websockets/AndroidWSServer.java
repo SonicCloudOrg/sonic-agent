@@ -160,7 +160,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 if (res.contains("Address already in use")) {
                                     NotStopSession.add(session);
                                 }
-                                if (res.contains("starting：start()")) {
+                                if (res.startsWith("starting")) {
                                     isTouchFinish.release();
                                 }
                             }

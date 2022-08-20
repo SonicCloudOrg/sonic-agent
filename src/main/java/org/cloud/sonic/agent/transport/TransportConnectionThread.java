@@ -32,7 +32,7 @@ public class TransportConnectionThread implements Runnable {
     /**
      * second
      */
-    public static final long DELAY = 30;
+    public static final long DELAY = 10;
 
     public static final String THREAD_NAME = "transport-connection-thread";
 

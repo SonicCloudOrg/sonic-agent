@@ -8,6 +8,8 @@ package org.cloud.sonic.agent.common.interfaces;
 public interface PlatformType {
     int ANDROID = 1;
     int IOS = 2;
+    // HarmonyOs
+    int HARMONYOS = 6;
     int WINDOWS = 3;
     int MAC = 4;
     int WEB = 5;

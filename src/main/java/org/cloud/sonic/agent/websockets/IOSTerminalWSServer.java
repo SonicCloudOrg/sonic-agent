@@ -61,9 +61,12 @@ public class IOSTerminalWSServer implements IIOSWSServer {
     @OnMessage
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
-        logger.info("{} send: {}",session.getId(), msg);
+        logger.info("{} send: {}", session.getId(), msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "processList":
+                SibTool.getProcessList(udId, session);
+                break;
             case "appList":
                 SibTool.getAppList(udId, session);
                 break;
@@ -100,6 +103,6 @@ public class IOSTerminalWSServer implements IIOSWSServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info("{} : quit.",session.getId());
+        logger.info("{} : quit.", session.getId());
     }
 }

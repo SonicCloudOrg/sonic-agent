@@ -604,6 +604,16 @@ public class AndroidStepHandler {
         }
     }
 
+    public void appReset(HandleDes handleDes, String bundleId) {
+        handleDes.setStepDes("清空App内存缓存");
+        bundleId = TextHandler.replaceTrans(bundleId, globalParams);
+        handleDes.setDetail("清空 " + bundleId);
+        IDevice device = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+        if (device != null) {
+            AndroidDeviceBridgeTool.executeCommand(device, "pm clear " + bundleId);
+        }
+    }
+
     public void openApp(HandleDes handleDes, String appPackage) {
         handleDes.setStepDes("打开应用");
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
@@ -775,7 +785,7 @@ public class AndroidStepHandler {
         handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
         try {
             // 修复flutter应用输入框无法sendKey的问题
-            new Actions(androidDriver).sendKeys(findEle(selector, pathValue),keys).perform();
+            new Actions(androidDriver).sendKeys(findEle(selector, pathValue), keys).perform();
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -818,6 +828,19 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         try {
             androidDriver.pressKey(new KeyEvent().withKey(AndroidKey.valueOf(key)));
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void keyCode(HandleDes handleDes, int key) {
+        handleDes.setStepDes("按系统按键" + key + "键");
+        handleDes.setDetail("");
+        try {
+            IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+            if (iDevice != null) {
+                AndroidDeviceBridgeTool.pressKey(iDevice, key);
+            }
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -1492,8 +1515,8 @@ public class AndroidStepHandler {
                 we = getWebElementByCssAndText(pathValue);
                 break;
             case "androidUIAutomator":
-                //仅限自动化引擎为UIAutomator2时生效
                 we = androidDriver.findElementByAndroidUIAutomator(pathValue);
+                break;
             default:
                 log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
                 break;
@@ -1506,11 +1529,11 @@ public class AndroidStepHandler {
         // value格式：van-button--default,购物车
         WebElement element = null;
         List<String> values = new ArrayList<>(Arrays.asList(pathValue.split(",")));
-        if(values.size() >= 2) {
+        if (values.size() >= 2) {
             // findElementsByClassName在高版本的chromedriver有bug，只能用cssSelector才能找到控件元素
-            List<WebElement> els =   androidDriver.findElements(By.cssSelector(values.get(0)));
-            for(WebElement el: els) {
-                if(el.getText().equals(values.get(1))) {
+            List<WebElement> els = androidDriver.findElements(By.cssSelector(values.get(0)));
+            for (WebElement el : els) {
+                if (el.getText().equals(values.get(1))) {
                     element = el;
                     break;
                 }
@@ -1532,6 +1555,9 @@ public class AndroidStepHandler {
         JSONArray eleList = step.getJSONArray("elements");
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
+            case "appReset":
+                appReset(handleDes, step.getString("text"));
+                break;
             case "stepHold":
                 stepHold(handleDes, Integer.parseInt(step.getString("content")));
                 break;
@@ -1654,6 +1680,9 @@ public class AndroidStepHandler {
                 break;
             case "keyCode":
                 keyCode(handleDes, step.getString("content"));
+                break;
+            case "keyCodeSelf":
+                keyCode(handleDes, step.getInteger("content"));
                 break;
             case "assertEquals":
             case "assertTrue":
