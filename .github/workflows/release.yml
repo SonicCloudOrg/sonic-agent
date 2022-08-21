@@ -53,7 +53,7 @@ jobs:
       - name: sgm
         run: cp sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
       - name: sib
-        run: cp sonic-ios-bridge sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
+        run: mv sib sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/sonic-ios-bridge
       - name: saa
         run: cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
       - name: sas
