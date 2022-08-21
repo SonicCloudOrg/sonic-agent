@@ -1,4 +1,4 @@
-name: Agent Docker Image CI
+name: deploy to Dockerhub
 
 on:
   workflow_dispatch:
