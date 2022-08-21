@@ -37,7 +37,7 @@ jobs:
       - name: sgm
         run: tar zxvf *_linux_x86.tar.gz && cp sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
       - name: sas
-        run: cp plugins/sonic-android-scrcpy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
+        run: cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
       - name: yadb
         run: cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
       - name: test
