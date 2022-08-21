@@ -26,7 +26,8 @@ jobs:
 #      - name: package
 #        run: mvn package -Plinux-x86
       - name: copy
-        run: cp config/ webview/ mini/ target/sonic-agent-linux-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
+#        run: cp -r config/ webview/ mini/ target/sonic-agent-linux-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
+        run: cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
       - name: sgm-download
         uses: robinraju/release-downloader@v1.4
         with:
