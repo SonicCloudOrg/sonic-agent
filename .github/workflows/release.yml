@@ -94,36 +94,31 @@ jobs:
         with:
           filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip
           directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86
-          path: ../
       - name: zip-linux86-64
         uses: TheDoctor0/zip-release@0.6.2
         with:
           filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64.zip
           directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64
-          path: ../
       - name: zip-macosx
         uses: TheDoctor0/zip-release@0.6.2
         with:
           filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64.zip
           directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64
-          path: ../
       - name: zip-win86
         uses: TheDoctor0/zip-release@0.6.2
         with:
           filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86.zip
           directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86
-          path: ../
       - name: zip-win86-64
         uses: TheDoctor0/zip-release@0.6.2
         with:
           filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64.zip
           directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64
-          path: ../
       - name: Upload To Github Release
         uses: xresloader/upload-to-github-release@v1.3.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64.zip;src/main/docker/docker-compose.yml;src/main/docker/docker-compose2.yml
+          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64.zip;src/main/docker/docker-compose.yml;src/main/docker/docker-compose2.yml
           tag_name: ${{ steps.previoustag.outputs.tag }}
           update_latest_release: true
