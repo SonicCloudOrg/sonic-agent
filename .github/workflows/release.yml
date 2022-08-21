@@ -27,12 +27,13 @@ jobs:
         run: mvn package -Plinux-x86
       - name: copy
         run: cp config webview mini target/sonic-agent-linux-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
-      - name: sgm
+      - name: sgm-download
         uses: robinraju/release-downloader@v1.4
         with:
           repository: SonicCloudOrg/sonic-go-mitmproxy
           latest: true
           fileName: "*_linux_x86.tar.gz"
+      - name: sgm
         run: tar zxvf *_linux_x86.tar.gz && cp sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
       - name: sas
         run: cp plugins/sonic-android-scrcpy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
