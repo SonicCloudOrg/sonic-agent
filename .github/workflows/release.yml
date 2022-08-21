@@ -22,58 +22,108 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: mkdir
-        run: mkdir -p sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins
-#      - name: package
-#        run: mvn package -Plinux-x86
+        run: mkdir -p sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins
+      - name: package-linux86
+        run: mvn clean package -Plinux-x86
+      - name: mvJar-linux86
+        run: cp -r target/sonic-agent-linux-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
+      - name: package-linux86-64
+        run: mvn clean package -Plinux-x86_64
+      - name: mvJar-linux86-64
+        run: cp -r target/sonic-agent-linux-x86_64.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/
+      - name: package-macosx
+        run: mvn clean package -Pmacosx-x86_64
+      - name: mvJar-macosx
+        run: cp -r target/sonic-agent-macosx-x86_64.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/
+      - name: package-win86
+        run: mvn clean package -Pwindows-x86
+      - name: mvJar-win86
+        run: cp -r target/sonic-agent-windows-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/
+      - name: package-win86-64
+        run: mvn clean package -Pwindows-x86_64
+      - name: mvJar-win86-64
+        run: cp -r target/sonic-agent-windows-x86_64.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/
       - name: copy
-#        run: cp -r config/ webview/ mini/ target/sonic-agent-linux-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
-        run: cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
+        run: cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/ && cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/ && cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/ && cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/ && cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/
       - name: sgm-download
         uses: robinraju/release-downloader@v1.4
         with:
           repository: SonicCloudOrg/sonic-go-mitmproxy
           latest: true
-          fileName: "*_linux_x86.tar.gz"
-      - name: sgm-untar
-        run: tar zxvf *_linux_x86.tar.gz && rm *_linux_x86.tar.gz
+          fileName: "*"
+      - name: sgm-untar-linux86
+        run: tar zxvf *_linux_x86.tar.gz && rm *_linux_x86.tar.gz && mv sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/sonic-go-mitmproxy
+      - name: sgm-untar-linux86-64
+        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && mv sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins/sonic-go-mitmproxy
+      - name: sgm-untar-macosx
+        run: tar zxvf *_macosx_x86_64.tar.gz && rm *_macosx_x86_64.tar.gz && mv sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins/sonic-go-mitmproxy
+      - name: sgm-untar-win86
+        run: tar zxvf *_windows_x86.tar.gz && rm *_windows_x86.tar.gz && mv sonic-go-mitmproxy.exe sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins/sonic-go-mitmproxy.exe
+      - name: sgm-untar-win86-64
+        run: tar zxvf *_windows_x86_64.tar.gz && rm *_windows_x86_64.tar.gz && mv sonic-go-mitmproxy.exe sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins/sonic-go-mitmproxy.exe
       - name: sib-download
         uses: robinraju/release-downloader@v1.4
         with:
           repository: SonicCloudOrg/sonic-ios-bridge
           latest: true
-          fileName: "*_linux_x86.tar.gz"
-      - name: sib-untar
-        run: tar zxvf *_linux_x86.tar.gz && rm *_linux_x86.tar.gz
+          fileName: "*"
+      - name: sib-untar-linux86
+        run: tar zxvf *_linux_x86.tar.gz && rm *_linux_x86.tar.gz && mv sib sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/sonic-ios-bridge
+      - name: sib-untar-linux86-64
+        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && mv sib sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins/sonic-ios-bridge
+      - name: sib-untar-macosx
+        run: tar zxvf *_macosx_x86_64.tar.gz && rm *_macosx_x86_64.tar.gz && mv sib sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins/sonic-ios-bridge
+      - name: sib-untar-win86
+        run: tar zxvf *_windows_x86.tar.gz && rm *_windows_x86.tar.gz && mv sib.exe sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins/sonic-ios-bridge.exe
+      - name: sib-untar-windows86-64
+        run: tar zxvf *_windows_x86_64.tar.gz && rm *_windows_x86_64.tar.gz && mv sib.exe sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins/sonic-ios-bridge.exe
       - name: saa-download
         uses: robinraju/release-downloader@v1.4
         with:
           repository: SonicCloudOrg/sonic-android-apk
           latest: true
           fileName: "sonic-android-apk.apk"
-      - name: sgm
-        run: cp sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
-      - name: sib
-        run: mv sib sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/sonic-ios-bridge
       - name: saa
-        run: cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
+        run: cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/ && cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins/ && cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins/ && cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins/ && cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins/
       - name: sas
-        run: cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
+        run: cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/ && cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins/ && cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins/ && cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins/ && cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins/
       - name: yadb
-        run: cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
-      - name: test
-        run: tree
-      - name: zip
+        run: cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/ && cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins/ && cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins/ && cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins/ && cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins/
+      - name: zip-linux86
         uses: TheDoctor0/zip-release@0.6.2
         with:
           filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip
           directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86
-      - name: move outside
-        run: mv sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip ./sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip
+          path: ../
+      - name: zip-linux86-64
+        uses: TheDoctor0/zip-release@0.6.2
+        with:
+          filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64.zip
+          directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64
+          path: ../
+      - name: zip-macosx
+        uses: TheDoctor0/zip-release@0.6.2
+        with:
+          filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64.zip
+          directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64
+          path: ../
+      - name: zip-win86
+        uses: TheDoctor0/zip-release@0.6.2
+        with:
+          filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86.zip
+          directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86
+          path: ../
+      - name: zip-win86-64
+        uses: TheDoctor0/zip-release@0.6.2
+        with:
+          filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64.zip
+          directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64
+          path: ../
       - name: Upload To Github Release
         uses: xresloader/upload-to-github-release@v1.3.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip
+          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64.zip;src/main/docker/docker-compose.yml;src/main/docker/docker-compose2.yml
           tag_name: ${{ steps.previoustag.outputs.tag }}
           update_latest_release: true
