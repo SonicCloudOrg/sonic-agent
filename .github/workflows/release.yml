@@ -1,0 +1,57 @@
+name: release to github
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: mkdir
+        run: mkdir -p sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins
+      - name: package
+        run: mvn package -Plinux-x86
+      - name: copy
+        run: cp config webview mini target/sonic-agent-linux-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
+      - name: sgm
+        uses: robinraju/release-downloader@v1.4
+        with:
+          repository: SonicCloudOrg/sonic-go-mitmproxy
+          latest: true
+          fileName: "*_linux_x86.tar.gz"
+        run: tar zxvf *_linux_x86.tar.gz && cp sonic-go-mitmproxy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
+      - name: sas
+        run: cp plugins/sonic-android-scrcpy sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
+      - name: yadb
+        run: cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins/
+      - name: test
+        run: tree
+#      - name: zip
+#        uses: TheDoctor0/zip-release@0.6.2
+#        with:
+#          filename: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip
+#          directory: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86
+#      - name: move outside
+#        run: mv sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip ./sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip
+#      - name: Upload To Github Release
+#        uses: xresloader/upload-to-github-release@v1.3.4
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip
+#          tag_name: ${{ steps.previoustag.outputs.tag }}
+#          update_latest_release: true

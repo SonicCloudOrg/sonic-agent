@@ -1,14 +1,14 @@
 sonic:
   agent:
     # 替换为部署Agent机器的ipv4
-    host: 192.168.1.7
+    host: 192.168.1.1
     # 替换为Agent服务的端口，可以自行更改
     port: 7777
     # 替换为前端新增Agent生成的key
     key: 29002272-4659-4808-a804-08ce3388b136
   server:
     # 改成server的SONIC_SERVER_HOST
-    host: 192.168.1.7
+    host: 192.168.1.1
     # 改成server的SONIC_SERVER_PORT
     port: 3000
 
@@ -34,4 +34,4 @@ modules:
     # 替换为Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
     chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
   sgm:
-    enable: false
+    enable: true
