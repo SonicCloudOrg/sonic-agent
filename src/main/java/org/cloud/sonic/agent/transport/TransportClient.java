@@ -179,7 +179,9 @@ public class TransportClient extends WebSocketClient {
         if (TransportWorker.isKeyAuth) {
             log.info("Server disconnected. Retry in 10s...");
         }
-        TransportWorker.client = null;
+        if(TransportWorker.client == this) {
+            TransportWorker.client = null;
+        }
     }
 
     @Override
