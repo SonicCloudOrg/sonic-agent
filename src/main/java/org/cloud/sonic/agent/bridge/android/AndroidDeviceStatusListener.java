@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.bridge.android;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
+import org.cloud.sonic.agent.common.interfaces.IsHMStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
@@ -50,12 +51,13 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("name", device.getProperty("ro.product.name"));
         deviceDetail.put("model", device.getProperty(IDevice.PROP_DEVICE_MODEL));
         deviceDetail.put("status", device.getState() == null ? null : device.getState().toString());
-        if(device.getProperty("hw_sc.build.os.enable") != null){
+        deviceDetail.put("platform", PlatformType.ANDROID);
+        if(device.getProperty("ro.config.ringtone").contains("Harmony")){
             deviceDetail.put("version", device.getProperty("hw_sc.build.platform.version"));
-            deviceDetail.put("platform", PlatformType.HARMONYOS);
+            deviceDetail.put("isHM", IsHMStatus.IS_HM);
         }else{
             deviceDetail.put("version", device.getProperty(IDevice.PROP_BUILD_VERSION));
-            deviceDetail.put("platform", PlatformType.ANDROID);
+            deviceDetail.put("isHM", IsHMStatus.IS_ANDROID);
         }
 
         deviceDetail.put("size", AndroidDeviceBridgeTool.getScreenSize(device));
