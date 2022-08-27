@@ -52,12 +52,12 @@ public class AndroidDeviceStatusListener implements AndroidDebugBridge.IDeviceCh
         deviceDetail.put("model", device.getProperty(IDevice.PROP_DEVICE_MODEL));
         deviceDetail.put("status", device.getState() == null ? null : device.getState().toString());
         deviceDetail.put("platform", PlatformType.ANDROID);
-        if(device.getProperty("ro.config.ringtone").contains("Harmony")){
+        if (device.getProperty("ro.config.ringtone") != null && device.getProperty("ro.config.ringtone").contains("Harmony")) {
             deviceDetail.put("version", device.getProperty("hw_sc.build.platform.version"));
-            deviceDetail.put("isHM", IsHMStatus.IS_HM);
-        }else{
+            deviceDetail.put("isHm", IsHMStatus.IS_HM);
+        } else {
             deviceDetail.put("version", device.getProperty(IDevice.PROP_BUILD_VERSION));
-            deviceDetail.put("isHM", IsHMStatus.IS_ANDROID);
+            deviceDetail.put("isHm", IsHMStatus.IS_ANDROID);
         }
 
         deviceDetail.put("size", AndroidDeviceBridgeTool.getScreenSize(device));
