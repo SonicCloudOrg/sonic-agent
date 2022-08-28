@@ -1,7 +1,8 @@
 name: release to github
 
 on:
-  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
 
@@ -21,6 +22,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
+      - name: replace version
+        run: ver=${{ steps.previoustag.outputs.tag }} && new_ver=${ver:1} && sed -i "s/SONIC_VERSION/${new_ver}/g" pom.xml && sed -i "s/SONIC_VERSION/${{ steps.previoustag.outputs.tag }}/g" src/main/docker/docker-compose*.yml
       - name: mkdir
         run: mkdir -p sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins
       - name: package-linux86
