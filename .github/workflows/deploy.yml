@@ -1,7 +1,8 @@
 name: deploy to Dockerhub
 
 on:
-  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
 
@@ -21,6 +22,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
+      - name: replace version
+        run: ver=${{ steps.previoustag.outputs.tag }} && new_ver=${ver:1} && sed -i "s/SONIC_VERSION/${new_ver}/g" pom.xml
       - name: login docker hub
         run: echo "${{ secrets.ACCESS_TOKEN }}" | docker login -u zhouyixun --password-stdin
       - name: sgm-download
