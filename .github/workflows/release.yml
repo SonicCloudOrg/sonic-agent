@@ -125,3 +125,4 @@ jobs:
           file: sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86.zip;sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64.zip;src/main/docker/docker-compose.yml;src/main/docker/docker-compose2.yml
           tag_name: ${{ steps.previoustag.outputs.tag }}
           update_latest_release: true
+          draft: false
