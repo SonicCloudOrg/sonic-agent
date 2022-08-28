@@ -1,7 +1,8 @@
 name: deploy to Dockerhub
 
 on:
-  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
 
