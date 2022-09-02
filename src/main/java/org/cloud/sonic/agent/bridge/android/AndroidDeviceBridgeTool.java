@@ -540,6 +540,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     }
 
     /**
+     * 当与服务端重连失败后，关闭Android端ADB，以便重新启动ADB服务
+     */
+    public static void terminate(){
+        AndroidDebugBridge.terminate();
+    }
+
+    /**
      * @param udId
      * @param packageName
      * @return java.lang.String

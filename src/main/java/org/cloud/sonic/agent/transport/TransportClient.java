@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.transport;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
@@ -170,6 +171,26 @@ public class TransportClient extends WebSocketClient {
                         }
                     }
                     break;
+                case "reconnect":
+                    log.info("===== 重新连接移动设备 ======");
+                    AndroidDeviceBridgeTool androidDeviceBridgeTool = null;
+                    try {
+                        androidDeviceBridgeTool = SpringTool.getBean(AndroidDeviceBridgeTool.class);
+                        log.info("===== 重新连接Android设备中 ======");
+                        androidDeviceBridgeTool.init();
+                    } catch (Exception e) {
+                        log.error("重新连接Android设备异常: " + e.getMessage());
+                    }
+                    SibTool sibTool = null;
+                    try {
+                        sibTool = SpringTool.getBean(SibTool.class);
+                        log.info("===== 重新连接iOS设备中 ======");
+                        sibTool.init();
+                    } catch (Exception e) {
+                        log.error("重新连接iOS设备异常: " + e.getMessage());
+                    }
+                    break;
+                default:
             }
         });
     }
@@ -181,6 +202,10 @@ public class TransportClient extends WebSocketClient {
         }
         if(TransportWorker.client == this) {
             TransportWorker.client = null;
+        }
+        // 关闭ADB服务，等待服务端唤醒
+        if (AndroidDebugBridge.getBridge() != null){
+            AndroidDeviceBridgeTool.terminate();
         }
     }
 
