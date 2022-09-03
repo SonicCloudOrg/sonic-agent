@@ -9,7 +9,7 @@ spring:
 sonic:
   saa: 2.0.1
   sgm: 1.3.1
-  sib: 1.1.8
+  sib: 1.1.10
 
 logging:
   file:
