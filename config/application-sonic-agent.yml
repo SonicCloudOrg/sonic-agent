@@ -20,7 +20,7 @@ modules:
     use-adbkit: true
   ios:
     # 如果不需要连接iOS设备，请将true改为false。开启的windows用户请确保本机已安装iTunes
-    enable: false
+    enable: true
     # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
     wda-bundle-id: com.sonic.WebDriverAgentRunner
   appium:
@@ -32,4 +32,4 @@ modules:
     # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
     remote-debug-port: 0
   sgm:
-    enable: false
+    enable: true
