@@ -271,12 +271,12 @@ public class AndroidStepHandler {
      * @date 2021/8/16 23:16
      */
     public void getPerform() {
-        if (!testPackage.equals("")) {
+        if (!"".equals(testPackage)) {
             List<String> performanceData = Arrays.asList("memoryinfo", "batteryinfo");
             for (String performName : performanceData) {
                 List<List<Object>> re = androidDriver.getPerformanceData(testPackage, performName, 1);
                 List<Integer> mem;
-                if (performName.equals("memoryinfo")) {
+                if ("memoryinfo".equals(performName)) {
                     mem = Arrays.asList(0, 1, 2, 5, 6, 7);
                 } else {
                     mem = Collections.singletonList(0);
@@ -285,7 +285,7 @@ public class AndroidStepHandler {
                 for (Integer memNum : mem) {
                     perform.put(re.get(0).get(memNum).toString(), re.get(1).get(memNum));
                 }
-                log.sendPerLog(testPackage, performName.equals("memoryinfo") ? 1 : 2, perform);
+                log.sendPerLog(testPackage, "memoryinfo".equals(performName) ? 1 : 2, perform);
             }
         }
     }
@@ -348,7 +348,7 @@ public class AndroidStepHandler {
             detail.put("xpath", indexXpath);
             for (Attribute attr : elements.get(i).attributes()) {
                 //把bounds字段拆出来解析，方便前端进行截取
-                if (attr.getKey().equals("bounds")) {
+                if ("bounds".equals(attr.getKey())) {
                     String bounds = attr.getValue().replace("][", ":");
                     String pointStart = bounds.substring(1, bounds.indexOf(":"));
                     String pointEnd = bounds.substring(bounds.indexOf(":") + 1, bounds.indexOf("]"));
@@ -1204,37 +1204,37 @@ public class AndroidStepHandler {
         if (!options.isEmpty()) {
             for (int i = options.size() - 1; i >= 0; i--) {
                 JSONObject jsonOption = (JSONObject) options.get(i);
-                if (jsonOption.getString("name").equals("sleepTime")) {
+                if ("sleepTime".equals(jsonOption.getString("name"))) {
                     sleepTime = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("systemEvent")) {
+                if ("systemEvent".equals(jsonOption.getString("name"))) {
                     systemEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("tapEvent")) {
+                if ("tapEvent".equals(jsonOption.getString("name"))) {
                     tapEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("longPressEvent")) {
+                if ("longPressEvent".equals(jsonOption.getString("name"))) {
                     longPressEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("swipeEvent")) {
+                if ("swipeEvent".equals(jsonOption.getString("name"))) {
                     swipeEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("zoomEvent")) {
+                if ("zoomEvent".equals(jsonOption.getString("name"))) {
                     zoomEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("navEvent")) {
+                if ("navEvent".equals(jsonOption.getString("name"))) {
                     navEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("isOpenH5Listener")) {
+                if ("isOpenH5Listener".equals(jsonOption.getString("name"))) {
                     isOpenH5Listener = jsonOption.getBoolean("value");
                 }
-                if (jsonOption.getString("name").equals("isOpenPackageListener")) {
+                if ("isOpenPackageListener".equals(jsonOption.getString("name"))) {
                     isOpenPackageListener = jsonOption.getBoolean("value");
                 }
-                if (jsonOption.getString("name").equals("isOpenActivityListener")) {
+                if ("isOpenActivityListener".equals(jsonOption.getString("name"))) {
                     isOpenActivityListener = jsonOption.getBoolean("value");
                 }
-                if (jsonOption.getString("name").equals("isOpenNetworkListener")) {
+                if ("isOpenNetworkListener".equals(jsonOption.getString("name"))) {
                     isOpenNetworkListener = jsonOption.getBoolean("value");
                 }
                 options.remove(options.get(i));

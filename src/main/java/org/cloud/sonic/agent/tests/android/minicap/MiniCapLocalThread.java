@@ -129,7 +129,7 @@ public class MiniCapLocalThread extends Thread {
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
         String vSize;
         int q = 80;
-        if (pic.equals("fixed")) {
+        if ("fixed".equals(pic)) {
             vSize = size;
             q = 40;
         } else {
@@ -179,7 +179,7 @@ public class MiniCapLocalThread extends Thread {
         if (man == null) {
             return;
         }
-        if (!suc && iDevice != null && (man.equals("Xiaomi") || man.equals("deltainno") || man.equals("HUAWEI"))) {
+        if (!suc && iDevice != null && ("Xiaomi".equals(man) || "deltainno".equals(man) || "HUAWEI".equals(man))) {
             suc = runMiniCap("Xiaomi");
             if (!suc && iDevice != null) {
                 suc = runMiniCap("Xiaomi_NW");
@@ -188,10 +188,10 @@ public class MiniCapLocalThread extends Thread {
                 }
             }
         }
-        if (!suc && iDevice != null && man.equals("vivo")) {
+        if (!suc && iDevice != null && "vivo".equals(man)) {
             suc = runMiniCap("vivo");
         }
-        if (!suc && iDevice != null && man.equals("LGE")) {
+        if (!suc && iDevice != null && "LGE".equals(man)) {
             suc = runMiniCap("LGE");
         }
         if (session != null && (!suc)) {

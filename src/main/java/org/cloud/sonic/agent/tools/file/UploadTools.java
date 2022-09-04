@@ -48,7 +48,7 @@ public class UploadTools {
             folder.mkdirs();
         }
         File transfer;
-        if (type.equals("keepFiles") || type.equals("imageFiles")) {
+        if ("keepFiles".equals(type) || "imageFiles".equals(type)) {
             long timeMillis = Calendar.getInstance().getTimeInMillis();
             try {
                 Thumbnails.of(uploadFile)

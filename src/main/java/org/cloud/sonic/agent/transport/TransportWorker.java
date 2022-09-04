@@ -33,6 +33,8 @@ public class TransportWorker {
     public static TransportClient client = null;
     public static Boolean isKeyAuth = true;
 
+    public static Boolean reconnect = false;
+
     public static void send(JSONObject jsonObject) {
         dataQueue.offer(jsonObject);
     }

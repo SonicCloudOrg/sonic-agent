@@ -176,7 +176,7 @@ public class IOSWSServer implements IIOSWSServer {
             switch (msg.getString("type")) {
                 case "screen": {
                     JSONObject appiumSettings = new JSONObject();
-                    if (msg.getString("detail").equals("low")) {
+                    if ("low".equals(msg.getString("detail"))) {
                         appiumSettings.put("mjpegServerFramerate", 50);
                         appiumSettings.put("mjpegScalingFactor", 50);
                         appiumSettings.put("mjpegServerScreenshotQuality", 10);
@@ -241,7 +241,7 @@ public class IOSWSServer implements IIOSWSServer {
                     break;
                 }
                 case "location": {
-                    if (msg.getString("detail").equals("set")) {
+                    if ("set".equals(msg.getString("detail"))) {
                         SibTool.locationSet(udId, msg.getString("long"), msg.getString("lat"));
                     } else {
                         SibTool.locationUnset(udId);
@@ -335,9 +335,9 @@ public class IOSWSServer implements IIOSWSServer {
                         case "keyEvent": {
                             if (iosDriver != null) {
                                 try {
-                                    if (msg.getString("key").equals("home") || msg.getString("key").equals("volumeup") || msg.getString("key").equals("volumedown")) {
+                                    if ("home".equals(msg.getString("key")) || "volumeup".equals(msg.getString("key")) || "volumedown".equals(msg.getString("key"))) {
                                         iosDriver.pressButton(msg.getString("key"));
-                                    } else if (msg.getString("key").equals("lock")) {
+                                    } else if ("lock".equals(msg.getString("key"))) {
                                         if (iosDriver.isLocked()) {
                                             iosDriver.unlock();
                                         } else {
@@ -427,8 +427,10 @@ public class IOSWSServer implements IIOSWSServer {
                             sendText(session, result.toJSONString());
                             break;
                         }
+                        default:
                     }
                     break;
+                default:
             }
         });
     }

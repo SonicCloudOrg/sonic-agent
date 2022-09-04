@@ -48,8 +48,8 @@ public class AndroidTests {
         List<JSONObject> dataProvider = new ArrayList<>();
         for (JSONObject iDevice : dataInfo.getJSONArray("device").toJavaList(JSONObject.class)) {
             String udId = iDevice.getString("udId");
-            if (AndroidDeviceBridgeTool.getIDeviceByUdId(udId) == null || !AndroidDeviceBridgeTool.getIDeviceByUdId(udId)
-                    .getState().toString().equals("ONLINE")) {
+            if (AndroidDeviceBridgeTool.getIDeviceByUdId(udId) == null || !"ONLINE".equals(AndroidDeviceBridgeTool.getIDeviceByUdId(udId)
+                    .getState().toString())) {
                 continue;
             }
             JSONObject deviceTestData = new JSONObject();

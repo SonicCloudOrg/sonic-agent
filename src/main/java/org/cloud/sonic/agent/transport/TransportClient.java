@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceStatusListener;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
@@ -70,14 +71,14 @@ public class TransportClient extends WebSocketClient {
     @Override
     public void onMessage(String s) {
         JSONObject jsonObject = JSON.parseObject(s);
-        if (jsonObject.getString("msg").equals("pong")) {
+        if ("pong".equals(jsonObject.getString("msg"))) {
             return;
         }
         log.info("Agent <- Server message: {}", jsonObject);
         TransportWorker.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
                 case "auth": {
-                    if (jsonObject.getString("result").equals("pass")) {
+                    if ("pass".equals(jsonObject.getString("result"))) {
                         log.info("server auth successful!");
                         BytesTool.agentId = jsonObject.getInteger("id");
                         BytesTool.highTemp = jsonObject.getInteger("highTemp");
@@ -92,6 +93,9 @@ public class TransportClient extends WebSocketClient {
                         agentInfo.put("systemType", System.getProperty("os.name"));
                         agentInfo.put("host", host);
                         TransportWorker.client.send(agentInfo.toJSONString());
+                        if (TransportWorker.reconnect){
+                            reconnectDevice();
+                        }
                     } else {
                         TransportWorker.isKeyAuth = false;
                         log.info("server auth failed!");
@@ -170,6 +174,7 @@ public class TransportClient extends WebSocketClient {
                         }
                     }
                     break;
+                default:
             }
         });
     }
@@ -182,6 +187,7 @@ public class TransportClient extends WebSocketClient {
         if(TransportWorker.client == this) {
             TransportWorker.client = null;
         }
+        TransportWorker.reconnect = true;
     }
 
     @Override
@@ -234,5 +240,28 @@ public class TransportClient extends WebSocketClient {
             }
         };
         TaskManager.startChildThread(task.getName(), task);
+    }
+
+    private void reconnectDevice(){
+        try {
+            log.info("==== 重新发送Android在线设备状态 ====");
+            AndroidDeviceStatusListener listener = SpringTool.getBean(AndroidDeviceStatusListener.class);
+            IDevice[] realOnLineAndroidDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
+            if (realOnLineAndroidDevices != null && realOnLineAndroidDevices.length != 0){
+                for (IDevice device : realOnLineAndroidDevices){
+                    listener.deviceConnected(device);
+                }
+            }
+        } catch (Exception e) {
+            log.error("==== 重新发送Android在线设备状态异常: " + e.getMessage() + " ====");
+        }
+        try {
+            log.info("==== 重新发送iOS在线设备状态 ====");
+            SibTool sibTool = SpringTool.getBean(SibTool.class);
+            sibTool.getIOSDevicesDetail();
+        } catch (Exception e) {
+            log.error("==== 重新发送iOS在线设备状态异常: " + e.getMessage() + " ====");
+        }
+        TransportWorker.reconnect = false;
     }
 }

@@ -82,55 +82,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             logger.info(String.format("Start sonic-ios-bridge failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
             System.exit(0);
         }
-        IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-            String processName = "sib";
-            if (GlobalProcessMap.getMap().get(processName) != null) {
-                Process ps = GlobalProcessMap.getMap().get(processName);
-                ps.children().forEach(ProcessHandle::destroy);
-                ps.destroy();
-            }
-            Process listenProcess = null;
-            String commandLine = "%s devices listen -d";
-            String system = System.getProperty("os.name").toLowerCase();
-            try {
-                if (system.contains("win")) {
-                    listenProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib)});
-                } else if (system.contains("linux") || system.contains("mac")) {
-                    listenProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib)});
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            InputStreamReader inputStreamReader = new InputStreamReader(listenProcess.getInputStream());
-            BufferedReader stdInput = new BufferedReader(inputStreamReader);
-            String s;
-            while (listenProcess.isAlive()) {
-                try {
-                    if ((s = stdInput.readLine()) != null) {
-                        JSONObject r = JSONObject.parseObject(s);
-                        if (r.getString("status").equals("online")) {
-                            sendOnlineStatus(r);
-                        } else if (r.getString("status").equals("offline")) {
-                            sendDisConnectStatus(r);
-                        }
-                        logger.info(s);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            try {
-                stdInput.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                inputStreamReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            GlobalProcessMap.getMap().put(processName, listenProcess);
-        });
+        IOSDeviceThreadPool.cachedThreadPool.execute(this::getIOSDevicesDetail);
 
         ScheduleTool.scheduleAtFixedRate(
                 new IOSBatteryThread(),
@@ -482,5 +434,55 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String commandLine = "%s battery -u %s -j";
         String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
         return JSON.parseObject(re).getInteger("level");
+    }
+
+    public void getIOSDevicesDetail(){
+        String processName = "sib";
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+        Process listenProcess = null;
+        String commandLine = "%s devices listen -d";
+        String system = System.getProperty("os.name").toLowerCase();
+        try {
+            if (system.contains("win")) {
+                listenProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                listenProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib)});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        InputStreamReader inputStreamReader = new InputStreamReader(listenProcess.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
+        String s;
+        while (listenProcess.isAlive()) {
+            try {
+                if ((s = stdInput.readLine()) != null) {
+                    JSONObject r = JSONObject.parseObject(s);
+                    if ("online".equals(r.getString("status"))) {
+                        sendOnlineStatus(r);
+                    } else if ("offline".equals(r.getString("status"))) {
+                        sendDisConnectStatus(r);
+                    }
+                    logger.info(s);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            stdInput.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            inputStreamReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        GlobalProcessMap.getMap().put(processName, listenProcess);
     }
 }
