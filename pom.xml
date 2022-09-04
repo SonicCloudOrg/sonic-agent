@@ -33,6 +33,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.github.kklisura.cdt</groupId>
+            <artifactId>cdt-java-client</artifactId>
+            <version>4.0.0</version>
+        </dependency>
         <!--    websocket client    -->
         <dependency>
             <groupId>org.java-websocket</groupId>
@@ -85,12 +90,6 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>6.9.10</version>
-        </dependency>
-        <!--    selenium    -->
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>3.141.59</version>
         </dependency>
         <!--    解析xml    -->
         <dependency>
