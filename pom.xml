@@ -114,6 +114,12 @@
             <artifactId>opencv</artifactId>
             <version>4.3.0-1.5.3</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-exec</artifactId>
+            <version>1.3</version>
+        </dependency>
     </dependencies>
 
     <!--  通过这个配置来决定打包使用哪一个环境  -->
