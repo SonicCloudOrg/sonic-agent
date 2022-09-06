@@ -9,7 +9,7 @@ public class CustomJavaExcuter {
     static ScriptExcuterManager excuterManager = new ScriptExcuterManager();
 
     public ExcuterResult compilerClass(String java_file_path,String external_jar_Path,String class_save_dir) {
-        ArrayList<String> args = new ArrayList<>();
+        ArrayList<String> args = new ArrayList<String>();
         args.add("-cp");
         args.add(".:"+external_jar_Path+"*");
         args.add(java_file_path);
@@ -24,7 +24,7 @@ public class CustomJavaExcuter {
     }
 
     public ExcuterResult excuteClass(String external_jar_Path,String class_save_dir,String class_name,String[] excute_args) {
-        ArrayList<String> args = new ArrayList<>();
+        ArrayList<String> args = new ArrayList<String>();
         args.add("-Djava.ext.dirs=" + external_jar_Path);
         args.add("-classpath");
         args.add(class_save_dir);
@@ -83,7 +83,7 @@ public class CustomJavaExcuter {
                 "        for(int i=0;i<args.length;i++) {\n" +
                 "            System.out.println(\"args[\" + i + \"]\" + args[i]);\n" +
                 "        }\n" +
-                "        }\n");
+                "        }\n"));
     }
 
 }
