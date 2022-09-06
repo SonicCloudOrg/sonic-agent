@@ -70,13 +70,13 @@ public class AndroidTests {
     @Test(dataProvider = "testData")
     public void run(JSONObject jsonObject) throws IOException {
         int rid = jsonObject.getInteger("rid");
-        if (TaskManager.ridRunning(rid)) {
+        String udId = jsonObject.getJSONObject("device").getString("udId");
+        if (TaskManager.ridRunning(rid, udId)) {
             logger.info("Task repeat! Maybe cause by network, ignore...");
             return;
         }
         int cid = jsonObject.getInteger("cid");
         AndroidStepHandler androidStepHandler = new AndroidStepHandler();
-        String udId = jsonObject.getJSONObject("device").getString("udId");
         JSONObject gp = jsonObject.getJSONObject("gp");
         androidStepHandler.setGlobalParams(gp);
         androidStepHandler.setTestMode(cid, rid, udId, DeviceStatus.TESTING, "");
