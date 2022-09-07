@@ -47,7 +47,7 @@ jobs:
       - name: push
         run: docker push sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}
       - name: login docker hub
-        run: echo "${{ secrets.ACCESS_TOKEN_ALIYUN }}" | docker login --username=小虫哔哔 registry.cn-hangzhou.aliyuncs.com --password-stdin
+        run: echo "${{ secrets.ACCESS_TOKEN_ALIYUN }}" | docker login --username=${{ secrets.ALIYUN_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password-stdin
       - name: tag
         run: docker tag sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}
       - name: push
