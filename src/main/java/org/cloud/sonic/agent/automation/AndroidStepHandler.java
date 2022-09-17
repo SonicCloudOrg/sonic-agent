@@ -19,19 +19,6 @@ package org.cloud.sonic.agent.automation;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import io.appium.java_client.MultiTouchAction;
-import io.appium.java_client.TouchAction;
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
-import io.appium.java_client.android.appmanagement.AndroidInstallApplicationOptions;
-import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
-import io.appium.java_client.android.nativekey.AndroidKey;
-import io.appium.java_client.android.nativekey.KeyEvent;
-import io.appium.java_client.remote.AndroidMobileCapabilityType;
-import io.appium.java_client.remote.AutomationName;
-import io.appium.java_client.remote.MobileCapabilityType;
-import io.appium.java_client.touch.WaitOptions;
-import io.appium.java_client.touch.offset.PointOption;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
@@ -52,6 +39,9 @@ import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
 import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.driver.android.AndroidDriver;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
+import org.cloud.sonic.driver.ios.IOSDriver;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
@@ -124,55 +114,17 @@ public class AndroidStepHandler {
      * @des 启动安卓驱动，连接设备
      * @date 2021/8/16 20:01
      */
-    public void startAndroidDriver(String udId) throws InterruptedException {
+    public void startAndroidDriver(String udId, int uiaPort) throws Exception {
         this.udId = udId;
-        DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-        //微信webView配置
-        ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.setExperimentalOption("androidProcess", "com.tencent.mm:tools");
-        desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-        //webView通用配置，自动下载匹配的driver
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.RECREATE_CHROME_DRIVER_SESSIONS, true);
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_EXECUTABLE_DIR, "webview");
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_CHROME_MAPPING_FILE, "webview/version.json");
-        //平台
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.PLATFORM_NAME, Platform.ANDROID);
-        //选用的自动化框架
-        desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME, AutomationName.ANDROID_UIAUTOMATOR2);
-        //关闭运行时阻塞其他Accessibility服务，开启的话其他不能使用了
-        desiredCapabilities.setCapability("disableSuppressAccessibilityService", true);
-        //adb指令超时时间
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 7200000);
-        //UIA2安装超时时间
-        desiredCapabilities.setCapability("uiautomator2ServerInstallTimeout", 600000);
-
-        //io.appium.uiautomator2.server io.appium.uiautomator2.server.test //io.appium.settings
-//        desiredCapabilities.setCapability("skipServerInstallation",true);
-//        desiredCapabilities.setCapability("disableWindowAnimation",true);
-//        desiredCapabilities.setCapability("skipDeviceInitialization",true);
-        //等待新命令超时时间
-        desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 7200);
-        //不重置应用
-        desiredCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
-        //单独唤起应用的话，这个需要设置空字符串
-        desiredCapabilities.setCapability(MobileCapabilityType.BROWSER_NAME, "");
-        //指定设备序列号
-        desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
-        //随机systemPort
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT, PortTool.getPort());
-        desiredCapabilities.setCapability("skipLogcatCapture", true);
         try {
-            AppiumServer.start(udId);
-            androidDriver = new AndroidDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
-            androidDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+            androidDriver = new AndroidDriver("http://127.0.0.1:" + uiaPort);
+            androidDriver.disableLog();
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
-            //测试标记为失败
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
-        Capabilities capabilities = androidDriver.getCapabilities();
         Thread.sleep(100);
         log.androidInfo("Android", capabilities.getCapability("platformVersion").toString(),
                 udId, capabilities.getCapability("deviceManufacturer").toString(),
@@ -190,12 +142,11 @@ public class AndroidStepHandler {
     public void closeAndroidDriver() {
         try {
             if (androidDriver != null) {
-                androidDriver.quit();
+                androidDriver.closeDriver();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
             }
         } catch (Exception e) {
             log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", "");
-            //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
         } finally {
@@ -300,13 +251,17 @@ public class AndroidStepHandler {
      * @date 2021/8/16 23:16
      */
     public JSONArray getResource() {
-        androidDriver.context("NATIVE_APP");
-        JSONArray elementList = new JSONArray();
-        Document doc = Jsoup.parse(androidDriver.getPageSource());
-        String xpath = "/hierarchy";
-        elementList.addAll(getChildren(doc.body().children().get(0).children(), xpath));
-        xpathId = 1;
-        return elementList;
+        try {
+            JSONArray elementList = new JSONArray();
+            Document doc = Jsoup.parse(androidDriver.getPageSource());
+            String xpath = "/hierarchy";
+            elementList.addAll(getChildren(doc.body().children().get(0).children(), xpath));
+            xpathId = 1;
+            return elementList;
+        } catch (SonicRespException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -321,21 +276,17 @@ public class AndroidStepHandler {
         JSONArray elementList = new JSONArray();
         for (int i = 0; i < elements.size(); i++) {
             JSONObject ele = new JSONObject();
-            //tag次数
             int tagCount = 0;
-            //兄弟节点index
             int siblingIndex = 0;
             String indexXpath;
             for (int j = 0; j < elements.size(); j++) {
                 if (elements.get(j).attr("class").equals(elements.get(i).attr("class"))) {
                     tagCount++;
                 }
-                //当i==j时候，兄弟节点index等于tag出现次数，因为xpath多个tag的时候,[]里面下标是从1开始
                 if (i == j) {
                     siblingIndex = tagCount;
                 }
             }
-            //如果tag出现次数等于1，xpath结尾不添加[]
             if (tagCount == 1) {
                 indexXpath = xpath + "/" + elements.get(i).attr("class");
             } else {
@@ -347,7 +298,6 @@ public class AndroidStepHandler {
             JSONObject detail = new JSONObject();
             detail.put("xpath", indexXpath);
             for (Attribute attr : elements.get(i).attributes()) {
-                //把bounds字段拆出来解析，方便前端进行截取
                 if (attr.getKey().equals("bounds")) {
                     String bounds = attr.getValue().replace("][", ":");
                     String pointStart = bounds.substring(1, bounds.indexOf(":"));

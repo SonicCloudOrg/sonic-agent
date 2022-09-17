@@ -38,6 +38,7 @@ import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
 import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.ios.IOSDriver;
 import org.cloud.sonic.driver.ios.enums.IOSSelector;
@@ -92,16 +93,14 @@ public class IOSStepHandler {
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
-            //测试标记为失败
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
-        int width = iosDriver.getWindowSize().getWidth();
-        int height = iosDriver.getWindowSize().getHeight();
+        WindowSize windowSize = iosDriver.getWindowSize();
         JSONObject appiumSettings = new JSONObject();
         appiumSettings.put("snapshotMaxDepth", 30);
         appiumSettings(appiumSettings);
-        IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
+        IOSInfoMap.getSizeMap().put(udId, windowSize.getWidth() + "x" + windowSize.getHeight());
     }
 
     public void closeIOSDriver() {
