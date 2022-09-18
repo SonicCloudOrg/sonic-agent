@@ -24,6 +24,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.enums.AndroidKey;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
 import org.cloud.sonic.agent.models.FindResult;
@@ -40,6 +41,9 @@ import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.driver.android.AndroidDriver;
+import org.cloud.sonic.driver.android.enmus.AndroidSelector;
+import org.cloud.sonic.driver.android.service.AndroidElement;
+import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.ios.IOSDriver;
 import org.jsoup.Jsoup;
@@ -531,33 +535,43 @@ public class AndroidStepHandler {
         }
     }
 
-    public void airPlaneMode(HandleDes handleDes) {
+    public void airPlaneMode(HandleDes handleDes, boolean enable) {
         handleDes.setStepDes("切换飞行模式");
-        handleDes.setDetail("");
+        handleDes.setDetail(enable ? "打开" : "关闭");
         try {
-            androidDriver.toggleAirplaneMode();
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
-    public void wifiMode(HandleDes handleDes) {
-        handleDes.setStepDes("打开WIFI网络");
-        handleDes.setDetail("");
-        try {
-            if (!androidDriver.getConnection().isWiFiEnabled()) {
-                androidDriver.toggleWifi();
+            if (enable) {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put global airplane_mode_on 1");
+            } else {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put global airplane_mode_on 0");
             }
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
-    public void locationMode(HandleDes handleDes) {
+    public void wifiMode(HandleDes handleDes, boolean enable) {
+        handleDes.setStepDes("开关WIFI");
+        handleDes.setDetail(enable ? "打开" : "关闭");
+        try {
+            if (enable) {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi enable");
+            } else {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi disable");
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void locationMode(HandleDes handleDes, boolean enable) {
         handleDes.setStepDes("切换位置服务");
         handleDes.setDetail("");
         try {
-            androidDriver.toggleLocationServices();
+            if (enable) {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put secure location_providers_allowed +gps");
+            } else {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put secure location_providers_allowed -gps");
+            }
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -599,16 +613,6 @@ public class AndroidStepHandler {
         return s;
     }
 
-    public void hideKey(HandleDes handleDes) {
-        handleDes.setStepDes("隐藏键盘");
-        handleDes.setDetail("隐藏弹出键盘");
-        try {
-            androidDriver.hideKeyboard();
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
     public void toWebView(HandleDes handleDes, String webViewName) {
         handleDes.setStepDes("切换到" + webViewName);
         handleDes.setDetail("");
@@ -645,8 +649,11 @@ public class AndroidStepHandler {
         handleDes.setStepDes("对" + des + "输入内容");
         handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
         try {
-            // 修复flutter应用输入框无法sendKey的问题
-            new Actions(androidDriver).sendKeys(findEle(selector, pathValue), keys).perform();
+            AndroidElement androidElement = findEle(selector, pathValue);
+            if (androidElement != null) {
+                androidElement.click();
+                androidDriver.sendKeys(keys);
+            }
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -677,21 +684,14 @@ public class AndroidStepHandler {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按坐标" + time + "毫秒 (" + x + "," + y + ")");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(time))).release().perform();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
     public void keyCode(HandleDes handleDes, String key) {
-        handleDes.setStepDes("按系统按键" + key + "键");
-        handleDes.setDetail("");
-        try {
-            androidDriver.pressKey(new KeyEvent().withKey(AndroidKey.valueOf(key)));
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
+        keyCode(handleDes, AndroidKey.valueOf(key).getCode());
     }
 
     public void keyCode(HandleDes handleDes, int key) {
@@ -706,40 +706,13 @@ public class AndroidStepHandler {
         }
     }
 
-    public void multiAction(HandleDes handleDes, String des1, String xy1, String des2, String xy2, String des3, String xy3, String des4, String xy4) {
-        int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-        int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-        int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-        int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-        int x3 = Integer.parseInt(xy3.substring(0, xy3.indexOf(",")));
-        int y3 = Integer.parseInt(xy3.substring(xy3.indexOf(",") + 1));
-        int x4 = Integer.parseInt(xy4.substring(0, xy4.indexOf(",")));
-        int y4 = Integer.parseInt(xy4.substring(xy4.indexOf(",") + 1));
-        String detail = "坐标" + des1 + "( " + x1 + ", " + y1 + " )移动到坐标" + des2 + "( " + x2 + ", " + y2 + " ),同时坐标" + des3 + "( " + x3 + ", " + y3 + " )移动到坐标" + des4 + "( " + x4 + ", " + y4 + " )";
-        handleDes.setStepDes("双指操作");
-        handleDes.setDetail(detail);
-        try {
-            TouchAction hand1 = new TouchAction(androidDriver);
-            TouchAction hand2 = new TouchAction(androidDriver);
-            MultiTouchAction multiTouchAction = new MultiTouchAction(androidDriver);
-            hand1.press(PointOption.point(x1, y1)).moveTo(PointOption.point(x2, y2)).release();
-            hand2.press(PointOption.point(x3, y3)).moveTo(PointOption.point(x4, y4)).release();
-            multiTouchAction.add(hand1);
-            multiTouchAction.add(hand2);
-            multiTouchAction.perform();
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
     public void tap(HandleDes handleDes, String des, String xy) {
         int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
         int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
         handleDes.setStepDes("点击" + des);
         handleDes.setDetail("点击坐标(" + x + "," + y + ")");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.tap(PointOption.point(x, y)).perform();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -753,25 +726,23 @@ public class AndroidStepHandler {
         handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
         handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
     public void swipe(HandleDes handleDes, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
-        WebElement webElement = findEle(selector, pathValue);
-        WebElement webElement2 = findEle(selector2, pathValue2);
-        int x1 = webElement.getLocation().getX();
-        int y1 = webElement.getLocation().getY();
-        int x2 = webElement2.getLocation().getX();
-        int y2 = webElement2.getLocation().getY();
-        handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
-        handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+        AndroidElement webElement = findEle(selector, pathValue);
+        AndroidElement webElement2 = findEle(selector2, pathValue2);
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+            int x1 = webElement.getRect().getX();
+            int y1 = webElement.getRect().getY();
+            int x2 = webElement2.getRect().getX();
+            int y2 = webElement2.getRect().getY();
+            handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
+            handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -781,12 +752,10 @@ public class AndroidStepHandler {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按控件元素" + time + "毫秒 ");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            WebElement webElement = findEle(selector, pathValue);
-            int x = webElement.getLocation().getX();
-            int y = webElement.getLocation().getY();
-            Duration duration = Duration.ofMillis(time);
-            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(duration)).release().perform();
+            AndroidElement webElement = findEle(selector, pathValue);
+            int x = webElement.getRect().getX();
+            int y = webElement.getRect().getY();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -807,7 +776,7 @@ public class AndroidStepHandler {
         handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
         boolean hasEle = false;
         try {
-            WebElement w = findEle(selector, pathValue);
+            AndroidElement w = findEle(selector, pathValue);
             if (w != null) {
                 hasEle = true;
             }
@@ -915,8 +884,7 @@ public class AndroidStepHandler {
         }
         if (findResult != null) {
             try {
-                TouchAction ta = new TouchAction(androidDriver);
-                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", findResult.getX(), findResult.getY()));
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
                 handleDes.setE(e);
@@ -994,7 +962,6 @@ public class AndroidStepHandler {
 
     public void errorScreen() {
         try {
-            androidDriver.context("NATIVE_APP");//先切换回app
             log.sendStepLog(StepType.WARN, "获取异常截图", UploadTools
                     .upload(((TakesScreenshot) androidDriver).getScreenshotAs(OutputType.FILE), "imageFiles"));
         } catch (Exception e) {
@@ -1007,7 +974,6 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         String url = "";
         try {
-            androidDriver.context("NATIVE_APP");//先切换回app
             url = UploadTools.upload(((TakesScreenshot) androidDriver)
                     .getScreenshotAs(OutputType.FILE), "imageFiles");
             handleDes.setDetail(url);
@@ -1047,8 +1013,14 @@ public class AndroidStepHandler {
             return;
         }
         JSONArray options = content.getJSONArray("options");
-        int width = androidDriver.manage().window().getSize().width;
-        int height = androidDriver.manage().window().getSize().height;
+        WindowSize windowSize = null;
+        try {
+            windowSize = androidDriver.getWindowSize();
+        } catch (SonicRespException e) {
+            e.printStackTrace();
+        }
+        int width = windowSize.getWidth();
+        int height = windowSize.getHeight();
         int sleepTime = 50;
         int systemEvent = 0;
         int tapEvent = 0;
@@ -1339,27 +1311,27 @@ public class AndroidStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
-    public WebElement findEle(String selector, String pathValue) {
-        WebElement we = null;
+    public AndroidElement findEle(String selector, String pathValue) throws SonicRespException {
+        AndroidElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "id":
-                we = androidDriver.findElementById(pathValue);
+                we = androidDriver.findElement(AndroidSelector.Id, pathValue);
                 break;
             case "accessibilityId":
-                we = androidDriver.findElementByAccessibilityId(pathValue);
+                we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue);
                 break;
             case "name":
                 we = androidDriver.findElementByName(pathValue);
                 break;
             case "xpath":
-                we = androidDriver.findElementByXPath(pathValue);
+                we = androidDriver.findElement(AndroidSelector.XPATH, pathValue);
                 break;
             case "cssSelector":
                 we = androidDriver.findElement(By.cssSelector(pathValue));
                 break;
             case "className":
-                we = androidDriver.findElementByClassName(pathValue);
+                we = androidDriver.findElement(AndroidSelector.CLASS_NAME,pathValue);
                 break;
             case "tagName":
                 we = androidDriver.findElementByTagName(pathValue);
@@ -1531,12 +1503,6 @@ public class AndroidStepHandler {
             case "locationMode":
                 locationMode(handleDes);
                 break;
-            case "zoom":
-                multiAction(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
-                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue")
-                        , eleList.getJSONObject(2).getString("eleName"), eleList.getJSONObject(2).getString("eleValue")
-                        , eleList.getJSONObject(3).getString("eleName"), eleList.getJSONObject(3).getString("eleValue"));
-                break;
             case "keyCode":
                 keyCode(handleDes, step.getString("content"));
                 break;
@@ -1553,9 +1519,6 @@ public class AndroidStepHandler {
             case "getTextValue":
                 globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
-                break;
-            case "hideKey":
-                hideKey(handleDes);
                 break;
             case "monkey":
                 runMonkey(handleDes, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
