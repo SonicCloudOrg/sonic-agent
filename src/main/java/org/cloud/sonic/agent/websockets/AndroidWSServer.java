@@ -506,8 +506,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     }
                     case "openApp": {
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            AndroidDeviceBridgeTool.executeCommand(iDevice,
-                                    String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
+                            AndroidDeviceBridgeTool.activateApp(iDevice, msg.getString("pkg"));
                         });
                         break;
                     }
@@ -540,7 +539,10 @@ public class AndroidWSServer implements IAndroidWSServer {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
-                                File localFile = DownloadTool.download(msg.getString("apk"));
+                                File localFile = new File(msg.getString("apk"));
+                                if (msg.getString("apk").contains("http")) {
+                                    localFile = DownloadTool.download(msg.getString("apk"));
+                                }
                                 iDevice.installPackage(localFile.getAbsolutePath()
                                         , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                                         , "-r", "-t", "-g");

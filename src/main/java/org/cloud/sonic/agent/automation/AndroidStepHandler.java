@@ -71,6 +71,7 @@ public class AndroidStepHandler {
     public LogUtil log = new LogUtil();
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
+    private IDevice iDevice;
     //包版本
 //    private String version = "";
     //测试起始时间
@@ -126,6 +127,7 @@ public class AndroidStepHandler {
             throw e;
         }
         Thread.sleep(100);
+        iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         log.androidInfo("Android", capabilities.getCapability("platformVersion").toString(),
                 udId, capabilities.getCapability("deviceManufacturer").toString(),
                 capabilities.getCapability("deviceModel").toString(),
@@ -316,56 +318,56 @@ public class AndroidStepHandler {
         return elementList;
     }
 
-    /**
-     * @return void
-     * @author ZhouYiXun
-     * @des 开始录像
-     * @date 2021/8/16 23:56
-     */
-    public void startRecord() {
-        try {
-            AndroidStartScreenRecordingOptions recordOption = new AndroidStartScreenRecordingOptions();
-            //限制30分钟，appium支持的最长时间
-            recordOption.withTimeLimit(Duration.ofMinutes(30));
-            //开启bugReport，开启后录像会有相关附加信息
-            recordOption.enableBugReport();
-            //是否强制终止上次录像并开始新的录像
-            recordOption.enableForcedRestart();
-            //限制码率，防止录像过大
-            recordOption.withBitRate(3000000);
-            androidDriver.startRecordingScreen(recordOption);
-        } catch (Exception e) {
-            log.sendRecordLog(false, "", "");
-        }
-    }
-
-    /**
-     * @return void
-     * @author ZhouYiXun
-     * @des 停止录像
-     * @date 2021/8/16 23:56
-     */
-    public void stopRecord() {
-        File recordDir = new File("test-output/record");
-        if (!recordDir.exists()) {
-            recordDir.mkdirs();
-        }
-        long timeMillis = Calendar.getInstance().getTimeInMillis();
-        String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
-        File uploadFile = new File(recordDir + File.separator + fileName);
-        try {
-            //加锁防止内存泄漏
-            synchronized (AndroidStepHandler.class) {
-                FileOutputStream fileOutputStream = new FileOutputStream(uploadFile);
-                byte[] bytes = Base64Utils.decodeFromString((androidDriver.stopRecordingScreen()));
-                fileOutputStream.write(bytes);
-                fileOutputStream.close();
-            }
-            log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
-        } catch (Exception e) {
-            log.sendRecordLog(false, fileName, "");
-        }
-    }
+//    /**
+//     * @return void
+//     * @author ZhouYiXun
+//     * @des 开始录像
+//     * @date 2021/8/16 23:56
+//     */
+//    public void startRecord() {
+//        try {
+//            AndroidStartScreenRecordingOptions recordOption = new AndroidStartScreenRecordingOptions();
+//            //限制30分钟，appium支持的最长时间
+//            recordOption.withTimeLimit(Duration.ofMinutes(30));
+//            //开启bugReport，开启后录像会有相关附加信息
+//            recordOption.enableBugReport();
+//            //是否强制终止上次录像并开始新的录像
+//            recordOption.enableForcedRestart();
+//            //限制码率，防止录像过大
+//            recordOption.withBitRate(3000000);
+//            androidDriver.startRecordingScreen(recordOption);
+//        } catch (Exception e) {
+//            log.sendRecordLog(false, "", "");
+//        }
+//    }
+//
+//    /**
+//     * @return void
+//     * @author ZhouYiXun
+//     * @des 停止录像
+//     * @date 2021/8/16 23:56
+//     */
+//    public void stopRecord() {
+//        File recordDir = new File("test-output/record");
+//        if (!recordDir.exists()) {
+//            recordDir.mkdirs();
+//        }
+//        long timeMillis = Calendar.getInstance().getTimeInMillis();
+//        String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
+//        File uploadFile = new File(recordDir + File.separator + fileName);
+//        try {
+//            //加锁防止内存泄漏
+//            synchronized (AndroidStepHandler.class) {
+//                FileOutputStream fileOutputStream = new FileOutputStream(uploadFile);
+//                byte[] bytes = Base64Utils.decodeFromString((androidDriver.stopRecordingScreen()));
+//                fileOutputStream.write(bytes);
+//                fileOutputStream.close();
+//            }
+//            log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
+//        } catch (Exception e) {
+//            log.sendRecordLog(false, fileName, "");
+//        }
+//    }
 
 //    public void settingSonicPlugins(IDevice iDevice) {
 //        try {
@@ -412,107 +414,16 @@ public class AndroidStepHandler {
         handleDes.setStepDes("安装应用");
         path = TextHandler.replaceTrans(path, globalParams);
         handleDes.setDetail("App安装路径： " + path);
-//        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
-//        String manufacturer = iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER);
+        File localFile = new File(path);
         try {
-            androidDriver.unlockDevice();
-            if (androidDriver.getConnection().isAirplaneModeEnabled()) {
-                androidDriver.toggleAirplaneMode();
+            if (path.contains("http")) {
+                localFile = DownloadTool.download(path);
             }
-            if (!androidDriver.getConnection().isWiFiEnabled()) {
-                androidDriver.toggleWifi();
-            }
-        } catch (Exception e) {
-            log.sendStepLog(StepType.WARN, "安装前准备跳过...", "");
-        }
-        log.sendStepLog(StepType.INFO, "", "开始安装App，请稍后...");
-//        if (manufacturer.equals("OPPO") || manufacturer.equals("vivo") || manufacturer.equals("Meizu")) {
-//            settingSonicPlugins(iDevice);
-//            AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 3");
-//        }
-//        //单独适配一下oppo
-//        if (manufacturer.equals("OPPO")) {
-//            try {
-//                androidDriver.installApp(path, new AndroidInstallApplicationOptions()
-//                        .withAllowTestPackagesEnabled().withReplaceEnabled()
-//                        .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
-//            } catch (Exception e) {
-//            }
-//            //单独再适配colorOs
-//            if (androidDriver.currentActivity().equals(".verification.login.AccountActivity")) {
-//                try {
-//                    if (AndroidPasswordMap.getMap().get(log.udId) != null
-//                            && (AndroidPasswordMap.getMap().get(log.udId) != null)
-//                            && (!AndroidPasswordMap.getMap().get(log.udId).equals(""))) {
-//                        findEle("id", "com.coloros.safecenter:id/et_login_passwd_edit"
-//                        ).sendKeys(AndroidPasswordMap.getMap().get(log.udId));
-//                    } else {
-//                        findEle("id", "com.coloros.safecenter:id/et_login_passwd_edit"
-//                        ).sendKeys("sonic123456");
-//                    }
-//                    findEle("id", "android:id/button1").click();
-//                } catch (Exception e) {
-//                }
-//            }
-//            AtomicInteger tryTime = new AtomicInteger(0);
-//            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-//                while (tryTime.get() < 20) {
-//                    tryTime.getAndIncrement();
-//                    //部分oppo有继续安装
-//                    try {
-//                        WebElement getContinueButton = findEle("id", "com.android.packageinstaller:id/virus_scan_panel");
-//                        Thread.sleep(2000);
-//                        AndroidDeviceBridgeTool.executeCommand(iDevice,
-//                                String.format("input tap %d %d", (getContinueButton.getRect().width) / 2
-//                                        , getContinueButton.getRect().y + getContinueButton.getRect().height));
-//                        Thread.sleep(2000);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                    //低版本oppo安装按钮在右边
-//                    try {
-//                        findEle("id", "com.android.packageinstaller:id/install_confirm_panel");
-//                        WebElement getInstallButton = findEle("id", "com.android.packageinstaller:id/bottom_button_layout");
-//                        Thread.sleep(2000);
-//                        AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d"
-//                                , ((getInstallButton.getRect().width) / 4) * 3
-//                                , getInstallButton.getRect().y + (getInstallButton.getRect().height) / 2));
-//                        Thread.sleep(2000);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                    //部分oppo无法点击
-//                    try {
-//                        findEle("xpath", "//*[@text='应用权限']");
-//                        WebElement getInstallButton = findEle("id", "com.android.packageinstaller:id/install_confirm_panel");
-//                        Thread.sleep(2000);
-//                        AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d"
-//                                , (getInstallButton.getRect().width) / 2, getInstallButton.getRect().y + getInstallButton.getRect().height));
-//                        Thread.sleep(2000);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                    if (!androidDriver.getCurrentPackage().equals("com.android.packageinstaller")) {
-//                        break;
-//                    }
-//                }
-//            });
-//            while (androidDriver.getCurrentPackage().equals("com.android.packageinstaller") && tryTime.get() < 20) {
-//                try {
-//                    findEle("xpath", "//*[@text='完成']").click();
-//                } catch (Exception e) {
-//                }
-//            }
-//        } else {
-        try {
-            androidDriver.installApp(path, new AndroidInstallApplicationOptions()
-                    .withAllowTestPackagesEnabled().withReplaceEnabled()
-                    .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(600000)));
+            log.sendStepLog(StepType.INFO, "", "开始安装App，请稍后...");
+            AndroidDeviceBridgeTool.install(iDevice, localFile.getAbsolutePath());
         } catch (Exception e) {
             handleDes.setE(e);
-            return;
         }
-//        }
     }
 
     public void uninstall(HandleDes handleDes, String appPackage) {
@@ -520,7 +431,7 @@ public class AndroidStepHandler {
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
-            androidDriver.removeApp(appPackage);
+            AndroidDeviceBridgeTool.uninstall(iDevice, appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -538,7 +449,7 @@ public class AndroidStepHandler {
         packageName = TextHandler.replaceTrans(packageName, globalParams);
         handleDes.setDetail("应用包名： " + packageName);
         try {
-            androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+            AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -570,7 +481,7 @@ public class AndroidStepHandler {
         handleDes.setDetail("App包名： " + appPackage);
         try {
             testPackage = appPackage;
-            androidDriver.activateApp(appPackage);
+            AndroidDeviceBridgeTool.activateApp(iDevice, appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -604,7 +515,7 @@ public class AndroidStepHandler {
         handleDes.setStepDes("锁定屏幕");
         handleDes.setDetail("");
         try {
-            androidDriver.lockDevice();
+            AndroidDeviceBridgeTool.pressKey(iDevice, 26);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -614,7 +525,7 @@ public class AndroidStepHandler {
         handleDes.setStepDes("解锁屏幕");
         handleDes.setDetail("");
         try {
-            androidDriver.unlockDevice();
+            AndroidDeviceBridgeTool.pressKey(iDevice, 26);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -787,7 +698,6 @@ public class AndroidStepHandler {
         handleDes.setStepDes("按系统按键" + key + "键");
         handleDes.setDetail("");
         try {
-            IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
             if (iDevice != null) {
                 AndroidDeviceBridgeTool.pressKey(iDevice, key);
             }
@@ -1136,7 +1046,6 @@ public class AndroidStepHandler {
             handleDes.setE(new Exception("未安装应用"));
             return;
         }
-        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         JSONArray options = content.getJSONArray("options");
         int width = androidDriver.manage().window().getSize().width;
         int height = androidDriver.manage().window().getSize().height;

@@ -340,6 +340,24 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         executeCommand(iDevice, String.format("input keyevent %s", keyNum));
     }
 
+    public static void install(IDevice iDevice, String path) throws InstallException {
+        iDevice.installPackage(path,
+                true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                , "-r", "-t", "-g");
+    }
+
+    public static void uninstall(IDevice iDevice, String bundleId) throws InstallException {
+        iDevice.uninstallPackage(bundleId);
+    }
+
+    public static void forceStop(IDevice iDevice, String bundleId) {
+        executeCommand(iDevice, String.format("am force-stop %s", bundleId));
+    }
+
+    public static void activateApp(IDevice iDevice, String bundleId) {
+        executeCommand(iDevice, String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", bundleId));
+    }
+
     /**
      * @param iDevice
      * @param key
@@ -538,24 +556,4 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
         return result;
     }
-
-    /**
-     * @param udId
-     * @param packageName
-     * @return java.lang.String
-     * @author ZhouYiXun
-     * @des 获取app版本信息
-     * @date 2021/8/16 15:29
-     */
-//    public static String getAppOnlyVersion(String udId, String packageName) {
-//        IDevice iDevice = getIDeviceByUdId(udId);
-//        //实质是获取安卓开发在gradle定义的versionName来定义版本号
-//        String version = executeCommand(iDevice, String.format("pm dump %s | grep 'versionName'", packageName));
-//        version = version.substring(version.indexOf("=") + 1, version.length() - 1);
-//        if (version.length() > 50) {
-//            version = version.substring(0, version.indexOf(" ") + 1);
-//        }
-//        //因为不同设备获取的信息不一样，所以需要去掉\r、\n
-//        return version.replace("\r", "").replace("\n", "");
-//    }
 }
