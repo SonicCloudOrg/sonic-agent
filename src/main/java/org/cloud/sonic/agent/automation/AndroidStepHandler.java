@@ -51,6 +51,7 @@ import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
@@ -67,10 +68,9 @@ import static org.testng.Assert.*;
 public class AndroidStepHandler {
     public LogUtil log = new LogUtil();
     private AndroidDriver androidDriver;
+    private ChromeDriver chromeDriver;
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
-    private long startTime;
-    private String testPackage = "";
     private int status = ResultDetailStatus.PASS;
     private DriverMode driverMode = DriverMode.APP;
 
@@ -93,16 +93,6 @@ public class AndroidStepHandler {
 
     public void setGlobalParams(JSONObject jsonObject) {
         globalParams = jsonObject;
-    }
-
-    /**
-     * @return
-     * @author ZhouYiXun
-     * @des new时开始计时
-     * @date 2021/8/16 20:01
-     */
-    public AndroidStepHandler() {
-        startTime = Calendar.getInstance().getTimeInMillis();
     }
 
     /**
@@ -349,7 +339,6 @@ public class AndroidStepHandler {
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
-            testPackage = appPackage;
             AndroidDeviceBridgeTool.activateApp(iDevice, appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -482,6 +471,7 @@ public class AndroidStepHandler {
         handleDes.setStepDes("切换到" + webViewName);
         handleDes.setDetail("");
         try {
+            chromeDriver = new ChromeDriver();
             androidDriver.context(webViewName);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -895,7 +885,7 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         String packageName = content.getString("packageName");
         int pctNum = content.getInteger("pctNum");
-        if (!androidDriver.isAppInstalled(packageName)) {
+        if (!AndroidDeviceBridgeTool.executeCommand(iDevice, "pm list package").contains(packageName)) {
             log.sendStepLog(StepType.ERROR, "应用未安装！", "设备未安装 " + packageName);
             handleDes.setE(new Exception("未安装应用"));
             return;

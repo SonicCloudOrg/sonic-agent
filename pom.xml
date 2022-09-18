@@ -55,6 +55,7 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.20</version>
+            <scope>compile</scope>
         </dependency>
         <!--    json对象    -->
         <dependency>
