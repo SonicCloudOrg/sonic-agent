@@ -52,6 +52,7 @@ import org.jsoup.nodes.Document;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
@@ -471,6 +472,8 @@ public class AndroidStepHandler {
         handleDes.setStepDes("切换到" + webViewName);
         handleDes.setDetail("");
         try {
+            ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.addArguments();
             chromeDriver = new ChromeDriver();
             androidDriver.context(webViewName);
         } catch (Exception e) {
@@ -867,7 +870,10 @@ public class AndroidStepHandler {
     }
 
     public String getCurrentActivity() {
-        return androidDriver.currentActivity();
+        String acts = AndroidDeviceBridgeTool.executeCommand(iDevice,"dumpsys activity activities");
+        String start = acts.substring(acts.indexOf("cmp="));
+        acts = start.substring(start.indexOf("}"));
+        return acts;
     }
 
     public void pause(HandleDes handleDes, int time) {
