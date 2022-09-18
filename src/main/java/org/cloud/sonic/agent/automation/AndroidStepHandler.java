@@ -1073,7 +1073,7 @@ public class AndroidStepHandler {
                             + "<br>系统事件权重：" + finalNavEvent
                     );
                     openApp(new HandleDes(), packageName);
-                    int totalCount = finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent;
+                    int totalCount = finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent;
                     for (int i = 0; i < pctNum; i++) {
                         try {
                             int random = new Random().nextInt(totalCount);
@@ -1126,7 +1126,7 @@ public class AndroidStepHandler {
                                 int y1 = new Random().nextInt(height - 80) + 80;
                                 int x2 = new Random().nextInt(width - 60) + 60;
                                 int y2 = new Random().nextInt(height - 80) + 80;
-                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 200);
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 200));
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent)) {
                                 int a = new Random().nextInt(1);
