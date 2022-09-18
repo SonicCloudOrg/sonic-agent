@@ -32,6 +32,7 @@ import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
@@ -56,6 +57,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.FileCopyUtils;
 
+import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -132,11 +134,10 @@ public class AndroidStepHandler {
         }
         Thread.sleep(100);
         iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        log.androidInfo("Android", capabilities.getCapability("platformVersion").toString(),
-                udId, capabilities.getCapability("deviceManufacturer").toString(),
-                capabilities.getCapability("deviceModel").toString(),
-                capabilities.getCapability("deviceApiLevel").toString(),
-                capabilities.getCapability("deviceScreenSize").toString());
+        log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
+                udId, iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
+                iDevice.getProperty(IDevice.PROP_DEVICE_MODEL),
+                AndroidDeviceBridgeTool.getScreenSize(iDevice));
     }
 
     /**
@@ -212,8 +213,10 @@ public class AndroidStepHandler {
      * @date 2021/8/16 23:16
      */
     public boolean getBattery() {
-        double battery = androidDriver.getBatteryInfo().getLevel();
-        if (battery <= 0.1) {
+        String battery = AndroidDeviceBridgeTool.executeCommand(iDevice, "dumpsys battery");
+        String realLevel = battery.substring(battery.indexOf("level")).trim();
+        int level = BytesTool.getInt(realLevel.substring(7, realLevel.indexOf("\n")));
+        if (level <= 10) {
             log.sendStepLog(StepType.ERROR, "设备电量过低!", "跳过本次测试...");
             return true;
         } else {
@@ -221,33 +224,6 @@ public class AndroidStepHandler {
         }
     }
 
-    /**
-     * @return void
-     * @author ZhouYiXun
-     * @des 获取性能信息(Appium自带的cpu和network方法貌似有bug, 后续再优化)
-     * @date 2021/8/16 23:16
-     */
-    public void getPerform() {
-        if (!testPackage.equals("")) {
-            List<String> performanceData = Arrays.asList("memoryinfo", "batteryinfo");
-            for (String performName : performanceData) {
-                List<List<Object>> re = androidDriver.getPerformanceData(testPackage, performName, 1);
-                List<Integer> mem;
-                if (performName.equals("memoryinfo")) {
-                    mem = Arrays.asList(0, 1, 2, 5, 6, 7);
-                } else {
-                    mem = Collections.singletonList(0);
-                }
-                JSONObject perform = new JSONObject();
-                for (Integer memNum : mem) {
-                    perform.put(re.get(0).get(memNum).toString(), re.get(1).get(memNum));
-                }
-                log.sendPerLog(testPackage, performName.equals("memoryinfo") ? 1 : 2, perform);
-            }
-        }
-    }
-
-    //配合前端渲染，需要每个节点加上id
     private int xpathId = 1;
 
     /**
@@ -454,16 +430,6 @@ public class AndroidStepHandler {
         handleDes.setDetail("应用包名： " + packageName);
         try {
             AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
-    public void runBackground(HandleDes handleDes, long time) {
-        handleDes.setStepDes("后台运行应用");
-        handleDes.setDetail("后台运行App " + time + " ms");
-        try {
-            androidDriver.runAppInBackground(Duration.ofMillis(time));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -733,9 +699,9 @@ public class AndroidStepHandler {
     }
 
     public void swipe(HandleDes handleDes, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
-        AndroidElement webElement = findEle(selector, pathValue);
-        AndroidElement webElement2 = findEle(selector2, pathValue2);
         try {
+            AndroidElement webElement = findEle(selector, pathValue);
+            AndroidElement webElement2 = findEle(selector2, pathValue2);
             int x1 = webElement.getRect().getX();
             int y1 = webElement.getRect().getY();
             int x2 = webElement2.getRect().getX();
@@ -926,14 +892,20 @@ public class AndroidStepHandler {
     }
 
     public File getScreenToLocal() {
-        File file = ((TakesScreenshot) androidDriver).getScreenshotAs(OutputType.FILE);
-        File resultFile = new File("test-output/" + log.udId + Calendar.getInstance().getTimeInMillis() + ".jpg");
+        File folder = new File("test-output");
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        File output = new File(folder + File.separator + log.udId + Calendar.getInstance().getTimeInMillis() + ".png");
         try {
-            FileCopyUtils.copy(file, resultFile);
-        } catch (IOException e) {
+            byte[] bt = androidDriver.screenshot();
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return resultFile;
+        return output;
     }
 
     public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
@@ -962,8 +934,17 @@ public class AndroidStepHandler {
 
     public void errorScreen() {
         try {
+            File folder = new File("test-output");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            byte[] bt = androidDriver.screenshot();
+            File output = new File(folder + File.separator + UUID.randomUUID() + ".png");
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
             log.sendStepLog(StepType.WARN, "获取异常截图", UploadTools
-                    .upload(((TakesScreenshot) androidDriver).getScreenshotAs(OutputType.FILE), "imageFiles"));
+                    .upload(output, "imageFiles"));
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "捕获截图失败", "");
         }
@@ -974,8 +955,16 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         String url = "";
         try {
-            url = UploadTools.upload(((TakesScreenshot) androidDriver)
-                    .getScreenshotAs(OutputType.FILE), "imageFiles");
+            File folder = new File("test-output");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
+            byte[] bt = androidDriver.screenshot();
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
+            url = UploadTools.upload(output, "imageFiles");
             handleDes.setDetail(url);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1026,7 +1015,6 @@ public class AndroidStepHandler {
         int tapEvent = 0;
         int longPressEvent = 0;
         int swipeEvent = 0;
-        int zoomEvent = 0;
         int navEvent = 0;
         boolean isOpenH5Listener = false;
         boolean isOpenPackageListener = false;
@@ -1050,9 +1038,6 @@ public class AndroidStepHandler {
                 if (jsonOption.getString("name").equals("swipeEvent")) {
                     swipeEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("zoomEvent")) {
-                    zoomEvent = jsonOption.getInteger("value");
-                }
                 if (jsonOption.getString("name").equals("navEvent")) {
                     navEvent = jsonOption.getInteger("value");
                 }
@@ -1075,7 +1060,6 @@ public class AndroidStepHandler {
         int finalTapEvent = tapEvent;
         int finalLongPressEvent = longPressEvent;
         int finalSwipeEvent = swipeEvent;
-        int finalZoomEvent = zoomEvent;
         int finalSystemEvent = systemEvent;
         int finalNavEvent = navEvent;
         Future<?> randomThread = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
@@ -1085,14 +1069,10 @@ public class AndroidStepHandler {
                             + "<br>轻触事件权重：" + finalTapEvent
                             + "<br>长按事件权重：" + finalLongPressEvent
                             + "<br>滑动事件权重：" + finalSwipeEvent
-                            + "<br>多点触控事件权重：" + finalZoomEvent
                             + "<br>物理按键事件权重：" + finalSystemEvent
                             + "<br>系统事件权重：" + finalNavEvent
                     );
                     openApp(new HandleDes(), packageName);
-                    TouchAction ta = new TouchAction(androidDriver);
-                    TouchAction ta2 = new TouchAction(androidDriver);
-                    MultiTouchAction multiTouchAction = new MultiTouchAction(androidDriver);
                     int totalCount = finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent;
                     for (int i = 0; i < pctNum; i++) {
                         try {
@@ -1129,42 +1109,32 @@ public class AndroidStepHandler {
                                         keyType = "VOLUME_MUTE";
                                         break;
                                 }
-                                androidDriver.pressKey(new KeyEvent(AndroidKey.valueOf(keyType)));
+                                AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.valueOf(keyType).getCode());
                             }
                             if (random >= finalSystemEvent && random < (finalSystemEvent + finalTapEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                ta.tap(PointOption.point(x, y)).perform();
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
                             }
                             if (random >= (finalSystemEvent + finalTapEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofSeconds(new Random().nextInt(3) + 1))).release().perform();
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, (new Random().nextInt(3) + 1) * 1000));
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent)) {
                                 int x1 = new Random().nextInt(width - 60) + 60;
                                 int y1 = new Random().nextInt(height - 80) + 80;
                                 int x2 = new Random().nextInt(width - 60) + 60;
                                 int y2 = new Random().nextInt(height - 80) + 80;
-                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release().perform();
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 200);
                             }
-                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent)) {
-                                int x1 = new Random().nextInt(width - 80);
-                                int y1 = new Random().nextInt(height - 80);
-                                int x2 = new Random().nextInt(width - 100);
-                                int y2 = new Random().nextInt(height - 80);
-                                int x3 = new Random().nextInt(width - 100);
-                                int y3 = new Random().nextInt(height - 80);
-                                int x4 = new Random().nextInt(width - 100);
-                                int y4 = new Random().nextInt(height - 80);
-                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release();
-                                ta2.press(PointOption.point(x3, y3)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x4, y4)).release();
-                                multiTouchAction.add(ta);
-                                multiTouchAction.add(ta2);
-                                multiTouchAction.perform();
-                            }
-                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent)) {
-                                androidDriver.toggleWifi();
+                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent)) {
+                                int a = new Random().nextInt(1);
+                                if (a == 1) {
+                                    AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi enable");
+                                } else {
+                                    AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi disable");
+                                }
                             }
                             Thread.sleep(finalSleepTime);
                         } catch (Throwable e) {
@@ -1184,14 +1154,14 @@ public class AndroidStepHandler {
                                 e.printStackTrace();
                             }
                             try {
-                                if (androidDriver.findElementsByClassName("android.webkit.WebView").size() > 0) {
+                                if (androidDriver.findElementList(AndroidSelector.CLASS_NAME, "android.webkit.WebView").size() > 0) {
                                     h5Time++;
                                     AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
                                 } else {
                                     h5Time = 0;
                                 }
                                 if (h5Time >= 12) {
-                                    androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                                    AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
                                     h5Time = 0;
                                 }
                             } catch (Throwable e) {
@@ -1213,11 +1183,11 @@ public class AndroidStepHandler {
                                     e.printStackTrace();
                                 }
                                 if (!androidDriver.getCurrentPackage().equals(packageName)) {
-                                    androidDriver.activateApp(packageName);
+                                    AndroidDeviceBridgeTool.activateApp(iDevice, packageName);
                                 }
                                 waitTime++;
                             }
-                            androidDriver.activateApp(packageName);
+                            AndroidDeviceBridgeTool.activateApp(iDevice, packageName);
                         }
                     }
                 }
@@ -1247,7 +1217,7 @@ public class AndroidStepHandler {
                                 e.printStackTrace();
                             }
                             if (blackList.contains(getCurrentActivity())) {
-                                androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                                AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
                             }
                         }
                     }
@@ -1262,17 +1232,13 @@ public class AndroidStepHandler {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            if (androidDriver.getConnection().isAirplaneModeEnabled()) {
-                                androidDriver.toggleAirplaneMode();
-                            }
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put global airplane_mode_on 0");
                             try {
                                 Thread.sleep(8000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            if (!androidDriver.getConnection().isWiFiEnabled()) {
-                                androidDriver.toggleWifi();
-                            }
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi enable");
                         }
                     }
                 }
@@ -1282,9 +1248,6 @@ public class AndroidStepHandler {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        if (version.length() == 0) {
-//            version = AndroidDeviceBridgeTool.getAppOnlyVersion(udId, packageName);
-//        }
         log.sendStepLog(StepType.INFO, "", "测试目标包：" + packageName +
                 (isOpenPackageListener ? "<br>应用包名监听器已开启..." : "") +
                 (isOpenH5Listener ? "<br>H5页面监听器已开启..." : "") +
@@ -1331,7 +1294,7 @@ public class AndroidStepHandler {
                 we = androidDriver.findElement(By.cssSelector(pathValue));
                 break;
             case "className":
-                we = androidDriver.findElement(AndroidSelector.CLASS_NAME,pathValue);
+                we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue);
                 break;
             case "tagName":
                 we = androidDriver.findElementByTagName(pathValue);
@@ -1480,9 +1443,6 @@ public class AndroidStepHandler {
             case "uninstall":
                 uninstall(handleDes, step.getString("text"));
                 break;
-            case "runBack":
-                runBackground(handleDes, Long.parseLong(step.getString("content")));
-                break;
             case "screenSub":
             case "screenAdd":
             case "screenAbort":
@@ -1495,13 +1455,13 @@ public class AndroidStepHandler {
                 unLock(handleDes);
                 break;
             case "airPlaneMode":
-                airPlaneMode(handleDes);
+                airPlaneMode(handleDes, step.getBoolean("content"));
                 break;
             case "wifiMode":
-                wifiMode(handleDes);
+                wifiMode(handleDes, step.getBoolean("content"));
                 break;
             case "locationMode":
-                locationMode(handleDes);
+                locationMode(handleDes, step.getBoolean("content"));
                 break;
             case "keyCode":
                 keyCode(handleDes, step.getString("content"));
@@ -1561,7 +1521,6 @@ public class AndroidStepHandler {
                     exceptionLog(e);
                     throw e;
             }
-            // 非条件步骤清除异常对象
             if (stepJson.getInteger("conditionType").equals(0)) {
                 handleDes.clear();
             }
