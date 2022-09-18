@@ -24,6 +24,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.enums.AndroidKey;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
@@ -33,7 +34,6 @@ import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
@@ -46,25 +46,16 @@ import org.cloud.sonic.driver.android.enmus.AndroidSelector;
 import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
-import org.cloud.sonic.driver.ios.IOSDriver;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.util.Base64Utils;
-import org.springframework.util.FileCopyUtils;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.*;
 
@@ -78,15 +69,15 @@ public class AndroidStepHandler {
     private AndroidDriver androidDriver;
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
-    //包版本
-//    private String version = "";
-    //测试起始时间
     private long startTime;
-    //测试的包名
     private String testPackage = "";
-    private String udId = "";
-    //测试状态
     private int status = ResultDetailStatus.PASS;
+    private DriverMode driverMode = DriverMode.APP;
+
+    public enum DriverMode {
+        APP,
+        WEB_VIEW
+    }
 
     public LogUtil getLog() {
         return log;
@@ -115,14 +106,14 @@ public class AndroidStepHandler {
     }
 
     /**
-     * @param udId
+     * @param iDevice
      * @return void
      * @author ZhouYiXun
      * @des 启动安卓驱动，连接设备
      * @date 2021/8/16 20:01
      */
-    public void startAndroidDriver(String udId, int uiaPort) throws Exception {
-        this.udId = udId;
+    public void startAndroidDriver(IDevice iDevice, int uiaPort) throws Exception {
+        this.iDevice = iDevice;
         try {
             androidDriver = new AndroidDriver("http://127.0.0.1:" + uiaPort);
             androidDriver.disableLog();
@@ -132,10 +123,8 @@ public class AndroidStepHandler {
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
-        Thread.sleep(100);
-        iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
-                udId, iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
+                iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
                 iDevice.getProperty(IDevice.PROP_DEVICE_MODEL),
                 AndroidDeviceBridgeTool.getScreenSize(iDevice));
     }
@@ -157,7 +146,10 @@ public class AndroidStepHandler {
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
         } finally {
-            AppiumServer.close(udId);
+            Thread s = AndroidThreadMap.getMap().get(String.format("%s-uia-thread", iDevice.getSerialNumber()));
+            if (s != null) {
+                s.interrupt();
+            }
         }
     }
 
@@ -172,7 +164,7 @@ public class AndroidStepHandler {
     }
 
     public String getUdId() {
-        return udId;
+        return iDevice.getSerialNumber();
     }
 
     public AndroidDriver getAndroidDriver() {
@@ -298,98 +290,6 @@ public class AndroidStepHandler {
         return elementList;
     }
 
-//    /**
-//     * @return void
-//     * @author ZhouYiXun
-//     * @des 开始录像
-//     * @date 2021/8/16 23:56
-//     */
-//    public void startRecord() {
-//        try {
-//            AndroidStartScreenRecordingOptions recordOption = new AndroidStartScreenRecordingOptions();
-//            //限制30分钟，appium支持的最长时间
-//            recordOption.withTimeLimit(Duration.ofMinutes(30));
-//            //开启bugReport，开启后录像会有相关附加信息
-//            recordOption.enableBugReport();
-//            //是否强制终止上次录像并开始新的录像
-//            recordOption.enableForcedRestart();
-//            //限制码率，防止录像过大
-//            recordOption.withBitRate(3000000);
-//            androidDriver.startRecordingScreen(recordOption);
-//        } catch (Exception e) {
-//            log.sendRecordLog(false, "", "");
-//        }
-//    }
-//
-//    /**
-//     * @return void
-//     * @author ZhouYiXun
-//     * @des 停止录像
-//     * @date 2021/8/16 23:56
-//     */
-//    public void stopRecord() {
-//        File recordDir = new File("test-output/record");
-//        if (!recordDir.exists()) {
-//            recordDir.mkdirs();
-//        }
-//        long timeMillis = Calendar.getInstance().getTimeInMillis();
-//        String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
-//        File uploadFile = new File(recordDir + File.separator + fileName);
-//        try {
-//            //加锁防止内存泄漏
-//            synchronized (AndroidStepHandler.class) {
-//                FileOutputStream fileOutputStream = new FileOutputStream(uploadFile);
-//                byte[] bytes = Base64Utils.decodeFromString((androidDriver.stopRecordingScreen()));
-//                fileOutputStream.write(bytes);
-//                fileOutputStream.close();
-//            }
-//            log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
-//        } catch (Exception e) {
-//            log.sendRecordLog(false, fileName, "");
-//        }
-//    }
-
-//    public void settingSonicPlugins(IDevice iDevice) {
-//        try {
-//            androidDriver.activateApp("com.sonic.plugins");
-//            try {
-//                Thread.sleep(1000);
-//            } catch (Exception e) {
-//            }
-//            log.sendStepLog(StepType.INFO, "已安装Sonic插件！", "");
-//        } catch (Exception e) {
-//            log.sendStepLog(StepType.ERROR, "未安装Sonic插件！", "");
-//            throw e;
-//        }
-//        try {
-//            if (!androidDriver.currentActivity().equals("com.sonic.plugins.MainActivity")) {
-//                try {
-//                    AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
-//                    Thread.sleep(1000);
-//                } catch (Exception e) {
-//                }
-//            }
-//            findEle("xpath", "//android.widget.TextView[@text='服务状态：已开启']");
-//        } catch (Exception e) {
-//            log.sendStepLog(StepType.ERROR, "未开启Sonic插件服务！请到辅助功能或无障碍开启", "");
-//            throw e;
-//        }
-//        try {
-//            findEle("id", "com.sonic.plugins:id/password_edit").clear();
-//            if (AndroidPasswordMap.getMap().get(log.udId) != null
-//                    && (AndroidPasswordMap.getMap().get(log.udId) != null)
-//                    && (!AndroidPasswordMap.getMap().get(log.udId).equals(""))) {
-//                findEle("id", "com.sonic.plugins:id/password_edit").sendKeys(AndroidPasswordMap.getMap().get(log.udId));
-//            } else {
-//                findEle("id", "com.sonic.plugins:id/password_edit").sendKeys("sonic123456");
-//            }
-//            findEle("id", "com.sonic.plugins:id/save").click();
-//        } catch (Exception e) {
-//            log.sendStepLog(StepType.ERROR, "配置Sonic插件服务失败！", "");
-//            throw e;
-//        }
-//    }
-
     public void install(HandleDes handleDes, String path) {
         handleDes.setStepDes("安装应用");
         path = TextHandler.replaceTrans(path, globalParams);
@@ -439,9 +339,8 @@ public class AndroidStepHandler {
         handleDes.setStepDes("清空App内存缓存");
         bundleId = TextHandler.replaceTrans(bundleId, globalParams);
         handleDes.setDetail("清空 " + bundleId);
-        IDevice device = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        if (device != null) {
-            AndroidDeviceBridgeTool.executeCommand(device, "pm clear " + bundleId);
+        if (iDevice != null) {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "pm clear " + bundleId);
         }
     }
 
@@ -475,7 +374,7 @@ public class AndroidStepHandler {
                     handleDes.setStepDes("关闭自动旋转");
                     break;
             }
-            AndroidDeviceBridgeTool.screen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId), s);
+            AndroidDeviceBridgeTool.screen(iDevice, s);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -959,7 +858,7 @@ public class AndroidStepHandler {
             if (!folder.exists()) {
                 folder.mkdirs();
             }
-            File output = new File(folder + File.separator + udId + Calendar.getInstance().getTimeInMillis() + ".png");
+            File output = new File(folder + File.separator + iDevice.getSerialNumber() + Calendar.getInstance().getTimeInMillis() + ".png");
             byte[] bt = androidDriver.screenshot();
             FileImageOutputStream imageOutput = new FileImageOutputStream(output);
             imageOutput.write(bt, 0, bt.length);

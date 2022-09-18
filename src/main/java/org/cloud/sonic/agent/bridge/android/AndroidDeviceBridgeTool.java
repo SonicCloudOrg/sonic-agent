@@ -16,10 +16,14 @@
  */
 package org.cloud.sonic.agent.bridge.android;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
+import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -37,9 +41,15 @@ import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -56,9 +66,12 @@ import java.util.stream.Collectors;
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
+    private static String uiaApkVersion;
     private static String apkVersion;
     @Value("${sonic.saa}")
     private String ver;
+    @Value("${sonic.saus}")
+    private String uiaVer;
 
     @Autowired
     private AndroidDeviceStatusListener androidDeviceStatusListener;
@@ -95,6 +108,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public void init() {
         apkVersion = ver;
+        uiaApkVersion = uiaVer;
         //获取系统SDK路径
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
@@ -245,6 +259,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     public static boolean checkSonicApkVersion(IDevice iDevice) {
         String all = executeCommand(iDevice, "dumpsys package org.cloud.sonic.android");
         if (!all.contains("versionName=" + apkVersion)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public static boolean checkUiaApkVersion(IDevice iDevice) {
+        String all = executeCommand(iDevice, "dumpsys package io.appium.uiautomator2.server");
+        if (!all.contains("versionName=" + uiaApkVersion)) {
             return false;
         } else {
             return true;
@@ -555,5 +578,52 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             FileTool.deleteDir(file);
         }
         return result;
+    }
+
+    public static int startUiaServer(IDevice iDevice) throws InstallException {
+        if (checkUiaApkVersion(iDevice)) {
+            iDevice.uninstallPackage("io.appium.uiautomator2.server");
+            iDevice.installPackage("plugins/sonic-appium-uiautomator2-server.apk",
+                    true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                    , "-r", "-t");
+        }
+        String appList = executeCommand(iDevice, "pm list package");
+        if (!appList.contains("io.appium.uiautomator2.server.test")) {
+            iDevice.installPackage("plugins/sonic-appium-uiautomator2-server-test.apk",
+                    true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                    , "-r", "-t");
+        }
+        int port = PortTool.getPort();
+        Thread uiaThread = new UiaThread(iDevice, port);
+        uiaThread.start();
+        AndroidThreadMap.getMap().put(String.format("%s-uia-thread", iDevice.getSerialNumber()), uiaThread);
+        return port;
+    }
+
+    static class UiaThread extends Thread {
+
+        private IDevice iDevice;
+        private int port;
+
+        public UiaThread(IDevice iDevice, int port) {
+            this.iDevice = iDevice;
+            this.port = port;
+        }
+
+        @Override
+        public void run() {
+            forward(iDevice, port, 6790);
+            try {
+                executeCommand(iDevice, "am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner");
+            } catch (Exception e) {
+            } finally {
+                AndroidDeviceBridgeTool.removeForward(iDevice, port, 6790);
+            }
+        }
+
+        @Override
+        public void interrupt() {
+            super.interrupt();
+        }
     }
 }
