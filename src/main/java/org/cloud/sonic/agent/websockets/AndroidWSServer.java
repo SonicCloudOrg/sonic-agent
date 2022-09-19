@@ -406,10 +406,10 @@ public class AndroidWSServer implements IAndroidWSServer {
                     webViewForwardMap.put(iDevice, has);
                 }
                 forwardView.put("msg", "forwardView");
-                if (RemoteDebugDriver.webDriver == null) {
-                    RemoteDebugDriver.startChromeDriver();
+                if (RemoteDebugDriver.launcher == null || (!RemoteDebugDriver.launcher.isAlive())) {
+                    RemoteDebugDriver.startChromeDebugger();
                 }
-                forwardView.put("chromePort", RemoteDebugDriver.chromePort);
+                forwardView.put("chromePort", RemoteDebugDriver.debugPort);
                 forwardView.put("detail", result);
                 BytesTool.sendText(session, forwardView.toJSONString());
                 break;

@@ -16,11 +16,9 @@
  */
 package org.cloud.sonic.agent.automation;
 
+import com.github.kklisura.cdt.launch.ChromeArguments;
+import com.github.kklisura.cdt.launch.ChromeLauncher;
 import org.cloud.sonic.agent.tools.PortTool;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,55 +38,46 @@ import org.springframework.lang.NonNull;
 @Configuration
 public class RemoteDebugDriver implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
-    private static String chromePath;
-    public static int chromePort;
-    public static WebDriver webDriver;
-    @Value("${modules.webview.chrome-driver-path}")
-    private String path;
-    @Value("${modules.webview.chrome-driver-debug-port}")
+    public static int debugPort;
+    public static ChromeLauncher launcher;
+    @Value("${modules.webview.remote-debug-port}")
     private int port;
 
     @Bean
     public void setChromePath() {
-        chromePath = path;
-        chromePort = port;
+        if (port == 0) {
+            debugPort = PortTool.getPort();
+        } else {
+            debugPort = port;
+        }
     }
 
     @Override
     public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
-        startChromeDriver();
+        startChromeDebugger();
     }
 
-    public static void startChromeDriver() {
-        logger.info("开启webview相关功能");
-        System.setProperty("webdriver.chrome.silentOutput", "true");
+    public static void startChromeDebugger() {
+        logger.info("Enable webview remote debugger.");
         try {
-            DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-            ChromeOptions chromeOptions = new ChromeOptions();
-            System.setProperty("webdriver.chrome.driver", chromePath);
-            if (chromePort == 0) {
-                int debugPort = PortTool.getPort();
-                chromePort = debugPort;
-                chromeOptions.addArguments("--remote-debugging-port=" + debugPort);
-            } else {
-                chromeOptions.addArguments("--remote-debugging-port=" + chromePort);
-            }
-            chromeOptions.addArguments("--remote-debugging-address=0.0.0.0");
-            chromeOptions.addArguments("--headless");
-            chromeOptions.addArguments("--no-sandbox");
-            chromeOptions.addArguments("--disable-gpu");
-            chromeOptions.addArguments("--disable-dev-shm-usage");
-            desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-            webDriver = new ChromeDriver(desiredCapabilities);
-            logger.info("chromeDriver启动完毕！");
+            launcher = new ChromeLauncher();
+            ChromeArguments chromeArguments = ChromeArguments.builder()
+                    .additionalArguments("remote-debugging-address", "0.0.0.0")
+                    .additionalArguments("no-sandbox", true)
+                    .additionalArguments("disable-dev-shm-usage", true)
+                    .headless().remoteDebuggingPort(debugPort)
+                    .disableGpu()
+                    .build();
+            launcher.launch(chromeArguments);
+            logger.info("Webview remote debugger start successful.");
         } catch (Exception e) {
-            logger.info("chromeDriver启动失败！");
+            logger.info("Webview remote debugger start failed.");
         }
     }
 
     public static void close() {
-        if (webDriver != null) {
-            webDriver.quit();
+        if (launcher != null) {
+            launcher.close();
         }
     }
 }
