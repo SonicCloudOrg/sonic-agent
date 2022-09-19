@@ -870,10 +870,28 @@ public class AndroidStepHandler {
     }
 
     public String getCurrentActivity() {
-        String acts = AndroidDeviceBridgeTool.executeCommand(iDevice,"dumpsys activity activities");
-        String start = acts.substring(acts.indexOf("cmp="));
-        acts = start.substring(start.indexOf("}"));
-        return acts;
+        Integer api = Integer.parseInt(iDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
+        String cmd = AndroidDeviceBridgeTool.executeCommand(iDevice,
+                String.format("dumpsys window %s", ((api != null && api >= 29) ? "displays" : "windows")));
+        String result = "";
+        try {
+            String start = cmd.substring(cmd.indexOf("mCurrentFocus="));
+            String end = start.substring(start.indexOf("/") + 1);
+            result = end.substring(0, end.indexOf("}"));
+        } catch (Exception e) {
+        }
+        if (result.length() == 0) {
+            try {
+                String start = cmd.substring(cmd.indexOf("mFocusedApp="));
+                String startCut = start.substring(0, start.indexOf("/"));
+                String activity = startCut.substring(startCut.lastIndexOf(" ") + 1);
+                String end = start.substring(start.indexOf("/") + 1);
+                String endCut = end.substring(0, end.indexOf(" "));
+                result = activity + endCut;
+            } catch (Exception e) {
+            }
+        }
+        return result;
     }
 
     public void pause(HandleDes handleDes, int time) {
@@ -1077,7 +1095,7 @@ public class AndroidStepHandler {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                if (!androidDriver.getCurrentPackage().equals(packageName)) {
+                                if (!getCurrentActivity().contains(packageName)) {
                                     AndroidDeviceBridgeTool.activateApp(iDevice, packageName);
                                 }
                                 waitTime++;
