@@ -17,7 +17,10 @@
 package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
+import com.android.ddmlib.IDevice;
+import com.android.ddmlib.InstallException;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.tests.TaskManager;
@@ -103,15 +106,15 @@ public class AndroidTestTaskBootThread extends Thread {
     /**
      * 任务线程构造
      *
-     * @param jsonObject          任务数据
-     * @param androidStepHandler  android步骤执行器
+     * @param jsonObject         任务数据
+     * @param androidStepHandler android步骤执行器
      */
     public AndroidTestTaskBootThread(JSONObject jsonObject, AndroidStepHandler androidStepHandler) {
         this.androidStepHandler = androidStepHandler;
         this.jsonObject = jsonObject;
         this.resultId = jsonObject.getInteger("rid") == null ? 0 : jsonObject.getInteger("rid");
         this.caseId = jsonObject.getInteger("cid") == null ? 0 : jsonObject.getInteger("cid");
-        this.udId = jsonObject.getJSONObject("device") == null? jsonObject.getString("udId") :
+        this.udId = jsonObject.getJSONObject("device") == null ? jsonObject.getString("udId") :
                 jsonObject.getJSONObject("device").getString("udId");
 
         // 比如：test-task-thread-af80d1e4
@@ -194,9 +197,10 @@ public class AndroidTestTaskBootThread extends Thread {
             }
 
             startTestSuccess = true;
-            //启动测试
             try {
-                androidStepHandler.startAndroidDriver(udId);
+                IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+                int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
+                androidStepHandler.startAndroidDriver(iDevice, port);
             } catch (Exception e) {
                 log.error(e.getMessage());
                 androidStepHandler.closeAndroidDriver();

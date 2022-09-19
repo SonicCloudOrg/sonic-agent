@@ -215,21 +215,19 @@ public class LogUtil {
      * @param udId
      * @param manufacturer
      * @param model
-     * @param api
      * @param size
      * @return void
      * @author ZhouYiXun
      * @des 发送安卓Info
      * @date 2021/8/16 19:59
      */
-    public void androidInfo(String platform, String version, String udId, String manufacturer, String model, String api, String size) {
+    public void androidInfo(String platform, String version, String udId, String manufacturer, String model, String size) {
         sendStepLog(StepType.INFO, "",
                 "设备操作系统：" + platform
                         + "<br>操作系统版本：" + version
                         + "<br>设备序列号：" + udId
                         + "<br>设备制造商：" + manufacturer
                         + "<br>设备型号：" + model
-                        + "<br>安卓API等级：" + api
                         + "<br>设备分辨率：" + size
         );
     }

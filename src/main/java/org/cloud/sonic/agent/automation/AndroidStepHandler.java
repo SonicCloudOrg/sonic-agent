@@ -19,24 +19,13 @@ package org.cloud.sonic.agent.automation;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import io.appium.java_client.MultiTouchAction;
-import io.appium.java_client.TouchAction;
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
-import io.appium.java_client.android.appmanagement.AndroidInstallApplicationOptions;
-import io.appium.java_client.android.appmanagement.AndroidTerminateApplicationOptions;
-import io.appium.java_client.android.nativekey.AndroidKey;
-import io.appium.java_client.android.nativekey.KeyEvent;
-import io.appium.java_client.remote.AndroidMobileCapabilityType;
-import io.appium.java_client.remote.AutomationName;
-import io.appium.java_client.remote.MobileCapabilityType;
-import io.appium.java_client.touch.WaitOptions;
-import io.appium.java_client.touch.offset.PointOption;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
+import org.cloud.sonic.agent.enums.AndroidKey;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
 import org.cloud.sonic.agent.models.FindResult;
@@ -44,7 +33,7 @@ import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
-import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
@@ -52,23 +41,23 @@ import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
 import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.driver.android.AndroidDriver;
+import org.cloud.sonic.driver.android.enmus.AndroidSelector;
+import org.cloud.sonic.driver.android.service.AndroidElement;
+import org.cloud.sonic.driver.common.models.WindowSize;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
-import org.openqa.selenium.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.util.Base64Utils;
-import org.springframework.util.FileCopyUtils;
 
+import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.*;
 
@@ -80,16 +69,16 @@ import static org.testng.Assert.*;
 public class AndroidStepHandler {
     public LogUtil log = new LogUtil();
     private AndroidDriver androidDriver;
+    private ChromeDriver chromeDriver;
     private JSONObject globalParams = new JSONObject();
-    //包版本
-//    private String version = "";
-    //测试起始时间
-    private long startTime;
-    //测试的包名
-    private String testPackage = "";
-    private String udId = "";
-    //测试状态
+    private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
+    private DriverMode driverMode = DriverMode.APP;
+
+    public enum DriverMode {
+        APP,
+        WEB_VIEW
+    }
 
     public LogUtil getLog() {
         return log;
@@ -108,77 +97,27 @@ public class AndroidStepHandler {
     }
 
     /**
-     * @return
-     * @author ZhouYiXun
-     * @des new时开始计时
-     * @date 2021/8/16 20:01
-     */
-    public AndroidStepHandler() {
-        startTime = Calendar.getInstance().getTimeInMillis();
-    }
-
-    /**
-     * @param udId
+     * @param iDevice
      * @return void
      * @author ZhouYiXun
      * @des 启动安卓驱动，连接设备
      * @date 2021/8/16 20:01
      */
-    public void startAndroidDriver(String udId) throws InterruptedException {
-        this.udId = udId;
-        DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
-        //微信webView配置
-        ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.setExperimentalOption("androidProcess", "com.tencent.mm:tools");
-        desiredCapabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
-        //webView通用配置，自动下载匹配的driver
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.RECREATE_CHROME_DRIVER_SESSIONS, true);
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_EXECUTABLE_DIR, "webview");
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.CHROMEDRIVER_CHROME_MAPPING_FILE, "webview/version.json");
-        //平台
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.PLATFORM_NAME, Platform.ANDROID);
-        //选用的自动化框架
-        desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME, AutomationName.ANDROID_UIAUTOMATOR2);
-        //关闭运行时阻塞其他Accessibility服务，开启的话其他不能使用了
-        desiredCapabilities.setCapability("disableSuppressAccessibilityService", true);
-        //adb指令超时时间
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.ADB_EXEC_TIMEOUT, 7200000);
-        //UIA2安装超时时间
-        desiredCapabilities.setCapability("uiautomator2ServerInstallTimeout", 600000);
-
-        //io.appium.uiautomator2.server io.appium.uiautomator2.server.test //io.appium.settings
-//        desiredCapabilities.setCapability("skipServerInstallation",true);
-//        desiredCapabilities.setCapability("disableWindowAnimation",true);
-//        desiredCapabilities.setCapability("skipDeviceInitialization",true);
-        //等待新命令超时时间
-        desiredCapabilities.setCapability(MobileCapabilityType.NEW_COMMAND_TIMEOUT, 7200);
-        //不重置应用
-        desiredCapabilities.setCapability(MobileCapabilityType.NO_RESET, true);
-        //单独唤起应用的话，这个需要设置空字符串
-        desiredCapabilities.setCapability(MobileCapabilityType.BROWSER_NAME, "");
-        //指定设备序列号
-        desiredCapabilities.setCapability(MobileCapabilityType.UDID, udId);
-        //随机systemPort
-        desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT, PortTool.getPort());
-        desiredCapabilities.setCapability("skipLogcatCapture", true);
+    public void startAndroidDriver(IDevice iDevice, int uiaPort) throws Exception {
+        this.iDevice = iDevice;
         try {
-            AppiumServer.start(udId);
-            androidDriver = new AndroidDriver(AppiumServer.serviceMap.get(udId).getUrl(), desiredCapabilities);
-            androidDriver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+            androidDriver = new AndroidDriver("http://127.0.0.1:" + uiaPort);
+            androidDriver.disableLog();
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
-            //测试标记为失败
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
-        Capabilities capabilities = androidDriver.getCapabilities();
-        Thread.sleep(100);
-        log.androidInfo("Android", capabilities.getCapability("platformVersion").toString(),
-                udId, capabilities.getCapability("deviceManufacturer").toString(),
-                capabilities.getCapability("deviceModel").toString(),
-                capabilities.getCapability("deviceApiLevel").toString(),
-                capabilities.getCapability("deviceScreenSize").toString());
+        log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
+                iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
+                iDevice.getProperty(IDevice.PROP_DEVICE_MODEL),
+                AndroidDeviceBridgeTool.getScreenSize(iDevice));
     }
 
     /**
@@ -190,16 +129,18 @@ public class AndroidStepHandler {
     public void closeAndroidDriver() {
         try {
             if (androidDriver != null) {
-                androidDriver.quit();
+                androidDriver.closeDriver();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
             }
         } catch (Exception e) {
             log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", "");
-            //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
             e.printStackTrace();
         } finally {
-            AppiumServer.close(udId);
+            Thread s = AndroidThreadMap.getMap().get(String.format("%s-uia-thread", iDevice.getSerialNumber()));
+            if (s != null) {
+                s.interrupt();
+            }
         }
     }
 
@@ -214,7 +155,7 @@ public class AndroidStepHandler {
     }
 
     public String getUdId() {
-        return udId;
+        return iDevice.getSerialNumber();
     }
 
     public AndroidDriver getAndroidDriver() {
@@ -255,8 +196,10 @@ public class AndroidStepHandler {
      * @date 2021/8/16 23:16
      */
     public boolean getBattery() {
-        double battery = androidDriver.getBatteryInfo().getLevel();
-        if (battery <= 0.1) {
+        String battery = AndroidDeviceBridgeTool.executeCommand(iDevice, "dumpsys battery");
+        String realLevel = battery.substring(battery.indexOf("level")).trim();
+        int level = BytesTool.getInt(realLevel.substring(7, realLevel.indexOf("\n")));
+        if (level <= 10) {
             log.sendStepLog(StepType.ERROR, "设备电量过低!", "跳过本次测试...");
             return true;
         } else {
@@ -264,33 +207,6 @@ public class AndroidStepHandler {
         }
     }
 
-    /**
-     * @return void
-     * @author ZhouYiXun
-     * @des 获取性能信息(Appium自带的cpu和network方法貌似有bug, 后续再优化)
-     * @date 2021/8/16 23:16
-     */
-    public void getPerform() {
-        if (!testPackage.equals("")) {
-            List<String> performanceData = Arrays.asList("memoryinfo", "batteryinfo");
-            for (String performName : performanceData) {
-                List<List<Object>> re = androidDriver.getPerformanceData(testPackage, performName, 1);
-                List<Integer> mem;
-                if (performName.equals("memoryinfo")) {
-                    mem = Arrays.asList(0, 1, 2, 5, 6, 7);
-                } else {
-                    mem = Collections.singletonList(0);
-                }
-                JSONObject perform = new JSONObject();
-                for (Integer memNum : mem) {
-                    perform.put(re.get(0).get(memNum).toString(), re.get(1).get(memNum));
-                }
-                log.sendPerLog(testPackage, performName.equals("memoryinfo") ? 1 : 2, perform);
-            }
-        }
-    }
-
-    //配合前端渲染，需要每个节点加上id
     private int xpathId = 1;
 
     /**
@@ -300,13 +216,17 @@ public class AndroidStepHandler {
      * @date 2021/8/16 23:16
      */
     public JSONArray getResource() {
-        androidDriver.context("NATIVE_APP");
-        JSONArray elementList = new JSONArray();
-        Document doc = Jsoup.parse(androidDriver.getPageSource());
-        String xpath = "/hierarchy";
-        elementList.addAll(getChildren(doc.body().children().get(0).children(), xpath));
-        xpathId = 1;
-        return elementList;
+        try {
+            JSONArray elementList = new JSONArray();
+            Document doc = Jsoup.parse(androidDriver.getPageSource());
+            String xpath = "/hierarchy";
+            elementList.addAll(getChildren(doc.body().children().get(0).children(), xpath));
+            xpathId = 1;
+            return elementList;
+        } catch (SonicRespException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -321,21 +241,17 @@ public class AndroidStepHandler {
         JSONArray elementList = new JSONArray();
         for (int i = 0; i < elements.size(); i++) {
             JSONObject ele = new JSONObject();
-            //tag次数
             int tagCount = 0;
-            //兄弟节点index
             int siblingIndex = 0;
             String indexXpath;
             for (int j = 0; j < elements.size(); j++) {
                 if (elements.get(j).attr("class").equals(elements.get(i).attr("class"))) {
                     tagCount++;
                 }
-                //当i==j时候，兄弟节点index等于tag出现次数，因为xpath多个tag的时候,[]里面下标是从1开始
                 if (i == j) {
                     siblingIndex = tagCount;
                 }
             }
-            //如果tag出现次数等于1，xpath结尾不添加[]
             if (tagCount == 1) {
                 indexXpath = xpath + "/" + elements.get(i).attr("class");
             } else {
@@ -347,7 +263,6 @@ public class AndroidStepHandler {
             JSONObject detail = new JSONObject();
             detail.put("xpath", indexXpath);
             for (Attribute attr : elements.get(i).attributes()) {
-                //把bounds字段拆出来解析，方便前端进行截取
                 if (attr.getKey().equals("bounds")) {
                     String bounds = attr.getValue().replace("][", ":");
                     String pointStart = bounds.substring(1, bounds.indexOf(":"));
@@ -366,203 +281,20 @@ public class AndroidStepHandler {
         return elementList;
     }
 
-    /**
-     * @return void
-     * @author ZhouYiXun
-     * @des 开始录像
-     * @date 2021/8/16 23:56
-     */
-    public void startRecord() {
-        try {
-            AndroidStartScreenRecordingOptions recordOption = new AndroidStartScreenRecordingOptions();
-            //限制30分钟，appium支持的最长时间
-            recordOption.withTimeLimit(Duration.ofMinutes(30));
-            //开启bugReport，开启后录像会有相关附加信息
-            recordOption.enableBugReport();
-            //是否强制终止上次录像并开始新的录像
-            recordOption.enableForcedRestart();
-            //限制码率，防止录像过大
-            recordOption.withBitRate(3000000);
-            androidDriver.startRecordingScreen(recordOption);
-        } catch (Exception e) {
-            log.sendRecordLog(false, "", "");
-        }
-    }
-
-    /**
-     * @return void
-     * @author ZhouYiXun
-     * @des 停止录像
-     * @date 2021/8/16 23:56
-     */
-    public void stopRecord() {
-        File recordDir = new File("test-output/record");
-        if (!recordDir.exists()) {
-            recordDir.mkdirs();
-        }
-        long timeMillis = Calendar.getInstance().getTimeInMillis();
-        String fileName = timeMillis + "_" + udId.substring(0, 4) + ".mp4";
-        File uploadFile = new File(recordDir + File.separator + fileName);
-        try {
-            //加锁防止内存泄漏
-            synchronized (AndroidStepHandler.class) {
-                FileOutputStream fileOutputStream = new FileOutputStream(uploadFile);
-                byte[] bytes = Base64Utils.decodeFromString((androidDriver.stopRecordingScreen()));
-                fileOutputStream.write(bytes);
-                fileOutputStream.close();
-            }
-            log.sendRecordLog(true, fileName, UploadTools.uploadPatchRecord(uploadFile));
-        } catch (Exception e) {
-            log.sendRecordLog(false, fileName, "");
-        }
-    }
-
-//    public void settingSonicPlugins(IDevice iDevice) {
-//        try {
-//            androidDriver.activateApp("com.sonic.plugins");
-//            try {
-//                Thread.sleep(1000);
-//            } catch (Exception e) {
-//            }
-//            log.sendStepLog(StepType.INFO, "已安装Sonic插件！", "");
-//        } catch (Exception e) {
-//            log.sendStepLog(StepType.ERROR, "未安装Sonic插件！", "");
-//            throw e;
-//        }
-//        try {
-//            if (!androidDriver.currentActivity().equals("com.sonic.plugins.MainActivity")) {
-//                try {
-//                    AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
-//                    Thread.sleep(1000);
-//                } catch (Exception e) {
-//                }
-//            }
-//            findEle("xpath", "//android.widget.TextView[@text='服务状态：已开启']");
-//        } catch (Exception e) {
-//            log.sendStepLog(StepType.ERROR, "未开启Sonic插件服务！请到辅助功能或无障碍开启", "");
-//            throw e;
-//        }
-//        try {
-//            findEle("id", "com.sonic.plugins:id/password_edit").clear();
-//            if (AndroidPasswordMap.getMap().get(log.udId) != null
-//                    && (AndroidPasswordMap.getMap().get(log.udId) != null)
-//                    && (!AndroidPasswordMap.getMap().get(log.udId).equals(""))) {
-//                findEle("id", "com.sonic.plugins:id/password_edit").sendKeys(AndroidPasswordMap.getMap().get(log.udId));
-//            } else {
-//                findEle("id", "com.sonic.plugins:id/password_edit").sendKeys("sonic123456");
-//            }
-//            findEle("id", "com.sonic.plugins:id/save").click();
-//        } catch (Exception e) {
-//            log.sendStepLog(StepType.ERROR, "配置Sonic插件服务失败！", "");
-//            throw e;
-//        }
-//    }
-
     public void install(HandleDes handleDes, String path) {
         handleDes.setStepDes("安装应用");
         path = TextHandler.replaceTrans(path, globalParams);
         handleDes.setDetail("App安装路径： " + path);
-//        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(log.udId);
-//        String manufacturer = iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER);
+        File localFile = new File(path);
         try {
-            androidDriver.unlockDevice();
-            if (androidDriver.getConnection().isAirplaneModeEnabled()) {
-                androidDriver.toggleAirplaneMode();
+            if (path.contains("http")) {
+                localFile = DownloadTool.download(path);
             }
-            if (!androidDriver.getConnection().isWiFiEnabled()) {
-                androidDriver.toggleWifi();
-            }
-        } catch (Exception e) {
-            log.sendStepLog(StepType.WARN, "安装前准备跳过...", "");
-        }
-        log.sendStepLog(StepType.INFO, "", "开始安装App，请稍后...");
-//        if (manufacturer.equals("OPPO") || manufacturer.equals("vivo") || manufacturer.equals("Meizu")) {
-//            settingSonicPlugins(iDevice);
-//            AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 3");
-//        }
-//        //单独适配一下oppo
-//        if (manufacturer.equals("OPPO")) {
-//            try {
-//                androidDriver.installApp(path, new AndroidInstallApplicationOptions()
-//                        .withAllowTestPackagesEnabled().withReplaceEnabled()
-//                        .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(60000)));
-//            } catch (Exception e) {
-//            }
-//            //单独再适配colorOs
-//            if (androidDriver.currentActivity().equals(".verification.login.AccountActivity")) {
-//                try {
-//                    if (AndroidPasswordMap.getMap().get(log.udId) != null
-//                            && (AndroidPasswordMap.getMap().get(log.udId) != null)
-//                            && (!AndroidPasswordMap.getMap().get(log.udId).equals(""))) {
-//                        findEle("id", "com.coloros.safecenter:id/et_login_passwd_edit"
-//                        ).sendKeys(AndroidPasswordMap.getMap().get(log.udId));
-//                    } else {
-//                        findEle("id", "com.coloros.safecenter:id/et_login_passwd_edit"
-//                        ).sendKeys("sonic123456");
-//                    }
-//                    findEle("id", "android:id/button1").click();
-//                } catch (Exception e) {
-//                }
-//            }
-//            AtomicInteger tryTime = new AtomicInteger(0);
-//            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-//                while (tryTime.get() < 20) {
-//                    tryTime.getAndIncrement();
-//                    //部分oppo有继续安装
-//                    try {
-//                        WebElement getContinueButton = findEle("id", "com.android.packageinstaller:id/virus_scan_panel");
-//                        Thread.sleep(2000);
-//                        AndroidDeviceBridgeTool.executeCommand(iDevice,
-//                                String.format("input tap %d %d", (getContinueButton.getRect().width) / 2
-//                                        , getContinueButton.getRect().y + getContinueButton.getRect().height));
-//                        Thread.sleep(2000);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                    //低版本oppo安装按钮在右边
-//                    try {
-//                        findEle("id", "com.android.packageinstaller:id/install_confirm_panel");
-//                        WebElement getInstallButton = findEle("id", "com.android.packageinstaller:id/bottom_button_layout");
-//                        Thread.sleep(2000);
-//                        AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d"
-//                                , ((getInstallButton.getRect().width) / 4) * 3
-//                                , getInstallButton.getRect().y + (getInstallButton.getRect().height) / 2));
-//                        Thread.sleep(2000);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                    //部分oppo无法点击
-//                    try {
-//                        findEle("xpath", "//*[@text='应用权限']");
-//                        WebElement getInstallButton = findEle("id", "com.android.packageinstaller:id/install_confirm_panel");
-//                        Thread.sleep(2000);
-//                        AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d"
-//                                , (getInstallButton.getRect().width) / 2, getInstallButton.getRect().y + getInstallButton.getRect().height));
-//                        Thread.sleep(2000);
-//                    } catch (Exception e) {
-//                        e.printStackTrace();
-//                    }
-//                    if (!androidDriver.getCurrentPackage().equals("com.android.packageinstaller")) {
-//                        break;
-//                    }
-//                }
-//            });
-//            while (androidDriver.getCurrentPackage().equals("com.android.packageinstaller") && tryTime.get() < 20) {
-//                try {
-//                    findEle("xpath", "//*[@text='完成']").click();
-//                } catch (Exception e) {
-//                }
-//            }
-//        } else {
-        try {
-            androidDriver.installApp(path, new AndroidInstallApplicationOptions()
-                    .withAllowTestPackagesEnabled().withReplaceEnabled()
-                    .withGrantPermissionsEnabled().withTimeout(Duration.ofMillis(600000)));
+            log.sendStepLog(StepType.INFO, "", "开始安装App，请稍后...");
+            AndroidDeviceBridgeTool.install(iDevice, localFile.getAbsolutePath());
         } catch (Exception e) {
             handleDes.setE(e);
-            return;
         }
-//        }
     }
 
     public void uninstall(HandleDes handleDes, String appPackage) {
@@ -570,7 +302,7 @@ public class AndroidStepHandler {
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
-            androidDriver.removeApp(appPackage);
+            AndroidDeviceBridgeTool.uninstall(iDevice, appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -588,17 +320,7 @@ public class AndroidStepHandler {
         packageName = TextHandler.replaceTrans(packageName, globalParams);
         handleDes.setDetail("应用包名： " + packageName);
         try {
-            androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
-    public void runBackground(HandleDes handleDes, long time) {
-        handleDes.setStepDes("后台运行应用");
-        handleDes.setDetail("后台运行App " + time + " ms");
-        try {
-            androidDriver.runAppInBackground(Duration.ofMillis(time));
+            AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -608,9 +330,8 @@ public class AndroidStepHandler {
         handleDes.setStepDes("清空App内存缓存");
         bundleId = TextHandler.replaceTrans(bundleId, globalParams);
         handleDes.setDetail("清空 " + bundleId);
-        IDevice device = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        if (device != null) {
-            AndroidDeviceBridgeTool.executeCommand(device, "pm clear " + bundleId);
+        if (iDevice != null) {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "pm clear " + bundleId);
         }
     }
 
@@ -619,8 +340,7 @@ public class AndroidStepHandler {
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
-            testPackage = appPackage;
-            androidDriver.activateApp(appPackage);
+            AndroidDeviceBridgeTool.activateApp(iDevice, appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -644,7 +364,7 @@ public class AndroidStepHandler {
                     handleDes.setStepDes("关闭自动旋转");
                     break;
             }
-            AndroidDeviceBridgeTool.screen(AndroidDeviceBridgeTool.getIDeviceByUdId(udId), s);
+            AndroidDeviceBridgeTool.screen(iDevice, s);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -654,7 +374,7 @@ public class AndroidStepHandler {
         handleDes.setStepDes("锁定屏幕");
         handleDes.setDetail("");
         try {
-            androidDriver.lockDevice();
+            AndroidDeviceBridgeTool.pressKey(iDevice, 26);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -664,39 +384,49 @@ public class AndroidStepHandler {
         handleDes.setStepDes("解锁屏幕");
         handleDes.setDetail("");
         try {
-            androidDriver.unlockDevice();
+            AndroidDeviceBridgeTool.pressKey(iDevice, 26);
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
-    public void airPlaneMode(HandleDes handleDes) {
+    public void airPlaneMode(HandleDes handleDes, boolean enable) {
         handleDes.setStepDes("切换飞行模式");
-        handleDes.setDetail("");
+        handleDes.setDetail(enable ? "打开" : "关闭");
         try {
-            androidDriver.toggleAirplaneMode();
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
-    public void wifiMode(HandleDes handleDes) {
-        handleDes.setStepDes("打开WIFI网络");
-        handleDes.setDetail("");
-        try {
-            if (!androidDriver.getConnection().isWiFiEnabled()) {
-                androidDriver.toggleWifi();
+            if (enable) {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put global airplane_mode_on 1");
+            } else {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put global airplane_mode_on 0");
             }
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
-    public void locationMode(HandleDes handleDes) {
+    public void wifiMode(HandleDes handleDes, boolean enable) {
+        handleDes.setStepDes("开关WIFI");
+        handleDes.setDetail(enable ? "打开" : "关闭");
+        try {
+            if (enable) {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi enable");
+            } else {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi disable");
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void locationMode(HandleDes handleDes, boolean enable) {
         handleDes.setStepDes("切换位置服务");
         handleDes.setDetail("");
         try {
-            androidDriver.toggleLocationServices();
+            if (enable) {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put secure location_providers_allowed +gps");
+            } else {
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put secure location_providers_allowed -gps");
+            }
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -738,20 +468,13 @@ public class AndroidStepHandler {
         return s;
     }
 
-    public void hideKey(HandleDes handleDes) {
-        handleDes.setStepDes("隐藏键盘");
-        handleDes.setDetail("隐藏弹出键盘");
-        try {
-            androidDriver.hideKeyboard();
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
     public void toWebView(HandleDes handleDes, String webViewName) {
         handleDes.setStepDes("切换到" + webViewName);
         handleDes.setDetail("");
         try {
+            ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.addArguments();
+            chromeDriver = new ChromeDriver();
             androidDriver.context(webViewName);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -784,8 +507,11 @@ public class AndroidStepHandler {
         handleDes.setStepDes("对" + des + "输入内容");
         handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
         try {
-            // 修复flutter应用输入框无法sendKey的问题
-            new Actions(androidDriver).sendKeys(findEle(selector, pathValue), keys).perform();
+            AndroidElement androidElement = findEle(selector, pathValue);
+            if (androidElement != null) {
+                androidElement.click();
+                androidDriver.sendKeys(keys);
+            }
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -816,57 +542,23 @@ public class AndroidStepHandler {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按坐标" + time + "毫秒 (" + x + "," + y + ")");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(time))).release().perform();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
     public void keyCode(HandleDes handleDes, String key) {
-        handleDes.setStepDes("按系统按键" + key + "键");
-        handleDes.setDetail("");
-        try {
-            androidDriver.pressKey(new KeyEvent().withKey(AndroidKey.valueOf(key)));
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
+        keyCode(handleDes, AndroidKey.valueOf(key).getCode());
     }
 
     public void keyCode(HandleDes handleDes, int key) {
         handleDes.setStepDes("按系统按键" + key + "键");
         handleDes.setDetail("");
         try {
-            IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
             if (iDevice != null) {
                 AndroidDeviceBridgeTool.pressKey(iDevice, key);
             }
-        } catch (Exception e) {
-            handleDes.setE(e);
-        }
-    }
-
-    public void multiAction(HandleDes handleDes, String des1, String xy1, String des2, String xy2, String des3, String xy3, String des4, String xy4) {
-        int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-        int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-        int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-        int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-        int x3 = Integer.parseInt(xy3.substring(0, xy3.indexOf(",")));
-        int y3 = Integer.parseInt(xy3.substring(xy3.indexOf(",") + 1));
-        int x4 = Integer.parseInt(xy4.substring(0, xy4.indexOf(",")));
-        int y4 = Integer.parseInt(xy4.substring(xy4.indexOf(",") + 1));
-        String detail = "坐标" + des1 + "( " + x1 + ", " + y1 + " )移动到坐标" + des2 + "( " + x2 + ", " + y2 + " ),同时坐标" + des3 + "( " + x3 + ", " + y3 + " )移动到坐标" + des4 + "( " + x4 + ", " + y4 + " )";
-        handleDes.setStepDes("双指操作");
-        handleDes.setDetail(detail);
-        try {
-            TouchAction hand1 = new TouchAction(androidDriver);
-            TouchAction hand2 = new TouchAction(androidDriver);
-            MultiTouchAction multiTouchAction = new MultiTouchAction(androidDriver);
-            hand1.press(PointOption.point(x1, y1)).moveTo(PointOption.point(x2, y2)).release();
-            hand2.press(PointOption.point(x3, y3)).moveTo(PointOption.point(x4, y4)).release();
-            multiTouchAction.add(hand1);
-            multiTouchAction.add(hand2);
-            multiTouchAction.perform();
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -878,8 +570,7 @@ public class AndroidStepHandler {
         handleDes.setStepDes("点击" + des);
         handleDes.setDetail("点击坐标(" + x + "," + y + ")");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.tap(PointOption.point(x, y)).perform();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -893,25 +584,23 @@ public class AndroidStepHandler {
         handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
         handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
     public void swipe(HandleDes handleDes, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
-        WebElement webElement = findEle(selector, pathValue);
-        WebElement webElement2 = findEle(selector2, pathValue2);
-        int x1 = webElement.getLocation().getX();
-        int y1 = webElement.getLocation().getY();
-        int x2 = webElement2.getLocation().getX();
-        int y2 = webElement2.getLocation().getY();
-        handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
-        handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(300))).moveTo(PointOption.point(x2, y2)).release().perform();
+            AndroidElement webElement = findEle(selector, pathValue);
+            AndroidElement webElement2 = findEle(selector2, pathValue2);
+            int x1 = webElement.getRect().getX();
+            int y1 = webElement.getRect().getY();
+            int x2 = webElement2.getRect().getX();
+            int y2 = webElement2.getRect().getY();
+            handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
+            handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -921,12 +610,10 @@ public class AndroidStepHandler {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按控件元素" + time + "毫秒 ");
         try {
-            TouchAction ta = new TouchAction(androidDriver);
-            WebElement webElement = findEle(selector, pathValue);
-            int x = webElement.getLocation().getX();
-            int y = webElement.getLocation().getY();
-            Duration duration = Duration.ofMillis(time);
-            ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(duration)).release().perform();
+            AndroidElement webElement = findEle(selector, pathValue);
+            int x = webElement.getRect().getX();
+            int y = webElement.getRect().getY();
+            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -947,7 +634,7 @@ public class AndroidStepHandler {
         handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
         boolean hasEle = false;
         try {
-            WebElement w = findEle(selector, pathValue);
+            AndroidElement w = findEle(selector, pathValue);
             if (w != null) {
                 hasEle = true;
             }
@@ -1055,8 +742,7 @@ public class AndroidStepHandler {
         }
         if (findResult != null) {
             try {
-                TouchAction ta = new TouchAction(androidDriver);
-                ta.tap(PointOption.point(findResult.getX(), findResult.getY())).perform();
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", findResult.getX(), findResult.getY()));
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
                 handleDes.setE(e);
@@ -1098,14 +784,20 @@ public class AndroidStepHandler {
     }
 
     public File getScreenToLocal() {
-        File file = ((TakesScreenshot) androidDriver).getScreenshotAs(OutputType.FILE);
-        File resultFile = new File("test-output/" + log.udId + Calendar.getInstance().getTimeInMillis() + ".jpg");
+        File folder = new File("test-output");
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        File output = new File(folder + File.separator + log.udId + Calendar.getInstance().getTimeInMillis() + ".png");
         try {
-            FileCopyUtils.copy(file, resultFile);
-        } catch (IOException e) {
+            byte[] bt = androidDriver.screenshot();
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return resultFile;
+        return output;
     }
 
     public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
@@ -1134,9 +826,17 @@ public class AndroidStepHandler {
 
     public void errorScreen() {
         try {
-            androidDriver.context("NATIVE_APP");//先切换回app
+            File folder = new File("test-output");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            byte[] bt = androidDriver.screenshot();
+            File output = new File(folder + File.separator + UUID.randomUUID() + ".png");
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
             log.sendStepLog(StepType.WARN, "获取异常截图", UploadTools
-                    .upload(((TakesScreenshot) androidDriver).getScreenshotAs(OutputType.FILE), "imageFiles"));
+                    .upload(output, "imageFiles"));
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "捕获截图失败", "");
         }
@@ -1147,9 +847,16 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         String url = "";
         try {
-            androidDriver.context("NATIVE_APP");//先切换回app
-            url = UploadTools.upload(((TakesScreenshot) androidDriver)
-                    .getScreenshotAs(OutputType.FILE), "imageFiles");
+            File folder = new File("test-output");
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            File output = new File(folder + File.separator + iDevice.getSerialNumber() + Calendar.getInstance().getTimeInMillis() + ".png");
+            byte[] bt = androidDriver.screenshot();
+            FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+            imageOutput.write(bt, 0, bt.length);
+            imageOutput.close();
+            url = UploadTools.upload(output, "imageFiles");
             handleDes.setDetail(url);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1163,7 +870,28 @@ public class AndroidStepHandler {
     }
 
     public String getCurrentActivity() {
-        return androidDriver.currentActivity();
+        Integer api = Integer.parseInt(iDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
+        String cmd = AndroidDeviceBridgeTool.executeCommand(iDevice,
+                String.format("dumpsys window %s", ((api != null && api >= 29) ? "displays" : "windows")));
+        String result = "";
+        try {
+            String start = cmd.substring(cmd.indexOf("mCurrentFocus="));
+            String end = start.substring(start.indexOf("/") + 1);
+            result = end.substring(0, end.indexOf("}"));
+        } catch (Exception e) {
+        }
+        if (result.length() == 0) {
+            try {
+                String start = cmd.substring(cmd.indexOf("mFocusedApp="));
+                String startCut = start.substring(0, start.indexOf("/"));
+                String activity = startCut.substring(startCut.lastIndexOf(" ") + 1);
+                String end = start.substring(start.indexOf("/") + 1);
+                String endCut = end.substring(0, end.indexOf(" "));
+                result = activity + endCut;
+            } catch (Exception e) {
+            }
+        }
+        return result;
     }
 
     public void pause(HandleDes handleDes, int time) {
@@ -1181,21 +909,25 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         String packageName = content.getString("packageName");
         int pctNum = content.getInteger("pctNum");
-        if (!androidDriver.isAppInstalled(packageName)) {
+        if (!AndroidDeviceBridgeTool.executeCommand(iDevice, "pm list package").contains(packageName)) {
             log.sendStepLog(StepType.ERROR, "应用未安装！", "设备未安装 " + packageName);
             handleDes.setE(new Exception("未安装应用"));
             return;
         }
-        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         JSONArray options = content.getJSONArray("options");
-        int width = androidDriver.manage().window().getSize().width;
-        int height = androidDriver.manage().window().getSize().height;
+        WindowSize windowSize = null;
+        try {
+            windowSize = androidDriver.getWindowSize();
+        } catch (SonicRespException e) {
+            e.printStackTrace();
+        }
+        int width = windowSize.getWidth();
+        int height = windowSize.getHeight();
         int sleepTime = 50;
         int systemEvent = 0;
         int tapEvent = 0;
         int longPressEvent = 0;
         int swipeEvent = 0;
-        int zoomEvent = 0;
         int navEvent = 0;
         boolean isOpenH5Listener = false;
         boolean isOpenPackageListener = false;
@@ -1219,9 +951,6 @@ public class AndroidStepHandler {
                 if (jsonOption.getString("name").equals("swipeEvent")) {
                     swipeEvent = jsonOption.getInteger("value");
                 }
-                if (jsonOption.getString("name").equals("zoomEvent")) {
-                    zoomEvent = jsonOption.getInteger("value");
-                }
                 if (jsonOption.getString("name").equals("navEvent")) {
                     navEvent = jsonOption.getInteger("value");
                 }
@@ -1244,7 +973,6 @@ public class AndroidStepHandler {
         int finalTapEvent = tapEvent;
         int finalLongPressEvent = longPressEvent;
         int finalSwipeEvent = swipeEvent;
-        int finalZoomEvent = zoomEvent;
         int finalSystemEvent = systemEvent;
         int finalNavEvent = navEvent;
         Future<?> randomThread = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
@@ -1254,15 +982,11 @@ public class AndroidStepHandler {
                             + "<br>轻触事件权重：" + finalTapEvent
                             + "<br>长按事件权重：" + finalLongPressEvent
                             + "<br>滑动事件权重：" + finalSwipeEvent
-                            + "<br>多点触控事件权重：" + finalZoomEvent
                             + "<br>物理按键事件权重：" + finalSystemEvent
                             + "<br>系统事件权重：" + finalNavEvent
                     );
                     openApp(new HandleDes(), packageName);
-                    TouchAction ta = new TouchAction(androidDriver);
-                    TouchAction ta2 = new TouchAction(androidDriver);
-                    MultiTouchAction multiTouchAction = new MultiTouchAction(androidDriver);
-                    int totalCount = finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent;
+                    int totalCount = finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent;
                     for (int i = 0; i < pctNum; i++) {
                         try {
                             int random = new Random().nextInt(totalCount);
@@ -1298,42 +1022,32 @@ public class AndroidStepHandler {
                                         keyType = "VOLUME_MUTE";
                                         break;
                                 }
-                                androidDriver.pressKey(new KeyEvent(AndroidKey.valueOf(keyType)));
+                                AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.valueOf(keyType).getCode());
                             }
                             if (random >= finalSystemEvent && random < (finalSystemEvent + finalTapEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                ta.tap(PointOption.point(x, y)).perform();
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
                             }
                             if (random >= (finalSystemEvent + finalTapEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                ta.longPress(PointOption.point(x, y)).waitAction(WaitOptions.waitOptions(Duration.ofSeconds(new Random().nextInt(3) + 1))).release().perform();
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, (new Random().nextInt(3) + 1) * 1000));
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent)) {
                                 int x1 = new Random().nextInt(width - 60) + 60;
                                 int y1 = new Random().nextInt(height - 80) + 80;
                                 int x2 = new Random().nextInt(width - 60) + 60;
                                 int y2 = new Random().nextInt(height - 80) + 80;
-                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release().perform();
+                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 200));
                             }
-                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent)) {
-                                int x1 = new Random().nextInt(width - 80);
-                                int y1 = new Random().nextInt(height - 80);
-                                int x2 = new Random().nextInt(width - 100);
-                                int y2 = new Random().nextInt(height - 80);
-                                int x3 = new Random().nextInt(width - 100);
-                                int y3 = new Random().nextInt(height - 80);
-                                int x4 = new Random().nextInt(width - 100);
-                                int y4 = new Random().nextInt(height - 80);
-                                ta.press(PointOption.point(x1, y1)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x2, y2)).release();
-                                ta2.press(PointOption.point(x3, y3)).waitAction(WaitOptions.waitOptions(Duration.ofMillis(200))).moveTo(PointOption.point(x4, y4)).release();
-                                multiTouchAction.add(ta);
-                                multiTouchAction.add(ta2);
-                                multiTouchAction.perform();
-                            }
-                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalZoomEvent + finalNavEvent)) {
-                                androidDriver.toggleWifi();
+                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent)) {
+                                int a = new Random().nextInt(1);
+                                if (a == 1) {
+                                    AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi enable");
+                                } else {
+                                    AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi disable");
+                                }
                             }
                             Thread.sleep(finalSleepTime);
                         } catch (Throwable e) {
@@ -1353,14 +1067,14 @@ public class AndroidStepHandler {
                                 e.printStackTrace();
                             }
                             try {
-                                if (androidDriver.findElementsByClassName("android.webkit.WebView").size() > 0) {
+                                if (androidDriver.findElementList(AndroidSelector.CLASS_NAME, "android.webkit.WebView").size() > 0) {
                                     h5Time++;
                                     AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
                                 } else {
                                     h5Time = 0;
                                 }
                                 if (h5Time >= 12) {
-                                    androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                                    AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
                                     h5Time = 0;
                                 }
                             } catch (Throwable e) {
@@ -1381,12 +1095,12 @@ public class AndroidStepHandler {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                if (!androidDriver.getCurrentPackage().equals(packageName)) {
-                                    androidDriver.activateApp(packageName);
+                                if (!getCurrentActivity().contains(packageName)) {
+                                    AndroidDeviceBridgeTool.activateApp(iDevice, packageName);
                                 }
                                 waitTime++;
                             }
-                            androidDriver.activateApp(packageName);
+                            AndroidDeviceBridgeTool.activateApp(iDevice, packageName);
                         }
                     }
                 }
@@ -1416,7 +1130,7 @@ public class AndroidStepHandler {
                                 e.printStackTrace();
                             }
                             if (blackList.contains(getCurrentActivity())) {
-                                androidDriver.terminateApp(packageName, new AndroidTerminateApplicationOptions().withTimeout(Duration.ofMillis(1000)));
+                                AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
                             }
                         }
                     }
@@ -1431,17 +1145,13 @@ public class AndroidStepHandler {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            if (androidDriver.getConnection().isAirplaneModeEnabled()) {
-                                androidDriver.toggleAirplaneMode();
-                            }
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "settings put global airplane_mode_on 0");
                             try {
                                 Thread.sleep(8000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            if (!androidDriver.getConnection().isWiFiEnabled()) {
-                                androidDriver.toggleWifi();
-                            }
+                            AndroidDeviceBridgeTool.executeCommand(iDevice, "svc wifi enable");
                         }
                     }
                 }
@@ -1451,9 +1161,6 @@ public class AndroidStepHandler {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        if (version.length() == 0) {
-//            version = AndroidDeviceBridgeTool.getAppOnlyVersion(udId, packageName);
-//        }
         log.sendStepLog(StepType.INFO, "", "测试目标包：" + packageName +
                 (isOpenPackageListener ? "<br>应用包名监听器已开启..." : "") +
                 (isOpenH5Listener ? "<br>H5页面监听器已开启..." : "") +
@@ -1480,27 +1187,27 @@ public class AndroidStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
-    public WebElement findEle(String selector, String pathValue) {
-        WebElement we = null;
+    public AndroidElement findEle(String selector, String pathValue) throws SonicRespException {
+        AndroidElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "id":
-                we = androidDriver.findElementById(pathValue);
+                we = androidDriver.findElement(AndroidSelector.Id, pathValue);
                 break;
             case "accessibilityId":
-                we = androidDriver.findElementByAccessibilityId(pathValue);
+                we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue);
                 break;
             case "name":
                 we = androidDriver.findElementByName(pathValue);
                 break;
             case "xpath":
-                we = androidDriver.findElementByXPath(pathValue);
+                we = androidDriver.findElement(AndroidSelector.XPATH, pathValue);
                 break;
             case "cssSelector":
                 we = androidDriver.findElement(By.cssSelector(pathValue));
                 break;
             case "className":
-                we = androidDriver.findElementByClassName(pathValue);
+                we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue);
                 break;
             case "tagName":
                 we = androidDriver.findElementByTagName(pathValue);
@@ -1515,7 +1222,7 @@ public class AndroidStepHandler {
                 we = getWebElementByCssAndText(pathValue);
                 break;
             case "androidUIAutomator":
-                we = androidDriver.findElementByAndroidUIAutomator(pathValue);
+                we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue);
                 break;
             default:
                 log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
@@ -1649,9 +1356,6 @@ public class AndroidStepHandler {
             case "uninstall":
                 uninstall(handleDes, step.getString("text"));
                 break;
-            case "runBack":
-                runBackground(handleDes, Long.parseLong(step.getString("content")));
-                break;
             case "screenSub":
             case "screenAdd":
             case "screenAbort":
@@ -1664,19 +1368,13 @@ public class AndroidStepHandler {
                 unLock(handleDes);
                 break;
             case "airPlaneMode":
-                airPlaneMode(handleDes);
+                airPlaneMode(handleDes, step.getBoolean("content"));
                 break;
             case "wifiMode":
-                wifiMode(handleDes);
+                wifiMode(handleDes, step.getBoolean("content"));
                 break;
             case "locationMode":
-                locationMode(handleDes);
-                break;
-            case "zoom":
-                multiAction(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
-                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue")
-                        , eleList.getJSONObject(2).getString("eleName"), eleList.getJSONObject(2).getString("eleValue")
-                        , eleList.getJSONObject(3).getString("eleName"), eleList.getJSONObject(3).getString("eleValue"));
+                locationMode(handleDes, step.getBoolean("content"));
                 break;
             case "keyCode":
                 keyCode(handleDes, step.getString("content"));
@@ -1694,9 +1392,6 @@ public class AndroidStepHandler {
             case "getTextValue":
                 globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
-                break;
-            case "hideKey":
-                hideKey(handleDes);
                 break;
             case "monkey":
                 runMonkey(handleDes, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
@@ -1739,7 +1434,6 @@ public class AndroidStepHandler {
                     exceptionLog(e);
                     throw e;
             }
-            // 非条件步骤清除异常对象
             if (stepJson.getInteger("conditionType").equals(0)) {
                 handleDes.clear();
             }

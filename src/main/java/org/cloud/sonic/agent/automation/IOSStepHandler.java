@@ -16,7 +16,6 @@
  */
 package org.cloud.sonic.agent.automation;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
@@ -32,35 +31,27 @@ import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
 import org.cloud.sonic.agent.tools.cv.SIFTFinder;
 import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
 import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
-import org.cloud.sonic.agent.tools.SpringTool;
-import org.cloud.sonic.core.ios.IOSDriver;
-import org.cloud.sonic.core.ios.enums.IOSSelector;
-import org.cloud.sonic.core.ios.models.TouchActions;
-import org.cloud.sonic.core.ios.service.WebElement;
-import org.cloud.sonic.core.tool.SonicRespException;
+import org.cloud.sonic.driver.common.models.WindowSize;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
+import org.cloud.sonic.driver.ios.IOSDriver;
+import org.cloud.sonic.driver.ios.enums.IOSSelector;
+import org.cloud.sonic.driver.ios.service.IOSElement;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.Platform;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.springframework.util.Base64Utils;
-import org.springframework.util.FileCopyUtils;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Calendar;
+import java.util.List;
+import java.util.UUID;
 
 import static org.testng.Assert.*;
 
@@ -102,16 +93,14 @@ public class IOSStepHandler {
             log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
-            //测试标记为失败
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
-        int width = iosDriver.getWindowSize().getWidth();
-        int height = iosDriver.getWindowSize().getHeight();
+        WindowSize windowSize = iosDriver.getWindowSize();
         JSONObject appiumSettings = new JSONObject();
         appiumSettings.put("snapshotMaxDepth", 30);
         appiumSettings(appiumSettings);
-        IOSInfoMap.getSizeMap().put(udId, width + "x" + height);
+        IOSInfoMap.getSizeMap().put(udId, windowSize.getWidth() + "x" + windowSize.getHeight());
     }
 
     public void closeIOSDriver() {
@@ -486,8 +475,8 @@ public class IOSStepHandler {
 
     public void swipe(HandleDes handleDes, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
         try {
-            WebElement webElement = findEle(selector, pathValue);
-            WebElement webElement2 = findEle(selector2, pathValue2);
+            IOSElement webElement = findEle(selector, pathValue);
+            IOSElement webElement2 = findEle(selector2, pathValue2);
             int x1 = webElement.getRect().getCenter().getX();
             int y1 = webElement.getRect().getCenter().getY();
             int x2 = webElement2.getRect().getCenter().getX();
@@ -504,7 +493,7 @@ public class IOSStepHandler {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按控件元素" + time + "毫秒 ");
         try {
-            WebElement webElement = findEle(selector, pathValue);
+            IOSElement webElement = findEle(selector, pathValue);
             int x = webElement.getRect().getCenter().getX();
             int y = webElement.getRect().getCenter().getY();
             iosDriver.longPress(x, y, time);
@@ -528,7 +517,7 @@ public class IOSStepHandler {
         handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
         boolean hasEle = false;
         try {
-            WebElement w = findEle(selector, pathValue);
+            IOSElement w = findEle(selector, pathValue);
             if (w != null) {
                 hasEle = true;
             }
@@ -744,8 +733,8 @@ public class IOSStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
-    public WebElement findEle(String selector, String pathValue) throws SonicRespException {
-        WebElement we = null;
+    public IOSElement findEle(String selector, String pathValue) throws SonicRespException {
+        IOSElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "id":

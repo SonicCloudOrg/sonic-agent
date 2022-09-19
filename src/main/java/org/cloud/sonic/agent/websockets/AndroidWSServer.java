@@ -47,6 +47,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import javax.imageio.stream.FileImageOutputStream;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
@@ -506,8 +507,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     }
                     case "openApp": {
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            AndroidDeviceBridgeTool.executeCommand(iDevice,
-                                    String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", msg.getString("pkg")));
+                            AndroidDeviceBridgeTool.activateApp(iDevice, msg.getString("pkg"));
                         });
                         break;
                     }
@@ -540,7 +540,10 @@ public class AndroidWSServer implements IAndroidWSServer {
                             JSONObject result = new JSONObject();
                             result.put("msg", "installFinish");
                             try {
-                                File localFile = DownloadTool.download(msg.getString("apk"));
+                                File localFile = new File(msg.getString("apk"));
+                                if (msg.getString("apk").contains("http")) {
+                                    localFile = DownloadTool.download(msg.getString("apk"));
+                                }
                                 iDevice.installPackage(localFile.getAbsolutePath()
                                         , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                                         , "-r", "-t", "-g");
@@ -595,10 +598,22 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 JSONObject result = new JSONObject();
                                 result.put("msg", "eleScreen");
                                 try {
-                                    result.put("img", UploadTools.upload(finalAndroidStepHandler.findEle("xpath", msg.getString("xpath")).getScreenshotAs(OutputType.FILE), "keepFiles"));
+                                    File folder = new File("test-output");
+                                    if (!folder.exists()) {
+                                        folder.mkdirs();
+                                    }
+                                    File output = new File(folder + File.separator + iDevice.getSerialNumber() + Calendar.getInstance().getTimeInMillis() + ".png");
+                                    try {
+                                        byte[] bt = androidStepHandler.findEle("xpath", msg.getString("xpath")).screenshot();
+                                        FileImageOutputStream imageOutput = new FileImageOutputStream(output);
+                                        imageOutput.write(bt, 0, bt.length);
+                                        imageOutput.close();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                    result.put("img", UploadTools.upload(output, "keepFiles"));
                                 } catch (Exception e) {
                                     result.put("errMsg", "获取元素截图失败！");
-                                    e.printStackTrace();
                                 }
                                 BytesTool.sendText(session, result.toJSONString());
                             });
@@ -619,14 +634,15 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                 try {
                     AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
-                    finalAndroidStepHandler1.startAndroidDriver(iDevice.getSerialNumber());
+                    int port = PortTool.getPort();
+                    finalAndroidStepHandler1.startAndroidDriver(iDevice, port);
                     result.put("status", "success");
                     result.put("detail", "初始化Driver完成！");
                     HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
-                    JSONObject port = new JSONObject();
-                    port.put("port", AppiumServer.serviceMap.get(iDevice.getSerialNumber()).getUrl().getPort());
-                    port.put("msg", "appiumPort");
-                    BytesTool.sendText(session, port.toJSONString());
+                    JSONObject portMsg = new JSONObject();
+                    portMsg.put("port", port);
+                    portMsg.put("msg", "appiumPort");
+                    BytesTool.sendText(session, portMsg.toJSONString());
                 } catch (Exception e) {
                     logger.error(e.getMessage());
                     result.put("status", "error");
