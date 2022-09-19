@@ -21,9 +21,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.models.HandleDes;
-import org.cloud.sonic.agent.automation.RemoteDebugDriver;
+import org.cloud.sonic.agent.automation.RemoteDebugLauncher;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
@@ -407,10 +406,10 @@ public class AndroidWSServer implements IAndroidWSServer {
                     webViewForwardMap.put(iDevice, has);
                 }
                 forwardView.put("msg", "forwardView");
-                if (RemoteDebugDriver.launcher == null || (!RemoteDebugDriver.launcher.isAlive())) {
-                    RemoteDebugDriver.startChromeDebugger();
+                if (RemoteDebugLauncher.launcher == null || (!RemoteDebugLauncher.launcher.isAlive())) {
+                    RemoteDebugLauncher.startChromeDebugger();
                 }
-                forwardView.put("chromePort", RemoteDebugDriver.debugPort);
+                forwardView.put("chromePort", RemoteDebugLauncher.debugPort);
                 forwardView.put("detail", result);
                 BytesTool.sendText(session, forwardView.toJSONString());
                 break;

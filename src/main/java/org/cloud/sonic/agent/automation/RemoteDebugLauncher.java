@@ -36,8 +36,8 @@ import org.springframework.lang.NonNull;
  */
 @ConditionalOnProperty(value = "modules.webview.enable", havingValue = "true")
 @Configuration
-public class RemoteDebugDriver implements ApplicationListener<ContextRefreshedEvent> {
-    private static final Logger logger = LoggerFactory.getLogger(RemoteDebugDriver.class);
+public class RemoteDebugLauncher implements ApplicationListener<ContextRefreshedEvent> {
+    private static final Logger logger = LoggerFactory.getLogger(RemoteDebugLauncher.class);
     public static int debugPort;
     public static ChromeLauncher launcher;
     @Value("${modules.webview.remote-debug-port}")
