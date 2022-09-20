@@ -86,6 +86,12 @@
             <artifactId>testng</artifactId>
             <version>6.9.10</version>
         </dependency>
+        <!--    selenium    -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>3.141.59</version>
+        </dependency>
         <!--    解析xml    -->
         <dependency>
             <groupId>org.jsoup</groupId>

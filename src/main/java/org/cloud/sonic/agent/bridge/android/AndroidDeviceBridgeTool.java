@@ -17,9 +17,11 @@
 package org.cloud.sonic.agent.bridge.android;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
+import org.cloud.sonic.agent.common.maps.AndroidWebViewMap;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.BytesTool;
@@ -38,8 +40,10 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import javax.websocket.Session;
 import java.io.File;
@@ -47,10 +51,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -68,10 +69,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     public static AndroidDebugBridge androidDebugBridge = null;
     private static String uiaApkVersion;
     private static String apkVersion;
+    private static RestTemplate restTemplate;
     @Value("${sonic.saa}")
     private String ver;
     @Value("${sonic.saus}")
     private String uiaVer;
+    @Autowired
+    private RestTemplate restTemplateBean;
 
     @Autowired
     private AndroidDeviceStatusListener androidDeviceStatusListener;
@@ -109,6 +113,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     public void init() {
         apkVersion = ver;
         uiaApkVersion = uiaVer;
+        restTemplate = restTemplateBean;
         //获取系统SDK路径
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
@@ -625,5 +630,68 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         public void interrupt() {
             super.interrupt();
         }
+    }
+
+    public static List<JSONObject> getWebView(IDevice iDevice) {
+        List<JSONObject> has = AndroidWebViewMap.getMap().get(iDevice);
+        if (has != null && has.size() > 0) {
+            for (JSONObject j : has) {
+                AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
+            }
+        }
+        has = new ArrayList<>();
+        Set<String> webSet = new HashSet<>();
+        List<String> out = Arrays.asList(AndroidDeviceBridgeTool
+                .executeCommand(iDevice, "cat /proc/net/unix").split("\n"));
+        for (String w : out) {
+            if (w.contains("webview") || w.contains("WebView") || w.contains("_devtools_remote")) {
+                if (w.contains("@") && w.indexOf("@") + 1 < w.length()) {
+                    webSet.add(w.substring(w.indexOf("@") + 1));
+                }
+            }
+        }
+        List<JSONObject> result = new ArrayList<>();
+        if (webSet.size() > 0) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Type", "application/json");
+            for (String ws : webSet) {
+                int port = PortTool.getPort();
+                AndroidDeviceBridgeTool.forward(iDevice, port, ws);
+                JSONObject j = new JSONObject();
+                j.put("port", port);
+                j.put("name", ws);
+                has.add(j);
+                JSONObject r = new JSONObject();
+                r.put("port", port);
+                try {
+                    ResponseEntity<LinkedHashMap> infoEntity =
+                            restTemplate.exchange("http://localhost:" + port + "/json/version", HttpMethod.GET, new HttpEntity(headers), LinkedHashMap.class);
+                    if (infoEntity.getStatusCode() == HttpStatus.OK) {
+                        r.put("version", infoEntity.getBody().get("Browser"));
+                        r.put("package", infoEntity.getBody().get("Android-Package"));
+                    }
+                } catch (Exception e) {
+                    continue;
+                }
+                ResponseEntity<JSONArray> responseEntity =
+                        restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
+                if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                    List<JSONObject> child = new ArrayList<>();
+                    for (Object e : responseEntity.getBody()) {
+                        LinkedHashMap objE = (LinkedHashMap) e;
+                        JSONObject c = new JSONObject();
+                        c.put("favicon", objE.get("faviconUrl"));
+                        c.put("title", objE.get("title"));
+                        c.put("url", objE.get("url"));
+                        c.put("id", objE.get("id"));
+                        child.add(c);
+                    }
+                    r.put("children", child);
+                    result.add(r);
+                }
+            }
+            AndroidWebViewMap.getMap().put(iDevice, has);
+        }
+        return result;
     }
 }

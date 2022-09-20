@@ -25,6 +25,7 @@ import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
+import org.cloud.sonic.agent.common.maps.AndroidWebViewMap;
 import org.cloud.sonic.agent.enums.AndroidKey;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
@@ -141,6 +142,13 @@ public class AndroidStepHandler {
             if (s != null) {
                 s.interrupt();
             }
+            List<JSONObject> has = AndroidWebViewMap.getMap().get(iDevice);
+            if (has != null && has.size() > 0) {
+                for (JSONObject j : has) {
+                    AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
+                }
+            }
+            AndroidWebViewMap.getMap().remove(iDevice);
         }
     }
 
@@ -865,8 +873,14 @@ public class AndroidStepHandler {
     }
 
     public Set<String> getWebView() {
-        Set<String> contextNames = androidDriver.getContextHandles();
-        return contextNames;
+        Set<String> webView = new HashSet<>();
+        List<JSONObject> result = AndroidDeviceBridgeTool.getWebView(iDevice);
+        if (result.size() > 0) {
+            for (JSONObject j : result) {
+                webView.add(j.getString("package"));
+            }
+        }
+        return webView;
     }
 
     public String getCurrentActivity() {
