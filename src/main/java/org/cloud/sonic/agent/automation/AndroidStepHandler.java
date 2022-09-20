@@ -653,7 +653,7 @@ public class AndroidStepHandler {
     }
 
     public void getTitle(HandleDes handleDes, String expect) {
-        String title = androidDriver.getTitle();
+        String title = chromeDriver.getTitle();
         handleDes.setStepDes("验证网页标题");
         handleDes.setDetail("标题：" + title + "，期望值：" + expect);
         try {
@@ -772,17 +772,17 @@ public class AndroidStepHandler {
         handleDes.setStepDes("切换Handle");
         handleDes.setDetail("");
         Thread.sleep(1000);
-        Set<String> handle = androidDriver.getWindowHandles();//获取handles
+        Set<String> handle = chromeDriver.getWindowHandles();
         String ha;
         for (int i = 1; i <= handle.size(); i++) {
-            ha = (String) handle.toArray()[handle.size() - i];//查找handle
+            ha = (String) handle.toArray()[handle.size() - i];
             try {
-                androidDriver.switchTo().window(ha);//切换到最后一个handle
+                chromeDriver.switchTo().window(ha);
             } catch (Exception e) {
             }
-            if (androidDriver.getTitle().equals(titleName)) {
+            if (chromeDriver.getTitle().equals(titleName)) {
                 handleDes.setDetail("切换到Handle:" + ha);
-                log.sendStepLog(StepType.INFO, "页面标题:" + androidDriver.getTitle(), "");
+                log.sendStepLog(StepType.INFO, "页面标题:" + chromeDriver.getTitle(), "");
                 break;
             }
         }
@@ -1216,7 +1216,7 @@ public class AndroidStepHandler {
                 we = androidDriver.findElement(AndroidSelector.XPATH, pathValue);
                 break;
             case "cssSelector":
-                we = androidDriver.findElement(By.cssSelector(pathValue));
+                we = chromeDriver.findElement(By.cssSelector(pathValue));
                 break;
             case "className":
                 we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue);
@@ -1250,7 +1250,7 @@ public class AndroidStepHandler {
         List<String> values = new ArrayList<>(Arrays.asList(pathValue.split(",")));
         if (values.size() >= 2) {
             // findElementsByClassName在高版本的chromedriver有bug，只能用cssSelector才能找到控件元素
-            List<WebElement> els = androidDriver.findElements(By.cssSelector(values.get(0)));
+            List<WebElement> els = chromeDriver.findElements(By.cssSelector(values.get(0)));
             for (WebElement el : els) {
                 if (el.getText().equals(values.get(1))) {
                     element = el;
