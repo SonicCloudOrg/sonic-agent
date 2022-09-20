@@ -606,13 +606,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         if (iDevice != null) {
             AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
             AndroidDeviceBridgeTool.clearProxy(iDevice);
-            List<JSONObject> has = AndroidWebViewMap.getMap().get(iDevice);
-            if (has != null && has.size() > 0) {
-                for (JSONObject j : has) {
-                    AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
-                }
-            }
-            AndroidWebViewMap.getMap().remove(iDevice);
+            AndroidDeviceBridgeTool.clearWebView(iDevice);
             if (isEnableAdbKit) {
                 String processName = String.format("process-%s-adbkit", iDevice.getSerialNumber());
                 if (GlobalProcessMap.getMap().get(processName) != null) {

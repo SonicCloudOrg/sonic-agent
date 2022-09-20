@@ -632,14 +632,19 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
-    public static List<JSONObject> getWebView(IDevice iDevice) {
+    public static void clearWebView(IDevice iDevice){
         List<JSONObject> has = AndroidWebViewMap.getMap().get(iDevice);
         if (has != null && has.size() > 0) {
             for (JSONObject j : has) {
                 AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
             }
         }
-        has = new ArrayList<>();
+        AndroidWebViewMap.getMap().remove(iDevice);
+    }
+
+    public static List<JSONObject> getWebView(IDevice iDevice) {
+        clearWebView(iDevice);
+        List<JSONObject> has = new ArrayList<>();
         Set<String> webSet = new HashSet<>();
         List<String> out = Arrays.asList(AndroidDeviceBridgeTool
                 .executeCommand(iDevice, "cat /proc/net/unix").split("\n"));

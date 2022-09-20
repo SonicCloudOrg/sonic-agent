@@ -142,13 +142,7 @@ public class AndroidStepHandler {
             if (s != null) {
                 s.interrupt();
             }
-            List<JSONObject> has = AndroidWebViewMap.getMap().get(iDevice);
-            if (has != null && has.size() > 0) {
-                for (JSONObject j : has) {
-                    AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
-                }
-            }
-            AndroidWebViewMap.getMap().remove(iDevice);
+            AndroidDeviceBridgeTool.clearWebView(iDevice);
         }
     }
 
@@ -481,7 +475,7 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         try {
             ChromeOptions chromeOptions = new ChromeOptions();
-            chromeOptions.addArguments();
+            chromeOptions.addArguments("android");
             chromeDriver = new ChromeDriver();
             androidDriver.context(webViewName);
         } catch (Exception e) {
@@ -880,6 +874,7 @@ public class AndroidStepHandler {
                 webView.add(j.getString("package"));
             }
         }
+        AndroidDeviceBridgeTool.clearWebView(iDevice);
         return webView;
     }
 
