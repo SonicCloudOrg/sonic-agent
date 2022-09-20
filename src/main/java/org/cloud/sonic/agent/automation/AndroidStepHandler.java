@@ -53,6 +53,7 @@ import org.jsoup.nodes.Document;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 import javax.imageio.stream.FileImageOutputStream;
@@ -474,10 +475,12 @@ public class AndroidStepHandler {
         handleDes.setStepDes("切换到" + webViewName);
         handleDes.setDetail("");
         try {
+            ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort().build();
             ChromeOptions chromeOptions = new ChromeOptions();
-            chromeOptions.addArguments("android");
-            chromeDriver = new ChromeDriver();
-            androidDriver.context(webViewName);
+            chromeOptions.setExperimentalOption("androidDeviceSerial", iDevice.getSerialNumber());
+            chromeOptions.setExperimentalOption("androidPackage", webViewName);
+            chromeOptions.setExperimentalOption("androidUseRunningApp", true);
+            chromeDriver = new ChromeDriver(chromeDriverService, chromeOptions);
         } catch (Exception e) {
             handleDes.setE(e);
         }
