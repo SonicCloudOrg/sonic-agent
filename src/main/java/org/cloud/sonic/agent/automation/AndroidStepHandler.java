@@ -1199,6 +1199,44 @@ public class AndroidStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
+    public WebElement findWebEle(String selector, String pathValue) throws SonicRespException {
+        WebElement we = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        switch (selector) {
+            case "id":
+                we = chromeDriver.findElementById(pathValue);
+                break;
+            case "name":
+                we = chromeDriver.findElementByName(pathValue);
+                break;
+            case "xpath":
+                we = chromeDriver.findElementByXPath(pathValue);
+                break;
+            case "cssSelector":
+                we = chromeDriver.findElementByCssSelector(pathValue);
+                break;
+            case "className":
+                we = chromeDriver.findElementByClassName(pathValue);
+                break;
+            case "tagName":
+                we = chromeDriver.findElementByTagName(pathValue);
+                break;
+            case "linkText":
+                we = chromeDriver.findElementByLinkText(pathValue);
+                break;
+            case "partialLinkText":
+                we = chromeDriver.findElementByPartialLinkText(pathValue);
+                break;
+            case "cssSelectorAndText":
+                we = getWebElementByCssAndText(pathValue);
+                break;
+            default:
+                log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                break;
+        }
+        return we;
+    }
+
     public AndroidElement findEle(String selector, String pathValue) throws SonicRespException {
         AndroidElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
@@ -1209,29 +1247,11 @@ public class AndroidStepHandler {
             case "accessibilityId":
                 we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue);
                 break;
-            case "name":
-                we = androidDriver.findElementByName(pathValue);
-                break;
             case "xpath":
                 we = androidDriver.findElement(AndroidSelector.XPATH, pathValue);
                 break;
-            case "cssSelector":
-                we = chromeDriver.findElement(By.cssSelector(pathValue));
-                break;
             case "className":
                 we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue);
-                break;
-            case "tagName":
-                we = androidDriver.findElementByTagName(pathValue);
-                break;
-            case "linkText":
-                we = androidDriver.findElementByLinkText(pathValue);
-                break;
-            case "partialLinkText":
-                we = androidDriver.findElementByPartialLinkText(pathValue);
-                break;
-            case "cssSelectorAndText":
-                we = getWebElementByCssAndText(pathValue);
                 break;
             case "androidUIAutomator":
                 we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue);
@@ -1259,6 +1279,87 @@ public class AndroidStepHandler {
             }
         }
         return element;
+    }
+
+    public void isExistWebViewEle(HandleDes handleDes, String des, String selector, String pathValue, boolean expect) {
+        handleDes.setStepDes("判断控件 " + des + " 是否存在");
+        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+        boolean hasEle = false;
+        try {
+            WebElement w = findWebEle(selector, pathValue);
+            if (w != null) {
+                hasEle = true;
+            }
+        } catch (Exception e) {
+        }
+        try {
+            assertEquals(hasEle, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void getWebViewTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
+        handleDes.setStepDes("获取" + des + "文本");
+        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        try {
+            String s = findWebEle(selector, pathValue).getText();
+            log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+            try {
+                expect = TextHandler.replaceTrans(expect, globalParams);
+                assertEquals(s, expect);
+                log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
+            } catch (AssertionError e) {
+                log.sendStepLog(StepType.ERROR, "验证" + des + "文本失败！", "");
+                handleDes.setE(e);
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void webViewClick(HandleDes handleDes, String des, String selector, String pathValue) {
+        handleDes.setStepDes("点击" + des);
+        handleDes.setDetail("点击" + selector + ": " + pathValue);
+        try {
+            findWebEle(selector, pathValue).click();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void webViewSendKeys(HandleDes handleDes, String des, String selector, String pathValue, String keys) {
+        keys = TextHandler.replaceTrans(keys, globalParams);
+        handleDes.setStepDes("对" + des + "输入内容");
+        handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
+        try {
+            findWebEle(selector, pathValue).sendKeys(keys);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void webViewClear(HandleDes handleDes, String des, String selector, String pathValue) {
+        handleDes.setStepDes("清空" + des);
+        handleDes.setDetail("清空" + selector + ": " + pathValue);
+        try {
+            findWebEle(selector, pathValue).clear();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public String getWebViewText(HandleDes handleDes, String des, String selector, String pathValue) {
+        String s = "";
+        handleDes.setStepDes("获取" + des + "文本");
+        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        try {
+            s = findWebEle(selector, pathValue).getText();
+            log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+        return s;
     }
 
     public void stepHold(HandleDes handleDes, int time) {
@@ -1411,6 +1512,30 @@ public class AndroidStepHandler {
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
                 return;
+            case "getWebViewText":
+                getWebViewTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "isExistWebViewEle":
+                isExistWebViewEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+                break;
+            case "webViewClear":
+                webViewClear(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "webViewSendKeys":
+                webViewSendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+                break;
+            case "webViewClick":
+                webViewClick(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "getWebViewTextValue":
+                globalParams.put(step.getString("content"), getWebViewText(handleDes, eleList.getJSONObject(0).getString("eleName")
+                        , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
+                break;
         }
         switchType(step, handleDes);
     }
