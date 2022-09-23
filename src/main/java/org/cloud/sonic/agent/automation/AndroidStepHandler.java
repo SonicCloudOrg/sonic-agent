@@ -75,12 +75,6 @@ public class AndroidStepHandler {
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
-    private DriverMode driverMode = DriverMode.APP;
-
-    public enum DriverMode {
-        APP,
-        WEB_VIEW
-    }
 
     public LogUtil getLog() {
         return log;
@@ -130,6 +124,9 @@ public class AndroidStepHandler {
      */
     public void closeAndroidDriver() {
         try {
+            if (chromeDriver != null) {
+                chromeDriver.close();
+            }
             if (androidDriver != null) {
                 androidDriver.closeDriver();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
