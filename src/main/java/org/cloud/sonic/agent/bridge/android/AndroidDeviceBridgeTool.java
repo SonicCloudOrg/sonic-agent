@@ -55,6 +55,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
+
 /**
  * @author ZhouYiXun
  * @des ADB工具类
@@ -586,7 +588,11 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     }
 
     public static int startUiaServer(IDevice iDevice) throws InstallException {
-        if (checkUiaApkVersion(iDevice)) {
+        Thread s = AndroidThreadMap.getMap().get(String.format("%s-uia-thread", iDevice.getSerialNumber()));
+        if (s != null) {
+            s.interrupt();
+        }
+        if (!checkUiaApkVersion(iDevice)) {
             iDevice.uninstallPackage("io.appium.uiautomator2.server");
             iDevice.installPackage("plugins/sonic-appium-uiautomator2-server.apk",
                     true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
@@ -599,8 +605,20 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     , "-r", "-t");
         }
         int port = PortTool.getPort();
-        Thread uiaThread = new UiaThread(iDevice, port);
+        UiaThread uiaThread = new UiaThread(iDevice, port);
         uiaThread.start();
+        int wait = 0;
+        while (!uiaThread.getIsOpen()) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            wait++;
+            if (wait >= 20) {
+                break;
+            }
+        }
         AndroidThreadMap.getMap().put(String.format("%s-uia-thread", iDevice.getSerialNumber()), uiaThread);
         return port;
     }
@@ -609,17 +627,46 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
         private IDevice iDevice;
         private int port;
+        private boolean isOpen = false;
 
         public UiaThread(IDevice iDevice, int port) {
             this.iDevice = iDevice;
             this.port = port;
         }
 
+        public boolean getIsOpen() {
+            return isOpen;
+        }
+
         @Override
         public void run() {
             forward(iDevice, port, 6790);
             try {
-                executeCommand(iDevice, "am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner");
+                iDevice.executeShellCommand("am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner",
+                        new IShellOutputReceiver() {
+                            @Override
+                            public void addOutput(byte[] bytes, int i, int i1) {
+                                String res = new String(bytes, i, i1);
+                                logger.info(res);
+                                if (res.contains("io.appium.uiautomator2.server.test.AppiumUiAutomator2Server:")) {
+                                    try {
+                                        Thread.sleep(2000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    isOpen = true;
+                                }
+                            }
+
+                            @Override
+                            public void flush() {
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return false;
+                            }
+                        }, 0, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
             } finally {
                 AndroidDeviceBridgeTool.removeForward(iDevice, port, 6790);
@@ -632,7 +679,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
-    public static void clearWebView(IDevice iDevice){
+    public static void clearWebView(IDevice iDevice) {
         List<JSONObject> has = AndroidWebViewMap.getMap().get(iDevice);
         if (has != null && has.size() > 0) {
             for (JSONObject j : has) {

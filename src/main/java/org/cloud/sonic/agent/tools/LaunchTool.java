@@ -16,7 +16,6 @@
  */
 package org.cloud.sonic.agent.tools;
 
-import org.cloud.sonic.agent.automation.AppiumServer;
 import org.cloud.sonic.agent.automation.RemoteDebugLauncher;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
@@ -92,9 +91,6 @@ public class LaunchTool implements ApplicationRunner {
                 p.children().forEach(ProcessHandle::destroy);
                 p.destroy();
             }
-        }
-        for(String udId:AppiumServer.serviceMap.keySet()){
-            AppiumServer.close(udId);
         }
         logger.info("Release done!");
     }

@@ -17,11 +17,9 @@
 package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.automation.RemoteDebugLauncher;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
@@ -30,20 +28,19 @@ import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
-import org.cloud.sonic.agent.transport.TransportWorker;
+import org.cloud.sonic.agent.models.HandleDes;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tools.*;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.tools.poco.PocoTool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import javax.imageio.stream.FileImageOutputStream;
 import javax.websocket.*;
@@ -53,7 +50,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -568,7 +568,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                 try {
                     AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
-                    int port = PortTool.getPort();
+                    int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
                     finalAndroidStepHandler1.startAndroidDriver(iDevice, port);
                     result.put("status", "success");
                     result.put("detail", "初始化Driver完成！");
