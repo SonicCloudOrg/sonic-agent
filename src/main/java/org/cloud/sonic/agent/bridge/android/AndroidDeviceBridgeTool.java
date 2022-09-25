@@ -594,12 +594,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
         if (!checkUiaApkVersion(iDevice)) {
             iDevice.uninstallPackage("io.appium.uiautomator2.server");
+            iDevice.uninstallPackage("io.appium.uiautomator2.server.test");
             iDevice.installPackage("plugins/sonic-appium-uiautomator2-server.apk",
                     true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                     , "-r", "-t");
-        }
-        String appList = executeCommand(iDevice, "pm list package");
-        if (!appList.contains("io.appium.uiautomator2.server.test")) {
             iDevice.installPackage("plugins/sonic-appium-uiautomator2-server-test.apk",
                     true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                     , "-r", "-t");

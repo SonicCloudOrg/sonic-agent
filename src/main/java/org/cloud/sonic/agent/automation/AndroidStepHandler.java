@@ -25,7 +25,6 @@ import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
-import org.cloud.sonic.agent.common.maps.AndroidWebViewMap;
 import org.cloud.sonic.agent.enums.AndroidKey;
 import org.cloud.sonic.agent.enums.ConditionEnum;
 import org.cloud.sonic.agent.enums.SonicEnum;
@@ -125,7 +124,7 @@ public class AndroidStepHandler {
     public void closeAndroidDriver() {
         try {
             if (chromeDriver != null) {
-                chromeDriver.close();
+                chromeDriver.quit();
             }
             if (androidDriver != null) {
                 androidDriver.closeDriver();
@@ -472,10 +471,14 @@ public class AndroidStepHandler {
         handleDes.setStepDes("切换到" + webViewName);
         handleDes.setDetail("");
         try {
-            ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort().build();
+            if (chromeDriver != null) {
+                chromeDriver.quit();
+            }
+            ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort().usingDriverExecutable(new File("webview/chromedriver.exe")).build();
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.setExperimentalOption("androidDeviceSerial", iDevice.getSerialNumber());
             chromeOptions.setExperimentalOption("androidPackage", webViewName);
+            chromeOptions.setExperimentalOption("androidProcess","com.tencent.mm:tools");
             chromeOptions.setExperimentalOption("androidUseRunningApp", true);
             chromeDriver = new ChromeDriver(chromeDriverService, chromeOptions);
         } catch (Exception e) {
