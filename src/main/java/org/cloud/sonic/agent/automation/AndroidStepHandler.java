@@ -471,23 +471,11 @@ public class AndroidStepHandler {
         handleDes.setStepDes("切换到" + packageName + " WebView");
         handleDes.setDetail("AndroidProcess: " + process);
         try {
-            String chromeVersion = "";
-            List<JSONObject> result = AndroidDeviceBridgeTool.getWebView(iDevice);
-            if (result.size() > 0) {
-                for (JSONObject j : result) {
-                    if (packageName.equals(j.getString("package"))) {
-                        chromeVersion = j.getString("version");
-                        break;
-                    }
-                }
-            }
-            AndroidDeviceBridgeTool.clearWebView(iDevice);
-
             if (chromeDriver != null) {
                 chromeDriver.quit();
             }
             ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort()
-                    .usingDriverExecutable(getChromeDriver(chromeVersion)).build();
+                    .usingDriverExecutable(AndroidDeviceBridgeTool.getChromeDriver(iDevice, packageName)).build();
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.setExperimentalOption("androidDeviceSerial", iDevice.getSerialNumber());
             chromeOptions.setExperimentalOption("androidPackage", packageName);
@@ -499,10 +487,6 @@ public class AndroidStepHandler {
         } catch (Exception e) {
             handleDes.setE(e);
         }
-    }
-
-    private File getChromeDriver(String version) {
-        return null;
     }
 
     public void click(HandleDes handleDes, String des, String selector, String pathValue) {

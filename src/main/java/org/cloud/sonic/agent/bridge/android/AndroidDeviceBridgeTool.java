@@ -687,6 +687,28 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         AndroidWebViewMap.getMap().remove(iDevice);
     }
 
+    public static File getChromeDriver(IDevice iDevice, String packageName) {
+        String chromeVersion = "";
+        List<JSONObject> result = getWebView(iDevice);
+        if (result.size() > 0) {
+            for (JSONObject j : result) {
+                if (packageName.equals(j.getString("package"))) {
+                    chromeVersion = j.getString("version");
+                    break;
+                }
+            }
+        }
+        clearWebView(iDevice);
+        if (chromeVersion.length() == 0) {
+            return null;
+        }
+        int end = (chromeVersion.indexOf(".") != -1 ? chromeVersion.indexOf(".") : chromeVersion.length() - 1);
+        String major = chromeVersion.substring(0, end);
+        ResponseEntity<String> infoEntity =
+                restTemplate.exchange("https://cdn.npmmirror.com/binaries/chromedriver", HttpMethod.GET, String.class);
+        return null;
+    }
+
     public static List<JSONObject> getWebView(IDevice iDevice) {
         clearWebView(iDevice);
         List<JSONObject> has = new ArrayList<>();
