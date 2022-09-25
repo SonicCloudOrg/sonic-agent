@@ -1,10 +1,9 @@
 package org.cloud.sonic.agent.tools.file;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.Enumeration;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -37,6 +36,52 @@ public class FileTool {
             }
             in.close();
         }
+    }
+
+    public static File unZipChromeDriver(File source, String version) {
+        int BUFFER = 2048;
+        File webview = new File("webview");
+        if (!webview.exists()) {
+            webview.mkdirs();
+        }
+        File driver = null;
+        try {
+            ZipFile zipFile = new ZipFile(source);
+            Enumeration emu = zipFile.entries();
+            while (emu.hasMoreElements()) {
+                ZipEntry entry = (ZipEntry) emu.nextElement();
+                BufferedInputStream bis = new BufferedInputStream(zipFile.getInputStream(entry));
+                if (entry.getName().equals("chromedriver.exe")) {
+                    String fileName = version + "_chromedriver.exe";
+                    File file = new File(webview + File.separator + fileName);
+                    File parent = file.getParentFile();
+                    if (parent != null && (!parent.exists())) {
+                        parent.mkdirs();
+                    }
+                    FileOutputStream fos = new FileOutputStream(file);
+                    BufferedOutputStream bos = new BufferedOutputStream(fos, BUFFER);
+                    int count;
+                    byte data[] = new byte[BUFFER];
+                    while ((count = bis.read(data, 0, BUFFER)) != -1) {
+                        bos.write(data, 0, count);
+                    }
+                    bos.flush();
+                    bos.close();
+                    driver = file;
+                }
+                bis.close();
+                if (driver != null) {
+                    break;
+                }
+            }
+            zipFile.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (driver != null) {
+            source.delete();
+        }
+        return driver;
     }
 
     public static void deleteDir(File file) {
