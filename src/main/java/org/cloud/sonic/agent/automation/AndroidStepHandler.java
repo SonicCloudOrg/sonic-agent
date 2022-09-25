@@ -467,9 +467,9 @@ public class AndroidStepHandler {
         return s;
     }
 
-    public void toWebView(HandleDes handleDes, String webViewName) {
-        handleDes.setStepDes("切换到" + webViewName);
-        handleDes.setDetail("");
+    public void toWebView(HandleDes handleDes, String webViewName, String process) {
+        handleDes.setStepDes("切换到" + webViewName + " WebView");
+        handleDes.setDetail("AndroidProcess: " + process);
         try {
             if (chromeDriver != null) {
                 chromeDriver.quit();
@@ -478,7 +478,9 @@ public class AndroidStepHandler {
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.setExperimentalOption("androidDeviceSerial", iDevice.getSerialNumber());
             chromeOptions.setExperimentalOption("androidPackage", webViewName);
-            chromeOptions.setExperimentalOption("androidProcess","com.tencent.mm:tools");
+            if (process != null && process.length() > 0) {
+                chromeOptions.setExperimentalOption("androidProcess", process);
+            }
             chromeOptions.setExperimentalOption("androidUseRunningApp", true);
             chromeDriver = new ChromeDriver(chromeDriverService, chromeOptions);
         } catch (Exception e) {
@@ -1382,7 +1384,7 @@ public class AndroidStepHandler {
                 stepHold(handleDes, Integer.parseInt(step.getString("content")));
                 break;
             case "toWebView":
-                toWebView(handleDes, step.getString("content"));
+                toWebView(handleDes, step.getString("content"), step.getString("text"));
                 break;
             case "toHandle":
                 toHandle(handleDes, step.getString("content"));
