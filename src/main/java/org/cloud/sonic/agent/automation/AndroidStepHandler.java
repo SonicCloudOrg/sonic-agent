@@ -467,17 +467,30 @@ public class AndroidStepHandler {
         return s;
     }
 
-    public void toWebView(HandleDes handleDes, String webViewName, String process) {
-        handleDes.setStepDes("切换到" + webViewName + " WebView");
+    public void toWebView(HandleDes handleDes, String packageName, String process) {
+        handleDes.setStepDes("切换到" + packageName + " WebView");
         handleDes.setDetail("AndroidProcess: " + process);
         try {
+            String chromeVersion = "";
+            List<JSONObject> result = AndroidDeviceBridgeTool.getWebView(iDevice);
+            if (result.size() > 0) {
+                for (JSONObject j : result) {
+                    if (packageName.equals(j.getString("package"))) {
+                        chromeVersion = j.getString("version");
+                        break;
+                    }
+                }
+            }
+            AndroidDeviceBridgeTool.clearWebView(iDevice);
+
             if (chromeDriver != null) {
                 chromeDriver.quit();
             }
-            ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort().usingDriverExecutable(new File("webview/chromedriver.exe")).build();
+            ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort()
+                    .usingDriverExecutable(getChromeDriver(chromeVersion)).build();
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.setExperimentalOption("androidDeviceSerial", iDevice.getSerialNumber());
-            chromeOptions.setExperimentalOption("androidPackage", webViewName);
+            chromeOptions.setExperimentalOption("androidPackage", packageName);
             if (process != null && process.length() > 0) {
                 chromeOptions.setExperimentalOption("androidProcess", process);
             }
@@ -486,6 +499,10 @@ public class AndroidStepHandler {
         } catch (Exception e) {
             handleDes.setE(e);
         }
+    }
+
+    private File getChromeDriver(String version) {
+        return null;
     }
 
     public void click(HandleDes handleDes, String des, String selector, String pathValue) {
