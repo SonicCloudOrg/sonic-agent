@@ -44,6 +44,11 @@ public class FileTool {
         if (!webview.exists()) {
             webview.mkdirs();
         }
+        String system = System.getProperty("os.name").toLowerCase();
+        String tail = "chromedriver";
+        if (system.contains("win")) {
+            tail += ".exe";
+        }
         File driver = null;
         try {
             ZipFile zipFile = new ZipFile(source);
@@ -51,8 +56,8 @@ public class FileTool {
             while (emu.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) emu.nextElement();
                 BufferedInputStream bis = new BufferedInputStream(zipFile.getInputStream(entry));
-                if (entry.getName().equals("chromedriver.exe")) {
-                    String fileName = version + "_chromedriver.exe";
+                if (entry.getName().equals(tail)) {
+                    String fileName = version + "_" + tail;
                     File file = new File(webview + File.separator + fileName);
                     File parent = file.getParentFile();
                     if (parent != null && (!parent.exists())) {

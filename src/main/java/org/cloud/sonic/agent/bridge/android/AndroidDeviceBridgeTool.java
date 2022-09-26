@@ -704,7 +704,9 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         } else {
             chromeVersion = chromeVersion.replace("Chrome/", "");
         }
-        File search = new File(String.format("webview/%s_chromedriver.exe", chromeVersion));
+        String system = System.getProperty("os.name").toLowerCase();
+        File search = new File(String.format("webview/%s_chromedriver%s", chromeVersion,
+                (system.contains("win") ? ".exe" : "")));
         if (search.exists()) {
             return search;
         }
@@ -713,13 +715,17 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         HttpHeaders headers = new HttpHeaders();
         ResponseEntity<String> infoEntity =
                 restTemplate.exchange(String.format("https://chromedriver.storage.googleapis.com/LATEST_RELEASE_%d", major), HttpMethod.GET, new HttpEntity(headers), String.class);
-        String system = System.getProperty("os.name").toLowerCase();
         if (system.contains("win")) {
             system = "win32";
         } else if (system.contains("linux")) {
             system = "linux64";
         } else {
-            system = "mac64";
+            String arch = System.getProperty("os.arch").toLowerCase();
+            if (arch.contains("aarch64")) {
+                system = "mac64_m1";
+            } else {
+                system = "mac64";
+            }
         }
         File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip", infoEntity.getBody(), system));
         File driver = FileTool.unZipChromeDriver(file, chromeVersion);
