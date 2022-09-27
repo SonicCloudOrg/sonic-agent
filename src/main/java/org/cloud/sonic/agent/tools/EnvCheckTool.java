@@ -102,7 +102,6 @@ public class EnvCheckTool {
      */
     public void checkFiles() {
         String type = "Check local resource";
-        File webview = new File("webview");
         File config = new File("config/application-sonic-agent.yml");
         File mini = new File("mini");
         File plugins = new File("plugins");
@@ -114,14 +113,13 @@ public class EnvCheckTool {
                 e.printStackTrace();
             }
         }
-        if (webview.exists()
-                && config.exists()
+        if (config.exists()
                 && mini.exists()
                 && plugins.exists()) {
             printPass(type);
         } else {
             printFail(type);
-            throw new RuntimeException("提示：请确保当前目录下有webview、config(内含application-prod.yml)、mini、plugins文件夹");
+            throw new RuntimeException("提示：请确保当前目录下有config(内含application-prod.yml)、mini、plugins文件夹");
         }
     }
 
