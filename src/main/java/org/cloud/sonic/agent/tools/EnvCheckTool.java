@@ -57,8 +57,6 @@ public class EnvCheckTool {
     public static String nodeVersion = "unknown \n";
     public static String npmPath = "unknown \n";
     public static String npmVersion = "unknown \n";
-    public static String appiumPath = "unknown \n";
-    public static String appiumVersion = "unknown \n";
     public static String adbKitPath = "unknown \n";
     public static String adbKitVersion = "unknown \n";
 
@@ -66,8 +64,6 @@ public class EnvCheckTool {
     public boolean androidEnAble;
     @Value("${modules.android.use-adbkit}")
     public boolean adbkitEnAble;
-    @Value("${modules.appium.enable}")
-    public boolean appiumEnAble;
 
     static {
         system = System.getProperty("os.name").toLowerCase();
@@ -81,13 +77,9 @@ public class EnvCheckTool {
                 checkSDK();
                 checkAdb();
             }
-            if (adbkitEnAble || appiumEnAble) {
+            if (adbkitEnAble) {
                 checkNode();
                 checkNpm();
-            }
-            if (appiumEnAble) {
-                checkJavaHome();
-                checkAppium();
             }
             if (adbkitEnAble) {
                 checkAdbKit();
@@ -231,23 +223,6 @@ public class EnvCheckTool {
         printPass(type);
     }
 
-    /**
-     * 检查appium环境
-     */
-    public void checkAppium() throws IOException, InterruptedException {
-        String type = "Check Appium env (Next version deprecated) ";
-        String commandStr = "appium -v";
-        try {
-            appiumPath = findCommandPath("appium");
-            appiumVersion = exeCmd(false, commandStr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            printFail(type);
-            throw new RuntimeException(String.format("提示：可使用[npm i -g appium]命令安装"));
-        }
-        printPass(type);
-    }
-
     public String findCommandPath(String command) throws IOException, InterruptedException {
 
         String path = "";
@@ -338,8 +313,6 @@ public class EnvCheckTool {
                 printInfo("npm version: ") + npmVersion +
                 printInfo("adbkit path: ") + adbKitPath +
                 printInfo("adbkit version: ") + adbKitVersion +
-                printInfo("Appium path: ") + appiumPath +
-                printInfo("Appium version: ") + appiumVersion +
                 printInfo("System: ") + system;
     }
 }

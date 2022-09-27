@@ -4,7 +4,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ENV SDK_VERSION=commandlinetools-linux-7583922_latest \
     ANDROID_BUILD_TOOLS_VERSION=29.0.3 \
-    APPIUM_VERSION=1.22.0 \
     ATD_VERSION=1.2 \
     CHROME_VERSION=google-chrome-stable
 
@@ -61,7 +60,7 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash && \
     apt-get -qqy install nodejs && \
-    npm install -g appium@${APPIUM_VERSION} adbkit --unsafe-perm=true --allow-root && \
+    npm install -g adbkit --unsafe-perm=true --allow-root && \
     exit 0 && \
     npm cache clean && \
     apt-get remove --purge -y npm && \

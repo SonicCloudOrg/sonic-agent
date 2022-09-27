@@ -127,10 +127,6 @@ public class IOSWSServer implements IIOSWSServer {
                 appiumSettings.put("mjpegServerScreenshotQuality", 25);
                 iosStepHandler.appiumSettings(appiumSettings);
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
-                JSONObject port = new JSONObject();
-                port.put("port", 0);
-                port.put("msg", "appiumPort");
-                sendText(session, port.toJSONString());
             } catch (Exception e) {
                 logger.error(e.getMessage());
                 result.put("status", "error");

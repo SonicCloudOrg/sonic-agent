@@ -20,8 +20,6 @@ services:
       - IOS_ENABLE=true
       # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
       - WDA_BUNDLE_ID=com.facebook.WebDriverAgentRunner.xctrunner
-      # 是否启用Appium
-      - APPIUM_ENABLE=true
       # 是否启用webview调试功能
       - WEBVIEW_ENABLE=true
       # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
