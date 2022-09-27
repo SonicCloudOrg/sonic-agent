@@ -16,10 +16,16 @@
  */
 package org.cloud.sonic.agent.bridge.android;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
+import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
+import org.cloud.sonic.agent.common.maps.AndroidWebViewMap;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -34,15 +40,22 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
+import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 /**
  * @author ZhouYiXun
@@ -56,9 +69,15 @@ import java.util.stream.Collectors;
 public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(AndroidDeviceBridgeTool.class);
     public static AndroidDebugBridge androidDebugBridge = null;
+    private static String uiaApkVersion;
     private static String apkVersion;
+    private static RestTemplate restTemplate;
     @Value("${sonic.saa}")
     private String ver;
+    @Value("${sonic.saus}")
+    private String uiaVer;
+    @Autowired
+    private RestTemplate restTemplateBean;
 
     @Autowired
     private AndroidDeviceStatusListener androidDeviceStatusListener;
@@ -95,6 +114,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public void init() {
         apkVersion = ver;
+        uiaApkVersion = uiaVer;
+        restTemplate = restTemplateBean;
         //获取系统SDK路径
         String systemADBPath = getADBPathFromSystemEnv();
         //添加设备上下线监听
@@ -251,6 +272,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
+    public static boolean checkUiaApkVersion(IDevice iDevice) {
+        String all = executeCommand(iDevice, "dumpsys package io.appium.uiautomator2.server");
+        if (!all.contains("versionName=" + uiaApkVersion)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     /**
      * @param iDevice
      * @param port
@@ -338,6 +368,24 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public static void pressKey(IDevice iDevice, int keyNum) {
         executeCommand(iDevice, String.format("input keyevent %s", keyNum));
+    }
+
+    public static void install(IDevice iDevice, String path) throws InstallException {
+        iDevice.installPackage(path,
+                true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                , "-r", "-t", "-g");
+    }
+
+    public static void uninstall(IDevice iDevice, String bundleId) throws InstallException {
+        iDevice.uninstallPackage(bundleId);
+    }
+
+    public static void forceStop(IDevice iDevice, String bundleId) {
+        executeCommand(iDevice, String.format("am force-stop %s", bundleId));
+    }
+
+    public static void activateApp(IDevice iDevice, String bundleId) {
+        executeCommand(iDevice, String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", bundleId));
     }
 
     /**
@@ -539,23 +587,206 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         return result;
     }
 
-    /**
-     * @param udId
-     * @param packageName
-     * @return java.lang.String
-     * @author ZhouYiXun
-     * @des 获取app版本信息
-     * @date 2021/8/16 15:29
-     */
-//    public static String getAppOnlyVersion(String udId, String packageName) {
-//        IDevice iDevice = getIDeviceByUdId(udId);
-//        //实质是获取安卓开发在gradle定义的versionName来定义版本号
-//        String version = executeCommand(iDevice, String.format("pm dump %s | grep 'versionName'", packageName));
-//        version = version.substring(version.indexOf("=") + 1, version.length() - 1);
-//        if (version.length() > 50) {
-//            version = version.substring(0, version.indexOf(" ") + 1);
-//        }
-//        //因为不同设备获取的信息不一样，所以需要去掉\r、\n
-//        return version.replace("\r", "").replace("\n", "");
-//    }
+    public static int startUiaServer(IDevice iDevice) throws InstallException {
+        Thread s = AndroidThreadMap.getMap().get(String.format("%s-uia-thread", iDevice.getSerialNumber()));
+        if (s != null) {
+            s.interrupt();
+        }
+        if (!checkUiaApkVersion(iDevice)) {
+            iDevice.uninstallPackage("io.appium.uiautomator2.server");
+            iDevice.uninstallPackage("io.appium.uiautomator2.server.test");
+            iDevice.installPackage("plugins/sonic-appium-uiautomator2-server.apk",
+                    true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                    , "-r", "-t");
+            iDevice.installPackage("plugins/sonic-appium-uiautomator2-server-test.apk",
+                    true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                    , "-r", "-t");
+        }
+        int port = PortTool.getPort();
+        UiaThread uiaThread = new UiaThread(iDevice, port);
+        uiaThread.start();
+        int wait = 0;
+        while (!uiaThread.getIsOpen()) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            wait++;
+            if (wait >= 20) {
+                break;
+            }
+        }
+        AndroidThreadMap.getMap().put(String.format("%s-uia-thread", iDevice.getSerialNumber()), uiaThread);
+        return port;
+    }
+
+    static class UiaThread extends Thread {
+
+        private IDevice iDevice;
+        private int port;
+        private boolean isOpen = false;
+
+        public UiaThread(IDevice iDevice, int port) {
+            this.iDevice = iDevice;
+            this.port = port;
+        }
+
+        public boolean getIsOpen() {
+            return isOpen;
+        }
+
+        @Override
+        public void run() {
+            forward(iDevice, port, 6790);
+            try {
+                iDevice.executeShellCommand("am instrument -w io.appium.uiautomator2.server.test/androidx.test.runner.AndroidJUnitRunner",
+                        new IShellOutputReceiver() {
+                            @Override
+                            public void addOutput(byte[] bytes, int i, int i1) {
+                                String res = new String(bytes, i, i1);
+                                logger.info(res);
+                                if (res.contains("io.appium.uiautomator2.server.test.AppiumUiAutomator2Server:")) {
+                                    try {
+                                        Thread.sleep(2000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    isOpen = true;
+                                }
+                            }
+
+                            @Override
+                            public void flush() {
+                            }
+
+                            @Override
+                            public boolean isCancelled() {
+                                return false;
+                            }
+                        }, 0, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+            } finally {
+                AndroidDeviceBridgeTool.removeForward(iDevice, port, 6790);
+            }
+        }
+
+        @Override
+        public void interrupt() {
+            super.interrupt();
+        }
+    }
+
+    public static void clearWebView(IDevice iDevice) {
+        List<JSONObject> has = AndroidWebViewMap.getMap().get(iDevice);
+        if (has != null && has.size() > 0) {
+            for (JSONObject j : has) {
+                AndroidDeviceBridgeTool.removeForward(iDevice, j.getInteger("port"), j.getString("name"));
+            }
+        }
+        AndroidWebViewMap.getMap().remove(iDevice);
+    }
+
+    public static File getChromeDriver(IDevice iDevice, String packageName) throws IOException {
+        String chromeVersion = "";
+        List<JSONObject> result = getWebView(iDevice);
+        if (result.size() > 0) {
+            for (JSONObject j : result) {
+                if (packageName.equals(j.getString("package"))) {
+                    chromeVersion = j.getString("version");
+                    break;
+                }
+            }
+        }
+        clearWebView(iDevice);
+        if (chromeVersion.length() == 0) {
+            return null;
+        } else {
+            chromeVersion = chromeVersion.replace("Chrome/", "");
+        }
+        String system = System.getProperty("os.name").toLowerCase();
+        File search = new File(String.format("webview/%s_chromedriver%s", chromeVersion,
+                (system.contains("win") ? ".exe" : "")));
+        if (search.exists()) {
+            return search;
+        }
+        int end = (chromeVersion.indexOf(".") != -1 ? chromeVersion.indexOf(".") : chromeVersion.length() - 1);
+        String major = chromeVersion.substring(0, end);
+        HttpHeaders headers = new HttpHeaders();
+        ResponseEntity<String> infoEntity =
+                restTemplate.exchange(String.format("https://chromedriver.storage.googleapis.com/LATEST_RELEASE_%d", major), HttpMethod.GET, new HttpEntity(headers), String.class);
+        if (system.contains("win")) {
+            system = "win32";
+        } else if (system.contains("linux")) {
+            system = "linux64";
+        } else {
+            String arch = System.getProperty("os.arch").toLowerCase();
+            if (arch.contains("aarch64")) {
+                system = "mac64_m1";
+            } else {
+                system = "mac64";
+            }
+        }
+        File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip", infoEntity.getBody(), system));
+        File driver = FileTool.unZipChromeDriver(file, chromeVersion);
+        return driver;
+    }
+
+    public static List<JSONObject> getWebView(IDevice iDevice) {
+        clearWebView(iDevice);
+        List<JSONObject> has = new ArrayList<>();
+        Set<String> webSet = new HashSet<>();
+        List<String> out = Arrays.asList(AndroidDeviceBridgeTool
+                .executeCommand(iDevice, "cat /proc/net/unix").split("\n"));
+        for (String w : out) {
+            if (w.contains("webview") || w.contains("WebView") || w.contains("_devtools_remote")) {
+                if (w.contains("@") && w.indexOf("@") + 1 < w.length()) {
+                    webSet.add(w.substring(w.indexOf("@") + 1));
+                }
+            }
+        }
+        List<JSONObject> result = new ArrayList<>();
+        if (webSet.size() > 0) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Type", "application/json");
+            for (String ws : webSet) {
+                int port = PortTool.getPort();
+                AndroidDeviceBridgeTool.forward(iDevice, port, ws);
+                JSONObject j = new JSONObject();
+                j.put("port", port);
+                j.put("name", ws);
+                has.add(j);
+                JSONObject r = new JSONObject();
+                r.put("port", port);
+                try {
+                    ResponseEntity<LinkedHashMap> infoEntity =
+                            restTemplate.exchange("http://localhost:" + port + "/json/version", HttpMethod.GET, new HttpEntity(headers), LinkedHashMap.class);
+                    if (infoEntity.getStatusCode() == HttpStatus.OK) {
+                        r.put("version", infoEntity.getBody().get("Browser"));
+                        r.put("package", infoEntity.getBody().get("Android-Package"));
+                    }
+                } catch (Exception e) {
+                    continue;
+                }
+                ResponseEntity<JSONArray> responseEntity =
+                        restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
+                if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                    List<JSONObject> child = new ArrayList<>();
+                    for (Object e : responseEntity.getBody()) {
+                        LinkedHashMap objE = (LinkedHashMap) e;
+                        JSONObject c = new JSONObject();
+                        c.put("favicon", objE.get("faviconUrl"));
+                        c.put("title", objE.get("title"));
+                        c.put("url", objE.get("url"));
+                        c.put("id", objE.get("id"));
+                        child.add(c);
+                    }
+                    r.put("children", child);
+                    result.add(r);
+                }
+            }
+            AndroidWebViewMap.getMap().put(iDevice, has);
+        }
+        return result;
+    }
 }

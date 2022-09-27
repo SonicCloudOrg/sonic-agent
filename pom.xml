@@ -33,6 +33,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.github.kklisura.cdt</groupId>
+            <artifactId>cdt-java-client</artifactId>
+            <version>4.0.0</version>
+        </dependency>
         <!--    websocket client    -->
         <dependency>
             <groupId>org.java-websocket</groupId>
@@ -55,6 +60,7 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.20</version>
+            <scope>compile</scope>
         </dependency>
         <!--    json对象    -->
         <dependency>
@@ -66,13 +72,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-driver-core</artifactId>
-            <version>1.0.12</version>
-        </dependency>
-        <!--  appium java api      -->
-        <dependency>
-            <groupId>io.appium</groupId>
-            <artifactId>java-client</artifactId>
-            <version>7.6.0</version>
+            <version>1.1.4</version>
         </dependency>
         <!--    压缩图片    -->
         <dependency>

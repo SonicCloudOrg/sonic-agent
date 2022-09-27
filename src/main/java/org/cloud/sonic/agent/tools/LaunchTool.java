@@ -16,9 +16,7 @@
  */
 package org.cloud.sonic.agent.tools;
 
-import io.appium.java_client.service.local.AppiumDriverLocalService;
-import org.cloud.sonic.agent.automation.AppiumServer;
-import org.cloud.sonic.agent.automation.RemoteDebugDriver;
+import org.cloud.sonic.agent.automation.RemoteDebugLauncher;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.transport.TransportConnectionThread;
@@ -28,7 +26,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -82,7 +79,7 @@ public class LaunchTool implements ApplicationRunner {
 
     @PreDestroy
     public void destroy() {
-        RemoteDebugDriver.close();
+        RemoteDebugLauncher.close();
         for (String key : GlobalProcessMap.getMap().keySet()) {
             Process ps = GlobalProcessMap.getMap().get(key);
             ps.children().forEach(ProcessHandle::destroy);
@@ -94,9 +91,6 @@ public class LaunchTool implements ApplicationRunner {
                 p.children().forEach(ProcessHandle::destroy);
                 p.destroy();
             }
-        }
-        for(String udId:AppiumServer.serviceMap.keySet()){
-            AppiumServer.close(udId);
         }
         logger.info("Release done!");
     }

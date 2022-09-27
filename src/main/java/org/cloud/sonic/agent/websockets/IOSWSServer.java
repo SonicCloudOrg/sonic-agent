@@ -36,11 +36,11 @@ import org.cloud.sonic.agent.tools.SGMTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.transport.TransportWorker;
-import org.cloud.sonic.core.ios.IOSDriver;
-import org.cloud.sonic.core.ios.RespHandler;
-import org.cloud.sonic.core.ios.enums.PasteboardType;
-import org.cloud.sonic.core.ios.enums.SystemButton;
-import org.cloud.sonic.core.tool.SonicRespException;
+import org.cloud.sonic.driver.common.enums.PasteboardType;
+import org.cloud.sonic.driver.common.tool.RespHandler;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
+import org.cloud.sonic.driver.ios.IOSDriver;
+import org.cloud.sonic.driver.ios.enums.SystemButton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,10 +127,6 @@ public class IOSWSServer implements IIOSWSServer {
                 appiumSettings.put("mjpegServerScreenshotQuality", 25);
                 iosStepHandler.appiumSettings(appiumSettings);
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
-                JSONObject port = new JSONObject();
-                port.put("port", 0);
-                port.put("msg", "appiumPort");
-                sendText(session, port.toJSONString());
             } catch (Exception e) {
                 logger.error(e.getMessage());
                 result.put("status", "error");

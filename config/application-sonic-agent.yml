@@ -23,15 +23,10 @@ modules:
     enable: true
     # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
     wda-bundle-id: com.sonic.WebDriverAgentRunner
-  appium:
-    # 是否开启Appium功能
-    enable: true
   webview:
     # 是否开启在线webView调试功能
     enable: true
     # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
-    chrome-driver-debug-port: 0
-    # 替换为Agent机器上的chrome浏览器的driver路径，可以去http://npm.taobao.org/mirrors/chromedriver/下载
-    chrome-driver-path: "/Applications/Google Chrome.app/Contents/MacOS/chromedriver"
+    remote-debug-port: 0
   sgm:
     enable: true
