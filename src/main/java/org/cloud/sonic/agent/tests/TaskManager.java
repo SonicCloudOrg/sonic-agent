@@ -56,7 +56,7 @@ public class TaskManager {
     /**
      * 记录正在运行的rid记录
      */
-    private static Set<Integer> runningRidSet =  Collections.synchronizedSet(new HashSet<>());
+    private static Set<String> runningRidSet =  Collections.synchronizedSet(new HashSet<>());
 
     /**
      * 记录正在运行的udId记录
@@ -65,8 +65,8 @@ public class TaskManager {
 
     private static final Lock lock = new ReentrantLock();
 
-    public static boolean ridRunning(Integer rid) {
-        return runningRidSet.contains(rid);
+    public static boolean ridRunning(Integer rid, String udId) {
+        return runningRidSet.contains(rid + "-" + udId);
     }
 
     public static boolean udIdRunning(String udId) {
@@ -83,7 +83,7 @@ public class TaskManager {
         addBootThread(bootThread.getName(), bootThread);
 
         String[] split = bootThread.getName().split("-");
-        runningRidSet.add(Integer.parseInt(split[split.length-3]));
+        runningRidSet.add(split[split.length-3] + "-" + split[split.length-1]);
         runningUdIdSet.add(split[split.length-1]);
     }
 
@@ -197,7 +197,7 @@ public class TaskManager {
         childThreadsMap.remove(key);
 
         String[] split = key.split("-");
-        runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+        runningRidSet.remove(split[split.length-3] + "-" + split[split.length-1]);
         runningUdIdSet.remove(split[split.length-1]);
     }
 
@@ -216,14 +216,14 @@ public class TaskManager {
             bootThreadsMap.remove(k);
 
             String[] split = k.split("-");
-            runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+            runningRidSet.remove(split[split.length-3] + "-" + split[split.length-1]);
             runningUdIdSet.remove(split[split.length-1]);
         });
         // 删除boot衍生的线程
         terminatedThread.forEach((key, value) -> {
             childThreadsMap.remove(key);
             String[] split = key.split("-");
-            runningRidSet.remove(Integer.parseInt(split[split.length-3]));
+            runningRidSet.remove(split[split.length-3] + "-" + split[split.length-1]);
             runningUdIdSet.remove(split[split.length-1]);
         });
     }
@@ -260,7 +260,7 @@ public class TaskManager {
         }
         runningTestsMap.remove(resultId + "");
 
-        runningRidSet.remove(resultId);
+        runningRidSet.remove(resultId + "-" + udId);
         runningUdIdSet.remove(udId);
     }
 
