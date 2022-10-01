@@ -59,7 +59,7 @@ jobs:
       - name: mvJar-linux86
         run: cp -r target/sonic-agent-${{ matrix.platform }}.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
       - name: copy
-        run: cp -r config/ webview/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
+        run: cp -r config/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
       - name: sgm-download
         uses: robinraju/release-downloader@v1.4
         with:

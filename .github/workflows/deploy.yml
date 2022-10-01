@@ -1,8 +1,9 @@
 name: deploy to Dockerhub
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*.*.*-*"
 
 jobs:
 
