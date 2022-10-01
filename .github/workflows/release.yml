@@ -16,25 +16,26 @@ jobs:
 
   release:
     needs: create
-    matrix:
-      platform: [ "windows-x86", "windows-x86_64", "macosx-arm64", "macosx-x86_64", "linux-arm64", "linux-x86", "linux-x86_64" ]
-      include:
-        - platform: linux-x86
-          depend: linux_x86
-        - platform: linux-x86_64
-          depend: linux_x86_64
-        - platform: linux-arm64
-          depend: linux_arm64
-        - platform: macosx-x86_64
-          depend: macosx_x86_64
-        - platform: macosx-arm64
-          depend: macosx_arm64
-        - platform: windows-x86
-          depend: windows_x86
-          tail: .exe
-        - platform: windows-x86_64
-          depend: windows_x86_64
-          tail: .exe
+    strategy:
+      matrix:
+        platform: [ "windows-x86", "windows-x86_64", "macosx-arm64", "macosx-x86_64", "linux-arm64", "linux-x86", "linux-x86_64" ]
+        include:
+          - platform: linux-x86
+            depend: linux_x86
+          - platform: linux-x86_64
+            depend: linux_x86_64
+          - platform: linux-arm64
+            depend: linux_arm64
+          - platform: macosx-x86_64
+            depend: macosx_x86_64
+          - platform: macosx-arm64
+            depend: macosx_arm64
+          - platform: windows-x86
+            depend: windows_x86
+            tail: .exe
+          - platform: windows-x86_64
+            depend: windows_x86_64
+            tail: .exe
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
