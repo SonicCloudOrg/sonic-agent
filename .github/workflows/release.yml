@@ -107,6 +107,9 @@ jobs:
     needs: [ create,release ]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Upload Docker Compose To Github Release
         uses: xresloader/upload-to-github-release@v1.3.4
         env:

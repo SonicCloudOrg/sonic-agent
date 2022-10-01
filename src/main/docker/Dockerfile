@@ -71,7 +71,6 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash && \
 RUN mkdir -p mini webview plugins config
 
 ADD /mini /root/mini
-ADD /webview /root/webview
 ADD /plugins /root/plugins
 ADD /src/main/docker/config /root/config
 ADD /target/sonic-agent-linux-x86_64.jar /root
