@@ -38,17 +38,6 @@ import java.util.Arrays;
 @Component
 public class EnvCheckTool {
 
-    /**
-     * 全局环境变量的JAVA_HOME，被appium使用，绝大多数情况下路径都能反映版本
-     */
-    public static String javaPath = "unknown \n";
-
-    /**
-     * 运行时的Java Version，假如上面的JAVA_HOME指向JDK 16，而启动的时候用 /{path}/JDK 17/java -jar 启动agent
-     * 则此处javaVersion=JDK 17
-     */
-    public static String javaVersion = "unknown \n";
-
     public static String system;
     public static String sdkPath = "unknown \n";
     public static String adbPath = "unknown \n";
@@ -119,23 +108,8 @@ public class EnvCheckTool {
             printPass(type);
         } else {
             printFail(type);
-            throw new RuntimeException("提示：请确保当前目录下有config(内含application-prod.yml)、mini、plugins文件夹");
+            throw new RuntimeException("提示：请确保当前目录下有config(内含application-sonic-agent.yml)、mini、plugins文件夹");
         }
-    }
-
-    /**
-     * 检查java环境
-     */
-    public void checkJavaHome() {
-        String type = "Check JAVA_HOME Path";
-        javaPath = System.getenv("JAVA_HOME");
-        javaVersion = System.getProperty("java.version");
-        if (!StringUtils.hasText(javaPath)) {
-            System.out.println("系统变量【JAVA_HOME】返回值为空！");
-            printFail(type);
-            throw new RuntimeException("提示：可前往https://www.oracle.com/java/technologies/downloads/下载jdk并设置JAVA_HOME系统变量");
-        }
-        printPass(type);
     }
 
     /**
@@ -300,9 +274,7 @@ public class EnvCheckTool {
 
     @Override
     public String toString() {
-        return printInfo("JAVA_HOME: ") + javaPath + "\n" +
-                printInfo("java version: ") + javaVersion + "\n" +
-                printInfo("ANDROID_HOME: ") + sdkPath + "\n" +
+        return printInfo("ANDROID_HOME: ") + sdkPath + "\n" +
                 printInfo("ADB path: ") + adbPath +
                 printInfo("ADB version: ") + adbVersion +
                 printInfo("Node path: ") + nodePath +
