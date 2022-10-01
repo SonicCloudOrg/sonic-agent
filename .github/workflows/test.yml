@@ -13,7 +13,7 @@ jobs:
           - platform: windows-x86
             depend: hello
           - platform: windows-x86_64
-              depend: hello2
+            depend: hello2
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
