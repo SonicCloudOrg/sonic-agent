@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package org.cloud.sonic.agent.enums;
+package org.cloud.sonic.agent.common.enums;
 
 import java.io.Serializable;
 

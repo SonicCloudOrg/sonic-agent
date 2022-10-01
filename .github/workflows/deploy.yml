@@ -43,7 +43,7 @@ jobs:
       - name: sib
         run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && rm plugins/sonic-ios-bridge* && mv sib plugins/sonic-ios-bridge
       - name: deploy
-        run: mvn package -Plinux-x86_64 && docker build -t sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} -f src/main/docker/Dockerfile .
+        run: mvn package -Dplatform=linux-x86_64 && docker build -t sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} -f src/main/docker/Dockerfile .
       - name: push
         run: docker push sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}
       - name: login docker hub

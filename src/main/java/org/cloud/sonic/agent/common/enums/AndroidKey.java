@@ -14,7 +14,7 @@
  *  limitations under the License.
  *
  */
-package org.cloud.sonic.agent.enums;
+package org.cloud.sonic.agent.common.enums;
 
 public enum AndroidKey {
     UNKNOWN(0),

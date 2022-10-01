@@ -27,23 +27,23 @@ jobs:
       - name: mkdir
         run: mkdir -p sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/plugins sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/plugins
       - name: package-linux86
-        run: mvn clean package -Plinux-x86
+        run: mvn clean package -Dplatform=linux-x86
       - name: mvJar-linux86
         run: cp -r target/sonic-agent-linux-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86/
       - name: package-linux86-64
-        run: mvn clean package -Plinux-x86_64
+        run: mvn clean package -Dplatform=linux-x86_64
       - name: mvJar-linux86-64
         run: cp -r target/sonic-agent-linux-x86_64.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-linux_x86_64/
       - name: package-macosx
-        run: mvn clean package -Pmacosx-x86_64
+        run: mvn clean package -Dplatform=macosx-x86_64
       - name: mvJar-macosx
         run: cp -r target/sonic-agent-macosx-x86_64.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-macosx_x86_64/
       - name: package-win86
-        run: mvn clean package -Pwindows-x86
+        run: mvn clean package -Dplatform=windows-x86
       - name: mvJar-win86
         run: cp -r target/sonic-agent-windows-x86.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86/
       - name: package-win86-64
-        run: mvn clean package -Pwindows-x86_64
+        run: mvn clean package -Dplatform=windows-x86_64
       - name: mvJar-win86-64
         run: cp -r target/sonic-agent-windows-x86_64.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-windows_x86_64/
       - name: copy
