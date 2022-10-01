@@ -16,20 +16,8 @@
  */
 package org.cloud.sonic.agent.tests.android;
 
-import com.android.ddmlib.IDevice;
-import org.bytedeco.javacv.FrameRecorder;
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
-import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
-import org.cloud.sonic.agent.tools.cv.RecordHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * android 录像线程
