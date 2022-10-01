@@ -1,8 +1,5 @@
 package org.cloud.sonic.agent.websockets;
 
-import com.android.ddmlib.IDevice;
-import org.bytedeco.librealsense.device;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.websocket.Session;

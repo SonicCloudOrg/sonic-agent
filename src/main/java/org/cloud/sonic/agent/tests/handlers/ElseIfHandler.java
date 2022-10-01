@@ -17,9 +17,9 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleDes;
 import org.cloud.sonic.agent.common.interfaces.StepType;
-import org.cloud.sonic.agent.enums.ConditionEnum;
+import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

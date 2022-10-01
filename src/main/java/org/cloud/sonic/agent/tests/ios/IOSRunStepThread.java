@@ -17,7 +17,7 @@
 package org.cloud.sonic.agent.tests.ios;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleDes;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;

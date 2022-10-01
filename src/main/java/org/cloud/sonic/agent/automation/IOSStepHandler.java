@@ -24,18 +24,13 @@ import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.enums.ConditionEnum;
-import org.cloud.sonic.agent.enums.SonicEnum;
-import org.cloud.sonic.agent.models.FindResult;
-import org.cloud.sonic.agent.models.HandleDes;
+import org.cloud.sonic.agent.common.enums.ConditionEnum;
+import org.cloud.sonic.agent.common.enums.SonicEnum;
+import org.cloud.sonic.agent.common.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tools.SpringTool;
-import org.cloud.sonic.agent.tools.cv.AKAZEFinder;
-import org.cloud.sonic.agent.tools.cv.SIFTFinder;
-import org.cloud.sonic.agent.tools.cv.SimilarityChecker;
-import org.cloud.sonic.agent.tools.cv.TemMatcher;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.driver.common.models.WindowSize;
@@ -43,6 +38,11 @@ import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.ios.IOSDriver;
 import org.cloud.sonic.driver.ios.enums.IOSSelector;
 import org.cloud.sonic.driver.ios.service.IOSElement;
+import org.cloud.sonic.vision.cv.AKAZEFinder;
+import org.cloud.sonic.vision.cv.SIFTFinder;
+import org.cloud.sonic.vision.cv.SimilarityChecker;
+import org.cloud.sonic.vision.cv.TemMatcher;
+import org.cloud.sonic.vision.models.FindResult;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
@@ -556,40 +556,43 @@ public class IOSStepHandler {
         FindResult findResult = null;
         try {
             SIFTFinder siftFinder = new SIFTFinder();
-            findResult = siftFinder.getSIFTFindResult(file, getScreenToLocal());
+            findResult = siftFinder.getSIFTFindResult(file, getScreenToLocal(), true);
         } catch (Exception e) {
             log.sendStepLog(StepType.WARN, "SIFT图像算法出错，切换算法中...",
                     "");
         }
         if (findResult != null) {
+            String url = UploadTools.upload(findResult.getFile(), "imageFiles");
             log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-                    findResult.getUrl());
+                    url);
         } else {
             log.sendStepLog(StepType.INFO, "SIFT算法无法定位图片，切换AKAZE算法中...",
                     "");
             try {
                 AKAZEFinder akazeFinder = new AKAZEFinder();
-                findResult = akazeFinder.getAKAZEFindResult(file, getScreenToLocal());
+                findResult = akazeFinder.getAKAZEFindResult(file, getScreenToLocal(), true);
             } catch (Exception e) {
                 log.sendStepLog(StepType.WARN, "AKAZE图像算法出错，切换模版匹配算法中...",
                         "");
             }
             if (findResult != null) {
+                String url = UploadTools.upload(findResult.getFile(), "imageFiles");
                 log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-                        findResult.getUrl());
+                        url);
             } else {
                 log.sendStepLog(StepType.INFO, "AKAZE算法无法定位图片，切换模版匹配算法中...",
                         "");
                 try {
                     TemMatcher temMatcher = new TemMatcher();
-                    findResult = temMatcher.getTemMatchResult(file, getScreenToLocal());
+                    findResult = temMatcher.getTemMatchResult(file, getScreenToLocal(), true);
                 } catch (Exception e) {
                     log.sendStepLog(StepType.WARN, "模版匹配算法出错",
                             "");
                 }
                 if (findResult != null) {
+                    String url = UploadTools.upload(findResult.getFile(), "imageFiles");
                     log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
-                            findResult.getUrl());
+                            url);
                 } else {
                     handleDes.setE(new Exception("图片定位失败！"));
                 }
@@ -642,7 +645,8 @@ public class IOSStepHandler {
         if (pathValue.startsWith("http")) {
             file = DownloadTool.download(pathValue);
         }
-        double score = SimilarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
+        SimilarityChecker similarityChecker = new SimilarityChecker();
+        double score = similarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
         handleDes.setStepDes("检测" + des + "图片相似度");
         handleDes.setDetail("相似度为" + score * 100 + "%");
         if (score == 0) {

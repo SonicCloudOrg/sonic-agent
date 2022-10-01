@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.enums;
+package org.cloud.sonic.agent.common.enums;
 
 import org.springframework.util.Assert;
 
