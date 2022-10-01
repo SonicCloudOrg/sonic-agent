@@ -110,6 +110,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: 'Get Previous tag'
+        id: previoustag
+        uses: "WyriHaximus/github-action-get-previous-tag@v1"
       - name: Upload Docker Compose To Github Release
         uses: xresloader/upload-to-github-release@v1.3.4
         env:
