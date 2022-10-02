@@ -1270,6 +1270,12 @@ public class AndroidStepHandler {
         return we;
     }
 
+    public void setFindElementInterval(HandleDes handleDes, int retry, int interval) {
+        handleDes.setStepDes("Set Global Find Element Interval");
+        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+        androidDriver.setDefaultFindElementInterval(retry, interval);
+    }
+
     private WebElement getWebElementByCssAndText(String pathValue) {
         // 新增H5页面通过className+text定位控件元素
         // value格式：van-button--default,购物车
@@ -1542,6 +1548,9 @@ public class AndroidStepHandler {
             case "getWebViewTextValue":
                 globalParams.put(step.getString("content"), getWebViewText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
+                break;
+            case "findElementInterval":
+                setFindElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
                 break;
         }
         switchType(step, handleDes);

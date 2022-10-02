@@ -775,6 +775,12 @@ public class IOSStepHandler {
         return we;
     }
 
+    public void setFindElementInterval(HandleDes handleDes, int retry, int interval) {
+        handleDes.setStepDes("Set Global Find Element Interval");
+        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+        iosDriver.setDefaultFindElementInterval(retry, interval);
+    }
+
     public void stepHold(HandleDes handleDes, int time) {
         handleDes.setStepDes("设置全局步骤间隔");
         handleDes.setDetail("间隔" + time + " ms");
@@ -911,6 +917,9 @@ public class IOSStepHandler {
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
                 return;
+            case "findElementInterval":
+                setFindElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
+                break;
         }
         switchType(step, handleDes);
     }
