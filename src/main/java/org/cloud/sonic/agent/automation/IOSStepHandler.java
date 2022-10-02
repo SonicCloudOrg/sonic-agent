@@ -33,10 +33,12 @@ import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.driver.common.enums.PasteboardType;
 import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.ios.IOSDriver;
 import org.cloud.sonic.driver.ios.enums.IOSSelector;
+import org.cloud.sonic.driver.ios.enums.SystemButton;
 import org.cloud.sonic.driver.ios.service.IOSElement;
 import org.cloud.sonic.vision.cv.AKAZEFinder;
 import org.cloud.sonic.vision.cv.SIFTFinder;
@@ -49,10 +51,12 @@ import org.jsoup.nodes.Document;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 import static org.testng.Assert.*;
 
 /**
@@ -798,6 +802,37 @@ public class IOSStepHandler {
         }
     }
 
+    public void setPasteboard(HandleDes handleDes, String text) {
+        text = TextHandler.replaceTrans(text, globalParams);
+        handleDes.setStepDes("Set text to clipboard");
+        handleDes.setDetail("Set text: " + text);
+        try {
+            iosDriver.appActivate("com.apple.springboard");
+            iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
+            Thread.sleep(2000);
+            iosDriver.setPasteboard(PasteboardType.PLAIN_TEXT, text);
+            iosDriver.pressButton(SystemButton.HOME);
+        } catch (SonicRespException | InterruptedException e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public String getPasteboard(HandleDes handleDes) {
+        String text = "";
+        handleDes.setStepDes("Get clipboard text");
+        handleDes.setDetail("");
+        try {
+            iosDriver.appActivate("com.apple.springboard");
+            iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
+            Thread.sleep(2000);
+            text = new String(iosDriver.getPasteboard(PasteboardType.PLAIN_TEXT), StandardCharsets.UTF_8);
+            iosDriver.pressButton(SystemButton.HOME);
+        } catch (SonicRespException | InterruptedException e) {
+            handleDes.setE(e);
+        }
+        return text;
+    }
+
     private int holdTime = 0;
 
     public void runStep(JSONObject stepJSON, HandleDes handleDes) throws Throwable {
@@ -919,6 +954,12 @@ public class IOSStepHandler {
                 return;
             case "findElementInterval":
                 setFindElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
+                break;
+            case "setPasteboard":
+                setPasteboard(handleDes, step.getString("content"));
+                break;
+            case "getPasteboard":
+                globalParams.put(step.getString("content"), getPasteboard(handleDes));
                 break;
         }
         switchType(step, handleDes);
