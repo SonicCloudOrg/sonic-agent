@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <properties>
-<!--        [ "windows-x86", "windows-x86_64", "macosx-arm64", "macosx-x86_64", "linux-arm64", "linux-x86", "linux-x86_64" ]-->
+        <!--        [ "windows-x86", "windows-x86_64", "macosx-arm64", "macosx-x86_64", "linux-arm64", "linux-x86", "linux-x86_64" ]-->
         <platform>windows-x86_64</platform>
         <maven.compiler.source>15</maven.compiler.source>
         <maven.compiler.target>15</maven.compiler.target>
@@ -105,10 +105,16 @@
             <artifactId>sonic-vision-core</artifactId>
             <version>1.0.5-${platform}</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.apache.commons</groupId>-->
+<!--            <artifactId>commons-exec</artifactId>-->
+<!--            <version>1.3</version>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-exec</artifactId>
-            <version>1.3</version>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>3.0.13</version>
+            <type>pom</type>
         </dependency>
     </dependencies>
 
