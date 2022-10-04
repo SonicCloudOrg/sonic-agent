@@ -18,6 +18,9 @@ package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.PumpStreamHandler;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
@@ -30,13 +33,17 @@ import org.cloud.sonic.agent.common.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tests.script.GroovyScript;
+import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.driver.common.enums.PasteboardType;
 import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.ios.IOSDriver;
 import org.cloud.sonic.driver.ios.enums.IOSSelector;
+import org.cloud.sonic.driver.ios.enums.SystemButton;
 import org.cloud.sonic.driver.ios.service.IOSElement;
 import org.cloud.sonic.vision.cv.AKAZEFinder;
 import org.cloud.sonic.vision.cv.SIFTFinder;
@@ -46,13 +53,18 @@ import org.cloud.sonic.vision.models.FindResult;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
+import org.testng.Assert;
 
 import javax.imageio.stream.FileImageOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 import static org.testng.Assert.*;
 
 /**
@@ -775,6 +787,12 @@ public class IOSStepHandler {
         return we;
     }
 
+    public void setFindElementInterval(HandleDes handleDes, int retry, int interval) {
+        handleDes.setStepDes("Set Global Find Element Interval");
+        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+        iosDriver.setDefaultFindElementInterval(retry, interval);
+    }
+
     public void stepHold(HandleDes handleDes, int time) {
         handleDes.setStepDes("设置全局步骤间隔");
         handleDes.setDetail("间隔" + time + " ms");
@@ -792,7 +810,81 @@ public class IOSStepHandler {
         }
     }
 
+    public void setPasteboard(HandleDes handleDes, String text) {
+        text = TextHandler.replaceTrans(text, globalParams);
+        handleDes.setStepDes("Set text to clipboard");
+        handleDes.setDetail("Set text: " + text);
+        try {
+            iosDriver.appActivate("com.apple.springboard");
+            iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
+            Thread.sleep(2000);
+            iosDriver.setPasteboard(PasteboardType.PLAIN_TEXT, text);
+            iosDriver.pressButton(SystemButton.HOME);
+        } catch (SonicRespException | InterruptedException e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public String getPasteboard(HandleDes handleDes) {
+        String text = "";
+        handleDes.setStepDes("Get clipboard text");
+        handleDes.setDetail("");
+        try {
+            iosDriver.appActivate("com.apple.springboard");
+            iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
+            Thread.sleep(2000);
+            text = new String(iosDriver.getPasteboard(PasteboardType.PLAIN_TEXT), StandardCharsets.UTF_8);
+            iosDriver.pressButton(SystemButton.HOME);
+        } catch (SonicRespException | InterruptedException e) {
+            handleDes.setE(e);
+        }
+        return text;
+    }
+
     private int holdTime = 0;
+
+    public void runScript(HandleDes handleDes, String script, String type) {
+        handleDes.setStepDes("Run Custom Scripts");
+        handleDes.setDetail("Script: <br>" + script);
+        try {
+            switch (type) {
+                case "Groovy":
+                    GroovyScript groovyScript = new GroovyScriptImpl();
+                    groovyScript.runIOS(iosDriver, udId, globalParams, log, script);
+                    break;
+                case "Python":
+                    File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
+                    if (!temp.exists()) {
+                        temp.createNewFile();
+                        FileWriter fileWriter = new FileWriter(temp);
+                        fileWriter.write(script);
+                        fileWriter.close();
+                    }
+                    CommandLine cmdLine = new CommandLine(String.format("python %s", temp.getAbsolutePath()));
+                    cmdLine.addArgument(iosDriver.getSessionId(), false);
+                    cmdLine.addArgument(udId, false);
+                    cmdLine.addArgument(globalParams.toJSONString(), false);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+                    try {
+                        DefaultExecutor executor = new DefaultExecutor();
+                        executor.setStreamHandler(streamHandler);
+                        int exit = executor.execute(cmdLine);
+                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + outputStream);
+                        Assert.assertEquals(exit, 0);
+                    } catch (Exception e) {
+                        handleDes.setE(e);
+                    } finally {
+                        outputStream.close();
+                        streamHandler.stop();
+                        temp.delete();
+                    }
+                    break;
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+    }
 
     public void runStep(JSONObject stepJSON, HandleDes handleDes) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
@@ -911,6 +1003,18 @@ public class IOSStepHandler {
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
                 return;
+            case "findElementInterval":
+                setFindElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
+                break;
+            case "setPasteboard":
+                setPasteboard(handleDes, step.getString("content"));
+                break;
+            case "getPasteboard":
+                globalParams.put(step.getString("content"), getPasteboard(handleDes));
+                break;
+            case "runScript":
+                runScript(handleDes, step.getString("content"), step.getString("text"));
+                break;
         }
         switchType(step, handleDes);
     }
