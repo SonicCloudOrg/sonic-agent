@@ -18,6 +18,9 @@ package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.PumpStreamHandler;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
@@ -30,6 +33,8 @@ import org.cloud.sonic.agent.common.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
+import org.cloud.sonic.agent.tests.script.GroovyScript;
+import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -48,9 +53,12 @@ import org.cloud.sonic.vision.models.FindResult;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
+import org.testng.Assert;
 
 import javax.imageio.stream.FileImageOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.List;
@@ -835,6 +843,49 @@ public class IOSStepHandler {
 
     private int holdTime = 0;
 
+    public void runScript(HandleDes handleDes, String script, String type) {
+        handleDes.setStepDes("Run Custom Scripts");
+        handleDes.setDetail("Script: <br>" + script);
+        try {
+            switch (type) {
+                case "Groovy":
+                    GroovyScript groovyScript = new GroovyScriptImpl();
+                    groovyScript.runIOS(iosDriver, udId, globalParams, log, script);
+                    break;
+                case "Python":
+                    File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
+                    if (!temp.exists()) {
+                        temp.createNewFile();
+                        FileWriter fileWriter = new FileWriter(temp);
+                        fileWriter.write(script);
+                        fileWriter.close();
+                    }
+                    CommandLine cmdLine = new CommandLine(String.format("python %s", temp.getAbsolutePath()));
+                    cmdLine.addArgument(iosDriver.getSessionId(), false);
+                    cmdLine.addArgument(udId, false);
+                    cmdLine.addArgument(globalParams.toJSONString(), false);
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                    PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+                    try {
+                        DefaultExecutor executor = new DefaultExecutor();
+                        executor.setStreamHandler(streamHandler);
+                        int exit = executor.execute(cmdLine);
+                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + outputStream);
+                        Assert.assertEquals(exit, 0);
+                    } catch (Exception e) {
+                        handleDes.setE(e);
+                    } finally {
+                        outputStream.close();
+                        streamHandler.stop();
+                        temp.delete();
+                    }
+                    break;
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void runStep(JSONObject stepJSON, HandleDes handleDes) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
@@ -960,6 +1011,9 @@ public class IOSStepHandler {
                 break;
             case "getPasteboard":
                 globalParams.put(step.getString("content"), getPasteboard(handleDes));
+                break;
+            case "runScript":
+                runScript(handleDes, step.getString("content"), step.getString("text"));
                 break;
         }
         switchType(step, handleDes);
