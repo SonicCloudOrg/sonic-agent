@@ -16,8 +16,8 @@ modules:
   android:
     # 是否开启安卓模块
     enable: ${ANDROID_ENABLE:true}
-    # 是否开启远程adb调试功能
-    use-adbkit: ${USE_ADBKIT:true}
+    # 是否开启sonic-android-supply远程adb调试功能
+    use-sas: ${USE_SAS:true}
   ios:
     # 如果不需要连接iOS设备，请将true改为false。开启的windows用户请确保本机已安装iTunes
     enable: ${IOS_ENABLE:true}

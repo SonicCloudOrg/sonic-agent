@@ -14,13 +14,13 @@ services:
       - AGENT_KEY=29002272-4659-4808-a804-08ce3388b136
       # 是否使用安卓模块
       - ANDROID_ENABLE=true
-      # 是否开启远程adb调试功能
-      - USE_ADBKIT=true
+      # 是否开启sonic-android-supply远程adb调试功能
+      - USE_SAS=true
       # 是否使用iOS模块
       - IOS_ENABLE=true
       # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
       - WDA_BUNDLE_ID=com.facebook.WebDriverAgentRunner.xctrunner
-      # 是否开启sonic-go-mitmproxy代理功能
+      # 是否开启sonic-go-mitmproxy网络抓包功能
       - SGM_ENABLE=true
     network_mode: "host"
     privileged: true
