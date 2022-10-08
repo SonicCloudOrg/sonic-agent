@@ -20,7 +20,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.RemoteDebugLauncher;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
@@ -339,10 +338,6 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
                 forwardView.put("msg", "forwardView");
-                if (RemoteDebugLauncher.launcher == null || (!RemoteDebugLauncher.launcher.isAlive())) {
-                    RemoteDebugLauncher.startChromeDebugger();
-                }
-                forwardView.put("chromePort", RemoteDebugLauncher.debugPort);
                 forwardView.put("detail", AndroidDeviceBridgeTool.getWebView(iDevice));
                 BytesTool.sendText(session, forwardView.toJSONString());
                 break;

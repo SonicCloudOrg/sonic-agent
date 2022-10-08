@@ -16,7 +16,6 @@
  */
 package org.cloud.sonic.agent.tools;
 
-import org.cloud.sonic.agent.automation.RemoteDebugLauncher;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.transport.TransportConnectionThread;
@@ -79,7 +78,6 @@ public class LaunchTool implements ApplicationRunner {
 
     @PreDestroy
     public void destroy() {
-        RemoteDebugLauncher.close();
         for (String key : GlobalProcessMap.getMap().keySet()) {
             Process ps = GlobalProcessMap.getMap().get(key);
             ps.children().forEach(ProcessHandle::destroy);
