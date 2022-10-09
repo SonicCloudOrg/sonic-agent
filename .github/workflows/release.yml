@@ -60,6 +60,14 @@ jobs:
         run: cp -r target/sonic-agent-${{ matrix.platform }}.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
       - name: copy
         run: cp -r config/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
+      - name: sas-download
+        uses: robinraju/release-downloader@v1.4
+        with:
+          repository: SonicCloudOrg/sonic-android-supply
+          latest: true
+          fileName: "*"
+      - name: sas-untar
+        run: tar zxvf *_${{matrix.depend}}.tar.gz && rm *_${{matrix.depend}}.tar.gz && mv sas${{matrix.tail}} sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins/sonic-android-supply${{matrix.tail}}
       - name: sgm-download
         uses: robinraju/release-downloader@v1.4
         with:

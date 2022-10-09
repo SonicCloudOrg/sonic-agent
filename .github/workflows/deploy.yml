@@ -27,6 +27,14 @@ jobs:
         run: ver=${{ steps.previoustag.outputs.tag }} && new_ver=${ver:1} && sed -i "s/SONIC_VERSION/${new_ver}/g" pom.xml
       - name: login docker hub
         run: echo "${{ secrets.ACCESS_TOKEN }}" | docker login -u zhouyixun --password-stdin
+      - name: sas-download
+        uses: robinraju/release-downloader@v1.4
+        with:
+          repository: SonicCloudOrg/sonic-android-supply
+          latest: true
+          fileName: "*_linux_x86_64.tar.gz"
+      - name: sas
+        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && rm plugins/sonic-android-supply* && mv sas plugins/sonic-android-supply
       - name: sgm-download
         uses: robinraju/release-downloader@v1.4
         with:
