@@ -78,7 +78,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
 
     public void init() {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
-        if (ver.size() == 0 || !ver.get(0).equals(sibVersion)) {
+        if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {
             logger.info(String.format("Start sonic-ios-bridge failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
             System.exit(0);
         }
