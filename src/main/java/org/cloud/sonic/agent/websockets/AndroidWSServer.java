@@ -20,10 +20,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.RemoteDebugLauncher;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
+import org.cloud.sonic.agent.bridge.android.AndroidSupplyTool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
@@ -67,8 +67,6 @@ public class AndroidWSServer implements IAndroidWSServer {
     private String key;
     @Value("${sonic.agent.port}")
     private int port;
-    @Value("${modules.android.use-adbkit}")
-    private boolean isEnableAdbKit;
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
     private List<Session> NotStopSession = new ArrayList<>();
     @Autowired
@@ -240,38 +238,7 @@ public class AndroidWSServer implements IAndroidWSServer {
 
         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> AndroidDeviceBridgeTool.pushYadb(iDevice));
 
-        if (isEnableAdbKit) {
-            String processName = String.format("process-%s-adbkit", udId);
-            if (GlobalProcessMap.getMap().get(processName) != null) {
-                Process ps = GlobalProcessMap.getMap().get(processName);
-                ps.children().forEach(ProcessHandle::destroy);
-                ps.destroy();
-            }
-            try {
-                String system = System.getProperty("os.name").toLowerCase();
-                Process ps = null;
-                int port = PortTool.getPort();
-                String command = String.format("adbkit usb-device-to-tcp -p %d %s", port, udId);
-                if (system.contains("win")) {
-                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
-                } else if (system.contains("linux") || system.contains("mac")) {
-                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
-                }
-                GlobalProcessMap.getMap().put(processName, ps);
-                JSONObject adbkit = new JSONObject();
-                adbkit.put("msg", "adbkit");
-                adbkit.put("isEnable", true);
-                adbkit.put("port", port);
-                BytesTool.sendText(session, adbkit.toJSONString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            JSONObject adbkit = new JSONObject();
-            adbkit.put("msg", "adbkit");
-            adbkit.put("isEnable", false);
-            BytesTool.sendText(session, adbkit.toJSONString());
-        }
+        AndroidSupplyTool.startShare(udId, session);
 
         if (isAutoInit == 1) {
             openDriver(iDevice, session);
@@ -339,10 +306,6 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "forwardView": {
                 JSONObject forwardView = new JSONObject();
                 forwardView.put("msg", "forwardView");
-                if (RemoteDebugLauncher.launcher == null || (!RemoteDebugLauncher.launcher.isAlive())) {
-                    RemoteDebugLauncher.startChromeDebugger();
-                }
-                forwardView.put("chromePort", RemoteDebugLauncher.debugPort);
                 forwardView.put("detail", AndroidDeviceBridgeTool.getWebView(iDevice));
                 BytesTool.sendText(session, forwardView.toJSONString());
                 break;
@@ -599,14 +562,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
             AndroidDeviceBridgeTool.clearProxy(iDevice);
             AndroidDeviceBridgeTool.clearWebView(iDevice);
-            if (isEnableAdbKit) {
-                String processName = String.format("process-%s-adbkit", iDevice.getSerialNumber());
-                if (GlobalProcessMap.getMap().get(processName) != null) {
-                    Process ps = GlobalProcessMap.getMap().get(processName);
-                    ps.children().forEach(ProcessHandle::destroy);
-                    ps.destroy();
-                }
-            }
+            AndroidSupplyTool.stopShare(iDevice.getSerialNumber());
             SGMTool.stopProxy(iDevice.getSerialNumber());
             AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         }

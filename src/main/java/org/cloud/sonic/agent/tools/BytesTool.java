@@ -6,8 +6,11 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author ZhouYiXun
@@ -107,4 +110,26 @@ public class BytesTool {
         return Integer.parseInt(m.replaceAll("").trim());
     }
 
+    public static boolean versionCheck(String target, String local) {
+        int[] targetParse = parseVersion(target);
+        int[] localParse = parseVersion(local);
+        if (targetParse[0] < localParse[0]) {
+            return true;
+        }
+        if (targetParse[0] == localParse[0]) {
+            if (targetParse[1] < localParse[1]) {
+                return true;
+            }
+            if (targetParse[1] == localParse[1]) {
+                if (targetParse[2] <= localParse[2]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static int[] parseVersion(String s) {
+        return Arrays.asList(s.split("\\.")).stream().mapToInt(Integer::parseInt).toArray();
+    }
 }

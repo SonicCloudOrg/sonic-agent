@@ -16,17 +16,12 @@ modules:
   android:
     # 是否开启安卓模块
     enable: ${ANDROID_ENABLE:true}
-    # 是否开启远程adb调试功能
-    use-adbkit: ${USE_ADBKIT:true}
+    # 是否开启sonic-android-supply远程adb调试功能
+    use-sas: ${USE_SAS:true}
   ios:
     # 如果不需要连接iOS设备，请将true改为false。开启的windows用户请确保本机已安装iTunes
     enable: ${IOS_ENABLE:true}
     # 替换为你自己使用的wda的bundleId，如果没有.xctrunner后缀会自动补全，建议使用公司的开发者证书
     wda-bundle-id: ${WDA_BUNDLE_ID:com.facebook.WebDriverAgentRunner.xctrunner}
-  webview:
-    # 是否开启在线webView调试功能
-    enable: ${WEBVIEW_ENABLE:true}
-    # 谷歌调试端口，一般不需要修改（默认0使用随机端口，如果需要开启防火墙给外部使用，请设置固定端口如7778）
-    remote-debug-port: ${CHROME_REMOTE_DEBUG_PORT:0}
   sgm:
     enable: ${SGM_ENABLE:true}

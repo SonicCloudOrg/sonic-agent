@@ -42,17 +42,9 @@ public class EnvCheckTool {
     public static String sdkPath = "unknown \n";
     public static String adbPath = "unknown \n";
     public static String adbVersion = "unknown \n";
-    public static String nodePath = "unknown \n";
-    public static String nodeVersion = "unknown \n";
-    public static String npmPath = "unknown \n";
-    public static String npmVersion = "unknown \n";
-    public static String adbKitPath = "unknown \n";
-    public static String adbKitVersion = "unknown \n";
 
     @Value("${modules.android.enable}")
     public boolean androidEnAble;
-    @Value("${modules.android.use-adbkit}")
-    public boolean adbkitEnAble;
 
     static {
         system = System.getProperty("os.name").toLowerCase();
@@ -65,13 +57,6 @@ public class EnvCheckTool {
             if (androidEnAble) {
                 checkSDK();
                 checkAdb();
-            }
-            if (adbkitEnAble) {
-                checkNode();
-                checkNpm();
-            }
-            if (adbkitEnAble) {
-                checkAdbKit();
             }
             checkFiles();
         } catch (Exception e) {
@@ -140,57 +125,6 @@ public class EnvCheckTool {
             System.out.println(e.getMessage());
             printFail(type);
             throw new RuntimeException(String.format("提示：请确保安卓SDK目录下的platform-tools有adb工具"));
-        }
-        printPass(type);
-    }
-
-    /**
-     * 检查adbkit环境
-     */
-    public void checkAdbKit() throws IOException, InterruptedException {
-        String type = "Check adbkit env (Next version deprecated) ";
-        String commandStr = "adbkit -V";
-        try {
-            adbKitPath = findCommandPath("adbkit");
-            adbKitVersion = exeCmd(false, commandStr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            printFail(type);
-            throw new RuntimeException(String.format("提示：可使用[npm i -g adbkit]安装"));
-        }
-        printPass(type);
-    }
-
-    /**
-     * 检查node环境
-     */
-    public void checkNode() throws IOException, InterruptedException {
-        String type = "Check Node env (Next version deprecated) ";
-        String commandStr = "node -v";
-        try {
-            nodePath = findCommandPath("node");
-            nodeVersion = exeCmd(false, commandStr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            printFail(type);
-            throw new RuntimeException(String.format("提示：可前往https://nodejs.org/zh-cn/下载"));
-        }
-        printPass(type);
-    }
-
-    /**
-     * 检查npm环境
-     */
-    public void checkNpm() throws IOException, InterruptedException {
-        String type = "Check npm env (Next version deprecated) ";
-        String commandStr = "npm -v";
-        try {
-            npmPath = findCommandPath("npm");
-            npmVersion = exeCmd(false, commandStr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            printFail(type);
-            throw new RuntimeException(String.format("提示：可前往https://nodejs.org/zh-cn/下载"));
         }
         printPass(type);
     }
@@ -277,12 +211,6 @@ public class EnvCheckTool {
         return printInfo("ANDROID_HOME: ") + sdkPath + "\n" +
                 printInfo("ADB path: ") + adbPath +
                 printInfo("ADB version: ") + adbVersion +
-                printInfo("Node path: ") + nodePath +
-                printInfo("Node version: ") + nodeVersion +
-                printInfo("npm path: ") + npmPath +
-                printInfo("npm version: ") + npmVersion +
-                printInfo("adbkit path: ") + adbKitPath +
-                printInfo("adbkit version: ") + adbKitVersion +
                 printInfo("System: ") + system;
     }
 }

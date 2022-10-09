@@ -22,13 +22,13 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.enums.ConditionEnum;
+import org.cloud.sonic.agent.common.enums.SonicEnum;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.common.enums.ConditionEnum;
-import org.cloud.sonic.agent.common.enums.SonicEnum;
 import org.cloud.sonic.agent.common.models.HandleDes;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
@@ -64,7 +64,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
-import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 import static org.testng.Assert.*;
 
 /**
@@ -76,7 +75,6 @@ public class IOSStepHandler {
     public LogUtil log = new LogUtil();
     private IOSDriver iosDriver;
     private JSONObject globalParams = new JSONObject();
-    private String testPackage = "";
     private String udId = "";
 
     private int status = ResultDetailStatus.PASS;
@@ -324,7 +322,6 @@ public class IOSStepHandler {
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleDes.setDetail("App包名： " + appPackage);
         try {
-            testPackage = appPackage;
             iosDriver.appActivate(appPackage);
         } catch (Exception e) {
             handleDes.setE(e);
@@ -438,12 +435,13 @@ public class IOSStepHandler {
     }
 
     public void longPressPoint(HandleDes handleDes, String des, String xy, int time) {
-        int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-        int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-        handleDes.setStepDes("长按" + des);
-        handleDes.setDetail("长按坐标" + time + "毫秒 (" + x + "," + y + ")");
         try {
-            iosDriver.longPress(x, y, time);
+            double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
+            double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
+            int[] point = computedPoint(x, y);
+            handleDes.setStepDes("长按" + des);
+            handleDes.setDetail("长按坐标" + time + "毫秒 (" + point[0] + "," + point[1] + ")");
+            iosDriver.longPress(point[0], point[1], time);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -460,26 +458,29 @@ public class IOSStepHandler {
     }
 
     public void tap(HandleDes handleDes, String des, String xy) {
-        int x = Integer.parseInt(xy.substring(0, xy.indexOf(",")));
-        int y = Integer.parseInt(xy.substring(xy.indexOf(",") + 1));
-        handleDes.setStepDes("点击" + des);
-        handleDes.setDetail("点击坐标(" + x + "," + y + ")");
         try {
-            iosDriver.tap(x, y);
+            double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
+            double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
+            int[] point = computedPoint(x, y);
+            handleDes.setStepDes("点击" + des);
+            handleDes.setDetail("点击坐标(" + point[0] + "," + point[1] + ")");
+            iosDriver.tap(point[0], point[1]);
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
     public void swipePoint(HandleDes handleDes, String des1, String xy1, String des2, String xy2) {
-        int x1 = Integer.parseInt(xy1.substring(0, xy1.indexOf(",")));
-        int y1 = Integer.parseInt(xy1.substring(xy1.indexOf(",") + 1));
-        int x2 = Integer.parseInt(xy2.substring(0, xy2.indexOf(",")));
-        int y2 = Integer.parseInt(xy2.substring(xy2.indexOf(",") + 1));
-        handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
-        handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
         try {
-            iosDriver.swipe(x1, y1, x2, y2);
+            double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
+            double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
+            int[] point1 = computedPoint(x1, y1);
+            double x2 = Double.parseDouble(xy2.substring(0, xy2.indexOf(",")));
+            double y2 = Double.parseDouble(xy2.substring(xy2.indexOf(",") + 1));
+            int[] point2 = computedPoint(x2, y2);
+            handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
+            handleDes.setDetail("拖动坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
+            iosDriver.swipe(point1[0], point1[1], point2[0], point2[1]);
         } catch (Exception e) {
             handleDes.setE(e);
         }
@@ -843,6 +844,15 @@ public class IOSStepHandler {
 
     private int holdTime = 0;
 
+    private int[] computedPoint(double x, double y) throws SonicRespException {
+        if (x <= 1 && y <= 1) {
+            WindowSize windowSize = iosDriver.getWindowSize();
+            x = windowSize.getWidth() * x;
+            y = windowSize.getHeight() * y;
+        }
+        return new int[]{(int) x, (int) y};
+    }
+
     public void runScript(HandleDes handleDes, String script, String type) {
         handleDes.setStepDes("Run Custom Scripts");
         handleDes.setDetail("Script: <br>" + script);
@@ -908,9 +918,6 @@ public class IOSStepHandler {
                 click(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
-//            case "getTitle":
-//                getTitle(handleDes, step.getString("content"));
-//                break;
             case "sendKeys":
                 sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
