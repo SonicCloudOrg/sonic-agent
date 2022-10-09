@@ -10,17 +10,15 @@ sonic:
   saa: 2.0.1
   sgm: 1.3.3
   sib: 1.2.0
-  sas: 0.0.1
+  sas: 0.0.2
   saus: 5.7.0
 
 logging:
   file:
-    #日志路径
     name: logs/sonic-agent.log
   logback:
     rollingpolicy:
       clean-history-on-start: true
-      #保留天数
       max-history: 3
   pattern:
     console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
