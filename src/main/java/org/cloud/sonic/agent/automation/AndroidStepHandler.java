@@ -1396,6 +1396,17 @@ public class AndroidStepHandler {
         holdTime = time;
     }
 
+    public void sendKeyForce(HandleDes handleDes, String text) {
+        text = TextHandler.replaceTrans(text, globalParams);
+        handleDes.setStepDes("键盘输入文本");
+        handleDes.setDetail("键盘输入" + text);
+        try {
+            androidDriver.sendKeys(text);
+        } catch (SonicRespException e) {
+            handleDes.setE(e);
+        }
+    }
+
     private int holdTime = 0;
 
     private int[] computedPoint(double x, double y) {
@@ -1586,6 +1597,9 @@ public class AndroidStepHandler {
             case "getTextValue":
                 globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
+                break;
+            case "sendKeyForce":
+                sendKeyForce(handleDes, step.getString("content"));
                 break;
             case "monkey":
                 runMonkey(handleDes, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
