@@ -69,9 +69,6 @@ import javax.imageio.stream.FileImageOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -86,7 +83,7 @@ public class AndroidStepHandler {
     public LogUtil log = new LogUtil();
     private AndroidDriver androidDriver;
     private ChromeDriver chromeDriver;
-    private PocoDriver pocoDriver;
+    private PocoDriver pocoDriver = null;
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
@@ -144,6 +141,7 @@ public class AndroidStepHandler {
             }
             if (pocoDriver != null) {
                 pocoDriver.closeDriver();
+                pocoDriver = null;
             }
             if (androidDriver != null) {
                 androidDriver.closeDriver();
@@ -1319,7 +1317,12 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         if (pocoDriver != null) {
             pocoDriver.closeDriver();
+            pocoDriver = null;
         }
+    }
+
+    public PocoDriver getPocoDriver() {
+        return pocoDriver;
     }
 
     public WebElement findWebEle(String selector, String pathValue) {

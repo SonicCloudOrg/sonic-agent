@@ -34,8 +34,8 @@ import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tools.*;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
-import org.cloud.sonic.agent.tools.poco.PocoTool;
 import org.cloud.sonic.agent.transport.TransportWorker;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -271,15 +271,6 @@ public class AndroidWSServer implements IAndroidWSServer {
         logger.info("{} send: {}", session.getId(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
-            case "poco": {
-                AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                    JSONObject poco = new JSONObject();
-                    poco.put("result", PocoTool.getSocketResult(iDevice.getSerialNumber(), PlatformType.ANDROID, msg.getString("detail")));
-                    poco.put("msg", "poco");
-                    BytesTool.sendText(session, poco.toJSONString());
-                });
-                break;
-            }
             case "clearProxy":
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
                 break;
@@ -381,6 +372,23 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "debug":
                 AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                 switch (msg.getString("detail")) {
+                    case "poco": {
+                        if (androidStepHandler.getPocoDriver() == null) {
+                            androidStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
+                        }
+                        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                            JSONObject poco = new JSONObject();
+                            try {
+                                poco.put("result", androidStepHandler.getPocoDriver().getPageSourceForJson());
+                            } catch (SonicRespException e) {
+                                poco.put("result", "");
+                                e.printStackTrace();
+                            }
+                            poco.put("msg", "poco");
+                            BytesTool.sendText(session, poco.toJSONString());
+                        });
+                        break;
+                    }
                     case "runStep": {
                         JSONObject jsonDebug = new JSONObject();
                         jsonDebug.put("msg", "findSteps");
