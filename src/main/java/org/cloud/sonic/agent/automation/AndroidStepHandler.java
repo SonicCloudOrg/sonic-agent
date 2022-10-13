@@ -1229,7 +1229,9 @@ public class AndroidStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
-    public void startPocoDriver(String engine, int port) {
+    public void startPocoDriver(HandleDes handleDes, String engine, int port) {
+        handleDes.setStepDes("启动PocoDriver");
+        handleDes.setDetail("");
         int newPort = PortTool.getPort();
         AndroidDeviceBridgeTool.forward(iDevice, newPort, port);
         pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), newPort);
@@ -1264,7 +1266,7 @@ public class AndroidStepHandler {
             PocoElement w = findPocoEle(value);
             if (w != null) {
                 //  w.getPayload().getPos();
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", point[0], point[1]));
+//                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", point[0], point[1]));
             }
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1278,14 +1280,14 @@ public class AndroidStepHandler {
             PocoElement w = findPocoEle(value);
             if (w != null) {
                 //  w.getPayload().getPos();
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", point[0], point[1], point[0], point[1], time));
+//                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", point[0], point[1], point[0], point[1], time));
             }
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
-    public void pocoLongPress(HandleDes handleDes, String des, String value, String des2, String value2) {
+    public void pocoSwipe(HandleDes handleDes, String des, String value, String des2, String value2) {
         handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
         handleDes.setDetail("");
         try {
@@ -1293,7 +1295,7 @@ public class AndroidStepHandler {
             PocoElement w2 = findPocoEle(value2);
             if (w1 != null && w2 != null) {
                 //  w.getPayload().getPos();
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+//                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
             }
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1735,6 +1737,34 @@ public class AndroidStepHandler {
                 break;
             case "runScript":
                 runScript(handleDes, step.getString("content"), step.getString("text"));
+                break;
+            case "startPocoDriver":
+                startPocoDriver(handleDes, step.getString("content"), step.getInteger("text"));
+                break;
+            case "isExistPocoEle":
+                isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+                break;
+            case "pocoClick":
+                pocoClick(handleDes, eleList.getJSONObject(0).getString("eleName")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "pocoLongPress":
+                pocoLongPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                        , Integer.parseInt(step.getString("content")));
+                break;
+            case "pocoSwipe":
+                pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+                break;
+            case "freezeSource":
+                freezeSource(handleDes);
+                break;
+            case "thawSource":
+                thawSource(handleDes);
+                break;
+            case "closePocoDriver":
+                closePocoDriver(handleDes);
                 break;
         }
         switchType(step, handleDes);
