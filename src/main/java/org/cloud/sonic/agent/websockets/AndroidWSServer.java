@@ -373,10 +373,8 @@ public class AndroidWSServer implements IAndroidWSServer {
                 AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
                 switch (msg.getString("detail")) {
                     case "poco": {
-                        if (androidStepHandler.getPocoDriver() == null) {
-                            androidStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
-                        }
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                            androidStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
                             JSONObject poco = new JSONObject();
                             try {
                                 poco.put("result", androidStepHandler.getPocoDriver().getPageSourceForJson());
@@ -386,6 +384,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             }
                             poco.put("msg", "poco");
                             BytesTool.sendText(session, poco.toJSONString());
+                            androidStepHandler.closePocoDriver(new HandleDes());
                         });
                         break;
                     }
