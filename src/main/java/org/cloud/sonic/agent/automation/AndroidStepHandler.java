@@ -38,6 +38,7 @@ import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tests.script.GroovyScript;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -46,6 +47,9 @@ import org.cloud.sonic.driver.android.enmus.AndroidSelector;
 import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
+import org.cloud.sonic.driver.poco.PocoDriver;
+import org.cloud.sonic.driver.poco.enums.PocoEngine;
+import org.cloud.sonic.driver.poco.models.PocoElement;
 import org.cloud.sonic.vision.cv.AKAZEFinder;
 import org.cloud.sonic.vision.cv.SIFTFinder;
 import org.cloud.sonic.vision.cv.SimilarityChecker;
@@ -82,6 +86,7 @@ public class AndroidStepHandler {
     public LogUtil log = new LogUtil();
     private AndroidDriver androidDriver;
     private ChromeDriver chromeDriver;
+    private PocoDriver pocoDriver;
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
@@ -136,6 +141,9 @@ public class AndroidStepHandler {
         try {
             if (chromeDriver != null) {
                 chromeDriver.quit();
+            }
+            if (pocoDriver != null) {
+                pocoDriver.closeDriver();
             }
             if (androidDriver != null) {
                 androidDriver.closeDriver();
@@ -1221,7 +1229,98 @@ public class AndroidStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
-    public WebElement findWebEle(String selector, String pathValue) throws SonicRespException {
+    public void startPocoDriver(String engine, int port) {
+        int newPort = PortTool.getPort();
+        AndroidDeviceBridgeTool.forward(iDevice, newPort, port);
+        pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), newPort);
+    }
+
+    public PocoElement findPocoEle(String expression) throws SonicRespException {
+        return pocoDriver.findElement(expression);
+    }
+
+    public void isExistPocoEle(HandleDes handleDes, String des, String value, boolean expect) {
+        handleDes.setStepDes("判断控件 " + des + " 是否存在");
+        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+        boolean hasEle = false;
+        try {
+            PocoElement w = findPocoEle(value);
+            if (w != null) {
+                hasEle = true;
+            }
+        } catch (Exception e) {
+        }
+        try {
+            assertEquals(hasEle, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void pocoClick(HandleDes handleDes, String des, String value) {
+        handleDes.setStepDes("点击" + des);
+        handleDes.setDetail("");
+        try {
+            PocoElement w = findPocoEle(value);
+            if (w != null) {
+                //  w.getPayload().getPos();
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", point[0], point[1]));
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void pocoLongPress(HandleDes handleDes, String des, String value, int time) {
+        handleDes.setStepDes("长按" + des);
+        handleDes.setDetail("");
+        try {
+            PocoElement w = findPocoEle(value);
+            if (w != null) {
+                //  w.getPayload().getPos();
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", point[0], point[1], point[0], point[1], time));
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void pocoLongPress(HandleDes handleDes, String des, String value, String des2, String value2) {
+        handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
+        handleDes.setDetail("");
+        try {
+            PocoElement w1 = findPocoEle(value);
+            PocoElement w2 = findPocoEle(value2);
+            if (w1 != null && w2 != null) {
+                //  w.getPayload().getPos();
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void freezeSource(HandleDes handleDes) {
+        handleDes.setStepDes("冻结控件树");
+        handleDes.setDetail("");
+        pocoDriver.freezeSource();
+    }
+
+    public void thawSource(HandleDes handleDes) {
+        handleDes.setStepDes("解冻控件树");
+        handleDes.setDetail("");
+        pocoDriver.thawSource();
+    }
+
+    public void closePocoDriver(HandleDes handleDes) {
+        handleDes.setStepDes("关闭PocoDriver");
+        handleDes.setDetail("");
+        if (pocoDriver != null) {
+            pocoDriver.closeDriver();
+        }
+    }
+
+    public WebElement findWebEle(String selector, String pathValue) {
         WebElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
