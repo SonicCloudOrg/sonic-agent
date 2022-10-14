@@ -24,10 +24,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
+import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
+import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
+import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
@@ -57,6 +62,8 @@ public class TransportClient extends WebSocketClient {
     String host = String.valueOf(SpringTool.getPropertiesValue("sonic.agent.host"));
     String version = String.valueOf(SpringTool.getPropertiesValue("spring.version"));
     Integer port = Integer.valueOf(SpringTool.getPropertiesValue("sonic.agent.port"));
+    Boolean isEnableAndroid = Boolean.valueOf(SpringTool.getPropertiesValue("modules.android.enable"));
+    Boolean isEnableIOS = Boolean.valueOf(SpringTool.getPropertiesValue("modules.ios.enable"));
 
     public TransportClient(URI serverUri) {
         super(serverUri);
@@ -92,6 +99,28 @@ public class TransportClient extends WebSocketClient {
                         agentInfo.put("systemType", System.getProperty("os.name"));
                         agentInfo.put("host", host);
                         TransportWorker.client.send(agentInfo.toJSONString());
+                        if (isEnableAndroid) {
+                            IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
+                            for (IDevice d : iDevices) {
+                                String status = AndroidDeviceManagerMap.getMap().get(d.getSerialNumber());
+                                if (status != null) {
+                                    AndroidDeviceLocalStatus.send(d.getSerialNumber(), status);
+                                } else {
+                                    AndroidDeviceLocalStatus.send(d.getSerialNumber(), d.getState() == null ? null : d.getState().toString());
+                                }
+                            }
+                        }
+                        if (isEnableIOS) {
+                            List<String> udIds = SibTool.getDeviceList();
+                            for (String u : udIds) {
+                                String status = IOSDeviceManagerMap.getMap().get(u);
+                                if (status != null) {
+                                    IOSDeviceLocalStatus.send(u, status);
+                                } else {
+                                    IOSDeviceLocalStatus.send(u, DeviceStatus.ONLINE);
+                                }
+                            }
+                        }
                     } else {
                         TransportWorker.isKeyAuth = false;
                         log.info("server auth failed!");
@@ -179,7 +208,7 @@ public class TransportClient extends WebSocketClient {
         if (TransportWorker.isKeyAuth) {
             log.info("Server disconnected. Retry in 10s...");
         }
-        if(TransportWorker.client == this) {
+        if (TransportWorker.client == this) {
             TransportWorker.client = null;
         }
     }
