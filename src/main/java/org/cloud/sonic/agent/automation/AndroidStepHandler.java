@@ -46,6 +46,7 @@ import org.cloud.sonic.driver.android.AndroidDriver;
 import org.cloud.sonic.driver.android.enmus.AndroidSelector;
 import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.models.WindowSize;
+import org.cloud.sonic.driver.common.tool.PocoXYTransformer;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.poco.PocoDriver;
 import org.cloud.sonic.driver.poco.enums.PocoEngine;
@@ -87,6 +88,7 @@ public class AndroidStepHandler {
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
+    private double[] screenOffset = {0,0};
 
     public LogUtil getLog() {
         return log;
@@ -1263,8 +1265,9 @@ public class AndroidStepHandler {
         try {
             PocoElement w = findPocoEle(value);
             if (w != null) {
-                //  w.getPayload().getPos();
-//                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", point[0], point[1]));
+                  List<Float> pos = w.getPayload().getPos();
+                  int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
+                  AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", realCoordinates[0], realCoordinates[1]));
             }
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1277,8 +1280,9 @@ public class AndroidStepHandler {
         try {
             PocoElement w = findPocoEle(value);
             if (w != null) {
-                //  w.getPayload().getPos();
-//                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", point[0], point[1], point[0], point[1], time));
+                List<Float> pos = w.getPayload().getPos();
+                int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates[0], realCoordinates[1], realCoordinates[0], realCoordinates[1], time));
             }
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1292,12 +1296,36 @@ public class AndroidStepHandler {
             PocoElement w1 = findPocoEle(value);
             PocoElement w2 = findPocoEle(value2);
             if (w1 != null && w2 != null) {
-                //  w.getPayload().getPos();
-//                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+                List<Float> pos1 = w1.getPayload().getPos();
+                int[] realCoordinates1 = getTheRealCoordinatesOfPoco(pos1.get(0), pos1.get(1));
+
+                List<Float> pos2 = w1.getPayload().getPos();
+                int[] realCoordinate2 = getTheRealCoordinatesOfPoco(pos2.get(0), pos2.get(1));
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1], 300));
             }
         } catch (Exception e) {
             handleDes.setE(e);
         }
+    }
+
+    public void setOffset(int offsetWidth,int offsetHeight){
+        this.screenOffset[0] = offsetWidth;
+        this.screenOffset[1] = offsetHeight;
+    }
+
+    public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
+
+        int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+
+        double[] normalizedInADBCoordinate = PocoXYTransformer.PocoTransformerVertical(pocoX, pocoY, 1.0, 1.0, screenOrientation*90);
+
+        int[] pos = computedPoint(normalizedInADBCoordinate[0], normalizedInADBCoordinate[1]);
+        // x
+        pos[0] += this.screenOffset[0];
+        // y
+        pos[1] += this.screenOffset[1];
+
+        return pos;
     }
 
     public void freezeSource(HandleDes handleDes) {
