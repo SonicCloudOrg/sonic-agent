@@ -486,11 +486,11 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
-    public void getDisplayOfAllScreen(IDevice iDevice, HashMap<String, Object> info) {
+    public static int[] getDisplayOfAllScreen(IDevice iDevice, int width, int height, int ori) {
         String out = executeCommand(iDevice, "dumpsys window windows");
         String[] windows = out.split("Window #");
         String packageName = getCurrentPackage(iDevice);
-        int offsetx = 0, offsety = 0, width = (int) info.get("width"), height = (int) info.get("height");
+        int offsetx = 0, offsety = 0;
         if (packageName != null) {
             for (String window : windows) {
                 if (window.contains("package=" + packageName)) {
@@ -504,7 +504,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                         width = Integer.parseInt(m.group(3));
                         height = Integer.parseInt(m.group(4));
 
-                        int ori = (int) info.get("orientation");
                         if (ori == 1 || ori == 3) {
                             int tempOffsetX = offsetx;
                             int tempWidth = width;
@@ -514,17 +513,13 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                             width = height;
                             height = tempWidth;
                         }
-
-                        width -= offsetx;
-                        height -= offsety;
+//                        width -= offsetx;
+//                        height -= offsety;
                     }
                 }
             }
         }
-        info.put("offset_x", offsetx);
-        info.put("offset_y", offsety);
-        info.put("offset_width", width);
-        info.put("offset_height", height);
+        return new int[]{offsetx, offsety};
     }
 
     public static String getCurrentPackage(IDevice iDevice) {

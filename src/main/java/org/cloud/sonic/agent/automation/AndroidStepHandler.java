@@ -88,7 +88,7 @@ public class AndroidStepHandler {
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
-    private double[] screenOffset = {0,0};
+    private int[] screenOffset = {0, 0};
 
     public LogUtil getLog() {
         return log;
@@ -1240,9 +1240,9 @@ public class AndroidStepHandler {
         try {
             PocoElement w = findPocoEle(value);
             if (w != null) {
-                  List<Float> pos = w.getPayload().getPos();
-                  int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
-                  AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", realCoordinates[0], realCoordinates[1]));
+                List<Float> pos = w.getPayload().getPos();
+                int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", realCoordinates[0], realCoordinates[1]));
             }
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1283,16 +1283,24 @@ public class AndroidStepHandler {
         }
     }
 
-    public void setOffset(int offsetWidth,int offsetHeight){
-        this.screenOffset[0] = offsetWidth;
-        this.screenOffset[1] = offsetHeight;
+    public void setOffset(int ori) {
+        try {
+            this.screenOffset = AndroidDeviceBridgeTool
+                    .getDisplayOfAllScreen(iDevice, androidDriver.getWindowSize().getWidth()
+                            , androidDriver.getWindowSize().getHeight()
+                            , ori);
+        } catch (SonicRespException e) {
+            e.printStackTrace();
+        }
     }
 
     public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
 
         int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
 
-        double[] normalizedInADBCoordinate = PocoXYTransformer.PocoTransformerVertical(pocoX, pocoY, 1.0, 1.0, screenOrientation*90);
+        setOffset(screenOrientation);
+
+        double[] normalizedInADBCoordinate = PocoXYTransformer.PocoTransformerVertical(pocoX, pocoY, 1.0, 1.0, screenOrientation * 90);
 
         int[] pos = computedPoint(normalizedInADBCoordinate[0], normalizedInADBCoordinate[1]);
         // x
