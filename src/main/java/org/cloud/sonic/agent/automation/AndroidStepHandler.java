@@ -89,6 +89,8 @@ public class AndroidStepHandler {
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
     private int[] screenOffset = {0, 0};
+    private int pocoPort = 0;
+    private int targetPort = 0;
 
     public LogUtil getLog() {
         return log;
@@ -1207,9 +1209,12 @@ public class AndroidStepHandler {
     public void startPocoDriver(HandleDes handleDes, String engine, int port) {
         handleDes.setStepDes("启动PocoDriver");
         handleDes.setDetail("");
-        int newPort = PortTool.getPort();
-        AndroidDeviceBridgeTool.forward(iDevice, newPort, port);
-        pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), newPort);
+        if (pocoPort == 0) {
+            pocoPort = PortTool.getPort();
+        }
+        targetPort = port;
+        AndroidDeviceBridgeTool.forward(iDevice, pocoPort, targetPort);
+        pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), pocoPort);
     }
 
     public PocoElement findPocoEle(String expression) throws SonicRespException {
@@ -1236,7 +1241,7 @@ public class AndroidStepHandler {
 
     public void pocoClick(HandleDes handleDes, String des, String value) {
         handleDes.setStepDes("点击" + des);
-        handleDes.setDetail("");
+        handleDes.setDetail("点击 " + value);
         try {
             PocoElement w = findPocoEle(value);
             if (w != null) {
@@ -1251,7 +1256,7 @@ public class AndroidStepHandler {
 
     public void pocoLongPress(HandleDes handleDes, String des, String value, int time) {
         handleDes.setStepDes("长按" + des);
-        handleDes.setDetail("");
+        handleDes.setDetail("长按 " + value);
         try {
             PocoElement w = findPocoEle(value);
             if (w != null) {
@@ -1266,7 +1271,7 @@ public class AndroidStepHandler {
 
     public void pocoSwipe(HandleDes handleDes, String des, String value, String des2, String value2) {
         handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
-        handleDes.setDetail("");
+        handleDes.setDetail("拖拽 " + value + " 到 " + value2);
         try {
             PocoElement w1 = findPocoEle(value);
             PocoElement w2 = findPocoEle(value2);
@@ -1328,6 +1333,7 @@ public class AndroidStepHandler {
         handleDes.setDetail("");
         if (pocoDriver != null) {
             pocoDriver.closeDriver();
+            AndroidDeviceBridgeTool.removeForward(iDevice, pocoPort, targetPort);
             pocoDriver = null;
         }
     }
