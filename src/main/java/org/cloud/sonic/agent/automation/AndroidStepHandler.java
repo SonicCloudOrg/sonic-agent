@@ -1289,14 +1289,12 @@ public class AndroidStepHandler {
     }
 
     public void setOffset(int ori) {
-        try {
-            this.screenOffset = AndroidDeviceBridgeTool
-                    .getDisplayOfAllScreen(iDevice, androidDriver.getWindowSize().getWidth()
-                            , androidDriver.getWindowSize().getHeight()
-                            , ori);
-        } catch (SonicRespException e) {
-            e.printStackTrace();
-        }
+        String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
+        String[] winSize = size.split("x");
+        this.screenOffset = AndroidDeviceBridgeTool
+                .getDisplayOfAllScreen(iDevice, BytesTool.getInt(winSize[0])
+                        , BytesTool.getInt(winSize[1])
+                        , ori);
     }
 
     public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
@@ -1305,9 +1303,9 @@ public class AndroidStepHandler {
 
         setOffset(screenOrientation);
 
-        double[] normalizedInADBCoordinate = PocoXYTransformer.PocoTransformerVertical(pocoX, pocoY, 1.0, 1.0, screenOrientation * 90);
+//        double[] normalizedInADBCoordinate = PocoXYTransformer.PocoTransformerVertical(pocoX, pocoY, 1.0, 1.0, screenOrientation * 90);
 
-        int[] pos = computedPoint(normalizedInADBCoordinate[0], normalizedInADBCoordinate[1]);
+        int[] pos = computedPoint(pocoX, pocoY);
         // x
         pos[0] += this.screenOffset[0];
         // y
