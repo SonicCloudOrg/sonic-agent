@@ -480,7 +480,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                         BytesTool.sendText(session, resultFail.toJSONString());
                                     } else {
                                         result.put("webView", finalAndroidStepHandler.getWebView());
-                                        result.put("activity", finalAndroidStepHandler.getCurrentActivity());
+                                        result.put("activity", AndroidDeviceBridgeTool.getCurrentActivity(iDevice));
                                         BytesTool.sendText(session, result.toJSONString());
                                     }
                                 } catch (Throwable e) {

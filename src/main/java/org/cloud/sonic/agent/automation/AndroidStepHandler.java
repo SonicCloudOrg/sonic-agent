@@ -691,7 +691,7 @@ public class AndroidStepHandler {
 
     public void getActivity(HandleDes handleDes, String expect) {
         expect = TextHandler.replaceTrans(expect, globalParams);
-        String currentActivity = getCurrentActivity();
+        String currentActivity = AndroidDeviceBridgeTool.getCurrentActivity(iDevice);
         handleDes.setStepDes("验证当前Activity");
         handleDes.setDetail("activity：" + currentActivity + "，期望值：" + expect);
         try {
@@ -911,31 +911,6 @@ public class AndroidStepHandler {
         return webView;
     }
 
-    public String getCurrentActivity() {
-        Integer api = Integer.parseInt(iDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
-        String cmd = AndroidDeviceBridgeTool.executeCommand(iDevice,
-                String.format("dumpsys window %s", ((api != null && api >= 29) ? "displays" : "windows")));
-        String result = "";
-        try {
-            String start = cmd.substring(cmd.indexOf("mCurrentFocus="));
-            String end = start.substring(start.indexOf("/") + 1);
-            result = end.substring(0, end.indexOf("}"));
-        } catch (Exception e) {
-        }
-        if (result.length() == 0) {
-            try {
-                String start = cmd.substring(cmd.indexOf("mFocusedApp="));
-                String startCut = start.substring(0, start.indexOf("/"));
-                String activity = startCut.substring(startCut.lastIndexOf(" ") + 1);
-                String end = start.substring(start.indexOf("/") + 1);
-                String endCut = end.substring(0, end.indexOf(" "));
-                result = activity + endCut;
-            } catch (Exception e) {
-            }
-        }
-        return result;
-    }
-
     public void pause(HandleDes handleDes, int time) {
         handleDes.setStepDes("强制等待");
         handleDes.setDetail("等待" + time + " ms");
@@ -1137,7 +1112,7 @@ public class AndroidStepHandler {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                if (!getCurrentActivity().contains(packageName)) {
+                                if (!AndroidDeviceBridgeTool.getCurrentActivity(iDevice).contains(packageName)) {
                                     AndroidDeviceBridgeTool.activateApp(iDevice, packageName);
                                 }
                                 waitTime++;
@@ -1163,7 +1138,7 @@ public class AndroidStepHandler {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            if (blackList.contains(getCurrentActivity())) {
+                            if (blackList.contains(AndroidDeviceBridgeTool.getCurrentActivity(iDevice))) {
                                 AndroidDeviceBridgeTool.executeCommand(iDevice, "input keyevent 4");
                             } else continue;
                             try {
@@ -1171,7 +1146,7 @@ public class AndroidStepHandler {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            if (blackList.contains(getCurrentActivity())) {
+                            if (blackList.contains(AndroidDeviceBridgeTool.getCurrentActivity(iDevice))) {
                                 AndroidDeviceBridgeTool.forceStop(iDevice, packageName);
                             }
                         }
