@@ -1247,7 +1247,10 @@ public class AndroidStepHandler {
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
+                System.out.println(realCoordinates[0] + " " + realCoordinates[1]);
                 AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", realCoordinates[0], realCoordinates[1]));
+            } else {
+                throw new SonicRespException(value + " not found!");
             }
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1263,6 +1266,8 @@ public class AndroidStepHandler {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
                 AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates[0], realCoordinates[1], realCoordinates[0], realCoordinates[1], time));
+            } else {
+                throw new SonicRespException(value + " not found!");
             }
         } catch (Exception e) {
             handleDes.setE(e);
@@ -1279,38 +1284,28 @@ public class AndroidStepHandler {
                 List<Float> pos1 = w1.getPayload().getPos();
                 int[] realCoordinates1 = getTheRealCoordinatesOfPoco(pos1.get(0), pos1.get(1));
 
-                List<Float> pos2 = w1.getPayload().getPos();
+                List<Float> pos2 = w2.getPayload().getPos();
                 int[] realCoordinate2 = getTheRealCoordinatesOfPoco(pos2.get(0), pos2.get(1));
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1], 300));
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1], 800));
+            } else {
+                throw new SonicRespException(value + " or " + value2 + " not found!");
             }
         } catch (Exception e) {
             handleDes.setE(e);
         }
     }
 
-    public void setOffset(int ori) {
-        String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
-        String[] winSize = size.split("x");
-        this.screenOffset = AndroidDeviceBridgeTool
-                .getDisplayOfAllScreen(iDevice, BytesTool.getInt(winSize[0])
-                        , BytesTool.getInt(winSize[1])
-                        , ori);
+    public void setOffset(int offsetWidth,int offsetHeight){
+        this.screenOffset[0] = offsetWidth;
+        this.screenOffset[1] = offsetHeight;
     }
 
     public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
-
-        int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
-
-        setOffset(screenOrientation);
-
-//        double[] normalizedInADBCoordinate = PocoXYTransformer.PocoTransformerVertical(pocoX, pocoY, 1.0, 1.0, screenOrientation * 90);
-
         int[] pos = computedPoint(pocoX, pocoY);
         // x
-        pos[0] += this.screenOffset[0];
+        pos[0] += this.screenOffset[1];
         // y
         pos[1] += this.screenOffset[1];
-
         return pos;
     }
 
@@ -1530,10 +1525,16 @@ public class AndroidStepHandler {
 
     private int[] computedPoint(double x, double y) {
         if (x <= 1 && y <= 1) {
+            int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
             String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
             String[] winSize = size.split("x");
-            x = BytesTool.getInt(winSize[0]) * x;
-            y = BytesTool.getInt(winSize[1]) * y;
+            if (screenOrientation == 1 || screenOrientation == 3) {
+                x = BytesTool.getInt(winSize[1]) * x;
+                y = BytesTool.getInt(winSize[0]) * y;
+            } else {
+                x = BytesTool.getInt(winSize[0]) * x;
+                y = BytesTool.getInt(winSize[1]) * y;
+            }
         }
         return new int[]{(int) x, (int) y};
     }
