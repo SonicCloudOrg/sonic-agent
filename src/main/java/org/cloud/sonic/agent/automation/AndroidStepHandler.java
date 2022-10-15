@@ -1312,6 +1312,8 @@ public class AndroidStepHandler {
             String[] winSize = size.split("x");
             width = BytesTool.getInt(winSize[0]);
             height = BytesTool.getInt(winSize[1]);
+            // Forget it, let's follow poco's window method.
+            screenWindowPosition = AndroidDeviceBridgeTool.getDisplayOfAllScreen(iDevice,width,height,screenOrientation);
         }
 
         if (screenOrientation==1 || screenOrientation==3){

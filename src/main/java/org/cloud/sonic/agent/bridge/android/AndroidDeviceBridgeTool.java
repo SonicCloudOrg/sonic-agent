@@ -510,7 +510,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
                             offsetx = offsety;
                             offsety = tempOffsetX;
-                            // todo Need to view the source code, I feel there is a problem
                             width = height;
                             height = tempWidth;
                         }
