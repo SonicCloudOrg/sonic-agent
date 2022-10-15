@@ -1286,7 +1286,7 @@ public class AndroidStepHandler {
 
                 List<Float> pos2 = w2.getPayload().getPos();
                 int[] realCoordinate2 = getTheRealCoordinatesOfPoco(pos2.get(0), pos2.get(1));
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1], 800));
+                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1], 300));
             } else {
                 throw new SonicRespException(value + " or " + value2 + " not found!");
             }
