@@ -860,7 +860,7 @@ public class IOSStepHandler {
             switch (type) {
                 case "Groovy":
                     GroovyScript groovyScript = new GroovyScriptImpl();
-                    groovyScript.runIOS(iosDriver, udId, globalParams, log, script);
+                    groovyScript.runIOS(this, script);
                     break;
                 case "Python":
                     File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");

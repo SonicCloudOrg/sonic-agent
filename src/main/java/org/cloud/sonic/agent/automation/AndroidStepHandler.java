@@ -46,7 +46,6 @@ import org.cloud.sonic.driver.android.AndroidDriver;
 import org.cloud.sonic.driver.android.enmus.AndroidSelector;
 import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.models.WindowSize;
-import org.cloud.sonic.driver.common.tool.PocoXYTransformer;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.poco.PocoDriver;
 import org.cloud.sonic.driver.poco.enums.PocoEngine;
@@ -1295,7 +1294,7 @@ public class AndroidStepHandler {
         }
     }
 
-    public void setOffset(int offsetWidth,int offsetHeight){
+    public void setOffset(int offsetWidth, int offsetHeight) {
         this.screenOffset[0] = offsetWidth;
         this.screenOffset[1] = offsetHeight;
     }
@@ -1546,7 +1545,7 @@ public class AndroidStepHandler {
             switch (type) {
                 case "Groovy":
                     GroovyScript groovyScript = new GroovyScriptImpl();
-                    groovyScript.runAndroid(androidDriver, iDevice, globalParams, log, script);
+                    groovyScript.runAndroid(this, script);
                     break;
                 case "Python":
                     File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
