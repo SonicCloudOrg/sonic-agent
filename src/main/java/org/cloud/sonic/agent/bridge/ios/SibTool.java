@@ -483,4 +483,31 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
         return JSON.parseObject(re).getInteger("level");
     }
+
+    public static void stopWebInspector(String udId) {
+        String processName = String.format("process-%s-web-inspector", udId);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+    }
+
+    public static void startWebInspector(String udId) {
+        Process ps = null;
+        String commandLine = "%s webinspector -u %s -p %d --cdp";
+        try {
+            String system = System.getProperty("os.name").toLowerCase();
+            int port = PortTool.getPort();
+            if (system.contains("win")) {
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
+            }
+            String processName = String.format("process-%s-web-inspector", udId);
+            GlobalProcessMap.getMap().put(processName, ps);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
