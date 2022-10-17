@@ -498,7 +498,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     Pattern pattern = Pattern.compile(patten);
                     Matcher m = pattern.matcher(window);
                     while (m.find()) {
-                        if (m.groupCount() != 4) break;
+                        if (m.groupCount()!=4)break;
                         offsetx = Integer.parseInt(m.group(1));
                         offsety = Integer.parseInt(m.group(2));
                         width = Integer.parseInt(m.group(3));
@@ -513,13 +513,14 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                             width = height;
                             height = tempWidth;
                         }
-//                        width -= offsetx;
-//                        height -= offsety;
+
+                        width -= offsetx;
+                        height -= offsety;
                     }
                 }
             }
         }
-        return new int[]{offsetx, offsety};
+        return new int[]{offsetx, offsety,width,height};
     }
 
     public static String getCurrentPackage(IDevice iDevice) {

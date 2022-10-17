@@ -87,7 +87,7 @@ public class AndroidStepHandler {
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
-    private int[] screenOffset = {0, 0};
+    private int[] screenWindowPosition = {0, 0};
     private int pocoPort = 0;
     private int targetPort = 0;
 
@@ -1294,17 +1294,39 @@ public class AndroidStepHandler {
         }
     }
 
-    public void setOffset(int offsetWidth, int offsetHeight) {
-        this.screenOffset[0] = offsetWidth;
-        this.screenOffset[1] = offsetHeight;
+    public void setTheRealPositionOfTheWindow(int offsetWidth,int offsetHeight,int windowWidth,int windowHeight){
+        this.screenWindowPosition[0] = offsetWidth;
+        this.screenWindowPosition[1] = offsetHeight;
+        this.screenWindowPosition[2] = windowWidth;
+        this.screenWindowPosition[3] = windowHeight;
     }
 
     public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
-        int[] pos = computedPoint(pocoX, pocoY);
-        // x
-        pos[0] += this.screenOffset[1];
-        // y
-        pos[1] += this.screenOffset[1];
+        int [] pos = new int[2];
+        int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+
+        int width = screenWindowPosition[2] , height = screenWindowPosition[3];
+
+        if (width==0||height==0){
+            String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
+            String[] winSize = size.split("x");
+            width = BytesTool.getInt(winSize[0]);
+            height = BytesTool.getInt(winSize[1]);
+            // Forget it, let's follow poco's window method.
+            screenWindowPosition = AndroidDeviceBridgeTool.getDisplayOfAllScreen(iDevice,width,height,screenOrientation);
+        }
+
+        if (screenOrientation==1 || screenOrientation==3){
+            // x
+            pos[0] = this.screenWindowPosition[1] + (int)(height*pocoX);
+            // y
+            pos[1] = this.screenWindowPosition[0] + (int)(width*pocoY);
+        }else {
+            // x = offsetX + width*pocoPosX
+            pos[0] = this.screenWindowPosition[0] + (int)(width*pocoX);
+            // y = offsetY + height*pocoPosY
+            pos[1] = this.screenWindowPosition[1] + (int)(height*pocoY);
+        }
         return pos;
     }
 
