@@ -31,6 +31,7 @@ import org.cloud.sonic.agent.common.models.HandleDes;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SGMTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
@@ -170,6 +171,13 @@ public class IOSWSServer implements IIOSWSServer {
                 iosDriver = iosStepHandler.getDriver();
             }
             switch (msg.getString("type")) {
+                case "forwardView": {
+                    JSONObject forwardView = new JSONObject();
+                    forwardView.put("msg", "forwardView");
+                    forwardView.put("detail", SibTool.getWebView(udId));
+                    BytesTool.sendText(session, forwardView.toJSONString());
+                    break;
+                }
                 case "screen": {
                     JSONObject appiumSettings = new JSONObject();
                     if (msg.getString("detail").equals("low")) {
@@ -430,7 +438,8 @@ public class IOSWSServer implements IIOSWSServer {
     }
 
     private void exit(Session session) {
-        SibTool.stopOrientationWatcher(udIdMap.get(session));
+        String udId = udIdMap.get(session);
+        SibTool.stopOrientationWatcher(udId);
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
         } catch (Exception e) {
@@ -438,7 +447,8 @@ public class IOSWSServer implements IIOSWSServer {
         } finally {
             HandlerMap.getIOSMap().remove(session.getId());
         }
-        SGMTool.stopProxy(udIdMap.get(session));
+        SibTool.stopWebInspector(udId);
+        SGMTool.stopProxy(udId);
         IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);
         removeUdIdMapAndSet(session);

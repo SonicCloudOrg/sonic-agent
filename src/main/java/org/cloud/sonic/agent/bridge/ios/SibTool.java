@@ -17,6 +17,7 @@
 package org.cloud.sonic.agent.bridge.ios;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
@@ -29,6 +30,7 @@ import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
@@ -37,8 +39,10 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import javax.websocket.Session;
 import java.io.BufferedReader;
@@ -46,8 +50,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
@@ -64,6 +67,10 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     private static String sib = new File("plugins" + File.separator + "sonic-ios-bridge").getAbsolutePath();
     @Value("${sonic.sib}")
     private String sibVersion;
+    private static RestTemplate restTemplate;
+    @Autowired
+    private RestTemplate restTemplateBean;
+    private static Map<String, Integer> webViewMap = new HashMap<>();
 
     @Bean
     public void setEnv() {
@@ -77,6 +84,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public void init() {
+        restTemplate = restTemplateBean;
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
         if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {
             logger.info(String.format("Start sonic-ios-bridge failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
@@ -493,21 +501,115 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
     }
 
-    public static void startWebInspector(String udId) {
+    public static int startWebInspector(String udId) {
         Process ps = null;
         String commandLine = "%s webinspector -u %s -p %d --cdp";
+        int port = PortTool.getPort();
         try {
             String system = System.getProperty("os.name").toLowerCase();
-            int port = PortTool.getPort();
             if (system.contains("win")) {
                 ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
             } else if (system.contains("linux") || system.contains("mac")) {
                 ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
             }
+            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
+            InputStreamReader err = new InputStreamReader(ps.getErrorStream());
+            BufferedReader stdInputErr = new BufferedReader(err);
+            Process finalPs = ps;
+            Semaphore isFinish = new Semaphore(0);
+            Thread webErr = new Thread(() -> {
+                String s;
+                while (finalPs.isAlive()) {
+                    try {
+                        if ((s = stdInputErr.readLine()) != null) {
+                            if (!s.equals("close send protocol")) {
+                                logger.info(s);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    stdInputErr.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    err.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                logger.info("WebInspector print thread shutdown.");
+            });
+            webErr.start();
+            Thread web = new Thread(() -> {
+                String s;
+                while (finalPs.isAlive()) {
+                    try {
+                        if ((s = stdInput.readLine()) != null) {
+                            logger.info(s);
+                            if (s.contains("service started successfully")) {
+                                isFinish.release();
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    stdInput.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    inputStreamReader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                webViewMap.remove(udId);
+                logger.info("WebInspector print thread shutdown.");
+            });
+            web.start();
+            int wait = 0;
+            while (!isFinish.tryAcquire()) {
+                Thread.sleep(500);
+                wait++;
+                if (wait >= 120) {
+                    logger.info(udId + " WebInspector start timeout!");
+                    return 0;
+                }
+            }
             String processName = String.format("process-%s-web-inspector", udId);
             GlobalProcessMap.getMap().put(processName, ps);
+            return port;
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public static List<JSONObject> getWebView(String udId) {
+        int port;
+        if (webViewMap.get(udId) != null) {
+            port = webViewMap.get(udId);
+        } else {
+            port = startWebInspector(udId);
+            if (port != 0) {
+                webViewMap.put(udId, port);
+            } else {
+                return new ArrayList<>();
+            }
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "application/json");
+        ResponseEntity<JSONArray> responseEntity =
+                restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
+        if (responseEntity.getStatusCode() == HttpStatus.OK) {
+            return responseEntity.getBody().toJavaList(JSONObject.class);
+        } else {
+            return new ArrayList<>();
         }
     }
 }
