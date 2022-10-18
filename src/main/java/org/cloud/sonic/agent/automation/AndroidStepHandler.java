@@ -87,7 +87,7 @@ public class AndroidStepHandler {
     private JSONObject globalParams = new JSONObject();
     private IDevice iDevice;
     private int status = ResultDetailStatus.PASS;
-    private int[] screenWindowPosition = {0, 0};
+    private int[] screenWindowPosition = {0, 0, 0, 0};
     private int pocoPort = 0;
     private int targetPort = 0;
 
@@ -1246,7 +1246,6 @@ public class AndroidStepHandler {
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
-                System.out.println(realCoordinates[0] + " " + realCoordinates[1]);
                 AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", realCoordinates[0], realCoordinates[1]));
             } else {
                 throw new SonicRespException(value + " not found!");
@@ -1294,38 +1293,46 @@ public class AndroidStepHandler {
         }
     }
 
-    public void setTheRealPositionOfTheWindow(int offsetWidth,int offsetHeight,int windowWidth,int windowHeight){
-        this.screenWindowPosition[0] = offsetWidth;
-        this.screenWindowPosition[1] = offsetHeight;
-        this.screenWindowPosition[2] = windowWidth;
-        this.screenWindowPosition[3] = windowHeight;
+    public void setTheRealPositionOfTheWindow(HandleDes handleDes, String text) {
+        JSONObject offsetValue = JSONObject.parseObject(text);
+        handleDes.setStepDes("设置偏移量");
+        handleDes.setDetail(String.format("offsetWidth: %d, offsetHeight: %d, windowWidth: %d, windowHeight: %d",
+                offsetValue.getInteger("offsetWidth"),
+                offsetValue.getInteger("offsetHeight"),
+                offsetValue.getInteger("windowWidth"),
+                offsetValue.getInteger("windowHeight")
+        ));
+        this.screenWindowPosition[0] = offsetValue.getInteger("offsetWidth");
+        this.screenWindowPosition[1] = offsetValue.getInteger("offsetHeight");
+        this.screenWindowPosition[2] = offsetValue.getInteger("windowWidth");
+        this.screenWindowPosition[3] = offsetValue.getInteger("windowHeight");
     }
 
     public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
-        int [] pos = new int[2];
+        int[] pos = new int[2];
         int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
 
-        int width = screenWindowPosition[2] , height = screenWindowPosition[3];
+        int width = screenWindowPosition[2], height = screenWindowPosition[3];
 
-        if (width==0||height==0){
+        if (width == 0 || height == 0) {
             String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
             String[] winSize = size.split("x");
             width = BytesTool.getInt(winSize[0]);
             height = BytesTool.getInt(winSize[1]);
             // Forget it, let's follow poco's window method.
-            screenWindowPosition = AndroidDeviceBridgeTool.getDisplayOfAllScreen(iDevice,width,height,screenOrientation);
+            screenWindowPosition = AndroidDeviceBridgeTool.getDisplayOfAllScreen(iDevice, width, height, screenOrientation);
         }
 
-        if (screenOrientation==1 || screenOrientation==3){
+        if (screenOrientation == 1 || screenOrientation == 3) {
             // x
-            pos[0] = this.screenWindowPosition[1] + (int)(height*pocoX);
+            pos[0] = this.screenWindowPosition[1] + (int) (height * pocoX);
             // y
-            pos[1] = this.screenWindowPosition[0] + (int)(width*pocoY);
-        }else {
+            pos[1] = this.screenWindowPosition[0] + (int) (width * pocoY);
+        } else {
             // x = offsetX + width*pocoPosX
-            pos[0] = this.screenWindowPosition[0] + (int)(width*pocoX);
+            pos[0] = this.screenWindowPosition[0] + (int) (width * pocoX);
             // y = offsetY + height*pocoPosY
-            pos[1] = this.screenWindowPosition[1] + (int)(height*pocoY);
+            pos[1] = this.screenWindowPosition[1] + (int) (height * pocoY);
         }
         return pos;
     }
@@ -1796,6 +1803,9 @@ public class AndroidStepHandler {
             case "pocoSwipe":
                 pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                         , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+                break;
+            case "setTheRealPositionOfTheWindow":
+                setTheRealPositionOfTheWindow(handleDes, step.getString("content"));
                 break;
             case "freezeSource":
                 freezeSource(handleDes);
