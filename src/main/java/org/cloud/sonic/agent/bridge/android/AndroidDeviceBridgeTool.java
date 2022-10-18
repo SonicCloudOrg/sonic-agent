@@ -16,7 +16,6 @@
  */
 package org.cloud.sonic.agent.bridge.android;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
@@ -28,8 +27,8 @@ import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
-import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.tools.file.FileTool;
+import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,19 +44,13 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import javax.websocket.Session;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 /**
  * @author ZhouYiXun
@@ -498,7 +491,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     Pattern pattern = Pattern.compile(patten);
                     Matcher m = pattern.matcher(window);
                     while (m.find()) {
-                        if (m.groupCount() != 4) break;
+                        if (m.groupCount()!=4)break;
                         offsetx = Integer.parseInt(m.group(1));
                         offsety = Integer.parseInt(m.group(2));
                         width = Integer.parseInt(m.group(3));
@@ -513,13 +506,14 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                             width = height;
                             height = tempWidth;
                         }
-//                        width -= offsetx;
-//                        height -= offsety;
+
+                        width -= offsetx;
+                        height -= offsety;
                     }
                 }
             }
         }
-        return new int[]{offsetx, offsety};
+        return new int[]{offsetx, offsety,width,height};
     }
 
     public static String getCurrentPackage(IDevice iDevice) {
