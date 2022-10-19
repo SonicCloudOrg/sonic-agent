@@ -30,7 +30,6 @@
 
 ### Official Website
 [Sonic Official Website](https://sonic-cloud.gitee.io)
-## Background
 
 ## Background
 
