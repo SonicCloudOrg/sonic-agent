@@ -110,27 +110,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}.zip
-          tag_name: ${{ steps.previoustag.outputs.tag }}
-          update_latest_release: true
-          draft: false
-
-  doc:
-    needs: [ create,release ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: 'Get Previous tag'
-        id: previoustag
-        uses: "WyriHaximus/github-action-get-previous-tag@v1"
-      - name: Upload Docker Compose To Github Release
-        uses: xresloader/upload-to-github-release@v1.3.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          file: src/main/docker/docker-compose.yml;src/main/docker/docker-compose2.yml
+          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}.zip;src/main/docker/docker-compose.yml;src/main/docker/docker-compose2.yml
           tag_name: ${{ steps.previoustag.outputs.tag }}
           update_latest_release: true
           draft: false
