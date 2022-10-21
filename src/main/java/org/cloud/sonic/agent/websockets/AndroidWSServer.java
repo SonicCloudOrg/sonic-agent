@@ -59,7 +59,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @Component
-@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}/{isAutoInit}", configurator = WsEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class AndroidWSServer implements IAndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
@@ -74,8 +74,8 @@ public class AndroidWSServer implements IAndroidWSServer {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
-                       @PathParam("udId") String udId, @PathParam("token") String token, @PathParam("isAutoInit") Integer isAutoInit) throws Exception {
-        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0 || isAutoInit == null) {
+                       @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
             logger.info("拦截访问！");
             return;
         }
@@ -240,9 +240,7 @@ public class AndroidWSServer implements IAndroidWSServer {
 
         AndroidSupplyTool.startShare(udId, session);
 
-        if (isAutoInit == 1) {
-            openDriver(iDevice, session);
-        }
+        openDriver(iDevice, session);
     }
 
     @OnClose
@@ -495,7 +493,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                     }
                     case "eleScreen": {
                         if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
-                            AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 JSONObject result = new JSONObject();
                                 result.put("msg", "eleScreen");
@@ -528,28 +525,30 @@ public class AndroidWSServer implements IAndroidWSServer {
     }
 
     private void openDriver(IDevice iDevice, Session session) {
-        AndroidStepHandler androidStepHandler = new AndroidStepHandler();
-        androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
-        JSONObject result = new JSONObject();
-        AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
-        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-            try {
-                AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
-                int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
-                finalAndroidStepHandler1.startAndroidDriver(iDevice, port);
-                result.put("status", "success");
-                result.put("detail", "初始化Driver完成！");
-                HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                result.put("status", "error");
-                result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
-                finalAndroidStepHandler1.closeAndroidDriver();
-            } finally {
-                result.put("msg", "openDriver");
-                BytesTool.sendText(session, result.toJSONString());
-            }
-        });
+        synchronized (session) {
+            AndroidStepHandler androidStepHandler = new AndroidStepHandler();
+            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+            JSONObject result = new JSONObject();
+            AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
+            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                try {
+                    AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
+                    int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
+                    finalAndroidStepHandler1.startAndroidDriver(iDevice, port);
+                    result.put("status", "success");
+                    result.put("detail", "初始化Driver完成！");
+                    HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
+                } catch (Exception e) {
+                    logger.error(e.getMessage());
+                    result.put("status", "error");
+                    result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+                    finalAndroidStepHandler1.closeAndroidDriver();
+                } finally {
+                    result.put("msg", "openDriver");
+                    BytesTool.sendText(session, result.toJSONString());
+                }
+            });
+        }
     }
 
     private void exit(Session session) {
