@@ -77,14 +77,14 @@ public class AndroidTerminalWSServer {
         udIdMap.put(session, iDevice);
         String username = iDevice.getProperty("ro.product.device");
         Future<?> terminal = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            logger.info(udId + "开启terminal");
+            logger.info(udId + "open terminal");
             JSONObject ter = new JSONObject();
             ter.put("msg", "terminal");
             ter.put("user", username);
             BytesTool.sendText(session, ter.toJSONString());
         });
         Future<?> logcat = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            logger.info(udId + "开启logcat");
+            logger.info(udId + "open logcat");
             JSONObject ter = new JSONObject();
             ter.put("msg", "logcat");
             BytesTool.sendText(session, ter.toJSONString());

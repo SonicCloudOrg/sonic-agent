@@ -110,22 +110,22 @@ public class AndroidWSServer implements IAndroidWSServer {
                 .replaceAll("\n", "")
                 .replaceAll("\t", "");
         if (path.length() > 0 && AndroidDeviceBridgeTool.checkSonicApkVersion(iDevice)) {
-            logger.info("已安装Sonic插件，检查版本信息通过");
+            logger.info("Check Sonic Apk version and status pass...");
         } else {
-            logger.info("未安装Sonic插件或版本不是最新，正在安装...");
+            logger.info("Sonic Apk version not newest or not install, starting install...");
             try {
                 iDevice.uninstallPackage("org.cloud.sonic.android");
             } catch (InstallException e) {
-                logger.info("卸载出错...");
+                logger.info("uninstall sonic Apk err...");
             }
             try {
                 iDevice.installPackage("plugins/sonic-android-apk.apk",
                         true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                         , "-r", "-t", "-g");
-                logger.info("Sonic插件安装完毕");
+                logger.info("Sonic Apk install successful.");
             } catch (InstallException e) {
                 e.printStackTrace();
-                logger.info("Sonic插件安装失败！");
+                logger.info("Sonic Apk install failed.");
                 return;
             }
             path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
@@ -167,7 +167,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             }
                         }, 0, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                logger.info("{} 设备touch服务启动异常！"
+                logger.info("{} device touch service launch err"
                         , iDevice.getSerialNumber());
                 logger.error(e.getMessage());
             }
