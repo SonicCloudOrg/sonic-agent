@@ -35,6 +35,7 @@ import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tests.script.GroovyScript;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
+import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -864,29 +865,16 @@ public class IOSStepHandler {
                     break;
                 case "Python":
                     File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
-                    if (!temp.exists()) {
-                        temp.createNewFile();
-                        FileWriter fileWriter = new FileWriter(temp);
-                        fileWriter.write(script);
-                        fileWriter.close();
-                    }
-                    CommandLine cmdLine = new CommandLine(String.format("python %s", temp.getAbsolutePath()));
-                    cmdLine.addArgument(iosDriver.getSessionId(), false);
-                    cmdLine.addArgument(udId, false);
-                    cmdLine.addArgument(globalParams.toJSONString(), false);
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+                    temp.createNewFile();
+                    FileWriter fileWriter = new FileWriter(temp);
+                    fileWriter.write(script);
+                    fileWriter.close();
                     try {
-                        DefaultExecutor executor = new DefaultExecutor();
-                        executor.setStreamHandler(streamHandler);
-                        int exit = executor.execute(cmdLine);
-                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + outputStream);
-                        Assert.assertEquals(exit, 0);
+                        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format("python %s %s %s %s", temp.getAbsolutePath(), iosDriver.getSessionId(), udId, globalParams.toJSONString()));
+                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + re);
                     } catch (Exception e) {
                         handleDes.setE(e);
                     } finally {
-                        outputStream.close();
-                        streamHandler.stop();
                         temp.delete();
                     }
                     break;

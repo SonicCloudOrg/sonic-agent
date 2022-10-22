@@ -68,6 +68,7 @@ public class UploadTools {
         ResponseEntity<JSONObject> responseEntity =
                 restTemplate.postForEntity(baseUrl + "/upload", param, JSONObject.class);
         if (responseEntity.getBody().getInteger("code") == 2000) {
+            uploadFile.delete();
             transfer.delete();
         } else {
             logger.info("发送失败！" + responseEntity.getBody());
