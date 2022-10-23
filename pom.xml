@@ -69,7 +69,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-driver-core</artifactId>
-            <version>1.1.7</version>
+            <version>1.1.8</version>
         </dependency>
         <!--    压缩图片    -->
         <dependency>

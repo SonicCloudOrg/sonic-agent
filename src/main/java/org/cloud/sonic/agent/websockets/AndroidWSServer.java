@@ -375,7 +375,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             androidStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
                             JSONObject poco = new JSONObject();
                             try {
-                                poco.put("result", androidStepHandler.getPocoDriver().getPageSourceForJson());
+                                poco.put("result", androidStepHandler.getPocoDriver().getPageSourceForJsonString());
                             } catch (SonicRespException e) {
                                 poco.put("result", "");
                                 e.printStackTrace();

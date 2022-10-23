@@ -50,6 +50,7 @@ import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.poco.PocoDriver;
 import org.cloud.sonic.driver.poco.enums.PocoEngine;
+import org.cloud.sonic.driver.poco.enums.PocoSelector;
 import org.cloud.sonic.driver.poco.models.PocoElement;
 import org.cloud.sonic.vision.cv.AKAZEFinder;
 import org.cloud.sonic.vision.cv.SIFTFinder;
@@ -1215,16 +1216,33 @@ public class AndroidStepHandler {
         pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), pocoPort);
     }
 
-    public PocoElement findPocoEle(String expression) throws SonicRespException {
-        return pocoDriver.findElement(expression);
+    public PocoElement findPocoEle(String selector, String pathValue) throws SonicRespException {
+        PocoElement pocoElement = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        pocoDriver.getPageSourceForXmlElement();
+        switch (selector) {
+            case "poco":
+                pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+                break;
+            case "xpath":
+                pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
+                break;
+            case "cssSelector":
+                pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
+                break;
+            default:
+                log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                break;
+        }
+        return pocoElement;
     }
 
-    public void isExistPocoEle(HandleDes handleDes, String des, String value, boolean expect) {
+    public void isExistPocoEle(HandleDes handleDes, String des, String selector, String value, boolean expect) {
         handleDes.setStepDes("判断控件 " + des + " 是否存在");
         handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
         boolean hasEle = false;
         try {
-            PocoElement w = findPocoEle(value);
+            PocoElement w = findPocoEle(selector, value);
             if (w != null) {
                 hasEle = true;
             }
@@ -1237,11 +1255,11 @@ public class AndroidStepHandler {
         }
     }
 
-    public void pocoClick(HandleDes handleDes, String des, String value) {
+    public void pocoClick(HandleDes handleDes, String des, String selector, String value) {
         handleDes.setStepDes("点击" + des);
         handleDes.setDetail("点击 " + value);
         try {
-            PocoElement w = findPocoEle(value);
+            PocoElement w = findPocoEle(selector, value);
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
@@ -1254,11 +1272,11 @@ public class AndroidStepHandler {
         }
     }
 
-    public void pocoLongPress(HandleDes handleDes, String des, String value, int time) {
+    public void pocoLongPress(HandleDes handleDes, String des, String selector, String value, int time) {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按 " + value);
         try {
-            PocoElement w = findPocoEle(value);
+            PocoElement w = findPocoEle(selector, value);
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
@@ -1271,12 +1289,12 @@ public class AndroidStepHandler {
         }
     }
 
-    public void pocoSwipe(HandleDes handleDes, String des, String value, String des2, String value2) {
+    public void pocoSwipe(HandleDes handleDes, String des, String selector, String value, String des2, String selector2, String value2) {
         handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
         handleDes.setDetail("拖拽 " + value + " 到 " + value2);
         try {
-            PocoElement w1 = findPocoEle(value);
-            PocoElement w2 = findPocoEle(value2);
+            PocoElement w1 = findPocoEle(selector, value);
+            PocoElement w2 = findPocoEle(selector2, value2);
             if (w1 != null && w2 != null) {
                 List<Float> pos1 = w1.getPayload().getPos();
                 int[] realCoordinates1 = getTheRealCoordinatesOfPoco(pos1.get(0), pos1.get(1));
@@ -1775,20 +1793,21 @@ public class AndroidStepHandler {
                 startPocoDriver(handleDes, step.getString("content"), step.getInteger("text"));
                 break;
             case "isExistPocoEle":
-                isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName")
+                isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
                 break;
             case "pocoClick":
-                pocoClick(handleDes, eleList.getJSONObject(0).getString("eleName")
+                pocoClick(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "pocoLongPress":
-                pocoLongPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                pocoLongPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue")
                         , Integer.parseInt(step.getString("content")));
                 break;
             case "pocoSwipe":
-                pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
-                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+                pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
                 break;
             case "setTheRealPositionOfTheWindow":
                 setTheRealPositionOfTheWindow(handleDes, step.getString("content"));
