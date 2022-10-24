@@ -792,7 +792,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         String major = chromeVersion.substring(0, end);
         HttpHeaders headers = new HttpHeaders();
         ResponseEntity<String> infoEntity =
-                restTemplate.exchange(String.format("https://chromedriver.storage.googleapis.com/LATEST_RELEASE_%d", major), HttpMethod.GET, new HttpEntity(headers), String.class);
+                restTemplate.exchange(String.format("https://chromedriver.storage.googleapis.com/LATEST_RELEASE_%s", major), HttpMethod.GET, new HttpEntity(headers), String.class);
         if (system.contains("win")) {
             system = "win32";
         } else if (system.contains("linux")) {
