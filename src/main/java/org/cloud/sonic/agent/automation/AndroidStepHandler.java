@@ -1216,23 +1216,27 @@ public class AndroidStepHandler {
         pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), pocoPort);
     }
 
-    public PocoElement findPocoEle(String selector, String pathValue) throws SonicRespException {
+    public PocoElement findPocoEle(String selector, String pathValue) throws Throwable {
         PocoElement pocoElement = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         pocoDriver.getPageSourceForXmlElement();
-        switch (selector) {
-            case "poco":
-                pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
-                break;
-            case "xpath":
-                pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
-                break;
-            case "cssSelector":
-                pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
-                break;
-            default:
-                log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
-                break;
+        try {
+            switch (selector) {
+                case "poco":
+                    pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+                    break;
+                case "xpath":
+                    pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
+                    break;
+                case "cssSelector":
+                    pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
+                    break;
+                default:
+                    log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                    break;
+            }
+        }catch (Throwable e){
+            throw e;
         }
         return pocoElement;
     }
@@ -1246,7 +1250,7 @@ public class AndroidStepHandler {
             if (w != null) {
                 hasEle = true;
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
         }
         try {
             assertEquals(hasEle, expect);
@@ -1267,7 +1271,7 @@ public class AndroidStepHandler {
             } else {
                 throw new SonicRespException(value + " not found!");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             handleDes.setE(e);
         }
     }
@@ -1284,7 +1288,7 @@ public class AndroidStepHandler {
             } else {
                 throw new SonicRespException(value + " not found!");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             handleDes.setE(e);
         }
     }
@@ -1305,7 +1309,7 @@ public class AndroidStepHandler {
             } else {
                 throw new SonicRespException(value + " or " + value2 + " not found!");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             handleDes.setE(e);
         }
     }
