@@ -800,7 +800,16 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         } else {
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
-                system = "mac64_m1";
+				// fixme m1 arm 版本获取到版本低于 87 应提示用户更新chrome或者做其他处理
+	            String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/",infoEntity.getBody()), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
+	            for (Object obj : JSONArray.parseArray(driverList)) {
+		            JSONObject jsonObject = JSONObject.parseObject(obj.toString());
+		            String full_name = jsonObject.getString("name");
+		            if (full_name.contains("m1") || full_name.contains("arm")) {
+			            system = full_name.substring(full_name.indexOf("mac"), full_name.indexOf("."));
+			            break;
+		            }
+	            }
             } else {
                 system = "mac64";
             }
