@@ -765,6 +765,21 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         AndroidWebViewMap.getMap().remove(iDevice);
     }
 
+
+	private static String getM1ChromeDriver(String version) {
+		String result = "";
+		String url = String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/",version);
+		String driverList = cn.hutool.http.HttpRequest.get(url).execute().body();
+		for (Object obj : JSONArray.parseArray(driverList)) {
+			JSONObject jsonObject = JSONObject.parseObject(obj.toString());
+			String full_name = jsonObject.getString("name");
+			if (full_name.contains("m1") || full_name.contains("arm")) {
+				result = full_name.substring(full_name.indexOf("mac"), full_name.indexOf("."));
+			}
+		}
+		return result;
+	}
+
     public static File getChromeDriver(IDevice iDevice, String packageName) throws IOException {
         String chromeVersion = "";
         List<JSONObject> result = getWebView(iDevice);
@@ -800,7 +815,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         } else {
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
-                system = "mac64_m1";
+				// fixme m1 arm 版本获取到版本第一 87 应提示用户更新chrome或者做其他处理
+	            system = getM1ChromeDriver(infoEntity.getBody());
             } else {
                 system = "mac64";
             }
