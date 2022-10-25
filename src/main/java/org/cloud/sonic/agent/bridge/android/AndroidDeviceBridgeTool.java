@@ -491,7 +491,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     Pattern pattern = Pattern.compile(patten);
                     Matcher m = pattern.matcher(window);
                     while (m.find()) {
-                        if (m.groupCount()!=4)break;
+                        if (m.groupCount() != 4) break;
                         offsetx = Integer.parseInt(m.group(1));
                         offsety = Integer.parseInt(m.group(2));
                         width = Integer.parseInt(m.group(3));
@@ -513,7 +513,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 }
             }
         }
-        return new int[]{offsetx, offsety,width,height};
+        return new int[]{offsetx, offsety, width, height};
     }
 
     public static String getCurrentPackage(IDevice iDevice) {
@@ -800,16 +800,16 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         } else {
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
-		    // fix m1 arm version obtained is lower than 87 for special processing
-	            String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/",infoEntity.getBody()), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
-	            for (Object obj : JSONArray.parseArray(driverList)) {
-		            JSONObject jsonObject = JSONObject.parseObject(obj.toString());
-		            String fullName = jsonObject.getString("name");
-		            if (fullName.contains("m1") || fullName.contains("arm")) {
-			            system = fullName.substring(fullName.indexOf("mac"), fullName.indexOf("."));
-			            break;
-		            }
-	            }
+                // fix m1 arm version obtained is lower than 87 for special processing
+                String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/", infoEntity.getBody()), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
+                for (Object obj : JSONArray.parseArray(driverList)) {
+                    JSONObject jsonObject = JSONObject.parseObject(obj.toString());
+                    String fullName = jsonObject.getString("name");
+                    if (fullName.contains("m1") || fullName.contains("arm")) {
+                        system = fullName.substring(fullName.indexOf("mac"), fullName.indexOf("."));
+                        break;
+                    }
+                }
             } else {
                 system = "mac64";
             }
