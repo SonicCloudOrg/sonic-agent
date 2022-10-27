@@ -85,7 +85,8 @@ public class IOSTests {
 
         // 启动任务
         IOSTestTaskBootThread bootThread = new IOSTestTaskBootThread(jsonObject, iosStepHandler);
-        if (!runningTestsMap.containsKey(rid + "")) {
+        // runningTestsMap的key在rid的基础上再加上udid，避免先执行完的会remove rid，导致用例执行不完全的问题
+        if (!runningTestsMap.containsKey(rid + "-" + udId)) {
             logger.info("任务【{}】中断，跳过", bootThread.getName());
             return;
         }
