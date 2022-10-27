@@ -16,9 +16,11 @@
  */
 package org.cloud.sonic.agent.tests;
 
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.springframework.util.CollectionUtils;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 
@@ -36,21 +38,31 @@ public class SuiteListener implements ISuiteListener {
 
     @Override
     public void onStart(ISuite suite) {
-        JSONObject dataInfoJson = JSON.parseObject(suite.getParameter("dataInfo"));
-        String rid = dataInfoJson.getString("rid");
-        JSONArray deviceArray = dataInfoJson.getJSONArray("device");
-        String udId = deviceArray.getJSONObject(0).getString("udId");
-        // 以rid-udId的方式形成key
-        runningTestsMap.put(rid + "-" + udId, true);
+        String runningTestsMapKey = getRunningTestsMapKey(suite);
+        if (StrUtil.isBlank(runningTestsMapKey)){
+            return;
+        }
+        runningTestsMap.put(runningTestsMapKey, true);
     }
 
     @Override
     public void onFinish(ISuite suite) {
+        String runningTestsMapKey = getRunningTestsMapKey(suite);
+        if (StrUtil.isBlank(runningTestsMapKey)){
+            return;
+        }
+        // 加上udId，避免先完成的设备移除后，后完成的设备无法执行后续操作
+        runningTestsMap.remove(runningTestsMapKey);
+    }
+
+    private String getRunningTestsMapKey(ISuite suite){
         JSONObject dataInfoJson = JSON.parseObject(suite.getParameter("dataInfo"));
         String rid = dataInfoJson.getString("rid");
         JSONArray deviceArray = dataInfoJson.getJSONArray("device");
+        if (CollectionUtils.isEmpty(deviceArray)){
+            return null;
+        }
         String udId = deviceArray.getJSONObject(0).getString("udId");
-        // 加上udId，避免先完成的设备移除后，后完成的设备无法执行后续操作
-        runningTestsMap.remove(rid + "-" + udId);
+        return rid + "-" + udId;
     }
 }
