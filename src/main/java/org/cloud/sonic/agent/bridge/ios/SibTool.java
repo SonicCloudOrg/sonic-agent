@@ -158,7 +158,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             if (a.length() == 0) {
                 break;
             }
-            result.add(a.substring(0, a.indexOf(" ")));
+            if (a.indexOf(" ") != -1) {
+                result.add(a.substring(0, a.indexOf(" ")));
+            }
         }
         return result;
     }

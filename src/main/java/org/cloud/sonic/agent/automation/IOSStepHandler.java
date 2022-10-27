@@ -18,9 +18,6 @@ package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.enums.SonicEnum;
@@ -54,10 +51,8 @@ import org.cloud.sonic.vision.models.FindResult;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
-import org.testng.Assert;
 
 import javax.imageio.stream.FileImageOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
@@ -101,9 +96,9 @@ public class IOSStepHandler {
         try {
             iosDriver = new IOSDriver("http://127.0.0.1:" + wdaPort);
             iosDriver.disableLog();
-            log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
+            log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
         } catch (Exception e) {
-            log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
+            log.sendStepLog(StepType.ERROR, "连接 WebDriverAgent 失败！", "");
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }

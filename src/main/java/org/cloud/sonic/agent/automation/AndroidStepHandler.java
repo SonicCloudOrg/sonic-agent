@@ -19,9 +19,6 @@ package org.cloud.sonic.agent.automation;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.enums.AndroidKey;
@@ -65,10 +62,10 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.testng.Assert;
 
 import javax.imageio.stream.FileImageOutputStream;
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -116,15 +113,26 @@ public class AndroidStepHandler {
      */
     public void startAndroidDriver(IDevice iDevice, int uiaPort) throws Exception {
         this.iDevice = iDevice;
-        try {
-            androidDriver = new AndroidDriver("http://127.0.0.1:" + uiaPort);
-            androidDriver.disableLog();
-            log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
-        } catch (Exception e) {
-            log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
-            setResultDetailStatus(ResultDetailStatus.FAIL);
-            throw e;
+        int retry = 0;
+        Exception out = null;
+        while (retry <= 4) {
+            try {
+                androidDriver = new AndroidDriver("http://127.0.0.1:" + uiaPort);
+                break;
+            } catch (Exception e) {
+                log.sendStepLog(StepType.WARN, String.format("连接 UIAutomator2 Server 失败！重试第 %d 次...", retry + 1), "");
+                out = e;
+            }
+            retry++;
+            Thread.sleep(2000);
         }
+        if (androidDriver == null) {
+            log.sendStepLog(StepType.ERROR, "连接 UIAutomator2 Server 失败！", "");
+            setResultDetailStatus(ResultDetailStatus.FAIL);
+            throw out;
+        }
+        androidDriver.disableLog();
+        log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
                 iDevice.getProperty(IDevice.PROP_DEVICE_MODEL),
@@ -1235,7 +1243,7 @@ public class AndroidStepHandler {
                     log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
                     break;
             }
-        }catch (Throwable e){
+        } catch (Throwable e) {
             throw e;
         }
         return pocoElement;

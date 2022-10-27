@@ -679,6 +679,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             iDevice.installPackage("plugins/sonic-appium-uiautomator2-server-test.apk",
                     true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                     , "-r", "-t");
+            executeCommand(iDevice, "appops set io.appium.uiautomator2.server RUN_IN_BACKGROUND allow");
+            executeCommand(iDevice, "appops set io.appium.uiautomator2.server.test RUN_IN_BACKGROUND allow");
+            executeCommand(iDevice, "dumpsys deviceidle whitelist +io.appium.uiautomator2.server");
+            executeCommand(iDevice, "dumpsys deviceidle whitelist +io.appium.uiautomator2.server.test");
         }
         int port = PortTool.getPort();
         UiaThread uiaThread = new UiaThread(iDevice, port);
@@ -686,7 +690,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         int wait = 0;
         while (!uiaThread.getIsOpen()) {
             try {
-                Thread.sleep(500);
+                Thread.sleep(800);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

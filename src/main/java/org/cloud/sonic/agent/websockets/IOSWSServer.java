@@ -121,7 +121,7 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("status", "success");
                 result.put("width", iosStepHandler.getDriver().getWindowSize().getWidth());
                 result.put("height", iosStepHandler.getDriver().getWindowSize().getHeight());
-                result.put("detail", "初始化Driver完成！");
+                result.put("detail", "初始化 WebDriverAgent 完成！");
                 JSONObject appiumSettings = new JSONObject();
                 appiumSettings.put("mjpegServerFramerate", 100);
                 appiumSettings.put("mjpegScalingFactor", 100);
@@ -131,7 +131,7 @@ public class IOSWSServer implements IIOSWSServer {
             } catch (Exception e) {
                 logger.error(e.getMessage());
                 result.put("status", "error");
-                result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
+                result.put("detail", "初始化 WebDriverAgent 失败！");
                 iosStepHandler.closeIOSDriver();
             } finally {
                 result.put("msg", "openDriver");
