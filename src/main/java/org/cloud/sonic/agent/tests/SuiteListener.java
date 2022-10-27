@@ -17,6 +17,8 @@
 package org.cloud.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 
@@ -34,13 +36,21 @@ public class SuiteListener implements ISuiteListener {
 
     @Override
     public void onStart(ISuite suite) {
-        String rid = JSON.parseObject(suite.getParameter("dataInfo")).getString("rid");
-        runningTestsMap.put(rid, true);
+        JSONObject dataInfoJson = JSON.parseObject(suite.getParameter("dataInfo"));
+        String rid = dataInfoJson.getString("rid");
+        JSONArray deviceArray = dataInfoJson.getJSONArray("device");
+        String udId = deviceArray.getJSONObject(0).getString("udId");
+        // 以rid-udId的方式形成key
+        runningTestsMap.put(rid + "-" + udId, true);
     }
 
     @Override
     public void onFinish(ISuite suite) {
-        String rid = JSON.parseObject(suite.getParameter("dataInfo")).getString("rid");
-        runningTestsMap.remove(rid);
+        JSONObject dataInfoJson = JSON.parseObject(suite.getParameter("dataInfo"));
+        String rid = dataInfoJson.getString("rid");
+        JSONArray deviceArray = dataInfoJson.getJSONArray("device");
+        String udId = deviceArray.getJSONObject(0).getString("udId");
+        // 加上udId，避免先完成的设备移除后，后完成的设备无法执行后续操作
+        runningTestsMap.remove(rid + "-" + udId);
     }
 }
