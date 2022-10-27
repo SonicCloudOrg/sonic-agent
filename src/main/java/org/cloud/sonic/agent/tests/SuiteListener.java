@@ -61,7 +61,14 @@ public class SuiteListener implements ISuiteListener {
         if (CollectionUtils.isEmpty(deviceArray)){
             return null;
         }
-        String udId = deviceArray.getJSONObject(0).getString("udId");
+        JSONObject jsonObject = deviceArray.getJSONObject(0);
+        if (jsonObject == null){
+            return null;
+        }
+        String udId = jsonObject.getString("udId");
+        if (udId == null || udId.length() == 0){
+            return null;
+        }
         return rid + "-" + udId;
     }
 }
