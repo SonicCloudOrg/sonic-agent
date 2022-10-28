@@ -19,9 +19,6 @@ package org.cloud.sonic.agent.automation;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.enums.AndroidKey;
@@ -39,6 +36,7 @@ import org.cloud.sonic.agent.tests.script.GroovyScript;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -49,6 +47,7 @@ import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.poco.PocoDriver;
 import org.cloud.sonic.driver.poco.enums.PocoEngine;
+import org.cloud.sonic.driver.poco.enums.PocoSelector;
 import org.cloud.sonic.driver.poco.models.PocoElement;
 import org.cloud.sonic.vision.cv.AKAZEFinder;
 import org.cloud.sonic.vision.cv.SIFTFinder;
@@ -63,10 +62,8 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.testng.Assert;
 
 import javax.imageio.stream.FileImageOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
@@ -116,15 +113,26 @@ public class AndroidStepHandler {
      */
     public void startAndroidDriver(IDevice iDevice, int uiaPort) throws Exception {
         this.iDevice = iDevice;
-        try {
-            androidDriver = new AndroidDriver("http://127.0.0.1:" + uiaPort);
-            androidDriver.disableLog();
-            log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
-        } catch (Exception e) {
-            log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
-            setResultDetailStatus(ResultDetailStatus.FAIL);
-            throw e;
+        int retry = 0;
+        Exception out = null;
+        while (retry <= 4) {
+            try {
+                androidDriver = new AndroidDriver("http://127.0.0.1:" + uiaPort);
+                break;
+            } catch (Exception e) {
+                log.sendStepLog(StepType.WARN, String.format("连接 UIAutomator2 Server 失败！重试第 %d 次...", retry + 1), "");
+                out = e;
+            }
+            retry++;
+            Thread.sleep(2000);
         }
+        if (androidDriver == null) {
+            log.sendStepLog(StepType.ERROR, "连接 UIAutomator2 Server 失败！", "");
+            setResultDetailStatus(ResultDetailStatus.FAIL);
+            throw out;
+        }
+        androidDriver.disableLog();
+        log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
                 iDevice.getProperty(IDevice.PROP_DEVICE_MODEL),
@@ -1216,20 +1224,41 @@ public class AndroidStepHandler {
         pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), pocoPort);
     }
 
-    public PocoElement findPocoEle(String expression) throws SonicRespException {
-        return pocoDriver.findElement(expression);
+    public PocoElement findPocoEle(String selector, String pathValue) throws Throwable {
+        PocoElement pocoElement = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        pocoDriver.getPageSourceForXmlElement();
+        try {
+            switch (selector) {
+                case "poco":
+                    pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+                    break;
+                case "xpath":
+                    pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
+                    break;
+                case "cssSelector":
+                    pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
+                    break;
+                default:
+                    log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                    break;
+            }
+        } catch (Throwable e) {
+            throw e;
+        }
+        return pocoElement;
     }
 
-    public void isExistPocoEle(HandleDes handleDes, String des, String value, boolean expect) {
+    public void isExistPocoEle(HandleDes handleDes, String des, String selector, String value, boolean expect) {
         handleDes.setStepDes("判断控件 " + des + " 是否存在");
         handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
         boolean hasEle = false;
         try {
-            PocoElement w = findPocoEle(value);
+            PocoElement w = findPocoEle(selector, value);
             if (w != null) {
                 hasEle = true;
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
         }
         try {
             assertEquals(hasEle, expect);
@@ -1238,11 +1267,11 @@ public class AndroidStepHandler {
         }
     }
 
-    public void pocoClick(HandleDes handleDes, String des, String value) {
+    public void pocoClick(HandleDes handleDes, String des, String selector, String value) {
         handleDes.setStepDes("点击" + des);
         handleDes.setDetail("点击 " + value);
         try {
-            PocoElement w = findPocoEle(value);
+            PocoElement w = findPocoEle(selector, value);
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
@@ -1250,16 +1279,16 @@ public class AndroidStepHandler {
             } else {
                 throw new SonicRespException(value + " not found!");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             handleDes.setE(e);
         }
     }
 
-    public void pocoLongPress(HandleDes handleDes, String des, String value, int time) {
+    public void pocoLongPress(HandleDes handleDes, String des, String selector, String value, int time) {
         handleDes.setStepDes("长按" + des);
         handleDes.setDetail("长按 " + value);
         try {
-            PocoElement w = findPocoEle(value);
+            PocoElement w = findPocoEle(selector, value);
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
@@ -1267,17 +1296,17 @@ public class AndroidStepHandler {
             } else {
                 throw new SonicRespException(value + " not found!");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             handleDes.setE(e);
         }
     }
 
-    public void pocoSwipe(HandleDes handleDes, String des, String value, String des2, String value2) {
+    public void pocoSwipe(HandleDes handleDes, String des, String selector, String value, String des2, String selector2, String value2) {
         handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
         handleDes.setDetail("拖拽 " + value + " 到 " + value2);
         try {
-            PocoElement w1 = findPocoEle(value);
-            PocoElement w2 = findPocoEle(value2);
+            PocoElement w1 = findPocoEle(selector, value);
+            PocoElement w2 = findPocoEle(selector2, value2);
             if (w1 != null && w2 != null) {
                 List<Float> pos1 = w1.getPayload().getPos();
                 int[] realCoordinates1 = getTheRealCoordinatesOfPoco(pos1.get(0), pos1.get(1));
@@ -1288,7 +1317,7 @@ public class AndroidStepHandler {
             } else {
                 throw new SonicRespException(value + " or " + value2 + " not found!");
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             handleDes.setE(e);
         }
     }
@@ -1578,29 +1607,16 @@ public class AndroidStepHandler {
                     break;
                 case "Python":
                     File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
-                    if (!temp.exists()) {
-                        temp.createNewFile();
-                        FileWriter fileWriter = new FileWriter(temp);
-                        fileWriter.write(script);
-                        fileWriter.close();
-                    }
-                    CommandLine cmdLine = new CommandLine(String.format("python %s", temp.getAbsolutePath()));
-                    cmdLine.addArgument(androidDriver.getSessionId(), false);
-                    cmdLine.addArgument(iDevice.getSerialNumber(), false);
-                    cmdLine.addArgument(globalParams.toJSONString(), false);
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+                    temp.createNewFile();
+                    FileWriter fileWriter = new FileWriter(temp);
+                    fileWriter.write(script);
+                    fileWriter.close();
                     try {
-                        DefaultExecutor executor = new DefaultExecutor();
-                        executor.setStreamHandler(streamHandler);
-                        int exit = executor.execute(cmdLine);
-                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + outputStream);
-                        Assert.assertEquals(exit, 0);
+                        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format("python %s %s %s %s", temp.getAbsolutePath(), androidDriver.getSessionId(), iDevice.getSerialNumber(), globalParams.toJSONString()));
+                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + re);
                     } catch (Exception e) {
                         handleDes.setE(e);
                     } finally {
-                        outputStream.close();
-                        streamHandler.stop();
                         temp.delete();
                     }
                     break;
@@ -1789,20 +1805,21 @@ public class AndroidStepHandler {
                 startPocoDriver(handleDes, step.getString("content"), step.getInteger("text"));
                 break;
             case "isExistPocoEle":
-                isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName")
+                isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
                 break;
             case "pocoClick":
-                pocoClick(handleDes, eleList.getJSONObject(0).getString("eleName")
+                pocoClick(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "pocoLongPress":
-                pocoLongPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                pocoLongPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue")
                         , Integer.parseInt(step.getString("content")));
                 break;
             case "pocoSwipe":
-                pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
-                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+                pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
                 break;
             case "setTheRealPositionOfTheWindow":
                 setTheRealPositionOfTheWindow(handleDes, step.getString("content"));

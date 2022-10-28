@@ -59,7 +59,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 @Component
-@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}/{isAutoInit}", configurator = WsEndpointConfigure.class)
+@ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class AndroidWSServer implements IAndroidWSServer {
 
     private final Logger logger = LoggerFactory.getLogger(AndroidWSServer.class);
@@ -74,8 +74,8 @@ public class AndroidWSServer implements IAndroidWSServer {
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
-                       @PathParam("udId") String udId, @PathParam("token") String token, @PathParam("isAutoInit") Integer isAutoInit) throws Exception {
-        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0 || isAutoInit == null) {
+                       @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
+        if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
             logger.info("拦截访问！");
             return;
         }
@@ -110,22 +110,24 @@ public class AndroidWSServer implements IAndroidWSServer {
                 .replaceAll("\n", "")
                 .replaceAll("\t", "");
         if (path.length() > 0 && AndroidDeviceBridgeTool.checkSonicApkVersion(iDevice)) {
-            logger.info("已安装Sonic插件，检查版本信息通过");
+            logger.info("Check Sonic Apk version and status pass...");
         } else {
-            logger.info("未安装Sonic插件或版本不是最新，正在安装...");
+            logger.info("Sonic Apk version not newest or not install, starting install...");
             try {
                 iDevice.uninstallPackage("org.cloud.sonic.android");
             } catch (InstallException e) {
-                logger.info("卸载出错...");
+                logger.info("uninstall sonic Apk err...");
             }
             try {
                 iDevice.installPackage("plugins/sonic-android-apk.apk",
                         true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                         , "-r", "-t", "-g");
-                logger.info("Sonic插件安装完毕");
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RUN_IN_BACKGROUND allow");
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "dumpsys deviceidle whitelist +org.cloud.sonic.android");
+                logger.info("Sonic Apk install successful.");
             } catch (InstallException e) {
                 e.printStackTrace();
-                logger.info("Sonic插件安装失败！");
+                logger.info("Sonic Apk install failed.");
                 return;
             }
             path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
@@ -167,7 +169,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             }
                         }, 0, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                logger.info("{} 设备touch服务启动异常！"
+                logger.info("{} device touch service launch err"
                         , iDevice.getSerialNumber());
                 logger.error(e.getMessage());
             }
@@ -240,9 +242,7 @@ public class AndroidWSServer implements IAndroidWSServer {
 
         AndroidSupplyTool.startShare(udId, session);
 
-        if (isAutoInit == 1) {
-            openDriver(iDevice, session);
-        }
+        openDriver(iDevice, session);
     }
 
     @OnClose
@@ -377,7 +377,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             androidStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
                             JSONObject poco = new JSONObject();
                             try {
-                                poco.put("result", androidStepHandler.getPocoDriver().getPageSourceForJson());
+                                poco.put("result", androidStepHandler.getPocoDriver().getPageSourceForJsonString());
                             } catch (SonicRespException e) {
                                 poco.put("result", "");
                                 e.printStackTrace();
@@ -495,7 +495,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                     }
                     case "eleScreen": {
                         if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
-                            AndroidStepHandler finalAndroidStepHandler = androidStepHandler;
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 JSONObject result = new JSONObject();
                                 result.put("msg", "eleScreen");
@@ -528,28 +527,30 @@ public class AndroidWSServer implements IAndroidWSServer {
     }
 
     private void openDriver(IDevice iDevice, Session session) {
-        AndroidStepHandler androidStepHandler = new AndroidStepHandler();
-        androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
-        JSONObject result = new JSONObject();
-        AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
-        AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-            try {
-                AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
-                int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
-                finalAndroidStepHandler1.startAndroidDriver(iDevice, port);
-                result.put("status", "success");
-                result.put("detail", "初始化Driver完成！");
-                HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
-            } catch (Exception e) {
-                logger.error(e.getMessage());
-                result.put("status", "error");
-                result.put("detail", "初始化Driver失败！部分功能不可用！请联系管理员");
-                finalAndroidStepHandler1.closeAndroidDriver();
-            } finally {
-                result.put("msg", "openDriver");
-                BytesTool.sendText(session, result.toJSONString());
-            }
-        });
+        synchronized (session) {
+            AndroidStepHandler androidStepHandler = new AndroidStepHandler();
+            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+            JSONObject result = new JSONObject();
+            AndroidStepHandler finalAndroidStepHandler1 = androidStepHandler;
+            AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                try {
+                    AndroidDeviceLocalStatus.startDebug(iDevice.getSerialNumber());
+                    int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
+                    finalAndroidStepHandler1.startAndroidDriver(iDevice, port);
+                    result.put("status", "success");
+                    result.put("detail", "初始化 UIAutomator2 Server 完成！");
+                    HandlerMap.getAndroidMap().put(session.getId(), finalAndroidStepHandler1);
+                } catch (Exception e) {
+                    logger.error(e.getMessage());
+                    result.put("status", "error");
+                    result.put("detail", "初始化 UIAutomator2 Server 失败！");
+                    finalAndroidStepHandler1.closeAndroidDriver();
+                } finally {
+                    result.put("msg", "openDriver");
+                    BytesTool.sendText(session, result.toJSONString());
+                }
+            });
+        }
     }
 
     private void exit(Session session) {

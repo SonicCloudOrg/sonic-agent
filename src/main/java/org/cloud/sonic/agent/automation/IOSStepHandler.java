@@ -18,9 +18,6 @@ package org.cloud.sonic.agent.automation;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.enums.SonicEnum;
@@ -35,6 +32,7 @@ import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tests.script.GroovyScript;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
+import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -53,10 +51,8 @@ import org.cloud.sonic.vision.models.FindResult;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
-import org.testng.Assert;
 
 import javax.imageio.stream.FileImageOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
@@ -100,9 +96,9 @@ public class IOSStepHandler {
         try {
             iosDriver = new IOSDriver("http://127.0.0.1:" + wdaPort);
             iosDriver.disableLog();
-            log.sendStepLog(StepType.PASS, "连接设备驱动成功", "");
+            log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
         } catch (Exception e) {
-            log.sendStepLog(StepType.ERROR, "连接设备驱动失败！", "");
+            log.sendStepLog(StepType.ERROR, "连接 WebDriverAgent 失败！", "");
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
@@ -864,29 +860,16 @@ public class IOSStepHandler {
                     break;
                 case "Python":
                     File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
-                    if (!temp.exists()) {
-                        temp.createNewFile();
-                        FileWriter fileWriter = new FileWriter(temp);
-                        fileWriter.write(script);
-                        fileWriter.close();
-                    }
-                    CommandLine cmdLine = new CommandLine(String.format("python %s", temp.getAbsolutePath()));
-                    cmdLine.addArgument(iosDriver.getSessionId(), false);
-                    cmdLine.addArgument(udId, false);
-                    cmdLine.addArgument(globalParams.toJSONString(), false);
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
+                    temp.createNewFile();
+                    FileWriter fileWriter = new FileWriter(temp);
+                    fileWriter.write(script);
+                    fileWriter.close();
                     try {
-                        DefaultExecutor executor = new DefaultExecutor();
-                        executor.setStreamHandler(streamHandler);
-                        int exit = executor.execute(cmdLine);
-                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + outputStream);
-                        Assert.assertEquals(exit, 0);
+                        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format("python %s %s %s %s", temp.getAbsolutePath(), iosDriver.getSessionId(), udId, globalParams.toJSONString()));
+                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + re);
                     } catch (Exception e) {
                         handleDes.setE(e);
                     } finally {
-                        outputStream.close();
-                        streamHandler.stop();
                         temp.delete();
                     }
                     break;

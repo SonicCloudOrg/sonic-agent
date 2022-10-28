@@ -491,7 +491,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     Pattern pattern = Pattern.compile(patten);
                     Matcher m = pattern.matcher(window);
                     while (m.find()) {
-                        if (m.groupCount()!=4)break;
+                        if (m.groupCount() != 4) break;
                         offsetx = Integer.parseInt(m.group(1));
                         offsety = Integer.parseInt(m.group(2));
                         width = Integer.parseInt(m.group(3));
@@ -513,7 +513,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 }
             }
         }
-        return new int[]{offsetx, offsety,width,height};
+        return new int[]{offsetx, offsety, width, height};
     }
 
     public static String getCurrentPackage(IDevice iDevice) {
@@ -679,6 +679,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             iDevice.installPackage("plugins/sonic-appium-uiautomator2-server-test.apk",
                     true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                     , "-r", "-t");
+            executeCommand(iDevice, "appops set io.appium.uiautomator2.server RUN_IN_BACKGROUND allow");
+            executeCommand(iDevice, "appops set io.appium.uiautomator2.server.test RUN_IN_BACKGROUND allow");
+            executeCommand(iDevice, "dumpsys deviceidle whitelist +io.appium.uiautomator2.server");
+            executeCommand(iDevice, "dumpsys deviceidle whitelist +io.appium.uiautomator2.server.test");
         }
         int port = PortTool.getPort();
         UiaThread uiaThread = new UiaThread(iDevice, port);
@@ -686,7 +690,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         int wait = 0;
         while (!uiaThread.getIsOpen()) {
             try {
-                Thread.sleep(500);
+                Thread.sleep(800);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -792,7 +796,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         String major = chromeVersion.substring(0, end);
         HttpHeaders headers = new HttpHeaders();
         ResponseEntity<String> infoEntity =
-                restTemplate.exchange(String.format("https://chromedriver.storage.googleapis.com/LATEST_RELEASE_%d", major), HttpMethod.GET, new HttpEntity(headers), String.class);
+                restTemplate.exchange(String.format("https://chromedriver.storage.googleapis.com/LATEST_RELEASE_%s", major), HttpMethod.GET, new HttpEntity(headers), String.class);
         if (system.contains("win")) {
             system = "win32";
         } else if (system.contains("linux")) {
@@ -800,7 +804,16 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         } else {
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
-                system = "mac64_m1";
+                // fix m1 arm version obtained is lower than 87 for special processing
+                String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/", infoEntity.getBody()), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
+                for (Object obj : JSONArray.parseArray(driverList)) {
+                    JSONObject jsonObject = JSONObject.parseObject(obj.toString());
+                    String fullName = jsonObject.getString("name");
+                    if (fullName.contains("m1") || fullName.contains("arm")) {
+                        system = fullName.substring(fullName.indexOf("mac"), fullName.indexOf("."));
+                        break;
+                    }
+                }
             } else {
                 system = "mac64";
             }

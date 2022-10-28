@@ -258,7 +258,7 @@ public class TaskManager {
                 }
             }
         }
-        runningTestsMap.remove(resultId + "");
+        runningTestsMap.remove(resultId + "-" + udId);
 
         runningRidSet.remove(resultId + "-" + udId);
         runningUdIdSet.remove(udId);

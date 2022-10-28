@@ -54,12 +54,14 @@ public class IOSRunStepThread extends RunStepThread {
         JSONObject jsonObject = iosTestTaskBootThread.getJsonObject();
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
 
+        // 复用同一个handleDes
+        HandleDes handleDes = new HandleDes();
         for (JSONObject step : steps) {
             if (isStopped()) {
                 return;
             }
             try {
-                stepHandlers.runStep(step, new HandleDes(), this);
+                stepHandlers.runStep(step, handleDes, this);
             } catch (Throwable e) {
                 break;
             }
