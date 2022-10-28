@@ -9,9 +9,9 @@ spring:
 sonic:
   saa: 2.0.1
   sgm: 1.3.3
-  sib: 1.2.3
+  sib: 1.2.4
   sas: 0.0.2
-  saus: 5.7.0
+  saus: 4.22.1
 
 logging:
   file:
