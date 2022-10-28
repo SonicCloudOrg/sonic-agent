@@ -122,6 +122,8 @@ public class AndroidWSServer implements IAndroidWSServer {
                 iDevice.installPackage("plugins/sonic-android-apk.apk",
                         true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                         , "-r", "-t", "-g");
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RUN_IN_BACKGROUND allow");
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "dumpsys deviceidle whitelist +org.cloud.sonic.android");
                 logger.info("Sonic Apk install successful.");
             } catch (InstallException e) {
                 e.printStackTrace();
