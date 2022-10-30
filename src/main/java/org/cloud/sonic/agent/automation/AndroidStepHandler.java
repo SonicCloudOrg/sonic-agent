@@ -152,6 +152,7 @@ public class AndroidStepHandler {
             }
             if (pocoDriver != null) {
                 pocoDriver.closeDriver();
+                AndroidDeviceBridgeTool.removeForward(iDevice, pocoPort, targetPort);
                 pocoDriver = null;
             }
             if (androidDriver != null) {

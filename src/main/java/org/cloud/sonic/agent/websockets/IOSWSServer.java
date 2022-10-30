@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
@@ -276,6 +277,22 @@ public class IOSWSServer implements IIOSWSServer {
                     break;
                 case "debug":
                     switch (msg.getString("detail")) {
+                        case "poco": {
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                iosStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
+                                JSONObject poco = new JSONObject();
+                                try {
+                                    poco.put("result", iosStepHandler.getPocoDriver().getPageSourceForJsonString());
+                                } catch (SonicRespException e) {
+                                    poco.put("result", "");
+                                    e.printStackTrace();
+                                }
+                                poco.put("msg", "poco");
+                                BytesTool.sendText(session, poco.toJSONString());
+                                iosStepHandler.closePocoDriver(new HandleDes());
+                            });
+                            break;
+                        }
                         case "runStep": {
                             JSONObject jsonDebug = new JSONObject();
                             jsonDebug.put("msg", "findSteps");
