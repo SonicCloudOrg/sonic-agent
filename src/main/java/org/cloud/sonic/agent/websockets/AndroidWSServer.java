@@ -322,8 +322,12 @@ public class AndroidWSServer implements IAndroidWSServer {
                 AndroidDeviceBridgeTool.pushToCamera(iDevice, msg.getString("url"));
                 break;
             case "text":
-                ProcessCommandTool.getProcessLocalCommand("adb -s " + iDevice.getSerialNumber()
-                        + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail"));
+	            String cmd = "adb -s " + iDevice.getSerialNumber() + " shell app_process -Djava.class.path=/data/local/tmp/yadb /data/local/tmp com.ysbing.yadb.Main -keyboard " + msg.getString("detail");
+	            if (msg.getString("detail").contains("&")) {
+		            String detail = msg.getString("detail").replaceAll("\\&", "\\\\&");
+		            cmd = "adb -s " + iDevice.getSerialNumber() + " shell input text " + '"' + detail + '"';
+	            }
+	            ProcessCommandTool.getProcessLocalCommand(cmd);
                 break;
             case "touch":
                 OutputStream outputStream = outputMap.get(session);
