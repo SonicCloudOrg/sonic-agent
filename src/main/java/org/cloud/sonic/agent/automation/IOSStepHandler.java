@@ -770,27 +770,59 @@ public class IOSStepHandler {
         pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), pocoPort);
     }
 
+    private int intervalInit = 3000;
+    private int retryInit = 3;
+
+    public void setDefaultFindPocoElementInterval(HandleDes handleDes, Integer retry, Integer interval) {
+        handleDes.setStepDes("Set Global Find Poco Element Interval");
+        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+        if (retry != null) {
+            retryInit = retry;
+        }
+        if (interval != null) {
+            intervalInit = interval;
+        }
+    }
+
     public PocoElement findPocoEle(String selector, String pathValue) throws Throwable {
         PocoElement pocoElement = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
-        pocoDriver.getPageSourceForXmlElement();
-        try {
-            switch (selector) {
-                case "poco":
-                    pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+        int wait = 0;
+        String errMsg = "";
+        while (wait < retryInit) {
+            wait++;
+            pocoDriver.getPageSourceForXmlElement();
+            try {
+                switch (selector) {
+                    case "poco":
+                        pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+                        break;
+                    case "xpath":
+                        pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
+                        break;
+                    case "cssSelector":
+                        pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
+                        break;
+                    default:
+                        log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                        break;
+                }
+                if (pocoElement != null) {
                     break;
-                case "xpath":
-                    pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
-                    break;
-                case "cssSelector":
-                    pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
-                    break;
-                default:
-                    log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
-                    break;
+                }
+            } catch (Throwable e) {
+                errMsg = e.getMessage();
             }
-        } catch (Throwable e) {
-            throw e;
+            if (wait < retryInit) {
+                try {
+                    Thread.sleep(intervalInit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (pocoElement == null) {
+            throw new SonicRespException(errMsg);
         }
         return pocoElement;
     }
@@ -980,7 +1012,7 @@ public class IOSStepHandler {
     }
 
     public void setFindElementInterval(HandleDes handleDes, int retry, int interval) {
-        handleDes.setStepDes("Set Global Find Element Interval");
+        handleDes.setStepDes("Set Global Find XCTest Element Interval");
         handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         iosDriver.setDefaultFindElementInterval(retry, interval);
     }
@@ -1196,6 +1228,9 @@ public class IOSStepHandler {
                 break;
             case "startPocoDriver":
                 startPocoDriver(handleDes, step.getString("content"), step.getInteger("text"));
+                break;
+            case "setDefaultFindPocoElementInterval":
+                setDefaultFindPocoElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
                 break;
             case "isExistPocoEle":
                 isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
