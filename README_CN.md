@@ -43,13 +43,13 @@
 ## 打包方式
 
 ```
-mvn package -P{你的平台}
+mvn package -Dplatform={platform}
 ```
 
 例如
 
 ```
-mvn package -Pwindows-x86_64
+mvn package -Dplatform=windows-x86_64
 ```
 
 ## 赞助商

@@ -45,13 +45,13 @@
 ## How to package
 
 ```
-mvn package -P{your_platform}
+mvn package -Dplatform={platform}
 ```
 
 For Example
 
 ```
-mvn package -Pwindows-x86_64
+mvn package -Dplatform=windows-x86_64
 ```
 
 ## Sponsors
