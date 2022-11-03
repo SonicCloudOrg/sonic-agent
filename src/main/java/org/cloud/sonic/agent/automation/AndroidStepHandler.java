@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.automation;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
@@ -941,7 +942,7 @@ public class AndroidStepHandler {
             handleDes.setE(new Exception("未安装应用"));
             return;
         }
-        List<JSONObject> options = content.getJSONArray("options").toJavaList(JSONObject.class);
+        JSONArray options = content.getJSONArray("options");
         WindowSize windowSize = null;
         try {
             windowSize = androidDriver.getWindowSize();
@@ -961,7 +962,8 @@ public class AndroidStepHandler {
         boolean isOpenActivityListener = false;
         boolean isOpenNetworkListener = false;
         if (!options.isEmpty()) {
-            for (JSONObject jsonOption : options) {
+            for (Object j : options) {
+                JSONObject jsonOption = JSON.parseObject(j.toString());
                 if (jsonOption.getString("name").equals("sleepTime")) {
                     sleepTime = jsonOption.getInteger("value");
                 }
@@ -1103,7 +1105,6 @@ public class AndroidStepHandler {
                                     h5Time = 0;
                                 }
                             } catch (Throwable e) {
-                                e.printStackTrace();
                             }
                         }
                     }
