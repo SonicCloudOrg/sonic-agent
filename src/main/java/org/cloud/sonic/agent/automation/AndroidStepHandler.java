@@ -941,7 +941,7 @@ public class AndroidStepHandler {
             handleDes.setE(new Exception("未安装应用"));
             return;
         }
-        JSONArray options = content.getJSONArray("options");
+        List<JSONObject> options = content.getJSONArray("options").toJavaList(JSONObject.class);
         WindowSize windowSize = null;
         try {
             windowSize = androidDriver.getWindowSize();
@@ -961,8 +961,7 @@ public class AndroidStepHandler {
         boolean isOpenActivityListener = false;
         boolean isOpenNetworkListener = false;
         if (!options.isEmpty()) {
-            for (int i = options.size() - 1; i >= 0; i--) {
-                JSONObject jsonOption = (JSONObject) options.get(i);
+            for (JSONObject jsonOption : options) {
                 if (jsonOption.getString("name").equals("sleepTime")) {
                     sleepTime = jsonOption.getInteger("value");
                 }
@@ -993,7 +992,6 @@ public class AndroidStepHandler {
                 if (jsonOption.getString("name").equals("isOpenNetworkListener")) {
                     isOpenNetworkListener = jsonOption.getBoolean("value");
                 }
-                options.remove(options.get(i));
             }
         }
         int finalSleepTime = sleepTime;
