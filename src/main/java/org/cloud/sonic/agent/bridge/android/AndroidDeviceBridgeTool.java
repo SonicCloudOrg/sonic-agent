@@ -859,21 +859,25 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 } catch (Exception e) {
                     continue;
                 }
-                ResponseEntity<JSONArray> responseEntity =
-                        restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
-                if (responseEntity.getStatusCode() == HttpStatus.OK) {
-                    List<JSONObject> child = new ArrayList<>();
-                    for (Object e : responseEntity.getBody()) {
-                        LinkedHashMap objE = (LinkedHashMap) e;
-                        JSONObject c = new JSONObject();
-                        c.put("favicon", objE.get("faviconUrl"));
-                        c.put("title", objE.get("title"));
-                        c.put("url", objE.get("url"));
-                        c.put("id", objE.get("id"));
-                        child.add(c);
+                try {
+                    ResponseEntity<JSONArray> responseEntity =
+                            restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
+                    if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                        List<JSONObject> child = new ArrayList<>();
+                        for (Object e : responseEntity.getBody()) {
+                            LinkedHashMap objE = (LinkedHashMap) e;
+                            JSONObject c = new JSONObject();
+                            c.put("favicon", objE.get("faviconUrl"));
+                            c.put("title", objE.get("title"));
+                            c.put("url", objE.get("url"));
+                            c.put("id", objE.get("id"));
+                            child.add(c);
+                        }
+                        r.put("children", child);
+                        result.add(r);
                     }
-                    r.put("children", child);
-                    result.add(r);
+                } catch (Exception e) {
+                    continue;
                 }
             }
             AndroidWebViewMap.getMap().put(iDevice, has);

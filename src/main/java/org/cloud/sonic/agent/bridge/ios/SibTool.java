@@ -64,7 +64,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
     private static String bundleId;
-    private static String sib = new File("plugins" + File.separator + "sonic-ios-bridge").getAbsolutePath();
+    private static File sibBinary = new File("plugins" + File.separator + "sonic-ios-bridge");
+    private static String sib = sibBinary.getAbsolutePath();
     @Value("${sonic.sib}")
     private String sibVersion;
     private static RestTemplate restTemplate;
@@ -84,6 +85,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public void init() {
+        sibBinary.setExecutable(true);
+        sibBinary.setWritable(true);
+        sibBinary.setReadable(true);
         restTemplate = restTemplateBean;
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
         if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {

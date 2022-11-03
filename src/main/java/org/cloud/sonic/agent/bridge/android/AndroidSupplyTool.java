@@ -14,11 +14,15 @@ import java.util.List;
 
 @Slf4j
 public class AndroidSupplyTool {
-    private static String sas = new File("plugins" + File.separator + "sonic-android-supply").getAbsolutePath();
+    private static File sasBinary = new File("plugins" + File.separator + "sonic-android-supply");
+    private static String sas = sasBinary.getAbsolutePath();
     private static String sasVersion = String.valueOf(SpringTool.getPropertiesValue("sonic.sas"));
     private static boolean isEnable = Boolean.valueOf(SpringTool.getPropertiesValue("modules.android.use-sas"));
 
     public static void startShare(String udId, Session session) {
+        sasBinary.setExecutable(true);
+        sasBinary.setWritable(true);
+        sasBinary.setReadable(true);
         JSONObject sasJSON = new JSONObject();
         sasJSON.put("msg", "sas");
         if (isEnable) {
