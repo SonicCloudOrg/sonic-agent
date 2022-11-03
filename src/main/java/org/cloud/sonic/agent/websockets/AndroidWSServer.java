@@ -129,7 +129,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                 true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                                 , "-r", "-t");
                     } catch (InstallException e2) {
-                        e.printStackTrace();
+                        e2.printStackTrace();
                         logger.info("Sonic Apk install failed.");
                         return;
                     }
