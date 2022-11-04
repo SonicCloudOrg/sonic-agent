@@ -16,6 +16,7 @@
  */
 package org.cloud.sonic.agent.automation;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
@@ -152,6 +153,7 @@ public class AndroidStepHandler {
             }
             if (pocoDriver != null) {
                 pocoDriver.closeDriver();
+                AndroidDeviceBridgeTool.removeForward(iDevice, pocoPort, targetPort);
                 pocoDriver = null;
             }
             if (androidDriver != null) {
@@ -960,8 +962,8 @@ public class AndroidStepHandler {
         boolean isOpenActivityListener = false;
         boolean isOpenNetworkListener = false;
         if (!options.isEmpty()) {
-            for (int i = options.size() - 1; i >= 0; i--) {
-                JSONObject jsonOption = (JSONObject) options.get(i);
+            for (Object j : options) {
+                JSONObject jsonOption = JSON.parseObject(j.toString());
                 if (jsonOption.getString("name").equals("sleepTime")) {
                     sleepTime = jsonOption.getInteger("value");
                 }
@@ -992,7 +994,6 @@ public class AndroidStepHandler {
                 if (jsonOption.getString("name").equals("isOpenNetworkListener")) {
                     isOpenNetworkListener = jsonOption.getBoolean("value");
                 }
-                options.remove(options.get(i));
             }
         }
         int finalSleepTime = sleepTime;
@@ -1104,7 +1105,6 @@ public class AndroidStepHandler {
                                     h5Time = 0;
                                 }
                             } catch (Throwable e) {
-                                e.printStackTrace();
                             }
                         }
                     }
@@ -1224,27 +1224,59 @@ public class AndroidStepHandler {
         pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), pocoPort);
     }
 
+    private int intervalInit = 3000;
+    private int retryInit = 3;
+
+    public void setDefaultFindPocoElementInterval(HandleDes handleDes, Integer retry, Integer interval) {
+        handleDes.setStepDes("Set Global Find Poco Element Interval");
+        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+        if (retry != null) {
+            retryInit = retry;
+        }
+        if (interval != null) {
+            intervalInit = interval;
+        }
+    }
+
     public PocoElement findPocoEle(String selector, String pathValue) throws Throwable {
         PocoElement pocoElement = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
-        pocoDriver.getPageSourceForXmlElement();
-        try {
-            switch (selector) {
-                case "poco":
-                    pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+        int wait = 0;
+        String errMsg = "";
+        while (wait < retryInit) {
+            wait++;
+            pocoDriver.getPageSourceForXmlElement();
+            try {
+                switch (selector) {
+                    case "poco":
+                        pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+                        break;
+                    case "xpath":
+                        pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
+                        break;
+                    case "cssSelector":
+                        pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
+                        break;
+                    default:
+                        log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                        break;
+                }
+                if (pocoElement != null) {
                     break;
-                case "xpath":
-                    pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
-                    break;
-                case "cssSelector":
-                    pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
-                    break;
-                default:
-                    log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
-                    break;
+                }
+            } catch (Throwable e) {
+                errMsg = e.getMessage();
             }
-        } catch (Throwable e) {
-            throw e;
+            if (wait < retryInit) {
+                try {
+                    Thread.sleep(intervalInit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (pocoElement == null) {
+            throw new SonicRespException(errMsg);
         }
         return pocoElement;
     }
@@ -1457,7 +1489,7 @@ public class AndroidStepHandler {
     }
 
     public void setFindElementInterval(HandleDes handleDes, int retry, int interval) {
-        handleDes.setStepDes("Set Global Find Element Interval");
+        handleDes.setStepDes("Set Global Find Android Element Interval");
         handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         androidDriver.setDefaultFindElementInterval(retry, interval);
     }
@@ -1800,6 +1832,9 @@ public class AndroidStepHandler {
                 break;
             case "runScript":
                 runScript(handleDes, step.getString("content"), step.getString("text"));
+                break;
+            case "setDefaultFindPocoElementInterval":
+                setDefaultFindPocoElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
                 break;
             case "startPocoDriver":
                 startPocoDriver(handleDes, step.getString("content"), step.getInteger("text"));

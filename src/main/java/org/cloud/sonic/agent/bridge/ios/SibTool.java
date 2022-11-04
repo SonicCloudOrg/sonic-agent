@@ -64,7 +64,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
     private static String bundleId;
-    private static String sib = new File("plugins" + File.separator + "sonic-ios-bridge").getAbsolutePath();
+    private static File sibBinary = new File("plugins" + File.separator + "sonic-ios-bridge");
+    private static String sib = sibBinary.getAbsolutePath();
     @Value("${sonic.sib}")
     private String sibVersion;
     private static RestTemplate restTemplate;
@@ -84,6 +85,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public void init() {
+        sibBinary.setExecutable(true);
+        sibBinary.setWritable(true);
+        sibBinary.setReadable(true);
         restTemplate = restTemplateBean;
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
         if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {
@@ -590,6 +594,91 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public static void stopProxy(String udId, int target) {
+        String processName = String.format("process-%s-proxy-%d", udId, target);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+    }
+
+    public static void proxy(String udId, int local, int target) {
+        stopProxy(udId, target);
+        Process ps = null;
+        String commandLine = "%s proxy -u %s -l %d -r %d";
+        try {
+            String system = System.getProperty("os.name").toLowerCase();
+            if (system.contains("win")) {
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, local, target)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, local, target)});
+            }
+            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
+            InputStreamReader err = new InputStreamReader(ps.getErrorStream());
+            BufferedReader stdInputErr = new BufferedReader(err);
+            Process finalPs = ps;
+            Thread proErr = new Thread(() -> {
+                String s;
+                while (finalPs.isAlive()) {
+                    try {
+                        if ((s = stdInputErr.readLine()) != null) {
+                            logger.info(s);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    stdInputErr.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    err.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                logger.info("WebInspector print thread shutdown.");
+            });
+            proErr.start();
+            Thread pro = new Thread(() -> {
+                String s;
+                while (finalPs.isAlive()) {
+                    try {
+                        if ((s = stdInput.readLine()) != null) {
+                            logger.info(s);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    stdInput.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    inputStreamReader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                logger.info("proxy print thread shutdown.");
+            });
+            pro.start();
+            String processName = String.format("process-%s-proxy-%d", udId, target);
+            GlobalProcessMap.getMap().put(processName, ps);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static int getOrientation(String udId) {
+        String commandLine = "%s orientation -u %s";
+        return BytesTool.getInt(ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId)));
     }
 
     public static List<JSONObject> getWebView(String udId) {

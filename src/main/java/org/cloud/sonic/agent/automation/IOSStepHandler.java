@@ -32,6 +32,7 @@ import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tests.script.GroovyScript;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
+import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
@@ -43,6 +44,10 @@ import org.cloud.sonic.driver.ios.IOSDriver;
 import org.cloud.sonic.driver.ios.enums.IOSSelector;
 import org.cloud.sonic.driver.ios.enums.SystemButton;
 import org.cloud.sonic.driver.ios.service.IOSElement;
+import org.cloud.sonic.driver.poco.PocoDriver;
+import org.cloud.sonic.driver.poco.enums.PocoEngine;
+import org.cloud.sonic.driver.poco.enums.PocoSelector;
+import org.cloud.sonic.driver.poco.models.PocoElement;
 import org.cloud.sonic.vision.cv.AKAZEFinder;
 import org.cloud.sonic.vision.cv.SIFTFinder;
 import org.cloud.sonic.vision.cv.SimilarityChecker;
@@ -70,10 +75,13 @@ import static org.testng.Assert.*;
 public class IOSStepHandler {
     public LogUtil log = new LogUtil();
     private IOSDriver iosDriver;
+    private PocoDriver pocoDriver = null;
     private JSONObject globalParams = new JSONObject();
     private String udId = "";
-
     private int status = ResultDetailStatus.PASS;
+    private int[] screenWindowPosition = {0, 0, 0, 0};
+    private int pocoPort = 0;
+    private int targetPort = 0;
 
     public LogUtil getLog() {
         return log;
@@ -114,6 +122,11 @@ public class IOSStepHandler {
             if (iosDriver != null) {
                 iosDriver.closeDriver();
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
+            }
+            if (pocoDriver != null) {
+                pocoDriver.closeDriver();
+                SibTool.stopProxy(udId, targetPort);
+                pocoDriver = null;
             }
         } catch (Exception e) {
             log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", "");
@@ -746,6 +759,220 @@ public class IOSStepHandler {
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
+    public void startPocoDriver(HandleDes handleDes, String engine, int port) {
+        handleDes.setStepDes("启动PocoDriver");
+        handleDes.setDetail("");
+        if (pocoPort == 0) {
+            pocoPort = PortTool.getPort();
+        }
+        targetPort = port;
+        SibTool.proxy(udId, pocoPort, targetPort);
+        pocoDriver = new PocoDriver(PocoEngine.valueOf(engine), pocoPort);
+    }
+
+    private int intervalInit = 3000;
+    private int retryInit = 3;
+
+    public void setDefaultFindPocoElementInterval(HandleDes handleDes, Integer retry, Integer interval) {
+        handleDes.setStepDes("Set Global Find Poco Element Interval");
+        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+        if (retry != null) {
+            retryInit = retry;
+        }
+        if (interval != null) {
+            intervalInit = interval;
+        }
+    }
+
+    public PocoElement findPocoEle(String selector, String pathValue) throws Throwable {
+        PocoElement pocoElement = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        int wait = 0;
+        String errMsg = "";
+        while (wait < retryInit) {
+            wait++;
+            pocoDriver.getPageSourceForXmlElement();
+            try {
+                switch (selector) {
+                    case "poco":
+                        pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
+                        break;
+                    case "xpath":
+                        pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
+                        break;
+                    case "cssSelector":
+                        pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
+                        break;
+                    default:
+                        log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                        break;
+                }
+                if (pocoElement != null) {
+                    break;
+                }
+            } catch (Throwable e) {
+                errMsg = e.getMessage();
+            }
+            if (wait < retryInit) {
+                try {
+                    Thread.sleep(intervalInit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (pocoElement == null) {
+            throw new SonicRespException(errMsg);
+        }
+        return pocoElement;
+    }
+
+    public void isExistPocoEle(HandleDes handleDes, String des, String selector, String value, boolean expect) {
+        handleDes.setStepDes("判断控件 " + des + " 是否存在");
+        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+        boolean hasEle = false;
+        try {
+            PocoElement w = findPocoEle(selector, value);
+            if (w != null) {
+                hasEle = true;
+            }
+        } catch (Throwable e) {
+        }
+        try {
+            assertEquals(hasEle, expect);
+        } catch (AssertionError e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void pocoClick(HandleDes handleDes, String des, String selector, String value) {
+        handleDes.setStepDes("点击" + des);
+        handleDes.setDetail("点击 " + value);
+        try {
+            PocoElement w = findPocoEle(selector, value);
+            if (w != null) {
+                List<Float> pos = w.getPayload().getPos();
+                int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
+                iosDriver.tap(realCoordinates[0], realCoordinates[1]);
+            } else {
+                throw new SonicRespException(value + " not found!");
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void pocoLongPress(HandleDes handleDes, String des, String selector, String value, int time) {
+        handleDes.setStepDes("长按" + des);
+        handleDes.setDetail("长按 " + value);
+        try {
+            PocoElement w = findPocoEle(selector, value);
+            if (w != null) {
+                List<Float> pos = w.getPayload().getPos();
+                int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
+                iosDriver.longPress(realCoordinates[0], realCoordinates[1], time);
+            } else {
+                throw new SonicRespException(value + " not found!");
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void pocoSwipe(HandleDes handleDes, String des, String selector, String value, String des2, String selector2, String value2) {
+        handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
+        handleDes.setDetail("拖拽 " + value + " 到 " + value2);
+        try {
+            PocoElement w1 = findPocoEle(selector, value);
+            PocoElement w2 = findPocoEle(selector2, value2);
+            if (w1 != null && w2 != null) {
+                List<Float> pos1 = w1.getPayload().getPos();
+                int[] realCoordinates1 = getTheRealCoordinatesOfPoco(pos1.get(0), pos1.get(1));
+
+                List<Float> pos2 = w2.getPayload().getPos();
+                int[] realCoordinate2 = getTheRealCoordinatesOfPoco(pos2.get(0), pos2.get(1));
+
+                iosDriver.swipe(realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1]);
+            } else {
+                throw new SonicRespException(value + " or " + value2 + " not found!");
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void setTheRealPositionOfTheWindow(HandleDes handleDes, String text) {
+        JSONObject offsetValue = JSONObject.parseObject(text);
+        handleDes.setStepDes("设置偏移量");
+        handleDes.setDetail(String.format("offsetWidth: %d, offsetHeight: %d, windowWidth: %d, windowHeight: %d",
+                offsetValue.getInteger("offsetWidth"),
+                offsetValue.getInteger("offsetHeight"),
+                offsetValue.getInteger("windowWidth"),
+                offsetValue.getInteger("windowHeight")
+        ));
+        this.screenWindowPosition[0] = offsetValue.getInteger("offsetWidth");
+        this.screenWindowPosition[1] = offsetValue.getInteger("offsetHeight");
+        this.screenWindowPosition[2] = offsetValue.getInteger("windowWidth");
+        this.screenWindowPosition[3] = offsetValue.getInteger("windowHeight");
+    }
+
+    public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
+        int[] pos = new int[2];
+        int screenOrientation = SibTool.getOrientation(udId);
+
+        int width = screenWindowPosition[2], height = screenWindowPosition[3];
+
+        if (width == 0 || height == 0) {
+            WindowSize windowSize = null;
+            try {
+                windowSize = iosDriver.getWindowSize();
+            } catch (SonicRespException e) {
+                e.printStackTrace();
+            }
+            width = windowSize.getWidth();
+            height = windowSize.getHeight();
+        }
+
+        if (screenOrientation == 1 || screenOrientation == 3) {
+            // x
+            pos[0] = this.screenWindowPosition[1] + (int) (height * pocoX);
+            // y
+            pos[1] = this.screenWindowPosition[0] + (int) (width * pocoY);
+        } else {
+            // x = offsetX + width*pocoPosX
+            pos[0] = this.screenWindowPosition[0] + (int) (width * pocoX);
+            // y = offsetY + height*pocoPosY
+            pos[1] = this.screenWindowPosition[1] + (int) (height * pocoY);
+        }
+        return pos;
+    }
+
+    public void freezeSource(HandleDes handleDes) {
+        handleDes.setStepDes("冻结控件树");
+        handleDes.setDetail("");
+        pocoDriver.freezeSource();
+    }
+
+    public void thawSource(HandleDes handleDes) {
+        handleDes.setStepDes("解冻控件树");
+        handleDes.setDetail("");
+        pocoDriver.thawSource();
+    }
+
+    public void closePocoDriver(HandleDes handleDes) {
+        handleDes.setStepDes("关闭PocoDriver");
+        handleDes.setDetail("");
+        if (pocoDriver != null) {
+            pocoDriver.closeDriver();
+            SibTool.stopProxy(udId, targetPort);
+            pocoDriver = null;
+        }
+    }
+
+    public PocoDriver getPocoDriver() {
+        return pocoDriver;
+    }
+
     public IOSElement findEle(String selector, String pathValue) throws SonicRespException {
         IOSElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
@@ -785,7 +1012,7 @@ public class IOSStepHandler {
     }
 
     public void setFindElementInterval(HandleDes handleDes, int retry, int interval) {
-        handleDes.setStepDes("Set Global Find Element Interval");
+        handleDes.setStepDes("Set Global Find XCTest Element Interval");
         handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         iosDriver.setDefaultFindElementInterval(retry, interval);
     }
@@ -984,12 +1211,6 @@ public class IOSStepHandler {
             case "sendKeyForce":
                 sendKeyForce(handleDes, step.getString("content"));
                 break;
-//            case "hideKey":
-//                hideKey(handleDes);
-//                break;
-//            case "monkey":
-//                runMonkey(handleDes, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
-//                break;
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
                 return;
@@ -1004,6 +1225,41 @@ public class IOSStepHandler {
                 break;
             case "runScript":
                 runScript(handleDes, step.getString("content"), step.getString("text"));
+                break;
+            case "startPocoDriver":
+                startPocoDriver(handleDes, step.getString("content"), step.getInteger("text"));
+                break;
+            case "setDefaultFindPocoElementInterval":
+                setDefaultFindPocoElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
+                break;
+            case "isExistPocoEle":
+                isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+                break;
+            case "pocoClick":
+                pocoClick(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "pocoLongPress":
+                pocoLongPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue")
+                        , Integer.parseInt(step.getString("content")));
+                break;
+            case "pocoSwipe":
+                pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                        , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
+                break;
+            case "setTheRealPositionOfTheWindow":
+                setTheRealPositionOfTheWindow(handleDes, step.getString("content"));
+                break;
+            case "freezeSource":
+                freezeSource(handleDes);
+                break;
+            case "thawSource":
+                thawSource(handleDes);
+                break;
+            case "closePocoDriver":
+                closePocoDriver(handleDes);
                 break;
         }
         switchType(step, handleDes);

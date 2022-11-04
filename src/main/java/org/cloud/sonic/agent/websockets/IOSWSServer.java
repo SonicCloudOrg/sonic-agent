@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
@@ -103,11 +104,6 @@ public class IOSWSServer implements IIOSWSServer {
         }
         saveUdIdMapAndSet(session, udId);
         int[] ports = SibTool.startWda(udId);
-        JSONObject picFinish = new JSONObject();
-        picFinish.put("msg", "picFinish");
-        picFinish.put("wda", ports[0]);
-        picFinish.put("port", ports[1]);
-        sendText(session, picFinish.toJSONString());
         if (ports[0] != 0) {
             SibTool.orientationWatcher(udId, session);
         }
@@ -121,11 +117,13 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("status", "success");
                 result.put("width", iosStepHandler.getDriver().getWindowSize().getWidth());
                 result.put("height", iosStepHandler.getDriver().getWindowSize().getHeight());
+                result.put("wda", ports[0]);
+                result.put("port", ports[1]);
                 result.put("detail", "初始化 WebDriverAgent 完成！");
                 JSONObject appiumSettings = new JSONObject();
-                appiumSettings.put("mjpegServerFramerate", 100);
+                appiumSettings.put("mjpegServerFramerate", 60);
                 appiumSettings.put("mjpegScalingFactor", 100);
-                appiumSettings.put("mjpegServerScreenshotQuality", 25);
+                appiumSettings.put("mjpegServerScreenshotQuality", 50);
                 iosStepHandler.appiumSettings(appiumSettings);
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
             } catch (Exception e) {
@@ -185,9 +183,9 @@ public class IOSWSServer implements IIOSWSServer {
                         appiumSettings.put("mjpegScalingFactor", 50);
                         appiumSettings.put("mjpegServerScreenshotQuality", 10);
                     } else {
-                        appiumSettings.put("mjpegServerFramerate", 100);
+                        appiumSettings.put("mjpegServerFramerate", 60);
                         appiumSettings.put("mjpegScalingFactor", 100);
-                        appiumSettings.put("mjpegServerScreenshotQuality", 25);
+                        appiumSettings.put("mjpegServerScreenshotQuality", 50);
                     }
                     try {
                         iosStepHandler.appiumSettings(appiumSettings);
@@ -276,6 +274,22 @@ public class IOSWSServer implements IIOSWSServer {
                     break;
                 case "debug":
                     switch (msg.getString("detail")) {
+                        case "poco": {
+                            IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
+                                iosStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
+                                JSONObject poco = new JSONObject();
+                                try {
+                                    poco.put("result", iosStepHandler.getPocoDriver().getPageSourceForJsonString());
+                                } catch (SonicRespException e) {
+                                    poco.put("result", "");
+                                    e.printStackTrace();
+                                }
+                                poco.put("msg", "poco");
+                                BytesTool.sendText(session, poco.toJSONString());
+                                iosStepHandler.closePocoDriver(new HandleDes());
+                            });
+                            break;
+                        }
                         case "runStep": {
                             JSONObject jsonDebug = new JSONObject();
                             jsonDebug.put("msg", "findSteps");

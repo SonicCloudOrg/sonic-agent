@@ -122,14 +122,26 @@ public class AndroidWSServer implements IAndroidWSServer {
                 iDevice.installPackage("plugins/sonic-android-apk.apk",
                         true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                         , "-r", "-t", "-g");
-                AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RUN_IN_BACKGROUND allow");
-                AndroidDeviceBridgeTool.executeCommand(iDevice, "dumpsys deviceidle whitelist +org.cloud.sonic.android");
-                logger.info("Sonic Apk install successful.");
             } catch (InstallException e) {
-                e.printStackTrace();
-                logger.info("Sonic Apk install failed.");
-                return;
+                if (e.getMessage().contains("Unknown option: -g")) {
+                    try {
+                        iDevice.installPackage("plugins/sonic-android-apk.apk",
+                                true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                                , "-r", "-t");
+                    } catch (InstallException e2) {
+                        e2.printStackTrace();
+                        logger.info("Sonic Apk install failed.");
+                        return;
+                    }
+                } else {
+                    e.printStackTrace();
+                    logger.info("Sonic Apk install failed.");
+                    return;
+                }
             }
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RUN_IN_BACKGROUND allow");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "dumpsys deviceidle whitelist +org.cloud.sonic.android");
+            logger.info("Sonic Apk install successful.");
             path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
                     .replaceAll("package:", "")
                     .replaceAll("\n", "")

@@ -30,7 +30,8 @@ import java.util.List;
 public class SGMTool {
     private static final Logger logger = LoggerFactory.getLogger(SGMTool.class);
     private static String pFile = new File("plugins").getAbsolutePath();
-    private static String sgm = new File(pFile + File.separator + "sonic-go-mitmproxy").getAbsolutePath();
+    private static File sgmBinary = new File(pFile + File.separator + "sonic-go-mitmproxy");
+    private static String sgm = sgmBinary.getAbsolutePath();
     private static String sgmVersion;
     @Value("${sonic.sgm}")
     private String ver;
@@ -41,6 +42,9 @@ public class SGMTool {
     }
 
     public static void init() {
+        sgmBinary.setExecutable(true);
+        sgmBinary.setWritable(true);
+        sgmBinary.setReadable(true);
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgm));
         if (ver.size() == 0 || !BytesTool.versionCheck(sgmVersion, ver.get(0).replace("sonic-go-mitmproxy:", "").trim())) {
             logger.info(String.format("Start sonic-go-mitmproxy failed! Please use [chmod -R 777 %s], if still failed, you can try with [sudo]", pFile));
