@@ -8,6 +8,6 @@
 .DS_Store
 .sib/
 /webview/
-/plugins/sonic-go-mitmproxy-ca-cert.cer
-/plugins/sonic-go-mitmproxy-ca-cert.pem
-/plugins/sonic-go-mitmproxy-ca.pem
+/plugins/sonic-go-mitmproxy*
+/plugins/sonic-ios-bridge*
+/plugins/sonic-android-supply*
