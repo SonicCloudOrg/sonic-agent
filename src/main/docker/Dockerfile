@@ -18,7 +18,7 @@ RUN apt-get -qqy update && \
     libgconf-2-4 \
     gnupg \
     salt-minion \
-    libasound2-dev freeglut3-dev libgtk2.0-dev libusb-dev zlib1g libffi-dev libbz2-dev zlib1g-dev \
+    libasound2-dev freeglut3-dev libgtk2.0-dev libusb-dev zlib1g libffi-dev libnss3 libbz2-dev zlib1g-dev \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get clean
 
