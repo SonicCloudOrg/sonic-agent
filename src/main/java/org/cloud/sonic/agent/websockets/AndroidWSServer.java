@@ -482,19 +482,12 @@ public class AndroidWSServer implements IAndroidWSServer {
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 try {
                                     JSONObject result = new JSONObject();
+                                    androidStepHandler.switchWindowMode(new HandleDes(),msg.getBoolean("isMulti"));
                                     result.put("msg", "tree");
                                     result.put("detail", finalAndroidStepHandler.getResource());
-                                    HandleDes handleDes = new HandleDes();
-                                    if (handleDes.getE() != null) {
-                                        logger.error(handleDes.getE().getMessage());
-                                        JSONObject resultFail = new JSONObject();
-                                        resultFail.put("msg", "treeFail");
-                                        BytesTool.sendText(session, resultFail.toJSONString());
-                                    } else {
-                                        result.put("webView", finalAndroidStepHandler.getWebView());
-                                        result.put("activity", AndroidDeviceBridgeTool.getCurrentActivity(iDevice));
-                                        BytesTool.sendText(session, result.toJSONString());
-                                    }
+                                    result.put("webView", finalAndroidStepHandler.getWebView());
+                                    result.put("activity", AndroidDeviceBridgeTool.getCurrentActivity(iDevice));
+                                    BytesTool.sendText(session, result.toJSONString());
                                 } catch (Throwable e) {
                                     logger.error(e.getMessage());
                                     JSONObject result = new JSONObject();

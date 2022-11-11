@@ -133,14 +133,19 @@ public class AndroidStepHandler {
             throw out;
         }
         androidDriver.disableLog();
-        JSONObject settings = new JSONObject();
-        settings.put("enableMultiWindows", true);
-        androidDriver.setAppiumSettings(settings);
         log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
                 iDevice.getProperty(IDevice.PROP_DEVICE_MODEL),
                 AndroidDeviceBridgeTool.getScreenSize(iDevice));
+    }
+
+    public void switchWindowMode(HandleDes handleDes, boolean isMulti) throws SonicRespException {
+        handleDes.setStepDes("切换窗口模式");
+        handleDes.setDetail("切换为： " + (isMulti ? "多窗口模式" : "单窗口模式"));
+        JSONObject settings = new JSONObject();
+        settings.put("enableMultiWindows", isMulti);
+        androidDriver.setAppiumSettings(settings);
     }
 
     /**
@@ -1870,6 +1875,9 @@ public class AndroidStepHandler {
                 break;
             case "closePocoDriver":
                 closePocoDriver(handleDes);
+                break;
+            case "switchWindowMode":
+                switchWindowMode(handleDes, step.getBoolean("content"));
                 break;
         }
         switchType(step, handleDes);
