@@ -3,7 +3,7 @@ name: deploy to Dockerhub
 on:
   push:
     tags:
-      - "v*.*.*-*"
+      - "v*.*.*"
 
 jobs:
 

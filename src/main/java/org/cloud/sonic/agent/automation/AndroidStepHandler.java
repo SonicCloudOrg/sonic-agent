@@ -133,6 +133,9 @@ public class AndroidStepHandler {
             throw out;
         }
         androidDriver.disableLog();
+        JSONObject settings = new JSONObject();
+        settings.put("enableMultiWindows", true);
+        androidDriver.setAppiumSettings(settings);
         log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
