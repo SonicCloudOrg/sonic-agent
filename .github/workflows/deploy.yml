@@ -34,7 +34,7 @@ jobs:
           latest: true
           fileName: "*_linux_x86_64.tar.gz"
       - name: sas
-        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && rm plugins/sonic-android-supply* && mv sas plugins/sonic-android-supply
+        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && mv sas plugins/sonic-android-supply
       - name: sgm-download
         uses: robinraju/release-downloader@v1.4
         with:
@@ -42,7 +42,7 @@ jobs:
           latest: true
           fileName: "*_linux_x86_64.tar.gz"
       - name: sgm
-        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && rm plugins/sonic-go-mitmproxy* && mv sonic-go-mitmproxy plugins/sonic-go-mitmproxy
+        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && mv sonic-go-mitmproxy plugins/sonic-go-mitmproxy
       - name: sib-download
         uses: robinraju/release-downloader@v1.4
         with:
@@ -50,7 +50,7 @@ jobs:
           latest: true
           fileName: "*_linux_x86_64.tar.gz"
       - name: sib
-        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && rm plugins/sonic-ios-bridge* && mv sib plugins/sonic-ios-bridge
+        run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && mv sib plugins/sonic-ios-bridge
       - name: deploy
         run: mvn package -Dplatform=linux-x86_64 && docker build -t sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} -f src/main/docker/Dockerfile .
       - name: push
