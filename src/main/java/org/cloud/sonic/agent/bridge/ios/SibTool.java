@@ -246,7 +246,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                         }
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.info(e.getMessage());
                 }
             }
             try {
@@ -395,7 +395,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 stdInput.close();
                 inputStreamReader.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.info(e.getMessage());
             }
         }).start();
     }

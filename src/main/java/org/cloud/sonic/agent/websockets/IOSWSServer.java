@@ -58,6 +58,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
@@ -66,6 +68,8 @@ import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 @ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class IOSWSServer implements IIOSWSServer {
     private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
+
+    public static Map<String, Integer> screenMap = new HashMap<>();
     @Value("${sonic.agent.key}")
     private String key;
     @Value("${sonic.agent.port}")
@@ -118,7 +122,7 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("width", iosStepHandler.getDriver().getWindowSize().getWidth());
                 result.put("height", iosStepHandler.getDriver().getWindowSize().getHeight());
                 result.put("wda", ports[0]);
-                result.put("port", ports[1]);
+                screenMap.put(udId, ports[1]);
                 result.put("detail", "初始化 WebDriverAgent 完成！");
                 JSONObject appiumSettings = new JSONObject();
                 appiumSettings.put("mjpegServerFramerate", 60);
@@ -387,7 +391,9 @@ public class IOSWSServer implements IIOSWSServer {
                                     result.put("msg", "tree");
                                     result.put("detail", iosStepHandler.getResource());
                                     HandleDes handleDes = new HandleDes();
-                                    result.put("img", iosStepHandler.stepScreen(handleDes));
+                                    if (msg.getBoolean("needImg")) {
+                                        result.put("img", iosStepHandler.stepScreen(handleDes));
+                                    }
                                     if (handleDes.getE() != null) {
                                         logger.error(handleDes.getE().getMessage());
                                         JSONObject resultFail = new JSONObject();
@@ -453,6 +459,7 @@ public class IOSWSServer implements IIOSWSServer {
 
     private void exit(Session session) {
         String udId = udIdMap.get(session);
+        screenMap.remove(udId);
         SibTool.stopOrientationWatcher(udId);
         try {
             HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
