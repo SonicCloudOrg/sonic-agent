@@ -21,11 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.nio.ByteBuffer;
 
-@Slf4j
 /**
  * mjpeg input stream handler
  * {@link https://github.com/sarxos/webcam-capture/blob/master/webcam-capture/src/main/java/com/github/sarxos/webcam/util/MjpegInputStream.java}
  */
+@Slf4j
 public class MjpegInputStream extends DataInputStream {
     private final byte[] SOI_MARKER = {(byte) 0xFF, (byte) 0xD8};
     private final byte[] EOI_MARKER = {(byte) 0xFF, (byte) 0xD9};
