@@ -128,6 +128,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 }
             } catch (IOException e) {
                 logger.info(e.getMessage());
+            } finally {
+                logger.info("listen done.");
             }
             try {
                 stdInput.close();
@@ -231,7 +233,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
         InputStreamReader inputStreamReader = new InputStreamReader(wdaProcess.getInputStream());
         BufferedReader stdInput = new BufferedReader(inputStreamReader);
-        Process finalWdaProcess = wdaProcess;
         Semaphore isFinish = new Semaphore(0);
         Thread wdaThread = new Thread(() -> {
             String s;
@@ -323,6 +324,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 inputStreamReader.close();
             } catch (Exception e) {
                 logger.info(e.getMessage());
+            } finally {
+                logger.info("sys done.");
             }
         }).start();
     }
@@ -379,6 +382,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                     }
                 } catch (Exception e) {
                     logger.info(e.getMessage());
+                } finally {
+                    logger.info("orientation watcher done.");
                 }
                 stdInput.close();
                 inputStreamReader.close();
@@ -401,19 +406,22 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             InputStreamReader inputStreamReader = new InputStreamReader(appListProcess.getInputStream());
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
-            while ((s = stdInput.readLine()) != null) {
-                try {
+            try {
+                while ((s = stdInput.readLine()) != null) {
                     JSONObject appList = new JSONObject();
                     appList.put("msg", "appListDetail");
                     appList.put("detail", JSON.parseObject(s));
                     sendText(session, appList.toJSONString());
-                } catch (Exception e) {
-                    logger.info(s);
                 }
+            } catch (Exception e) {
+                logger.info(e.getMessage());
+            } finally {
+                logger.info("app list done.");
             }
             stdInput.close();
             inputStreamReader.close();
         } catch (Exception e) {
+            logger.info(e.getMessage());
         }
     }
 
@@ -430,8 +438,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             InputStreamReader inputStreamReader = new InputStreamReader(appProcess.getInputStream());
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
-            while ((s = stdInput.readLine()) != null) {
-                try {
+            try {
+                while ((s = stdInput.readLine()) != null) {
                     List<JSONObject> pList = JSON.parseArray(s, JSONObject.class);
                     for (JSONObject p : pList) {
                         JSONObject processListDetail = new JSONObject();
@@ -439,9 +447,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                         processListDetail.put("detail", p);
                         sendText(session, processListDetail.toJSONString());
                     }
-                } catch (Exception e) {
-                    logger.info(s);
                 }
+            } catch (Exception e) {
+                logger.info(e.getMessage());
+            } finally {
+                logger.info("process done.");
             }
             stdInput.close();
             inputStreamReader.close();
@@ -506,7 +516,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             InputStreamReader err = new InputStreamReader(ps.getErrorStream());
             BufferedReader stdInputErr = new BufferedReader(err);
-            Process finalPs = ps;
             Semaphore isFinish = new Semaphore(0);
             Thread webErr = new Thread(() -> {
                 String s;
@@ -600,7 +609,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             InputStreamReader err = new InputStreamReader(ps.getErrorStream());
             BufferedReader stdInputErr = new BufferedReader(err);
-            Process finalPs = ps;
             Thread proErr = new Thread(() -> {
                 String s;
                 try {
@@ -620,7 +628,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                logger.info("WebInspector print thread shutdown.");
+                logger.info("proxy print thread shutdown.");
             });
             proErr.start();
             Thread pro = new Thread(() -> {
