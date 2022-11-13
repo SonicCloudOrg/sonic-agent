@@ -116,20 +116,18 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             InputStreamReader inputStreamReader = new InputStreamReader(listenProcess.getInputStream());
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
-            while (listenProcess.isAlive()) {
-                try {
-                    if ((s = stdInput.readLine()) != null) {
-                        JSONObject r = JSONObject.parseObject(s);
-                        if (r.getString("status").equals("online")) {
-                            sendOnlineStatus(r);
-                        } else if (r.getString("status").equals("offline")) {
-                            sendDisConnectStatus(r);
-                        }
-                        logger.info(s);
+            try {
+                while ((s = stdInput.readLine()) != null) {
+                    JSONObject r = JSONObject.parseObject(s);
+                    if (r.getString("status").equals("online")) {
+                        sendOnlineStatus(r);
+                    } else if (r.getString("status").equals("offline")) {
+                        sendDisConnectStatus(r);
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.info(s);
                 }
+            } catch (IOException e) {
+                logger.info(e.getMessage());
             }
             try {
                 stdInput.close();
@@ -237,17 +235,15 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         Semaphore isFinish = new Semaphore(0);
         Thread wdaThread = new Thread(() -> {
             String s;
-            while (finalWdaProcess.isAlive()) {
-                try {
-                    if ((s = stdInput.readLine()) != null) {
-                        logger.info(s);
-                        if (s.contains("WebDriverAgent server start successful")) {
-                            isFinish.release();
-                        }
+            try {
+                while ((s = stdInput.readLine()) != null) {
+                    logger.info(s);
+                    if (s.contains("WebDriverAgent server start successful")) {
+                        isFinish.release();
                     }
-                } catch (IOException e) {
-                    logger.info(e.getMessage());
                 }
+            } catch (IOException e) {
+                logger.info(e.getMessage());
             }
             try {
                 stdInput.close();
@@ -316,23 +312,17 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
                 BufferedReader stdInput = new BufferedReader(inputStreamReader);
                 String s;
-                while (ps.isAlive()) {
-                    if ((s = stdInput.readLine()) != null) {
-                        logger.info(s);
-                        try {
-                            JSONObject appList = new JSONObject();
-                            appList.put("msg", "logDetail");
-                            appList.put("detail", s);
-                            sendText(session, appList.toJSONString());
-                        } catch (Exception e) {
-                            logger.info(s);
-                        }
-                    }
+                while ((s = stdInput.readLine()) != null) {
+                    logger.info(s);
+                    JSONObject appList = new JSONObject();
+                    appList.put("msg", "logDetail");
+                    appList.put("detail", s);
+                    sendText(session, appList.toJSONString());
                 }
                 stdInput.close();
                 inputStreamReader.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.info(e.getMessage());
             }
         }).start();
     }
@@ -362,35 +352,33 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
                 BufferedReader stdInput = new BufferedReader(inputStreamReader);
                 String s;
-                while (ps.isAlive()) {
-                    if ((s = stdInput.readLine()) != null) {
+                try {
+                    while ((s = stdInput.readLine()) != null) {
                         logger.info(s);
                         if (s.contains("orientation") && (!s.contains("0")) && (!s.contains("failed"))) {
-                            try {
-                                int result = 0;
-                                switch (BytesTool.getInt(s)) {
-                                    case 1:
-                                        result = 0;
-                                        break;
-                                    case 2:
-                                        result = 180;
-                                        break;
-                                    case 3:
-                                        result = 270;
-                                        break;
-                                    case 4:
-                                        result = 90;
-                                        break;
-                                }
-                                JSONObject rotation = new JSONObject();
-                                rotation.put("msg", "rotation");
-                                rotation.put("value", result);
-                                sendText(session, rotation.toJSONString());
-                            } catch (Exception e) {
-                                logger.info(s);
+                            int result = 0;
+                            switch (BytesTool.getInt(s)) {
+                                case 1:
+                                    result = 0;
+                                    break;
+                                case 2:
+                                    result = 180;
+                                    break;
+                                case 3:
+                                    result = 270;
+                                    break;
+                                case 4:
+                                    result = 90;
+                                    break;
                             }
+                            JSONObject rotation = new JSONObject();
+                            rotation.put("msg", "rotation");
+                            rotation.put("value", result);
+                            sendText(session, rotation.toJSONString());
                         }
                     }
+                } catch (Exception e) {
+                    logger.info(e.getMessage());
                 }
                 stdInput.close();
                 inputStreamReader.close();
@@ -413,16 +401,14 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             InputStreamReader inputStreamReader = new InputStreamReader(appListProcess.getInputStream());
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
-            while (appListProcess.isAlive()) {
-                if ((s = stdInput.readLine()) != null) {
-                    try {
-                        JSONObject appList = new JSONObject();
-                        appList.put("msg", "appListDetail");
-                        appList.put("detail", JSON.parseObject(s));
-                        sendText(session, appList.toJSONString());
-                    } catch (Exception e) {
-                        logger.info(s);
-                    }
+            while ((s = stdInput.readLine()) != null) {
+                try {
+                    JSONObject appList = new JSONObject();
+                    appList.put("msg", "appListDetail");
+                    appList.put("detail", JSON.parseObject(s));
+                    sendText(session, appList.toJSONString());
+                } catch (Exception e) {
+                    logger.info(s);
                 }
             }
             stdInput.close();
@@ -444,19 +430,17 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             InputStreamReader inputStreamReader = new InputStreamReader(appProcess.getInputStream());
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
-            while (appProcess.isAlive()) {
-                if ((s = stdInput.readLine()) != null) {
-                    try {
-                        List<JSONObject> pList = JSON.parseArray(s, JSONObject.class);
-                        for (JSONObject p : pList) {
-                            JSONObject processListDetail = new JSONObject();
-                            processListDetail.put("msg", "processListDetail");
-                            processListDetail.put("detail", p);
-                            sendText(session, processListDetail.toJSONString());
-                        }
-                    } catch (Exception e) {
-                        logger.info(s);
+            while ((s = stdInput.readLine()) != null) {
+                try {
+                    List<JSONObject> pList = JSON.parseArray(s, JSONObject.class);
+                    for (JSONObject p : pList) {
+                        JSONObject processListDetail = new JSONObject();
+                        processListDetail.put("msg", "processListDetail");
+                        processListDetail.put("detail", p);
+                        sendText(session, processListDetail.toJSONString());
                     }
+                } catch (Exception e) {
+                    logger.info(s);
                 }
             }
             stdInput.close();
@@ -526,16 +510,14 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             Semaphore isFinish = new Semaphore(0);
             Thread webErr = new Thread(() -> {
                 String s;
-                while (finalPs.isAlive()) {
-                    try {
-                        if ((s = stdInputErr.readLine()) != null) {
-                            if (!s.equals("close send protocol")) {
-                                logger.info(s);
-                            }
+                try {
+                    while ((s = stdInputErr.readLine()) != null) {
+                        if (!s.equals("close send protocol")) {
+                            logger.info(s);
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
                 }
                 try {
                     stdInputErr.close();
@@ -552,17 +534,15 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             webErr.start();
             Thread web = new Thread(() -> {
                 String s;
-                while (finalPs.isAlive()) {
-                    try {
-                        if ((s = stdInput.readLine()) != null) {
-                            logger.info(s);
-                            if (s.contains("service started successfully")) {
-                                isFinish.release();
-                            }
+                try {
+                    while ((s = stdInput.readLine()) != null) {
+                        logger.info(s);
+                        if (s.contains("service started successfully")) {
+                            isFinish.release();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
                 }
                 try {
                     stdInput.close();
@@ -623,14 +603,12 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             Process finalPs = ps;
             Thread proErr = new Thread(() -> {
                 String s;
-                while (finalPs.isAlive()) {
-                    try {
-                        if ((s = stdInputErr.readLine()) != null) {
-                            logger.info(s);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                try {
+                    while ((s = stdInputErr.readLine()) != null) {
+                        logger.info(s);
                     }
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
                 }
                 try {
                     stdInputErr.close();
@@ -647,14 +625,12 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             proErr.start();
             Thread pro = new Thread(() -> {
                 String s;
-                while (finalPs.isAlive()) {
-                    try {
-                        if ((s = stdInput.readLine()) != null) {
-                            logger.info(s);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                try {
+                    while ((s = stdInput.readLine()) != null) {
+                        logger.info(s);
                     }
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
                 }
                 try {
                     stdInput.close();
