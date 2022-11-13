@@ -116,20 +116,20 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             InputStreamReader inputStreamReader = new InputStreamReader(listenProcess.getInputStream());
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
             String s;
-            try {
-                while ((s = stdInput.readLine()) != null) {
-                    JSONObject r = JSONObject.parseObject(s);
-                    if (r.getString("status").equals("online")) {
-                        sendOnlineStatus(r);
-                    } else if (r.getString("status").equals("offline")) {
-                        sendDisConnectStatus(r);
-                    }
-                    logger.info(s);
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
                 }
-            } catch (IOException e) {
-                logger.info(e.getMessage());
-            } finally {
-                logger.info("listen done.");
+                JSONObject r = JSONObject.parseObject(s);
+                if (r.getString("status").equals("online")) {
+                    sendOnlineStatus(r);
+                } else if (r.getString("status").equals("offline")) {
+                    sendDisConnectStatus(r);
+                }
+                logger.info(s);
             }
             try {
                 stdInput.close();
@@ -141,6 +141,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            logger.info("listen done.");
             GlobalProcessMap.getMap().put(processName, listenProcess);
         });
 
@@ -162,7 +163,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             if (a.length() == 0) {
                 break;
             }
-            if (a.indexOf(" ") != -1) {
+            if (a.contains(" ")) {
                 result.add(a.substring(0, a.indexOf(" ")));
             }
         }
@@ -236,15 +237,17 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         Semaphore isFinish = new Semaphore(0);
         Thread wdaThread = new Thread(() -> {
             String s;
-            try {
-                while ((s = stdInput.readLine()) != null) {
-                    logger.info(s);
-                    if (s.contains("WebDriverAgent server start successful")) {
-                        isFinish.release();
-                    }
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
                 }
-            } catch (IOException e) {
-                logger.info(e.getMessage());
+                logger.info(s);
+                if (s.contains("WebDriverAgent server start successful")) {
+                    isFinish.release();
+                }
             }
             try {
                 stdInput.close();
@@ -308,25 +311,38 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 } else if (system.contains("linux") || system.contains("mac")) {
                     ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
                 }
-                String processName = String.format("process-%s-syslog", udId);
-                GlobalProcessMap.getMap().put(processName, ps);
-                InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
-                BufferedReader stdInput = new BufferedReader(inputStreamReader);
-                String s;
-                while ((s = stdInput.readLine()) != null) {
-                    logger.info(s);
-                    JSONObject appList = new JSONObject();
-                    appList.put("msg", "logDetail");
-                    appList.put("detail", s);
-                    sendText(session, appList.toJSONString());
-                }
-                stdInput.close();
-                inputStreamReader.close();
             } catch (Exception e) {
-                logger.info(e.getMessage());
-            } finally {
-                logger.info("sys done.");
+                e.printStackTrace();
             }
+            String processName = String.format("process-%s-syslog", udId);
+            GlobalProcessMap.getMap().put(processName, ps);
+            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                logger.info(s);
+                JSONObject appList = new JSONObject();
+                appList.put("msg", "logDetail");
+                appList.put("detail", s);
+                sendText(session, appList.toJSONString());
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("sys done.");
         }).start();
     }
 
@@ -350,46 +366,46 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 } else if (system.contains("linux") || system.contains("mac")) {
                     ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
                 }
-                String processName = String.format("process-%s-orientation", udId);
-                GlobalProcessMap.getMap().put(processName, ps);
-                InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
-                BufferedReader stdInput = new BufferedReader(inputStreamReader);
-                String s;
-                try {
-                    while ((s = stdInput.readLine()) != null) {
-                        logger.info(s);
-                        if (s.contains("orientation") && (!s.contains("0")) && (!s.contains("failed"))) {
-                            int result = 0;
-                            switch (BytesTool.getInt(s)) {
-                                case 1:
-                                    result = 0;
-                                    break;
-                                case 2:
-                                    result = 180;
-                                    break;
-                                case 3:
-                                    result = 270;
-                                    break;
-                                case 4:
-                                    result = 90;
-                                    break;
-                            }
-                            JSONObject rotation = new JSONObject();
-                            rotation.put("msg", "rotation");
-                            rotation.put("value", result);
-                            sendText(session, rotation.toJSONString());
-                        }
-                    }
-                } catch (Exception e) {
-                    logger.info(e.getMessage());
-                } finally {
-                    logger.info("orientation watcher done.");
-                }
-                stdInput.close();
-                inputStreamReader.close();
             } catch (Exception e) {
-                logger.info(e.getMessage());
+                e.printStackTrace();
             }
+            String processName = String.format("process-%s-orientation", udId);
+            GlobalProcessMap.getMap().put(processName, ps);
+            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                logger.info(s);
+                if (s.contains("orientation") && (!s.contains("0")) && (!s.contains("failed"))) {
+                    int result = switch (BytesTool.getInt(s)) {
+                        case 2 -> 180;
+                        case 3 -> 270;
+                        case 4 -> 90;
+                        default -> 0;
+                    };
+                    JSONObject rotation = new JSONObject();
+                    rotation.put("msg", "rotation");
+                    rotation.put("value", result);
+                    sendText(session, rotation.toJSONString());
+                }
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("orientation watcher done.");
         }).start();
     }
 
@@ -403,26 +419,35 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } else if (system.contains("linux") || system.contains("mac")) {
                 appListProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
             }
-            InputStreamReader inputStreamReader = new InputStreamReader(appListProcess.getInputStream());
-            BufferedReader stdInput = new BufferedReader(inputStreamReader);
-            String s;
-            try {
-                while ((s = stdInput.readLine()) != null) {
-                    JSONObject appList = new JSONObject();
-                    appList.put("msg", "appListDetail");
-                    appList.put("detail", JSON.parseObject(s));
-                    sendText(session, appList.toJSONString());
-                }
-            } catch (Exception e) {
-                logger.info(e.getMessage());
-            } finally {
-                logger.info("app list done.");
-            }
-            stdInput.close();
-            inputStreamReader.close();
         } catch (Exception e) {
-            logger.info(e.getMessage());
+            e.printStackTrace();
         }
+        InputStreamReader inputStreamReader = new InputStreamReader(appListProcess.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
+        String s;
+        while (true) {
+            try {
+                if ((s = stdInput.readLine()) == null) break;
+            } catch (IOException e) {
+                logger.info(e.getMessage());
+                break;
+            }
+            JSONObject appList = new JSONObject();
+            appList.put("msg", "appListDetail");
+            appList.put("detail", JSON.parseObject(s));
+            sendText(session, appList.toJSONString());
+        }
+        try {
+            stdInput.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            inputStreamReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        logger.info("app list done.");
     }
 
     public static void getProcessList(String udId, Session session) {
@@ -435,29 +460,38 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } else if (system.contains("linux") || system.contains("mac")) {
                 appProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
             }
-            InputStreamReader inputStreamReader = new InputStreamReader(appProcess.getInputStream());
-            BufferedReader stdInput = new BufferedReader(inputStreamReader);
-            String s;
-            try {
-                while ((s = stdInput.readLine()) != null) {
-                    List<JSONObject> pList = JSON.parseArray(s, JSONObject.class);
-                    for (JSONObject p : pList) {
-                        JSONObject processListDetail = new JSONObject();
-                        processListDetail.put("msg", "processListDetail");
-                        processListDetail.put("detail", p);
-                        sendText(session, processListDetail.toJSONString());
-                    }
-                }
-            } catch (Exception e) {
-                logger.info(e.getMessage());
-            } finally {
-                logger.info("process done.");
-            }
-            stdInput.close();
-            inputStreamReader.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        InputStreamReader inputStreamReader = new InputStreamReader(appProcess.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
+        String s;
+        while (true) {
+            try {
+                if ((s = stdInput.readLine()) == null) break;
+            } catch (IOException e) {
+                logger.info(e.getMessage());
+                break;
+            }
+            List<JSONObject> pList = JSON.parseArray(s, JSONObject.class);
+            for (JSONObject p : pList) {
+                JSONObject processListDetail = new JSONObject();
+                processListDetail.put("msg", "processListDetail");
+                processListDetail.put("detail", p);
+                sendText(session, processListDetail.toJSONString());
+            }
+        }
+        try {
+            stdInput.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            inputStreamReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        logger.info("process done.");
     }
 
     public static void locationUnset(String udId) {
@@ -512,77 +546,84 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } else if (system.contains("linux") || system.contains("mac")) {
                 ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
             }
-            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
-            BufferedReader stdInput = new BufferedReader(inputStreamReader);
-            InputStreamReader err = new InputStreamReader(ps.getErrorStream());
-            BufferedReader stdInputErr = new BufferedReader(err);
-            Semaphore isFinish = new Semaphore(0);
-            Thread webErr = new Thread(() -> {
-                String s;
-                try {
-                    while ((s = stdInputErr.readLine()) != null) {
-                        if (!s.equals("close send protocol")) {
-                            logger.info(s);
-                        }
-                    }
-                } catch (IOException e) {
-                    logger.info(e.getMessage());
-                }
-                try {
-                    stdInputErr.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    err.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                logger.info("WebInspector print thread shutdown.");
-            });
-            webErr.start();
-            Thread web = new Thread(() -> {
-                String s;
-                try {
-                    while ((s = stdInput.readLine()) != null) {
-                        logger.info(s);
-                        if (s.contains("service started successfully")) {
-                            isFinish.release();
-                        }
-                    }
-                } catch (IOException e) {
-                    logger.info(e.getMessage());
-                }
-                try {
-                    stdInput.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    inputStreamReader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                webViewMap.remove(udId);
-                logger.info("WebInspector print thread shutdown.");
-            });
-            web.start();
-            int wait = 0;
-            while (!isFinish.tryAcquire()) {
-                Thread.sleep(500);
-                wait++;
-                if (wait >= 120) {
-                    logger.info(udId + " WebInspector start timeout!");
-                    return 0;
-                }
-            }
-            String processName = String.format("process-%s-web-inspector", udId);
-            GlobalProcessMap.getMap().put(processName, ps);
-            return port;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return 0;
+        InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
+        InputStreamReader err = new InputStreamReader(ps.getErrorStream());
+        BufferedReader stdInputErr = new BufferedReader(err);
+        Semaphore isFinish = new Semaphore(0);
+        Thread webErr = new Thread(() -> {
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInputErr.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                if (!s.equals("close send protocol")) {
+                    logger.info(s);
+                }
+            }
+            try {
+                stdInputErr.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                err.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("WebInspector print thread shutdown.");
+        });
+        webErr.start();
+        Thread web = new Thread(() -> {
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                logger.info(s);
+                if (s.contains("service started successfully")) {
+                    isFinish.release();
+                }
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            webViewMap.remove(udId);
+            logger.info("WebInspector print thread shutdown.");
+        });
+        web.start();
+        int wait = 0;
+        while (!isFinish.tryAcquire()) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+            wait++;
+            if (wait >= 120) {
+                logger.info(udId + " WebInspector start timeout!");
+                return 0;
+            }
+        }
+        String processName = String.format("process-%s-web-inspector", udId);
+        GlobalProcessMap.getMap().put(processName, ps);
+        return port;
     }
 
     public static void stopProxy(String udId, int target) {
@@ -605,59 +646,63 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             } else if (system.contains("linux") || system.contains("mac")) {
                 ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, local, target)});
             }
-            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
-            BufferedReader stdInput = new BufferedReader(inputStreamReader);
-            InputStreamReader err = new InputStreamReader(ps.getErrorStream());
-            BufferedReader stdInputErr = new BufferedReader(err);
-            Thread proErr = new Thread(() -> {
-                String s;
-                try {
-                    while ((s = stdInputErr.readLine()) != null) {
-                        logger.info(s);
-                    }
-                } catch (IOException e) {
-                    logger.info(e.getMessage());
-                }
-                try {
-                    stdInputErr.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    err.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                logger.info("proxy print thread shutdown.");
-            });
-            proErr.start();
-            Thread pro = new Thread(() -> {
-                String s;
-                try {
-                    while ((s = stdInput.readLine()) != null) {
-                        logger.info(s);
-                    }
-                } catch (IOException e) {
-                    logger.info(e.getMessage());
-                }
-                try {
-                    stdInput.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    inputStreamReader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                logger.info("proxy print thread shutdown.");
-            });
-            pro.start();
-            String processName = String.format("process-%s-proxy-%d", udId, target);
-            GlobalProcessMap.getMap().put(processName, ps);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
+        InputStreamReader err = new InputStreamReader(ps.getErrorStream());
+        BufferedReader stdInputErr = new BufferedReader(err);
+        Thread proErr = new Thread(() -> {
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInputErr.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                logger.info(s);
+            }
+            try {
+                stdInputErr.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                err.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("proxy print thread shutdown.");
+        });
+        proErr.start();
+        Thread pro = new Thread(() -> {
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                logger.info(s);
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("proxy print thread shutdown.");
+        });
+        pro.start();
+        String processName = String.format("process-%s-proxy-%d", udId, target);
+        GlobalProcessMap.getMap().put(processName, ps);
     }
 
     public static int getOrientation(String udId) {
