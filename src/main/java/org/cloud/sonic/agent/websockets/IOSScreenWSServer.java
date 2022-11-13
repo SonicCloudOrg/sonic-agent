@@ -31,6 +31,7 @@ import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 
@@ -76,18 +77,34 @@ public class IOSScreenWSServer implements IIOSWSServer {
         }
         int finalScreenPort = screenPort;
         new Thread(() -> {
+            URL url;
             try {
-                URL url = new URL("http://localhost:" + finalScreenPort);
-                MjpegInputStream mjpegInputStream = new MjpegInputStream(url.openStream());
-                ByteBuffer bufferedImage;
-                while ((bufferedImage = mjpegInputStream.readFrameForByteBuffer()) != null) {
-                    sendByte(session, bufferedImage);
-                }
+                url = new URL("http://localhost:" + finalScreenPort);
+            } catch (MalformedURLException e) {
+                return;
+            }
+            MjpegInputStream mjpegInputStream = null;
+            try {
+                mjpegInputStream = new MjpegInputStream(url.openStream());
             } catch (IOException e) {
                 log.info(e.getMessage());
-            } finally {
-                log.info("screen done.");
             }
+            ByteBuffer bufferedImage;
+            while (true) {
+                try {
+                    if ((bufferedImage = mjpegInputStream.readFrameForByteBuffer()) == null) break;
+                } catch (IOException e) {
+                    log.info(e.getMessage());
+                    break;
+                }
+                sendByte(session, bufferedImage);
+            }
+            try {
+                mjpegInputStream.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            log.info("screen done.");
         }).start();
     }
 

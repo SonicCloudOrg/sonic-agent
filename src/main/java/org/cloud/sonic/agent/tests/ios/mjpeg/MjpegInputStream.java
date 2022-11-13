@@ -59,23 +59,43 @@ public class MjpegInputStream extends DataInputStream {
         return end < 0 ? -1 : end - sequence.length;
     }
 
-    private int parseContentLength(final byte[] headerBytes) throws IOException, NumberFormatException {
-        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(headerBytes);
-        final InputStreamReader inputStreamReader = new InputStreamReader(byteArrayInputStream);
-        final BufferedReader br = new BufferedReader(inputStreamReader);
+    private int parseContentLength(final byte[] headerBytes) {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(headerBytes);
+        InputStreamReader inputStreamReader = new InputStreamReader(byteArrayInputStream);
+        BufferedReader br = new BufferedReader(inputStreamReader);
         String line;
-        while ((line = br.readLine()) != null) {
+        int result = 0;
+        while (true) {
+            try {
+                if ((line = br.readLine()) == null) break;
+            } catch (IOException e) {
+                log.info(e.getMessage());
+                break;
+            }
             if (line.toLowerCase().startsWith(CONTENT_LENGTH)) {
                 final String[] parts = line.split(":");
                 if (parts.length == 2) {
-                    return Integer.parseInt(parts[1].trim());
+                    result = Integer.parseInt(parts[1].trim());
+                    break;
                 }
             }
         }
-        br.close();
-        inputStreamReader.close();
-        byteArrayInputStream.close();
-        return 0;
+        try {
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            inputStreamReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            byteArrayInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     public ByteBuffer readFrameForByteBuffer() throws IOException {
