@@ -90,6 +90,7 @@ public class IOSScreenWSServer implements IIOSWSServer {
                 log.info(e.getMessage());
             }
             ByteBuffer bufferedImage;
+            int i = 0;
             while (true) {
                 try {
                     if ((bufferedImage = mjpegInputStream.readFrameForByteBuffer()) == null) break;
@@ -97,7 +98,12 @@ public class IOSScreenWSServer implements IIOSWSServer {
                     log.info(e.getMessage());
                     break;
                 }
-                sendByte(session, bufferedImage);
+                i++;
+                if (i % 3 != 0) {
+                    sendByte(session, bufferedImage);
+                } else {
+                    i = 0;
+                }
             }
             try {
                 mjpegInputStream.close();
