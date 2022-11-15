@@ -42,15 +42,7 @@
 
 ## 打包方式
 
-```
-mvn package -P{你的平台}
-```
-
-例如
-
-```
-mvn package -Pwindows-x86_64
-```
+[查看这里](https://sonic-cloud.gitee.io/#/Contribute?tag=con-agent)
 
 ## 赞助商
 

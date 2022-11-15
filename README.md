@@ -44,15 +44,7 @@
 
 ## How to package
 
-```
-mvn package -P{your_platform}
-```
-
-For Example
-
-```
-mvn package -Pwindows-x86_64
-```
+[Look Here!](https://sonic-cloud.gitee.io/#/Contribute?tag=con-agent)
 
 ## Sponsors
 
