@@ -79,9 +79,9 @@ public class AudioWSServer {
         IDevice iDevice = udIdMap.get(session);
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android PROJECT_MEDIA allow");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RECORD_AUDIO allow");
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/org.cloud.sonic.android.plugin.audioPlugin.AudioActivity");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.plugin.audioPlugin.AudioActivity");
         int wait = 0;
-        String has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicaudioservice");
+        String has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix");
         while (!has.contains("sonicaudioservice")) {
             wait++;
             if (wait > 8) {
@@ -92,7 +92,7 @@ public class AudioWSServer {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicaudioservice");
+            has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix");
         }
         int appAudioPort = PortTool.getPort();
         Thread audio = new Thread(() -> {

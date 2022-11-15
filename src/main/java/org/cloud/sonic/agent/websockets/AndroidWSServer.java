@@ -147,6 +147,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     .replaceAll("\n", "")
                     .replaceAll("\t", "");
         }
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SonicServiceActivity");
         AndroidAPKMap.getMap().put(udId, true);
         if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
             AndroidDeviceBridgeTool.pressKey(iDevice, 3);
@@ -203,6 +204,11 @@ public class AndroidWSServer implements IAndroidWSServer {
                     return;
                 }
             }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                logger.info(e.getMessage());
+            }
             AndroidDeviceBridgeTool.forward(iDevice, finalTouchPort, "sonictouchservice");
             Socket touchSocket = null;
             OutputStream outputStream = null;
@@ -218,7 +224,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             } finally {
                 if (NotStopSession.contains(session)) {
                     try {
-                        outputStream.write("r\n".getBytes());
+                        outputStream.write("release\n".getBytes());
                         outputStream.flush();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -482,7 +488,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 try {
                                     JSONObject result = new JSONObject();
-                                    androidStepHandler.switchWindowMode(new HandleDes(),msg.getBoolean("isMulti"));
+                                    androidStepHandler.switchWindowMode(new HandleDes(), msg.getBoolean("isMulti"));
                                     result.put("msg", "tree");
                                     result.put("detail", finalAndroidStepHandler.getResource());
                                     result.put("webView", finalAndroidStepHandler.getWebView());
@@ -572,7 +578,6 @@ public class AndroidWSServer implements IAndroidWSServer {
             HandlerMap.getAndroidMap().remove(session.getId());
         }
         if (iDevice != null) {
-            AndroidDeviceBridgeTool.executeCommand(iDevice, "am force-stop org.cloud.sonic.android");
             AndroidDeviceBridgeTool.clearProxy(iDevice);
             AndroidDeviceBridgeTool.clearWebView(iDevice);
             AndroidSupplyTool.stopShare(iDevice.getSerialNumber());

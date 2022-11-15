@@ -35,17 +35,13 @@ import org.springframework.stereotype.Component;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author ZhouYiXun
@@ -285,20 +281,10 @@ public class AndroidTerminalWSServer {
         if (socketMap.get(session) != null && socketMap.get(session).isAlive()) {
             return;
         }
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.MainActivity");
-        int wait = 0;
-        String has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicmanagersocket");
-        while (!has.contains("sonicmanagersocket")) {
-            wait++;
-            if (wait > 8) {
-                return;
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            has = AndroidDeviceBridgeTool.executeCommand(iDevice, "cat /proc/net/unix | grep sonicmanagersocket");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            log.info(e.getMessage());
         }
         Thread manager = new ManagerThread(iDevice, session, outputStreamMap);
         manager.start();
@@ -322,6 +308,8 @@ public class AndroidTerminalWSServer {
         private Socket managerSocket = null;
         private InputStream inputStream = null;
         private OutputStream outputStream = null;
+        private InputStreamReader isr = null;
+        private BufferedReader br = null;
 
         private IDevice iDevice;
         private Session session;
@@ -336,39 +324,35 @@ public class AndroidTerminalWSServer {
         @Override
         public void run() {
             int managerPort = PortTool.getPort();
-            AndroidDeviceBridgeTool.forward(iDevice, managerPort, "sonicmanagersocket");
+            AndroidDeviceBridgeTool.forward(iDevice, managerPort, 2334);
             try {
                 managerSocket = new Socket("localhost", managerPort);
                 inputStream = managerSocket.getInputStream();
                 outputStreamMap.put(session, managerSocket.getOutputStream());
-                while (managerSocket.isConnected() && !Thread.interrupted()) {
-                    byte[] lengthBytes = inputStream.readNBytes(32);
-                    if (lengthBytes.length == 0) {
+                isr = new InputStreamReader(inputStream);
+                br = new BufferedReader(isr);
+                String s;
+                while (true) {
+                    try {
+                        if ((s = br.readLine()) == null) break;
+                    } catch (IOException e) {
+                        e.printStackTrace();
                         break;
                     }
-                    StringBuffer binStr = new StringBuffer();
-                    for (byte lengthByte : lengthBytes) {
-                        binStr.append(lengthByte);
-                    }
-                    Integer readLen = Integer.valueOf(binStr.toString(), 2);
-
-                    // 根据长度读取数据体
-                    byte[] dataBytes = inputStream.readNBytes(readLen);
-                    String dataJson = new String(dataBytes);
                     JSONObject managerDetail = new JSONObject();
-                    JSONObject data = JSON.parseObject(dataJson);
+                    JSONObject data = JSON.parseObject(s);
                     if (data.getString("appName") != null) {
                         managerDetail.put("msg", "appListDetail");
                     } else {
                         managerDetail.put("msg", "wifiListDetail");
                     }
-                    managerDetail.put("detail", JSON.parseObject(dataJson));
+                    managerDetail.put("detail", JSON.parseObject(s));
                     BytesTool.sendText(session, managerDetail.toJSONString());
                 }
             } catch (IOException e) {
                 log.info("error: {}", e.getMessage());
             }
-            AndroidDeviceBridgeTool.removeForward(iDevice, managerPort, "sonicmanagersocket");
+            AndroidDeviceBridgeTool.removeForward(iDevice, managerPort, 2334);
             outputStreamMap.remove(session);
         }
 
@@ -387,6 +371,20 @@ public class AndroidTerminalWSServer {
                     e.printStackTrace();
                 }
             }
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (isr != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             if (inputStream != null) {
                 try {
                     inputStream.close();
@@ -394,7 +392,7 @@ public class AndroidTerminalWSServer {
                     e.printStackTrace();
                 }
             }
-            if (managerSocket != null && managerSocket.isConnected()) {
+            if (managerSocket != null) {
                 try {
                     managerSocket.close();
                     log.info("manager socket closed.");
