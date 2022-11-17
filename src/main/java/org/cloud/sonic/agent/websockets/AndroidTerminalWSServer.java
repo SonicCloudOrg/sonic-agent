@@ -101,6 +101,7 @@ public class AndroidTerminalWSServer {
         if (!isInstall) {
             logger.info("等待安装超时！");
         }
+        startService(udIdMap.get(session), session);
     }
 
     @OnMessage
@@ -282,7 +283,7 @@ public class AndroidTerminalWSServer {
             return;
         }
         try {
-            Thread.sleep(2000);
+            Thread.sleep(2500);
         } catch (InterruptedException e) {
             log.info(e.getMessage());
         }

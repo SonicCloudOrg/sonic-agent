@@ -150,9 +150,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                     .replaceAll("\t", "");
         }
         AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SonicServiceActivity");
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
-        startKeyboard(iDevice,session);
         AndroidAPKMap.getMap().put(udId, true);
         if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
             AndroidDeviceBridgeTool.pressKey(iDevice, 3);
@@ -568,6 +565,9 @@ public class AndroidWSServer implements IAndroidWSServer {
                 } finally {
                     result.put("msg", "openDriver");
                     BytesTool.sendText(session, result.toJSONString());
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
+                    startKeyboard(iDevice, session);
                 }
             });
         }
@@ -608,6 +608,11 @@ public class AndroidWSServer implements IAndroidWSServer {
     public void startKeyboard(IDevice iDevice, Session session) {
         if (keyboardThreadMap.get(session) != null && keyboardThreadMap.get(session).isAlive()) {
             return;
+        }
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            log.info(e.getMessage());
         }
         Thread keyboard = new Thread(() -> {
             int socketPort = PortTool.getPort();

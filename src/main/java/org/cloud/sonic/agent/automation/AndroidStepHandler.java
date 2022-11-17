@@ -68,6 +68,10 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -89,6 +93,9 @@ public class AndroidStepHandler {
     private int[] screenWindowPosition = {0, 0, 0, 0};
     private int pocoPort = 0;
     private int targetPort = 0;
+
+    private Thread keyboardThread = null;
+    private OutputStream keyboardOutputStream = null;
 
     public LogUtil getLog() {
         return log;
@@ -157,6 +164,7 @@ public class AndroidStepHandler {
      */
     public void closeAndroidDriver() {
         try {
+            stopKeyboard();
             if (chromeDriver != null) {
                 chromeDriver.quit();
             }
@@ -1610,13 +1618,92 @@ public class AndroidStepHandler {
 
     public void sendKeyForce(HandleDes handleDes, String text) {
         text = TextHandler.replaceTrans(text, globalParams);
-        handleDes.setStepDes("键盘输入文本");
-        handleDes.setDetail("键盘输入" + text);
-        try {
-            androidDriver.sendKeys(text);
-        } catch (SonicRespException e) {
-            handleDes.setE(e);
+        handleDes.setStepDes("Sonic输入法输入文本");
+        handleDes.setDetail("输入" + text);
+        startKeyboard();
+        if (keyboardOutputStream != null) {
+            try {
+                keyboardOutputStream.write(text.getBytes(StandardCharsets.UTF_8));
+                keyboardOutputStream.flush();
+            } catch (IOException e) {
+                handleDes.setE(e);
+            }
         }
+    }
+
+    public void startKeyboard() {
+        if (keyboardThread != null && keyboardThread.isAlive()) {
+            return;
+        }
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
+        AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
+        Thread keyboard = new Thread(() -> {
+            int socketPort = PortTool.getPort();
+            AndroidDeviceBridgeTool.forward(iDevice, socketPort, 2335);
+            Socket keyboardSocket = null;
+            try {
+                keyboardSocket = new Socket("localhost", socketPort);
+                keyboardOutputStream = keyboardSocket.getOutputStream();
+                while (keyboardSocket.isConnected() && !Thread.interrupted()) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+            } finally {
+                if (keyboardOutputStream != null) {
+                    try {
+                        keyboardOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (keyboardSocket != null) {
+                    try {
+                        keyboardSocket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            AndroidDeviceBridgeTool.removeForward(iDevice, socketPort, 2335);
+            keyboardOutputStream = null;
+        });
+        keyboard.start();
+        int w = 0;
+        while (keyboardOutputStream == null) {
+            if (w > 10) {
+                break;
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            w++;
+        }
+        keyboardThread = keyboard;
+    }
+
+    private void stopKeyboard() {
+        if (keyboardThread != null) {
+            keyboardThread.interrupt();
+            int wait = 0;
+            while (!keyboardThread.isInterrupted()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                wait++;
+                if (wait >= 3) {
+                    break;
+                }
+            }
+        }
+        keyboardThread = null;
     }
 
     private int holdTime = 0;
