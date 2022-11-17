@@ -1,18 +1,19 @@
 /*
- *  Copyright (C) [SonicCloudOrg] Sonic Project
+ *   sonic-agent  Agent of Sonic Cloud Real Machine Platform.
+ *   Copyright (C) 2022 SonicCloudOrg
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.cloud.sonic.agent.websockets;
 
@@ -112,6 +113,7 @@ public class AndroidTerminalWSServer {
                 if (outputStreamMap.get(session) != null) {
                     try {
                         outputStreamMap.get(session).write("action_get_all_app_info".getBytes(StandardCharsets.UTF_8));
+                        outputStreamMap.get(session).flush();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -123,6 +125,7 @@ public class AndroidTerminalWSServer {
                 if (outputStreamMap.get(session) != null) {
                     try {
                         outputStreamMap.get(session).write("action_get_all_wifi_info".getBytes(StandardCharsets.UTF_8));
+                        outputStreamMap.get(session).flush();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -254,10 +257,7 @@ public class AndroidTerminalWSServer {
                 logger.error(e.getMessage());
             }
         }
-        Thread s = socketMap.get(session);
-        if (s != null) {
-            s.interrupt();
-        }
+        stopService(session);
         terminalMap.remove(session);
         Future<?> logcat = logcatMap.get(session);
         if (!logcat.isDone() || !logcat.isCancelled()) {
@@ -286,53 +286,23 @@ public class AndroidTerminalWSServer {
         } catch (InterruptedException e) {
             log.info(e.getMessage());
         }
-        Thread manager = new ManagerThread(iDevice, session, outputStreamMap);
-        manager.start();
-        int w = 0;
-        while (outputStreamMap.get(session) == null) {
-            if (w > 10) {
-                break;
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            w++;
-        }
-        socketMap.put(session, manager);
-    }
-
-    static class ManagerThread extends Thread {
-
-        private Socket managerSocket = null;
-        private InputStream inputStream = null;
-        private OutputStream outputStream = null;
-        private InputStreamReader isr = null;
-        private BufferedReader br = null;
-
-        private IDevice iDevice;
-        private Session session;
-        private Map<Session, OutputStream> outputStreamMap;
-
-        public ManagerThread(IDevice iDevice, Session session, Map<Session, OutputStream> outputStreamMap) {
-            this.iDevice = iDevice;
-            this.session = session;
-            this.outputStreamMap = outputStreamMap;
-        }
-
-        @Override
-        public void run() {
+        Thread manager = new Thread(() -> {
             int managerPort = PortTool.getPort();
             AndroidDeviceBridgeTool.forward(iDevice, managerPort, 2334);
+            Socket managerSocket = null;
+            InputStream inputStream = null;
+            OutputStream outputStream = null;
+            InputStreamReader isr = null;
+            BufferedReader br = null;
             try {
                 managerSocket = new Socket("localhost", managerPort);
                 inputStream = managerSocket.getInputStream();
-                outputStreamMap.put(session, managerSocket.getOutputStream());
+                outputStream = managerSocket.getOutputStream();
+                outputStreamMap.put(session, outputStream);
                 isr = new InputStreamReader(inputStream);
                 br = new BufferedReader(isr);
                 String s;
-                while (true) {
+                while (managerSocket.isConnected() && !Thread.interrupted()) {
                     try {
                         if ((s = br.readLine()) == null) break;
                     } catch (IOException e) {
@@ -351,55 +321,88 @@ public class AndroidTerminalWSServer {
                 }
             } catch (IOException e) {
                 log.info("error: {}", e.getMessage());
+            } finally {
+                if (outputStream != null) {
+                    try {
+                        outputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (br != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (isr != null) {
+                    try {
+                        br.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (managerSocket != null) {
+                    try {
+                        managerSocket.close();
+                        log.info("manager socket closed.");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
             AndroidDeviceBridgeTool.removeForward(iDevice, managerPort, 2334);
             outputStreamMap.remove(session);
+            log.info("manager done.");
+        });
+        manager.start();
+        int w = 0;
+        while (outputStreamMap.get(session) == null) {
+            if (w > 10) {
+                break;
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            w++;
         }
+        socketMap.put(session, manager);
+    }
 
-        @Override
-        public void interrupt() {
-            super.interrupt();
-            stopManager();
+    private void stopService(Session session) {
+        if (outputStreamMap.get(session) != null) {
+            try {
+                outputStreamMap.get(session).write("org.cloud.sonic.android.STOP".getBytes(StandardCharsets.UTF_8));
+                outputStreamMap.get(session).flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-        public void stopManager() {
-            if (outputStream != null) {
+        if (socketMap.get(session) != null) {
+            socketMap.get(session).interrupt();
+            int wait = 0;
+            while (!socketMap.get(session).isInterrupted()) {
                 try {
-                    outputStream.write("org.cloud.sonic.android.STOP".getBytes(StandardCharsets.UTF_8));
-                    outputStream.close();
-                } catch (IOException e) {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            }
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (isr != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (managerSocket != null) {
-                try {
-                    managerSocket.close();
-                    log.info("manager socket closed.");
-                } catch (IOException e) {
-                    e.printStackTrace();
+                wait++;
+                if (wait >= 3) {
+                    break;
                 }
             }
         }
+        socketMap.remove(session);
     }
 }

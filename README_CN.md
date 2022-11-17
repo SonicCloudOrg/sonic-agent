@@ -55,3 +55,10 @@
 ## 开源许可协议
 
 [License](LICENSE)
+
+- mini文件夹二进制文件来自 [minicap](https://github.com/openstf/minicap) license: [Apache 2.0 License](licenses/LICENSE.minicap)
+- sonic-android-scrcpy.jar 来自 sonic-android-scrcpy fork from [scrcpy](https://github.com/Genymobile/scrcpy) license: [Apache 2.0 License](licenses/LICENSE.scrcpy)
+- sonic-appium-uiautomator2-server*.apk 来自 sonic-appium-uiautomator2-server fork from [appium-uiautomator2-server](https://github.com/appium/appium-uiautomator2-server) license: [Apache 2.0 License](licenses/LICENSE.appium-uiautomator2-server)
+- sonic-go-mitmproxy 来自 sonic-go-mitmproxy fork from [go-mitmproxy](https://github.com/lqqyt2423/go-mitmproxy) license: [MIT License](licenses/LICENSE.go-mitmproxy)
+- WebDriverAgent 来自 sonic-ios-wda fork from [WebDriverAgent](https://github.com/appium/WebDriverAgent) license: [BSD License](licenses/LICENSE.WebDriverAgent)
+- Poco-SDK 来自 sonic-sdk-poco fork from [Poco-SDK](https://github.com/AirtestProject/Poco-SDK) license: [Apache 2.0 License](licenses/LICENSE.Poco-SDK)

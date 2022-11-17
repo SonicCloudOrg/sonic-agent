@@ -94,8 +94,6 @@ jobs:
         run: cp sonic-android-apk.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins/
       - name: sas
         run: cp plugins/sonic-android-scrcpy.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins/
-      - name: yadb
-        run: cp plugins/yadb sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins/
       - name: appium1
         run: cp plugins/sonic-appium-uiautomator2-server.apk sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins/
       - name: appium2

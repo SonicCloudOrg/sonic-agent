@@ -57,3 +57,10 @@ Thank you to all our sponsors!
 ## LICENSE
 
 [License](LICENSE)
+
+ - Binary files in the mini folder are from [minicap](https://github.com/openstf/minicap) license: [Apache 2.0 License](licenses/LICENSE.minicap)
+ - sonic-android-scrcpy.jar in the plugins folder is from sonic-android-scrcpy fork from [scrcpy](https://github.com/Genymobile/scrcpy) license: [Apache 2.0 License](licenses/LICENSE.scrcpy)
+ - sonic-appium-uiautomator2-server*.apk in the plugins folder are from sonic-appium-uiautomator2-server fork from [appium-uiautomator2-server](https://github.com/appium/appium-uiautomator2-server) license: [Apache 2.0 License](licenses/LICENSE.appium-uiautomator2-server)
+ - sonic-go-mitmproxy in the plugins folder is from sonic-go-mitmproxy fork from [go-mitmproxy](https://github.com/lqqyt2423/go-mitmproxy) license: [MIT License](licenses/LICENSE.go-mitmproxy)
+ - WebDriverAgent is from sonic-ios-wda fork from [WebDriverAgent](https://github.com/appium/WebDriverAgent) license: [BSD License](licenses/LICENSE.WebDriverAgent)
+ - Poco-SDK is from sonic-sdk-poco fork from [Poco-SDK](https://github.com/AirtestProject/Poco-SDK) license: [Apache 2.0 License](licenses/LICENSE.Poco-SDK)
