@@ -68,8 +68,6 @@ public class AndroidWSServer implements IAndroidWSServer {
     @Value("${sonic.agent.port}")
     private int port;
     private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
-    private Map<Session, OutputStream> outputSendMap = new ConcurrentHashMap<>();
-    private Map<Session, Thread> keyboardThreadMap = new ConcurrentHashMap<>();
     private List<Session> NotStopSession = new ArrayList<>();
     @Autowired
     private AgentManagerTool agentManagerTool;
@@ -261,6 +259,12 @@ public class AndroidWSServer implements IAndroidWSServer {
         AndroidSupplyTool.startShare(udId, session);
 
         openDriver(iDevice, session);
+
+        String currentIme = AndroidDeviceBridgeTool.executeCommand(iDevice, "settings get secure default_input_method");
+        if (!currentIme.contains("org.cloud.sonic.android/.keyboard.SonicKeyboard")) {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
+        }
     }
 
     @OnClose
@@ -289,6 +293,17 @@ public class AndroidWSServer implements IAndroidWSServer {
         log.info("{} send: {}", session.getId(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
+            case "startKeyboard": {
+                String currentIme = AndroidDeviceBridgeTool.executeCommand(iDevice, "settings get secure default_input_method");
+                if (!currentIme.contains("org.cloud.sonic.android/.keyboard.SonicKeyboard")) {
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
+                }
+                break;
+            }
+            case "stopKeyboard":
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "ime disable org.cloud.sonic.android/.keyboard.SonicKeyboard");
+                break;
             case "clearProxy":
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
                 break;
@@ -342,14 +357,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 AndroidDeviceBridgeTool.pushToCamera(iDevice, msg.getString("url"));
                 break;
             case "text":
-                if (outputSendMap.get(session) != null) {
-                    try {
-                        outputSendMap.get(session).write(msg.getString("detail").getBytes(StandardCharsets.UTF_8));
-                        outputSendMap.get(session).flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+                AndroidDeviceBridgeTool.executeCommand(iDevice, "am broadcast -a SONIC_KEYBOARD --es msg \"" + msg.getString("detail") + "\"");
                 break;
             case "touch":
                 OutputStream outputStream = outputMap.get(session);
@@ -565,9 +573,6 @@ public class AndroidWSServer implements IAndroidWSServer {
                 } finally {
                     result.put("msg", "openDriver");
                     BytesTool.sendText(session, result.toJSONString());
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
-                    startKeyboard(iDevice, session);
                 }
             });
         }
@@ -594,7 +599,6 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         }
         outputMap.remove(session);
-        stopKeyboard(session);
         removeUdIdMapAndSet(session);
         WebSocketSessionMap.removeSession(session);
         try {
@@ -603,88 +607,5 @@ public class AndroidWSServer implements IAndroidWSServer {
             e.printStackTrace();
         }
         log.info("{} : quit.", session.getId());
-    }
-
-    public void startKeyboard(IDevice iDevice, Session session) {
-        if (keyboardThreadMap.get(session) != null && keyboardThreadMap.get(session).isAlive()) {
-            return;
-        }
-        try {
-            Thread.sleep(2500);
-        } catch (InterruptedException e) {
-            log.info(e.getMessage());
-        }
-        Thread keyboard = new Thread(() -> {
-            int socketPort = PortTool.getPort();
-            AndroidDeviceBridgeTool.forward(iDevice, socketPort, 2335);
-            Socket keyboardSocket = null;
-            OutputStream outputStream = null;
-            try {
-                keyboardSocket = new Socket("localhost", socketPort);
-                outputStream = keyboardSocket.getOutputStream();
-                outputSendMap.put(session, outputStream);
-                while (keyboardSocket.isConnected() && !Thread.interrupted()) {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        break;
-                    }
-                }
-            } catch (IOException e) {
-                log.info("error: {}", e.getMessage());
-            } finally {
-                if (outputStream != null) {
-                    try {
-                        outputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (keyboardSocket != null) {
-                    try {
-                        keyboardSocket.close();
-                        log.info("keyboard socket closed.");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            AndroidDeviceBridgeTool.removeForward(iDevice, socketPort, 2335);
-            outputSendMap.remove(session);
-            log.info("keyboard done.");
-        });
-        keyboard.start();
-        int w = 0;
-        while (outputSendMap.get(session) == null) {
-            if (w > 10) {
-                break;
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            w++;
-        }
-        keyboardThreadMap.put(session, keyboard);
-    }
-
-    private void stopKeyboard(Session session) {
-        if (keyboardThreadMap.get(session) != null) {
-            keyboardThreadMap.get(session).interrupt();
-            int wait = 0;
-            while (!keyboardThreadMap.get(session).isInterrupted()) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                wait++;
-                if (wait >= 3) {
-                    break;
-                }
-            }
-        }
-        keyboardThreadMap.remove(session);
     }
 }
