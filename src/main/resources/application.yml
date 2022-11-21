@@ -7,7 +7,7 @@ spring:
     active: @project.artifactId@
 
 sonic:
-  saa: 2.0.3
+  saa: 2.0.4
   sgm: 1.3.3
   sib: 1.2.5
   sas: 0.0.2
