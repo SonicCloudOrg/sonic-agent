@@ -719,7 +719,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
 
     public static void mount(String udId) {
         String commandLine = "%s mount -u %s";
-        ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
+        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
+        logger.info(re);
     }
 
     public static List<JSONObject> getWebView(String udId) {
