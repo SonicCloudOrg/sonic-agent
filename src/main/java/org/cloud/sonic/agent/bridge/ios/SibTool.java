@@ -210,6 +210,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static int[] startWda(String udId) throws IOException, InterruptedException {
+        mount(udId);
         List<Process> processList;
         if (IOSProcessMap.getMap().get(udId) != null) {
             processList = IOSProcessMap.getMap().get(udId);
@@ -714,6 +715,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     public static int getOrientation(String udId) {
         String commandLine = "%s orientation -u %s";
         return BytesTool.getInt(ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId)));
+    }
+
+    public static void mount(String udId) {
+        String commandLine = "%s mount -u %s";
+        ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
     }
 
     public static List<JSONObject> getWebView(String udId) {
