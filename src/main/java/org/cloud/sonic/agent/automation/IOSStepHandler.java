@@ -104,13 +104,13 @@ public class IOSStepHandler {
         this.udId = udId;
         try {
             iosDriver = new IOSDriver("http://127.0.0.1:" + wdaPort);
-            iosDriver.disableLog();
             log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
         } catch (Exception e) {
             log.sendStepLog(StepType.ERROR, "连接 WebDriverAgent 失败！", "");
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw e;
         }
+        iosDriver.getWdaClient().setGlobalTimeOut(60000);
         WindowSize windowSize = iosDriver.getWindowSize();
         JSONObject appiumSettings = new JSONObject();
         appiumSettings.put("snapshotMaxDepth", 30);

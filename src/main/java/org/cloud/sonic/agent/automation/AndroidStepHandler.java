@@ -137,7 +137,7 @@ public class AndroidStepHandler {
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw out;
         }
-        androidDriver.disableLog();
+        androidDriver.getUiaClient().setGlobalTimeOut(60000);
         log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
