@@ -247,6 +247,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 }
                 logger.info(s);
                 if (s.contains("WebDriverAgent server start successful")) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                     isFinish.release();
                 }
             }
