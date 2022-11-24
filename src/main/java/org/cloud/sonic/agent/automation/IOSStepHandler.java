@@ -102,15 +102,26 @@ public class IOSStepHandler {
 
     public void startIOSDriver(String udId, int wdaPort) throws Exception {
         this.udId = udId;
-        try {
-            iosDriver = new IOSDriver("http://127.0.0.1:" + wdaPort);
-            log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
-        } catch (Exception e) {
+        int retry = 0;
+        Exception out = null;
+        while (retry <= 4) {
+            try {
+                iosDriver = new IOSDriver("http://127.0.0.1:" + wdaPort);
+                break;
+            } catch (Exception e) {
+                log.sendStepLog(StepType.WARN, String.format("连接 WebDriverAgent 失败！重试第 %d 次...", retry + 1), "");
+                out = e;
+            }
+            retry++;
+            Thread.sleep(2000);
+        }
+        if (iosDriver == null) {
             log.sendStepLog(StepType.ERROR, "连接 WebDriverAgent 失败！", "");
             setResultDetailStatus(ResultDetailStatus.FAIL);
-            throw e;
+            throw out;
         }
         iosDriver.getWdaClient().setGlobalTimeOut(60000);
+        log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
         WindowSize windowSize = iosDriver.getWindowSize();
         JSONObject appiumSettings = new JSONObject();
         appiumSettings.put("snapshotMaxDepth", 30);
