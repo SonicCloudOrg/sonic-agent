@@ -85,10 +85,24 @@ public class IOSScreenWSServer implements IIOSWSServer {
                 return;
             }
             MjpegInputStream mjpegInputStream = null;
-            try {
-                mjpegInputStream = new MjpegInputStream(url.openStream());
-            } catch (IOException e) {
-                log.info(e.getMessage());
+            int waitMjpeg = 0;
+            while (mjpegInputStream == null) {
+                try {
+                    mjpegInputStream = new MjpegInputStream(url.openStream());
+                } catch (IOException e) {
+                    log.info(e.getMessage());
+                }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.info(e.getMessage());
+                    return;
+                }
+                waitMjpeg++;
+                if (waitMjpeg >= 20) {
+                    log.info("mjpeg server connect fail");
+                    return;
+                }
             }
             ByteBuffer bufferedImage;
             int i = 0;
