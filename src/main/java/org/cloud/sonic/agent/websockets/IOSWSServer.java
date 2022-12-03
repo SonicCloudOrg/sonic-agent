@@ -174,6 +174,12 @@ public class IOSWSServer implements IIOSWSServer {
                 iosDriver = iosStepHandler.getDriver();
             }
             switch (msg.getString("type")) {
+                case "startPerfmon":
+                    SibTool.startPerfmon(udId,session);
+                    break;
+                case "stopPerfmon":
+                    SibTool.stopPerfmon(udId);
+                    break;
                 case "forwardView": {
                     JSONObject forwardView = new JSONObject();
                     forwardView.put("msg", "forwardView");
@@ -470,6 +476,7 @@ public class IOSWSServer implements IIOSWSServer {
             HandlerMap.getIOSMap().remove(session.getId());
         }
         SibTool.stopWebInspector(udId);
+        SibTool.stopPerfmon(udId);
         SGMTool.stopProxy(udId);
         IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);

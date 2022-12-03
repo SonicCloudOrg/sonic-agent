@@ -745,4 +745,90 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             return new ArrayList<>();
         }
     }
+
+    public static void stopPerfmon(String udId) {
+        String processName = String.format("process-%s-perfmon", udId);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+    }
+
+    public static void startPerfmon(String udId, Session session) {
+        stopPerfmon(udId);
+        Process ps = null;
+        String commandLine = "%s perfmon -u %s";
+        String system = System.getProperty("os.name").toLowerCase();
+        try {
+            if (system.contains("win")) {
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
+        InputStreamReader err = new InputStreamReader(ps.getErrorStream());
+        BufferedReader stdInputErr = new BufferedReader(err);
+        Thread psErr = new Thread(() -> {
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInputErr.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                logger.info(s);
+            }
+            try {
+                stdInputErr.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                err.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("perfmon print thread shutdown.");
+        });
+        psErr.start();
+        Thread pro = new Thread(() -> {
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                try {
+                    JSONObject perf = JSON.parseObject(s);
+                    JSONObject perfDetail = new JSONObject();
+                    perfDetail.put("msg", "perfDetail");
+                    perfDetail.put("detail", perf);
+                    sendText(session, perfDetail.toJSONString());
+                } catch (Exception e) {
+                }
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("perfmon print thread shutdown.");
+        });
+        pro.start();
+        String processName = String.format("process-%s-perfmon", udId);
+        GlobalProcessMap.getMap().put(processName, ps);
+    }
 }
