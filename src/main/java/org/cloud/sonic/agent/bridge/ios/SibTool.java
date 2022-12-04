@@ -755,16 +755,17 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
     }
 
-    public static void startPerfmon(String udId, Session session) {
+    public static void startPerfmon(String udId, String bundleId, Session session) {
         stopPerfmon(udId);
         Process ps = null;
-        String commandLine = "%s perfmon -u %s";
+        String commandLine = "%s perfmon --sys-cpu --sys-mem --sys-disk --sys-network --fps --gpu -u %s%s ";
         String system = System.getProperty("os.name").toLowerCase();
+        String tail = bundleId.length() == 0 ? "" : (" --proc-cpu --proc-mem -b " + bundleId);
         try {
             if (system.contains("win")) {
-                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, tail)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, tail)});
             }
         } catch (Exception e) {
             e.printStackTrace();
