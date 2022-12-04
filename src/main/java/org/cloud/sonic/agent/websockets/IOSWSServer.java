@@ -141,6 +141,9 @@ public class IOSWSServer implements IIOSWSServer {
                 sendText(session, result.toJSONString());
             }
         });
+
+        SibTool.startShare(udId, session);
+
     }
 
     @OnClose
@@ -175,7 +178,7 @@ public class IOSWSServer implements IIOSWSServer {
             }
             switch (msg.getString("type")) {
                 case "startPerfmon":
-                    SibTool.startPerfmon(udId,session);
+                    SibTool.startPerfmon(udId, session);
                     break;
                 case "stopPerfmon":
                     SibTool.stopPerfmon(udId);
@@ -477,6 +480,7 @@ public class IOSWSServer implements IIOSWSServer {
         }
         SibTool.stopWebInspector(udId);
         SibTool.stopPerfmon(udId);
+        SibTool.stopShare(udId);
         SGMTool.stopProxy(udId);
         IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
         WebSocketSessionMap.removeSession(session);

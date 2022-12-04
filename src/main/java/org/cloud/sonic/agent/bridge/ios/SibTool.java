@@ -831,4 +831,38 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String processName = String.format("process-%s-perfmon", udId);
         GlobalProcessMap.getMap().put(processName, ps);
     }
+
+    public static void stopShare(String udId) {
+        String processName = String.format("process-%s-sib-share", udId);
+        if (GlobalProcessMap.getMap().get(processName) != null) {
+            Process ps = GlobalProcessMap.getMap().get(processName);
+            ps.children().forEach(ProcessHandle::destroy);
+            ps.destroy();
+        }
+    }
+
+    public static void startShare(String udId, Session session) {
+        String processName = String.format("process-%s-sib-share", udId);
+        String commandLine = "%s remote share -u %s -p %d";
+        stopShare(udId);
+        JSONObject shareJSON = new JSONObject();
+        shareJSON.put("msg", "share");
+        try {
+            String system = System.getProperty("os.name").toLowerCase();
+            Process ps = null;
+            int port = PortTool.getPort();
+            if (system.contains("win")) {
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
+            }
+            GlobalProcessMap.getMap().put(processName, ps);
+            shareJSON.put("port", port);
+        } catch (Exception e) {
+            shareJSON.put("port", 0);
+            e.printStackTrace();
+        } finally {
+            BytesTool.sendText(session, shareJSON.toJSONString());
+        }
+    }
 }
