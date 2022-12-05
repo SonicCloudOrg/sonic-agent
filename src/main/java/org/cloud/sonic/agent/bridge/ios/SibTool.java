@@ -836,10 +836,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         });
         pro.start();
         String processName = String.format("process-%s-perfmon", udId);
-        GlobalProcessMap.getMap().
-
-                put(processName, ps);
-
+        GlobalProcessMap.getMap().put(processName, ps);
     }
 
     public static void stopShare(String udId) {
