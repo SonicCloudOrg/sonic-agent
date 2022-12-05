@@ -60,6 +60,7 @@ public class IOSTests {
             deviceTestData.put("rid", dataInfo.getInteger("rid"));
             deviceTestData.put("cid", dataInfo.getInteger("cid"));
             deviceTestData.put("gp", dataInfo.getJSONObject("gp"));
+            deviceTestData.put("perf", dataInfo.getJSONObject("perf"));
             deviceTestData.put("device", device);
             dataProvider.add(deviceTestData);
         }

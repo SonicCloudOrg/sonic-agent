@@ -178,7 +178,7 @@ public class IOSWSServer implements IIOSWSServer {
             }
             switch (msg.getString("type")) {
                 case "startPerfmon":
-                    SibTool.startPerfmon(udId, msg.getString("bundleId"), session);
+                    SibTool.startPerfmon(udId, msg.getString("bundleId"), session, null, 1000);
                     break;
                 case "stopPerfmon":
                     SibTool.stopPerfmon(udId);

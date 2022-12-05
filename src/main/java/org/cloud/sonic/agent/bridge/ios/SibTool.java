@@ -23,6 +23,7 @@ import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
+import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.transport.TransportWorker;
 import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
@@ -755,17 +756,17 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
     }
 
-    public static void startPerfmon(String udId, String bundleId, Session session) {
+    public static void startPerfmon(String udId, String bundleId, Session session, LogUtil logUtil, int interval) {
         stopPerfmon(udId);
         Process ps = null;
-        String commandLine = "%s perfmon --sys-cpu --sys-mem --sys-disk --sys-network --fps --gpu -u %s%s ";
+        String commandLine = "%s perfmon -r %d --sys-cpu --sys-mem --sys-disk --sys-network --fps --gpu -u %s%s ";
         String system = System.getProperty("os.name").toLowerCase();
         String tail = bundleId.length() == 0 ? "" : (" --proc-cpu --proc-mem -b " + bundleId);
         try {
             if (system.contains("win")) {
-                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, tail)});
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, interval, udId, tail)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, tail)});
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, interval, udId, tail)});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -809,10 +810,15 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 }
                 try {
                     JSONObject perf = JSON.parseObject(s);
-                    JSONObject perfDetail = new JSONObject();
-                    perfDetail.put("msg", "perfDetail");
-                    perfDetail.put("detail", perf);
-                    sendText(session, perfDetail.toJSONString());
+                    if (session != null) {
+                        JSONObject perfDetail = new JSONObject();
+                        perfDetail.put("msg", "perfDetail");
+                        perfDetail.put("detail", perf);
+                        sendText(session, perfDetail.toJSONString());
+                    }
+                    if (logUtil != null) {
+                        logUtil.sendPerLog(perf.toJSONString());
+                    }
                 } catch (Exception e) {
                 }
             }
@@ -830,7 +836,10 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         });
         pro.start();
         String processName = String.format("process-%s-perfmon", udId);
-        GlobalProcessMap.getMap().put(processName, ps);
+        GlobalProcessMap.getMap().
+
+                put(processName, ps);
+
     }
 
     public static void stopShare(String udId) {

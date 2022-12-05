@@ -146,19 +146,18 @@ public class LogUtil {
     }
 
     /**
-     * @param type
      * @param detail
      * @return void
      * @author ZhouYiXun
      * @des 发送性能数据
      * @date 2021/8/16 19:58
      */
-    public void sendPerLog(String packageName, int type, JSONObject detail) {
+    public void sendPerLog(String detail) {
         JSONObject log = new JSONObject();
         log.put("msg", "perform");
-        log.put("des", packageName);
-        log.put("log", detail.toJSONString());
-        log.put("status", type);
+        log.put("des", "");
+        log.put("status", 1);
+        log.put("log", detail);
         send(log);
     }
 
