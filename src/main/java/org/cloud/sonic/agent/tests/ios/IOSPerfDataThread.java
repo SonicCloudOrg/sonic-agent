@@ -1,6 +1,7 @@
 package org.cloud.sonic.agent.tests.ios;
 
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,13 +33,20 @@ public class IOSPerfDataThread extends Thread {
         JSONObject perf = iosTestTaskBootThread.getJsonObject().getJSONObject("perf");
         if (perf.getInteger("isOpen") == 1) {
             String udId = iosTestTaskBootThread.getUdId();
+            IOSStepHandler iosStepHandler = iosTestTaskBootThread.getIosStepHandler();
             SibTool.startPerfmon(udId, "", null,
-                    iosTestTaskBootThread.getIosStepHandler().getLog(), perf.getInteger("perfInterval"));
+                    iosStepHandler.getLog(), perf.getInteger("perfInterval"));
+            boolean hasTarget = false;
             while (iosTestTaskBootThread.getRunStepThread().isAlive()) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
                     break;
+                }
+                if (iosStepHandler.getTargetPackage().length() != 0 && !hasTarget) {
+                    SibTool.startPerfmon(udId, iosStepHandler.getTargetPackage(), null,
+                            iosStepHandler.getLog(), perf.getInteger("perfInterval"));
+                    hasTarget = true;
                 }
             }
             SibTool.stopPerfmon(udId);

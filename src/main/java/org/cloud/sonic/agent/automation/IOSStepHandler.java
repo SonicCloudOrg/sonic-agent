@@ -83,6 +83,11 @@ public class IOSStepHandler {
     private int[] screenWindowPosition = {0, 0, 0, 0};
     private int pocoPort = 0;
     private int targetPort = 0;
+    private String targetPackage = "";
+
+    public String getTargetPackage() {
+        return targetPackage;
+    }
 
     public LogUtil getLog() {
         return log;
@@ -344,6 +349,7 @@ public class IOSStepHandler {
         handleDes.setDetail("App包名： " + appPackage);
         try {
             iosDriver.appActivate(appPackage);
+            targetPackage = appPackage;
         } catch (Exception e) {
             handleDes.setE(e);
         }
