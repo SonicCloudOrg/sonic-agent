@@ -947,11 +947,16 @@ public class IOSStepHandler {
             } catch (SonicRespException e) {
                 e.printStackTrace();
             }
-            width = windowSize.getWidth();
-            height = windowSize.getHeight();
+            if (screenOrientation == 1 || screenOrientation == 2) {
+                width = windowSize.getWidth();
+                height = windowSize.getHeight();
+            }else{
+                height = windowSize.getWidth();
+                width = windowSize.getHeight();
+            }
         }
 
-        if (screenOrientation == 1 || screenOrientation == 3) {
+        if (screenOrientation == 3 || screenOrientation == 4) {
             // x
             pos[0] = this.screenWindowPosition[1] + (int) (height * pocoX);
             // y

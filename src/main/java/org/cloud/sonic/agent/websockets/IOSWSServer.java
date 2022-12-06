@@ -108,6 +108,9 @@ public class IOSWSServer implements IIOSWSServer {
             return;
         }
         saveUdIdMapAndSet(session, udId);
+        if (SibTool.getOrientation(udId) != 1) {
+            SibTool.launch(udId, "com.apple.springboard");
+        }
         int[] ports = SibTool.startWda(udId);
         if (ports[0] != 0) {
             SibTool.orientationWatcher(udId, session);
