@@ -821,24 +821,34 @@ public class AndroidStepHandler {
 //        }
     }
 
-    public void toHandle(HandleDes handleDes, String titleName) throws Exception {
+    public void toHandle(HandleDes handleDes, String params) throws Exception {
         handleDes.setStepDes("切换Handle");
         handleDes.setDetail("");
         Thread.sleep(1000);
-        Set<String> handle = chromeDriver.getWindowHandles();
-        String ha;
-        for (int i = 1; i <= handle.size(); i++) {
-            ha = (String) handle.toArray()[handle.size() - i];
+        List<String> handles;
+        try {
+            handles = new ArrayList<>(chromeDriver.getWindowHandles());
+        } catch (Exception e) {
+            handleDes.setE(e);
+            return;
+        }
+        int index = -1;
+        if (BytesTool.isInt(params)) {
+            index = BytesTool.getInt(params);
+        }
+        for (int i = 0; i < handles.size(); i++) {
             try {
-                chromeDriver.switchTo().window(ha);
+                chromeDriver.switchTo().window(handles.get(i));
             } catch (Exception e) {
             }
-            if (chromeDriver.getTitle().equals(titleName)) {
-                handleDes.setDetail("切换到Handle:" + ha);
+            if (i == index || chromeDriver.getTitle().equals(params)
+                    || chromeDriver.getCurrentUrl().equals(params)) {
+                handleDes.setDetail("切换到Handle:" + params);
                 log.sendStepLog(StepType.INFO, "页面标题:" + chromeDriver.getTitle(), "");
-                break;
+                return;
             }
         }
+        handleDes.setE(new SonicRespException("Handle not found!"));
     }
 
     public File getScreenToLocal() {

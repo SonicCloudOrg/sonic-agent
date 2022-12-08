@@ -120,6 +120,10 @@ public class BytesTool {
         }
     }
 
+    public static boolean isInt(String s) {
+        return s.matches("[0-9]+");
+    }
+
     public static int getInt(String a) {
         String regEx = "[^0-9]";
         Pattern p = Pattern.compile(regEx);

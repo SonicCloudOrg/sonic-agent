@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.common.maps.AndroidWebViewMap;
+import org.cloud.sonic.agent.common.maps.ChromeDriverMap;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.android.AndroidBatteryThread;
 import org.cloud.sonic.agent.tools.BytesTool;
@@ -779,8 +780,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         int end = (chromeVersion.indexOf(".") != -1 ? chromeVersion.indexOf(".") : chromeVersion.length() - 1);
         String major = chromeVersion.substring(0, end);
         HttpHeaders headers = new HttpHeaders();
-        ResponseEntity<String> infoEntity =
-                restTemplate.exchange(String.format("https://chromedriver.storage.googleapis.com/LATEST_RELEASE_%s", major), HttpMethod.GET, new HttpEntity(headers), String.class);
         if (system.contains("win")) {
             system = "win32";
         } else if (system.contains("linux")) {
@@ -789,7 +788,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
                 // fix m1 arm version obtained is lower than 87 for special processing
-                String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/", infoEntity.getBody()), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
+                String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/", ChromeDriverMap.getMap().get(major)), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
                 for (Object obj : JSONArray.parseArray(driverList)) {
                     JSONObject jsonObject = JSONObject.parseObject(obj.toString());
                     String fullName = jsonObject.getString("name");
@@ -802,7 +801,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 system = "mac64";
             }
         }
-        File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip", infoEntity.getBody(), system));
+        File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip", ChromeDriverMap.getMap().get(major), system));
         File driver = FileTool.unZipChromeDriver(file, chromeVersion);
         return driver;
     }
