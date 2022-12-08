@@ -569,17 +569,18 @@ public class AndroidStepHandler {
     }
 
     public void getTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
-        handleDes.setStepDes("获取" + des + "文本");
-        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
         try {
-            String s = findEle(selector, pathValue).getText();
-            log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+            String s = getText(handleDes, des, selector, pathValue);
+            if (handleDes.getE() != null) {
+                return;
+            }
+            handleDes.setStepDes("验证" + des + "文本");
+            handleDes.setDetail("验证" + selector + ":" + pathValue + "文本");
             try {
                 expect = TextHandler.replaceTrans(expect, globalParams);
                 assertEquals(s, expect);
                 log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
             } catch (AssertionError e) {
-                log.sendStepLog(StepType.ERROR, "验证" + des + "文本失败！", "");
                 handleDes.setE(e);
             }
         } catch (Exception e) {
@@ -1377,6 +1378,44 @@ public class AndroidStepHandler {
         }
     }
 
+    public String getPocoText(HandleDes handleDes, String des, String selector, String pathValue) {
+        String s = "";
+        handleDes.setStepDes("获取" + des + "文本");
+        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        try {
+            PocoElement w = findPocoEle(selector, pathValue);
+            if (w != null) {
+                s = w.getPayload().getText();
+                log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+            } else {
+                throw new SonicRespException(pathValue + " not found!");
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+        return s;
+    }
+
+    public void getPocoTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
+        try {
+            String s = getPocoText(handleDes, des, selector, pathValue);
+            if (handleDes.getE() != null) {
+                return;
+            }
+            handleDes.setStepDes("验证" + des + "文本");
+            handleDes.setDetail("验证" + selector + ":" + pathValue + "文本");
+            try {
+                expect = TextHandler.replaceTrans(expect, globalParams);
+                assertEquals(s, expect);
+                log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
+            } catch (AssertionError e) {
+                handleDes.setE(e);
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void setTheRealPositionOfTheWindow(HandleDes handleDes, String text) {
         JSONObject offsetValue = JSONObject.parseObject(text);
         handleDes.setStepDes("设置偏移量");
@@ -1554,17 +1593,18 @@ public class AndroidStepHandler {
     }
 
     public void getWebViewTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
-        handleDes.setStepDes("获取" + des + "文本");
-        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
         try {
-            String s = findWebEle(selector, pathValue).getText();
-            log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+            String s = getWebViewText(handleDes, des, selector, pathValue);
+            if (handleDes.getE() != null) {
+                return;
+            }
+            handleDes.setStepDes("验证" + des + "文本");
+            handleDes.setDetail("验证" + selector + ":" + pathValue + "文本");
             try {
                 expect = TextHandler.replaceTrans(expect, globalParams);
                 assertEquals(s, expect);
                 log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
             } catch (AssertionError e) {
-                log.sendStepLog(StepType.ERROR, "验证" + des + "文本失败！", "");
                 handleDes.setE(e);
             }
         } catch (Exception e) {

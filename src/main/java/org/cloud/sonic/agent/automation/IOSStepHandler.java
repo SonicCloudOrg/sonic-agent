@@ -443,17 +443,18 @@ public class IOSStepHandler {
     }
 
     public void getTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
-        handleDes.setStepDes("获取" + des + "文本");
-        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
         try {
-            String s = findEle(selector, pathValue).getText();
-            log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+            String s = getText(handleDes, des,selector, pathValue);
+            if (handleDes.getE() != null) {
+                return;
+            }
+            handleDes.setStepDes("验证" + des + "文本");
+            handleDes.setDetail("验证" + selector + ":" + pathValue + "文本");
             try {
                 expect = TextHandler.replaceTrans(expect, globalParams);
                 assertEquals(s, expect);
                 log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
             } catch (AssertionError e) {
-                log.sendStepLog(StepType.ERROR, "验证" + des + "文本失败！", "");
                 handleDes.setE(e);
             }
         } catch (Exception e) {
