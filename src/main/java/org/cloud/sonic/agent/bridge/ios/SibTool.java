@@ -44,6 +44,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.websocket.Session;
@@ -186,6 +187,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static void sendOnlineStatus(JSONObject jsonObject) {
+        if (StringUtils.hasText(jsonObject.getString("serialNumber"))) {
+            mount(jsonObject.getString("serialNumber"));
+        }
         JSONObject detail = jsonObject.getJSONObject("deviceDetail");
         JSONObject deviceStatus = new JSONObject();
         deviceStatus.put("msg", "deviceDetail");
@@ -211,7 +215,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static int[] startWda(String udId) throws IOException, InterruptedException {
-        mount(udId);
         List<Process> processList;
         if (IOSProcessMap.getMap().get(udId) != null) {
             processList = IOSProcessMap.getMap().get(udId);
@@ -287,6 +290,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
 
     public static void reboot(String udId) {
         String commandLine = "%s reboot -u %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
+    }
+
+    public static void shutdown(String udId) {
+        String commandLine = "%s reboot -u %s -s";
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId));
     }
 
@@ -512,9 +520,9 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, longitude, latitude));
     }
 
-    public static JSONObject getAllDevicesBattery() {
-        String commandLine = "%s battery -j";
-        String res = ProcessCommandTool.getProcessLocalCommandStr(commandLine.formatted(sib));
+    public static JSONObject getBattery(String udId) {
+        String commandLine = "%s battery -u %s -j";
+        String res = ProcessCommandTool.getProcessLocalCommandStr(commandLine.formatted(sib, udId));
         return JSONObject.parseObject(res, JSONObject.class);
     }
 
@@ -531,7 +539,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     public static int battery(String udId) {
         String commandLine = "%s battery -u %s -j";
         String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
-        return JSON.parseObject(re).getInteger("level");
+        return JSON.parseObject(re).getInteger("CurrentCapacity");
     }
 
     public static void stopWebInspector(String udId) {

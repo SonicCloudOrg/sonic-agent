@@ -60,15 +60,18 @@ public class AndroidBatteryThread implements Runnable {
         for (IDevice iDevice : deviceList) {
             JSONObject jsonObject = new JSONObject();
             String battery = AndroidDeviceBridgeTool
-                    .executeCommand(iDevice, "dumpsys battery");
+                    .executeCommand(iDevice, "dumpsys battery").replace("Max charging voltage","");
             if (StringUtils.hasText(battery)) {
                 String realTem = battery.substring(battery.indexOf("temperature")).trim();
                 int tem = BytesTool.getInt(realTem.substring(13, realTem.indexOf("\n")));
                 String realLevel = battery.substring(battery.indexOf("level")).trim();
                 int level = BytesTool.getInt(realLevel.substring(7, realLevel.indexOf("\n")));
+                String realVol = battery.substring(battery.indexOf("voltage")).trim();
+                int vol = BytesTool.getInt(realVol.substring(9, realVol.indexOf("\n")));
                 jsonObject.put("udId", iDevice.getSerialNumber());
                 jsonObject.put("tem", tem);
                 jsonObject.put("level", level);
+                jsonObject.put("vol",vol);
                 detail.add(jsonObject);
                 //control
                 if (tem >= BytesTool.highTemp * 10) {

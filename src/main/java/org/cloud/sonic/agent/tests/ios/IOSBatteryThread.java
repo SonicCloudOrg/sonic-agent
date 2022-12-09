@@ -20,9 +20,9 @@ package org.cloud.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
-import org.cloud.sonic.agent.transport.TransportWorker;
+import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.agent.transport.TransportWorker;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -59,20 +59,51 @@ public class IOSBatteryThread implements Runnable {
 
         List<JSONObject> detail = new ArrayList<>();
         JSONObject devicesBattery;
-        try {
-            devicesBattery = SibTool.getAllDevicesBattery();
-        } catch (Exception e) {
-            return;
-        }
-        List<JSONObject> batteryList = devicesBattery.getJSONArray("batteryList").toJavaList(JSONObject.class);
-        for (JSONObject dB : batteryList) {
+        for (String udId : deviceList) {
+            try {
+                devicesBattery = SibTool.getBattery(udId);
+            } catch (Exception e) {
+                e.printStackTrace();
+                continue;
+            }
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("udId", dB.getString("serialNumber"));
-            jsonObject.put("tem", dB.getInteger("temperature"));
-            jsonObject.put("level", dB.getInteger("level"));
+            jsonObject.put("udId", udId);
+            jsonObject.put("vol", devicesBattery.getInteger("Voltage"));
+            int tem = devicesBattery.getInteger("Temperature") / 10;
+            jsonObject.put("tem", tem);
+            jsonObject.put("level", devicesBattery.getInteger("CurrentCapacity"));
             detail.add(jsonObject);
+            //control
+            if (tem >= BytesTool.highTemp * 10) {
+                Integer times = DevicesBatteryMap.getTempMap().get(udId);
+                if (times == null) {
+                    //Send Error Msg
+                    JSONObject errCall = new JSONObject();
+                    errCall.put("msg", "errCall");
+                    errCall.put("udId", udId);
+                    errCall.put("tem", tem);
+                    errCall.put("type", 1);
+                    TransportWorker.send(errCall);
+                    DevicesBatteryMap.getTempMap().put(udId, 1);
+                } else {
+                    DevicesBatteryMap.getTempMap().put(udId, times + 1);
+                }
+                times = DevicesBatteryMap.getTempMap().get(udId);
+                if (times >= (BytesTool.highTempTime * 2)) {
+                    //Send shutdown Msg
+                    JSONObject errCall = new JSONObject();
+                    errCall.put("msg", "errCall");
+                    errCall.put("udId", udId);
+                    errCall.put("tem", tem);
+                    errCall.put("type", 2);
+                    TransportWorker.send(errCall);
+                    SibTool.shutdown(udId);
+                    DevicesBatteryMap.getTempMap().remove(udId);
+                }
+            } else {
+                DevicesBatteryMap.getTempMap().remove(udId);
+            }
         }
-
         JSONObject result = new JSONObject();
         result.put("msg", "battery");
         result.put("detail", detail);
