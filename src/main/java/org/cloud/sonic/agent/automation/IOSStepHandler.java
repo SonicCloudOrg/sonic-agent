@@ -444,7 +444,7 @@ public class IOSStepHandler {
 
     public void getTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
         try {
-            String s = getText(handleDes, des,selector, pathValue);
+            String s = getText(handleDes, des, selector, pathValue);
             if (handleDes.getE() != null) {
                 return;
             }
@@ -864,6 +864,67 @@ public class IOSStepHandler {
         }
     }
 
+    public void getPocoElementAttr(HandleDes handleDes, String des, String selector, String pathValue, String attr, String expect) {
+        handleDes.setStepDes("验证控件 " + des + " 属性");
+        handleDes.setDetail("属性：" + attr + "，期望值：" + expect);
+        try {
+            PocoElement pocoElement = findPocoEle(selector, pathValue);
+            String attrValue = "";
+            switch (attr) {
+                case "type" -> attrValue = pocoElement.getPayload().getType();
+                case "name" -> attrValue = pocoElement.getPayload().getName();
+                case "visible" -> attrValue = pocoElement.getPayload().getVisible().toString();
+                case "clickable" -> attrValue = pocoElement.getPayload().getClickable().toString();
+            }
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            try {
+                assertEquals(attrValue, expect);
+            } catch (AssertionError e) {
+                handleDes.setE(e);
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public String getPocoText(HandleDes handleDes, String des, String selector, String pathValue) {
+        String s = "";
+        handleDes.setStepDes("获取" + des + "文本");
+        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        try {
+            PocoElement w = findPocoEle(selector, pathValue);
+            if (w != null) {
+                s = w.getPayload().getText();
+                log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
+            } else {
+                throw new SonicRespException(pathValue + " not found!");
+            }
+        } catch (Throwable e) {
+            handleDes.setE(e);
+        }
+        return s;
+    }
+
+    public void getPocoTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
+        try {
+            String s = getPocoText(handleDes, des, selector, pathValue);
+            if (handleDes.getE() != null) {
+                return;
+            }
+            handleDes.setStepDes("验证" + des + "文本");
+            handleDes.setDetail("验证" + selector + ":" + pathValue + "文本");
+            try {
+                expect = TextHandler.replaceTrans(expect, globalParams);
+                assertEquals(s, expect);
+                log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
+            } catch (AssertionError e) {
+                handleDes.setE(e);
+            }
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
     public void pocoClick(HandleDes handleDes, String des, String selector, String value) {
         handleDes.setStepDes("点击" + des);
         handleDes.setDetail("点击 " + value);
@@ -951,7 +1012,7 @@ public class IOSStepHandler {
             if (screenOrientation == 1 || screenOrientation == 2) {
                 width = windowSize.getWidth();
                 height = windowSize.getHeight();
-            }else{
+            } else {
                 height = windowSize.getWidth();
                 width = windowSize.getHeight();
             }
@@ -1275,6 +1336,18 @@ public class IOSStepHandler {
                 break;
             case "setTheRealPositionOfTheWindow":
                 setTheRealPositionOfTheWindow(handleDes, step.getString("content"));
+                break;
+            case "getPocoElementAttr":
+                getPocoElementAttr(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
+                break;
+            case "getPocoTextValue":
+                globalParams.put(step.getString("content"), getPocoText(handleDes, eleList.getJSONObject(0).getString("eleName")
+                        , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
+                break;
+            case "getPocoText":
+                getPocoTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
                 break;
             case "freezeSource":
                 freezeSource(handleDes);
