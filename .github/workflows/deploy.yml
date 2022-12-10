@@ -52,6 +52,6 @@ jobs:
       - name: sib
         run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && mv sib plugins/sonic-ios-bridge
       - name: deploy
-        run: mvn package -Dplatform=linux-x86_64 && docker build -t registry.cn-hongkong.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} -f src/main/docker/Dockerfile .
+        run: mvn package -Dplatform=linux-x86_64 -Dmaven.test.skip=true && docker build -t registry.cn-hongkong.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} -f src/main/docker/Dockerfile .
       - name: push
         run: docker push registry.cn-hongkong.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}

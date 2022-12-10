@@ -1,4 +1,4 @@
-package org.cloud.sonic.agent.localdebug.android;
+package org.cloud.sonic.agent.android;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.AndroidDebugBridge;
