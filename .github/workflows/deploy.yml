@@ -26,7 +26,7 @@ jobs:
       - name: replace version
         run: ver=${{ steps.previoustag.outputs.tag }} && new_ver=${ver:1} && sed -i "s/SONIC_VERSION/${new_ver}/g" pom.xml
       - name: login docker hub
-        run: echo "${{ secrets.ACCESS_TOKEN }}" | docker login -u zhouyixun --password-stdin
+        run: echo "${{ secrets.ACCESS_TOKEN_ALIYUN }}" | docker login --username=${{ secrets.ALIYUN_USERNAME }} registry.cn-hongkong.aliyuncs.com --password-stdin
       - name: sas-download
         uses: robinraju/release-downloader@v1.4
         with:
@@ -52,12 +52,6 @@ jobs:
       - name: sib
         run: tar zxvf *_linux_x86_64.tar.gz && rm *_linux_x86_64.tar.gz && mv sib plugins/sonic-ios-bridge
       - name: deploy
-        run: mvn package -Dplatform=linux-x86_64 && docker build -t sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} -f src/main/docker/Dockerfile .
+        run: mvn package -Dplatform=linux-x86_64 && docker build -t registry.cn-hongkong.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} -f src/main/docker/Dockerfile .
       - name: push
-        run: docker push sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}
-      - name: login docker hub
-        run: echo "${{ secrets.ACCESS_TOKEN_ALIYUN }}" | docker login --username=${{ secrets.ALIYUN_USERNAME }} registry.cn-hangzhou.aliyuncs.com --password-stdin
-      - name: tag
-        run: docker tag sonicorg/sonic-agent-linux:${{ steps.previoustag.outputs.tag }} registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}
-      - name: push
-        run: docker push registry.cn-hangzhou.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}
+        run: docker push registry.cn-hongkong.aliyuncs.com/sonic-cloud/sonic-agent-linux:${{ steps.previoustag.outputs.tag }}
