@@ -18,7 +18,7 @@
 package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
@@ -64,13 +64,13 @@ public class AndroidRunStepThread extends RunStepThread {
         JSONObject jsonObject = androidTestTaskBootThread.getJsonObject();
         List<JSONObject> steps = jsonObject.getJSONArray("steps").toJavaList(JSONObject.class);
 
-        HandleDes handleDes = new HandleDes();
+        HandleContext handleContext = new HandleContext();
         for (JSONObject step : steps) {
             if (isStopped()) {
                 return;
             }
             try {
-                stepHandlers.runStep(step, handleDes, this);
+                stepHandlers.runStep(step, handleContext, this);
             } catch (Throwable e) {
                 break;
             }

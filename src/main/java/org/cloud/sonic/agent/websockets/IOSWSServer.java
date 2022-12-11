@@ -20,7 +20,6 @@ package org.cloud.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
@@ -29,7 +28,7 @@ import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
@@ -293,7 +292,7 @@ public class IOSWSServer implements IIOSWSServer {
                     switch (msg.getString("detail")) {
                         case "poco": {
                             IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
-                                iosStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
+                                iosStepHandler.startPocoDriver(new HandleContext(), msg.getString("engine"), msg.getInteger("port"));
                                 JSONObject poco = new JSONObject();
                                 try {
                                     poco.put("result", iosStepHandler.getPocoDriver().getPageSourceForJsonString());
@@ -303,7 +302,7 @@ public class IOSWSServer implements IIOSWSServer {
                                 }
                                 poco.put("msg", "poco");
                                 BytesTool.sendText(session, poco.toJSONString());
-                                iosStepHandler.closePocoDriver(new HandleDes());
+                                iosStepHandler.closePocoDriver(new HandleContext());
                             });
                             break;
                         }
@@ -403,12 +402,12 @@ public class IOSWSServer implements IIOSWSServer {
                                     JSONObject result = new JSONObject();
                                     result.put("msg", "tree");
                                     result.put("detail", iosStepHandler.getResource());
-                                    HandleDes handleDes = new HandleDes();
+                                    HandleContext handleContext = new HandleContext();
                                     if (msg.getBoolean("needImg")) {
-                                        result.put("img", iosStepHandler.stepScreen(handleDes));
+                                        result.put("img", iosStepHandler.stepScreen(handleContext));
                                     }
-                                    if (handleDes.getE() != null) {
-                                        logger.error(handleDes.getE().getMessage());
+                                    if (handleContext.getE() != null) {
+                                        logger.error(handleContext.getE().getMessage());
                                         JSONObject resultFail = new JSONObject();
                                         resultFail.put("msg", "treeFail");
                                         sendText(session, resultFail.toJSONString());

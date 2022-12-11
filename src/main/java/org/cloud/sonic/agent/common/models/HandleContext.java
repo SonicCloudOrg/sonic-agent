@@ -17,17 +17,25 @@
  */
 package org.cloud.sonic.agent.common.models;
 
+import org.cloud.sonic.driver.poco.models.PocoElement;
+
+import java.util.Iterator;
+
 /**
  * @author ZhouYiXun
  * @des
  * @date 2021/8/26 23:46
  */
-public class HandleDes {
+public class HandleContext {
     private String stepDes;
     private String detail;
     private Throwable e;
 
-    public HandleDes(){
+    public Iterator<PocoElement> iteratorPocoElement;
+
+    public PocoElement currentIteratorPocoElement;
+
+    public HandleContext(){
         this.stepDes = "";
         this.detail = "";
         this.e = null;

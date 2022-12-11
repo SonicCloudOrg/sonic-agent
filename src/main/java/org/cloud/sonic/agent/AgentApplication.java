@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -32,6 +33,7 @@ import org.springframework.context.annotation.Import;
  * @date 2021/08/16 19:26
  */
 @Import(SpringTool.class)
+@EnableAspectJAutoProxy(proxyTargetClass = true)
 @SpringBootApplication
 public class AgentApplication {
     @Value("${sonic.agent.port}")
