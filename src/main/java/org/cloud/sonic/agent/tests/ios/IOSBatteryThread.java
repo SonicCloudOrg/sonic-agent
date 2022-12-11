@@ -53,7 +53,7 @@ public class IOSBatteryThread implements Runnable {
         }
 
         List<String> deviceList = SibTool.getDeviceList();
-        if (CollectionUtils.isEmpty(deviceList)) {
+        if (deviceList.size() == 0) {
             return;
         }
 
