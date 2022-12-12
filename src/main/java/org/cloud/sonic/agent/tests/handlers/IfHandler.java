@@ -18,7 +18,8 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.aspect.PocoIteratorCheck;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
@@ -42,29 +43,30 @@ public class IfHandler implements StepHandler {
     private StepHandlers stepHandlers;
 
     @Override
-    public HandleDes runStep(JSONObject stepJSON, HandleDes handleDes, RunStepThread thread) throws Throwable {
+    @PocoIteratorCheck
+    public HandleContext runStep(JSONObject stepJSON, HandleContext handleContext, RunStepThread thread) throws Throwable {
         if (thread.isStopped()) {
             return null;
         }
-        handleDes.clear();
+        handleContext.clear();
 
         // 取出if下的步骤集合
         JSONObject conditionStep = stepJSON.getJSONObject("step");
         List<JSONObject> steps = conditionStep.getJSONArray("childSteps").toJavaList(JSONObject.class);
         // 执行条件步骤
         thread.getLogTool().sendStepLog(StepType.PASS, "开始执行「if」步骤", "");
-        noneConditionHandler.runStep(stepJSON, handleDes, thread);
+        noneConditionHandler.runStep(stepJSON, handleContext, thread);
         // 上述步骤无异常则取出if下的步骤，再次丢给 stepHandlers 处理
-        if (handleDes.getE() == null) {
+        if (handleContext.getE() == null) {
             thread.getLogTool().sendStepLog(StepType.PASS, "「if」步骤通过，开始执行子步骤", "");
             for (JSONObject step : steps) {
-                stepHandlers.runStep(handlerPublicStep(step), handleDes, thread);
+                stepHandlers.runStep(handlerPublicStep(step), handleContext, thread);
             }
             thread.getLogTool().sendStepLog(StepType.PASS, "「if」子步骤执行完毕", "");
         } else {
             thread.getLogTool().sendStepLog(StepType.WARN, "「if」步骤执行失败，跳过", "");
         }
-        return handleDes;
+        return handleContext;
     }
 
     @Override

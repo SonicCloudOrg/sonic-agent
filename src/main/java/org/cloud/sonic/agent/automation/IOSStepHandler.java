@@ -27,7 +27,7 @@ import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.IOSInfoMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
@@ -300,113 +300,113 @@ public class IOSStepHandler {
 //        }
 //    }
 
-    public void install(HandleDes handleDes, String path) {
-        handleDes.setStepDes("安装应用");
+    public void install(HandleContext handleContext, String path) {
+        handleContext.setStepDes("安装应用");
         path = TextHandler.replaceTrans(path, globalParams);
-        handleDes.setDetail("App安装路径： " + path);
+        handleContext.setDetail("App安装路径： " + path);
         try {
             SibTool.install(udId, path);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void uninstall(HandleDes handleDes, String appPackage) {
-        handleDes.setStepDes("卸载应用");
+    public void uninstall(HandleContext handleContext, String appPackage) {
+        handleContext.setStepDes("卸载应用");
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
-        handleDes.setDetail("App包名： " + appPackage);
+        handleContext.setDetail("App包名： " + appPackage);
         try {
             SibTool.uninstall(udId, appPackage);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void terminate(HandleDes handleDes, String packageName) {
-        handleDes.setStepDes("终止应用");
+    public void terminate(HandleContext handleContext, String packageName) {
+        handleContext.setStepDes("终止应用");
         packageName = TextHandler.replaceTrans(packageName, globalParams);
-        handleDes.setDetail("应用包名： " + packageName);
+        handleContext.setDetail("应用包名： " + packageName);
         try {
             iosDriver.appTerminate(packageName);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void runBackground(HandleDes handleDes, long time) {
-        handleDes.setStepDes("后台运行应用");
-        handleDes.setDetail("后台运行App " + time + " ms");
+    public void runBackground(HandleContext handleContext, long time) {
+        handleContext.setStepDes("后台运行应用");
+        handleContext.setDetail("后台运行App " + time + " ms");
         try {
             iosDriver.appRunBackground((int) (time / 1000));
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void openApp(HandleDes handleDes, String appPackage) {
-        handleDes.setStepDes("打开应用");
+    public void openApp(HandleContext handleContext, String appPackage) {
+        handleContext.setStepDes("打开应用");
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
-        handleDes.setDetail("App包名： " + appPackage);
+        handleContext.setDetail("App包名： " + appPackage);
         try {
             iosDriver.appActivate(appPackage);
             targetPackage = appPackage;
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void lock(HandleDes handleDes) {
-        handleDes.setStepDes("锁定屏幕");
-        handleDes.setDetail("");
+    public void lock(HandleContext handleContext) {
+        handleContext.setStepDes("锁定屏幕");
+        handleContext.setDetail("");
         try {
             iosDriver.lock();
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void unLock(HandleDes handleDes) {
-        handleDes.setStepDes("解锁屏幕");
-        handleDes.setDetail("");
+    public void unLock(HandleContext handleContext) {
+        handleContext.setStepDes("解锁屏幕");
+        handleContext.setDetail("");
         try {
             iosDriver.unlock();
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void asserts(HandleDes handleDes, String actual, String expect, String type) {
-        handleDes.setDetail("真实值： " + actual + " 期望值： " + expect);
-        handleDes.setStepDes("");
+    public void asserts(HandleContext handleContext, String actual, String expect, String type) {
+        handleContext.setDetail("真实值： " + actual + " 期望值： " + expect);
+        handleContext.setStepDes("");
         try {
             switch (type) {
                 case "assertEquals":
-                    handleDes.setStepDes("断言验证(相等)");
+                    handleContext.setStepDes("断言验证(相等)");
                     assertEquals(actual, expect);
                     break;
                 case "assertTrue":
-                    handleDes.setStepDes("断言验证(包含)");
+                    handleContext.setStepDes("断言验证(包含)");
                     assertTrue(actual.contains(expect));
                     break;
                 case "assertNotTrue":
-                    handleDes.setStepDes("断言验证(不包含)");
+                    handleContext.setStepDes("断言验证(不包含)");
                     assertFalse(actual.contains(expect));
                     break;
             }
         } catch (AssertionError e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public String getText(HandleDes handleDes, String des, String selector, String pathValue) {
+    public String getText(HandleContext handleContext, String des, String selector, String pathValue) {
         String s = "";
-        handleDes.setStepDes("获取" + des + "文本");
-        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        handleContext.setStepDes("获取" + des + "文本");
+        handleContext.setDetail("获取" + selector + ":" + pathValue + "文本");
         try {
             s = findEle(selector, pathValue).getText();
             log.sendStepLog(StepType.INFO, "", "文本获取结果: " + s);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
         return s;
     }
@@ -421,84 +421,84 @@ public class IOSStepHandler {
 //        }
 //    }
 
-    public void click(HandleDes handleDes, String des, String selector, String pathValue) {
-        handleDes.setStepDes("点击" + des);
-        handleDes.setDetail("点击" + selector + ": " + pathValue);
+    public void click(HandleContext handleContext, String des, String selector, String pathValue) {
+        handleContext.setStepDes("点击" + des);
+        handleContext.setDetail("点击" + selector + ": " + pathValue);
         try {
             findEle(selector, pathValue).click();
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void sendKeys(HandleDes handleDes, String des, String selector, String pathValue, String keys) {
+    public void sendKeys(HandleContext handleContext, String des, String selector, String pathValue, String keys) {
         keys = TextHandler.replaceTrans(keys, globalParams);
-        handleDes.setStepDes("对" + des + "输入内容");
-        handleDes.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
+        handleContext.setStepDes("对" + des + "输入内容");
+        handleContext.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
         try {
             findEle(selector, pathValue).sendKeys(keys);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void getTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
+    public void getTextAndAssert(HandleContext handleContext, String des, String selector, String pathValue, String expect) {
         try {
-            String s = getText(handleDes, des, selector, pathValue);
-            if (handleDes.getE() != null) {
+            String s = getText(handleContext, des, selector, pathValue);
+            if (handleContext.getE() != null) {
                 return;
             }
-            handleDes.setStepDes("验证" + des + "文本");
-            handleDes.setDetail("验证" + selector + ":" + pathValue + "文本");
+            handleContext.setStepDes("验证" + des + "文本");
+            handleContext.setDetail("验证" + selector + ":" + pathValue + "文本");
             try {
                 expect = TextHandler.replaceTrans(expect, globalParams);
                 assertEquals(s, expect);
                 log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
             } catch (AssertionError e) {
-                handleDes.setE(e);
+                handleContext.setE(e);
             }
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void longPressPoint(HandleDes handleDes, String des, String xy, int time) {
+    public void longPressPoint(HandleContext handleContext, String des, String xy, int time) {
         try {
             double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
             double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
             int[] point = computedPoint(x, y);
-            handleDes.setStepDes("长按" + des);
-            handleDes.setDetail("长按坐标" + time + "毫秒 (" + point[0] + "," + point[1] + ")");
+            handleContext.setStepDes("长按" + des);
+            handleContext.setDetail("长按坐标" + time + "毫秒 (" + point[0] + "," + point[1] + ")");
             iosDriver.longPress(point[0], point[1], time);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void keyCode(HandleDes handleDes, String key) {
-        handleDes.setStepDes("按系统按键" + key + "键");
-        handleDes.setDetail("");
+    public void keyCode(HandleContext handleContext, String key) {
+        handleContext.setStepDes("按系统按键" + key + "键");
+        handleContext.setDetail("");
         try {
             iosDriver.pressButton(key);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void tap(HandleDes handleDes, String des, String xy) {
+    public void tap(HandleContext handleContext, String des, String xy) {
         try {
             double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
             double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
             int[] point = computedPoint(x, y);
-            handleDes.setStepDes("点击" + des);
-            handleDes.setDetail("点击坐标(" + point[0] + "," + point[1] + ")");
+            handleContext.setStepDes("点击" + des);
+            handleContext.setDetail("点击坐标(" + point[0] + "," + point[1] + ")");
             iosDriver.tap(point[0], point[1]);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void swipePoint(HandleDes handleDes, String des1, String xy1, String des2, String xy2) {
+    public void swipePoint(HandleContext handleContext, String des1, String xy1, String des2, String xy2) {
         try {
             double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
             double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
@@ -506,15 +506,15 @@ public class IOSStepHandler {
             double x2 = Double.parseDouble(xy2.substring(0, xy2.indexOf(",")));
             double y2 = Double.parseDouble(xy2.substring(xy2.indexOf(",") + 1));
             int[] point2 = computedPoint(x2, y2);
-            handleDes.setStepDes("滑动拖拽" + des1 + "到" + des2);
-            handleDes.setDetail("拖动坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
+            handleContext.setStepDes("滑动拖拽" + des1 + "到" + des2);
+            handleContext.setDetail("拖动坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
             iosDriver.swipe(point1[0], point1[1], point2[0], point2[1]);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void swipe(HandleDes handleDes, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
+    public void swipe(HandleContext handleContext, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
         try {
             IOSElement webElement = findEle(selector, pathValue);
             IOSElement webElement2 = findEle(selector2, pathValue2);
@@ -522,40 +522,40 @@ public class IOSStepHandler {
             int y1 = webElement.getRect().getCenter().getY();
             int x2 = webElement2.getRect().getCenter().getX();
             int y2 = webElement2.getRect().getCenter().getY();
-            handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
-            handleDes.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+            handleContext.setStepDes("滑动拖拽" + des + "到" + des2);
+            handleContext.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
             iosDriver.swipe(x1, y1, x2, y2);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void longPress(HandleDes handleDes, String des, String selector, String pathValue, int time) {
-        handleDes.setStepDes("长按" + des);
-        handleDes.setDetail("长按控件元素" + time + "毫秒 ");
+    public void longPress(HandleContext handleContext, String des, String selector, String pathValue, int time) {
+        handleContext.setStepDes("长按" + des);
+        handleContext.setDetail("长按控件元素" + time + "毫秒 ");
         try {
             IOSElement webElement = findEle(selector, pathValue);
             int x = webElement.getRect().getCenter().getX();
             int y = webElement.getRect().getCenter().getY();
             iosDriver.longPress(x, y, time);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void clear(HandleDes handleDes, String des, String selector, String pathValue) {
-        handleDes.setStepDes("清空" + des);
-        handleDes.setDetail("清空" + selector + ": " + pathValue);
+    public void clear(HandleContext handleContext, String des, String selector, String pathValue) {
+        handleContext.setStepDes("清空" + des);
+        handleContext.setDetail("清空" + selector + ": " + pathValue);
         try {
             findEle(selector, pathValue).clear();
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void isExistEle(HandleDes handleDes, String des, String selector, String pathValue, boolean expect) {
-        handleDes.setStepDes("判断控件 " + des + " 是否存在");
-        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+    public void isExistEle(HandleContext handleContext, String des, String selector, String pathValue, boolean expect) {
+        handleContext.setStepDes("判断控件 " + des + " 是否存在");
+        handleContext.setDetail("期望值：" + (expect ? "存在" : "不存在"));
         boolean hasEle = false;
         try {
             IOSElement w = findEle(selector, pathValue);
@@ -567,7 +567,7 @@ public class IOSStepHandler {
         try {
             assertEquals(hasEle, expect);
         } catch (AssertionError e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
@@ -582,15 +582,15 @@ public class IOSStepHandler {
 //        }
 //    }
 
-    public void clickByImg(HandleDes handleDes, String des, String pathValue) throws Exception {
-        handleDes.setStepDes("点击图片" + des);
-        handleDes.setDetail(pathValue);
+    public void clickByImg(HandleContext handleContext, String des, String pathValue) throws Exception {
+        handleContext.setStepDes("点击图片" + des);
+        handleContext.setDetail(pathValue);
         File file = null;
         if (pathValue.startsWith("http")) {
             try {
                 file = DownloadTool.download(pathValue);
             } catch (Exception e) {
-                handleDes.setE(e);
+                handleContext.setE(e);
                 return;
             }
         }
@@ -635,7 +635,7 @@ public class IOSStepHandler {
                     log.sendStepLog(StepType.INFO, "图片定位到坐标：(" + findResult.getX() + "," + findResult.getY() + ")  耗时：" + findResult.getTime() + " ms",
                             url);
                 } else {
-                    handleDes.setE(new Exception("图片定位失败！"));
+                    handleContext.setE(new Exception("图片定位失败！"));
                 }
             }
         }
@@ -644,20 +644,20 @@ public class IOSStepHandler {
                 iosDriver.tap(findResult.getX(), findResult.getY());
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
-                handleDes.setE(e);
+                handleContext.setE(e);
             }
         }
     }
 
 
-    public void readText(HandleDes handleDes, String language, String text) throws Exception {
+    public void readText(HandleContext handleContext, String language, String text) throws Exception {
 //        TextReader textReader = new TextReader();
 //        String result = textReader.getTessResult(getScreenToLocal(), language);
 //        log.sendStepLog(StepType.INFO, "",
 //                "图像文字识别结果：<br>" + result);
 //        String filter = result.replaceAll(" ", "");
-        handleDes.setStepDes("图像文字识别");
-        handleDes.setDetail("（该功能暂时关闭）期望包含文本：" + text);
+        handleContext.setStepDes("图像文字识别");
+        handleContext.setDetail("（该功能暂时关闭）期望包含文本：" + text);
 //        if (!filter.contains(text)) {
 //            handleDes.setE(new Exception("图像文字识别不通过！"));
 //        }
@@ -680,7 +680,7 @@ public class IOSStepHandler {
         return output;
     }
 
-    public void checkImage(HandleDes handleDes, String des, String pathValue, double matchThreshold) throws Exception {
+    public void checkImage(HandleContext handleContext, String des, String pathValue, double matchThreshold) throws Exception {
         log.sendStepLog(StepType.INFO, "开始检测" + des + "兼容", "检测与当前设备截图相似度，期望相似度为" + matchThreshold + "%");
         File file = null;
         if (pathValue.startsWith("http")) {
@@ -688,22 +688,22 @@ public class IOSStepHandler {
         }
         SimilarityChecker similarityChecker = new SimilarityChecker();
         double score = similarityChecker.getSimilarMSSIMScore(file, getScreenToLocal(), true);
-        handleDes.setStepDes("检测" + des + "图片相似度");
-        handleDes.setDetail("相似度为" + score * 100 + "%");
+        handleContext.setStepDes("检测" + des + "图片相似度");
+        handleContext.setDetail("相似度为" + score * 100 + "%");
         if (score == 0) {
-            handleDes.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
+            handleContext.setE(new Exception("图片相似度检测不通过！比对图片分辨率不一致！"));
         } else if (score < (matchThreshold / 100)) {
-            handleDes.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
+            handleContext.setE(new Exception("图片相似度检测不通过！expect " + matchThreshold + " but " + score * 100));
         }
     }
 
-    public void siriCommand(HandleDes handleDes, String command) {
-        handleDes.setStepDes("siri指令");
-        handleDes.setDetail("对siri发送指令： " + command);
+    public void siriCommand(HandleContext handleContext, String command) {
+        handleContext.setStepDes("siri指令");
+        handleContext.setDetail("对siri发送指令： " + command);
         try {
             iosDriver.sendSiriCommand(command);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
@@ -729,9 +729,9 @@ public class IOSStepHandler {
         }
     }
 
-    public String stepScreen(HandleDes handleDes) {
-        handleDes.setStepDes("获取截图");
-        handleDes.setDetail("");
+    public String stepScreen(HandleContext handleContext) {
+        handleContext.setStepDes("获取截图");
+        handleContext.setDetail("");
         String url = "";
         try {
             File folder = new File("test-output");
@@ -744,43 +744,43 @@ public class IOSStepHandler {
             imageOutput.write(bt, 0, bt.length);
             imageOutput.close();
             url = UploadTools.upload(output, "imageFiles");
-            handleDes.setDetail(url);
+            handleContext.setDetail(url);
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
         return url;
     }
 
-    public void pause(HandleDes handleDes, int time) {
-        handleDes.setStepDes("强制等待");
-        handleDes.setDetail("等待" + time + " ms");
+    public void pause(HandleContext handleContext, int time) {
+        handleContext.setStepDes("强制等待");
+        handleContext.setDetail("等待" + time + " ms");
         try {
             Thread.sleep(time);
         } catch (InterruptedException e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
-        handleDes.setStepDes("执行公共步骤 " + name);
-        handleDes.setDetail("");
+    public void publicStep(HandleContext handleContext, String name, JSONArray stepArray) {
+        handleContext.setStepDes("执行公共步骤 " + name);
+        handleContext.setDetail("");
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」开始执行", "");
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
             try {
                 SpringTool.getBean(StepHandlers.class)
-                        .runStep(stepDetail, handleDes, (RunStepThread) Thread.currentThread());
+                        .runStep(stepDetail, handleContext, (RunStepThread) Thread.currentThread());
             } catch (Throwable e) {
-                handleDes.setE(e);
+                handleContext.setE(e);
                 break;
             }
         }
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
 
-    public void startPocoDriver(HandleDes handleDes, String engine, int port) {
-        handleDes.setStepDes("启动PocoDriver");
-        handleDes.setDetail("");
+    public void startPocoDriver(HandleContext handleContext, String engine, int port) {
+        handleContext.setStepDes("启动PocoDriver");
+        handleContext.setDetail("");
         if (pocoPort == 0) {
             pocoPort = PortTool.getPort();
         }
@@ -792,9 +792,9 @@ public class IOSStepHandler {
     private int intervalInit = 3000;
     private int retryInit = 3;
 
-    public void setDefaultFindPocoElementInterval(HandleDes handleDes, Integer retry, Integer interval) {
-        handleDes.setStepDes("Set Global Find Poco Element Interval");
-        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+    public void setDefaultFindPocoElementInterval(HandleContext handleContext, Integer retry, Integer interval) {
+        handleContext.setStepDes("Set Global Find Poco Element Interval");
+        handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         if (retry != null) {
             retryInit = retry;
         }
@@ -846,9 +846,9 @@ public class IOSStepHandler {
         return pocoElement;
     }
 
-    public void isExistPocoEle(HandleDes handleDes, String des, String selector, String value, boolean expect) {
-        handleDes.setStepDes("判断控件 " + des + " 是否存在");
-        handleDes.setDetail("期望值：" + (expect ? "存在" : "不存在"));
+    public void isExistPocoEle(HandleContext handleContext, String des, String selector, String value, boolean expect) {
+        handleContext.setStepDes("判断控件 " + des + " 是否存在");
+        handleContext.setDetail("期望值：" + (expect ? "存在" : "不存在"));
         boolean hasEle = false;
         try {
             PocoElement w = findPocoEle(selector, value);
@@ -860,13 +860,13 @@ public class IOSStepHandler {
         try {
             assertEquals(hasEle, expect);
         } catch (AssertionError e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void getPocoElementAttr(HandleDes handleDes, String des, String selector, String pathValue, String attr, String expect) {
-        handleDes.setStepDes("验证控件 " + des + " 属性");
-        handleDes.setDetail("属性：" + attr + "，期望值：" + expect);
+    public void getPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr, String expect) {
+        handleContext.setStepDes("验证控件 " + des + " 属性");
+        handleContext.setDetail("属性：" + attr + "，期望值：" + expect);
         try {
             PocoElement pocoElement = findPocoEle(selector, pathValue);
             String attrValue = "";
@@ -880,17 +880,17 @@ public class IOSStepHandler {
             try {
                 assertEquals(attrValue, expect);
             } catch (AssertionError e) {
-                handleDes.setE(e);
+                handleContext.setE(e);
             }
         } catch (Throwable e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public String getPocoText(HandleDes handleDes, String des, String selector, String pathValue) {
+    public String getPocoText(HandleContext handleContext, String des, String selector, String pathValue) {
         String s = "";
-        handleDes.setStepDes("获取" + des + "文本");
-        handleDes.setDetail("获取" + selector + ":" + pathValue + "文本");
+        handleContext.setStepDes("获取" + des + "文本");
+        handleContext.setDetail("获取" + selector + ":" + pathValue + "文本");
         try {
             PocoElement w = findPocoEle(selector, pathValue);
             if (w != null) {
@@ -900,34 +900,34 @@ public class IOSStepHandler {
                 throw new SonicRespException(pathValue + " not found!");
             }
         } catch (Throwable e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
         return s;
     }
 
-    public void getPocoTextAndAssert(HandleDes handleDes, String des, String selector, String pathValue, String expect) {
+    public void getPocoTextAndAssert(HandleContext handleContext, String des, String selector, String pathValue, String expect) {
         try {
-            String s = getPocoText(handleDes, des, selector, pathValue);
-            if (handleDes.getE() != null) {
+            String s = getPocoText(handleContext, des, selector, pathValue);
+            if (handleContext.getE() != null) {
                 return;
             }
-            handleDes.setStepDes("验证" + des + "文本");
-            handleDes.setDetail("验证" + selector + ":" + pathValue + "文本");
+            handleContext.setStepDes("验证" + des + "文本");
+            handleContext.setDetail("验证" + selector + ":" + pathValue + "文本");
             try {
                 expect = TextHandler.replaceTrans(expect, globalParams);
                 assertEquals(s, expect);
                 log.sendStepLog(StepType.INFO, "验证文本", "真实值： " + s + " 期望值： " + expect);
             } catch (AssertionError e) {
-                handleDes.setE(e);
+                handleContext.setE(e);
             }
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void pocoClick(HandleDes handleDes, String des, String selector, String value) {
-        handleDes.setStepDes("点击" + des);
-        handleDes.setDetail("点击 " + value);
+    public void pocoClick(HandleContext handleContext, String des, String selector, String value) {
+        handleContext.setStepDes("点击" + des);
+        handleContext.setDetail("点击 " + value);
         try {
             PocoElement w = findPocoEle(selector, value);
             if (w != null) {
@@ -938,13 +938,13 @@ public class IOSStepHandler {
                 throw new SonicRespException(value + " not found!");
             }
         } catch (Throwable e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void pocoLongPress(HandleDes handleDes, String des, String selector, String value, int time) {
-        handleDes.setStepDes("长按" + des);
-        handleDes.setDetail("长按 " + value);
+    public void pocoLongPress(HandleContext handleContext, String des, String selector, String value, int time) {
+        handleContext.setStepDes("长按" + des);
+        handleContext.setDetail("长按 " + value);
         try {
             PocoElement w = findPocoEle(selector, value);
             if (w != null) {
@@ -955,13 +955,13 @@ public class IOSStepHandler {
                 throw new SonicRespException(value + " not found!");
             }
         } catch (Throwable e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void pocoSwipe(HandleDes handleDes, String des, String selector, String value, String des2, String selector2, String value2) {
-        handleDes.setStepDes("滑动拖拽" + des + "到" + des2);
-        handleDes.setDetail("拖拽 " + value + " 到 " + value2);
+    public void pocoSwipe(HandleContext handleContext, String des, String selector, String value, String des2, String selector2, String value2) {
+        handleContext.setStepDes("滑动拖拽" + des + "到" + des2);
+        handleContext.setDetail("拖拽 " + value + " 到 " + value2);
         try {
             PocoElement w1 = findPocoEle(selector, value);
             PocoElement w2 = findPocoEle(selector2, value2);
@@ -977,14 +977,14 @@ public class IOSStepHandler {
                 throw new SonicRespException(value + " or " + value2 + " not found!");
             }
         } catch (Throwable e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void setTheRealPositionOfTheWindow(HandleDes handleDes, String text) {
+    public void setTheRealPositionOfTheWindow(HandleContext handleContext, String text) {
         JSONObject offsetValue = JSONObject.parseObject(text);
-        handleDes.setStepDes("设置偏移量");
-        handleDes.setDetail(String.format("offsetWidth: %d, offsetHeight: %d, windowWidth: %d, windowHeight: %d",
+        handleContext.setStepDes("设置偏移量");
+        handleContext.setDetail(String.format("offsetWidth: %d, offsetHeight: %d, windowWidth: %d, windowHeight: %d",
                 offsetValue.getInteger("offsetWidth"),
                 offsetValue.getInteger("offsetHeight"),
                 offsetValue.getInteger("windowWidth"),
@@ -1032,21 +1032,21 @@ public class IOSStepHandler {
         return pos;
     }
 
-    public void freezeSource(HandleDes handleDes) {
-        handleDes.setStepDes("冻结控件树");
-        handleDes.setDetail("");
+    public void freezeSource(HandleContext handleContext) {
+        handleContext.setStepDes("冻结控件树");
+        handleContext.setDetail("");
         pocoDriver.freezeSource();
     }
 
-    public void thawSource(HandleDes handleDes) {
-        handleDes.setStepDes("解冻控件树");
-        handleDes.setDetail("");
+    public void thawSource(HandleContext handleContext) {
+        handleContext.setStepDes("解冻控件树");
+        handleContext.setDetail("");
         pocoDriver.thawSource();
     }
 
-    public void closePocoDriver(HandleDes handleDes) {
-        handleDes.setStepDes("关闭PocoDriver");
-        handleDes.setDetail("");
+    public void closePocoDriver(HandleContext handleContext) {
+        handleContext.setStepDes("关闭PocoDriver");
+        handleContext.setDetail("");
         if (pocoDriver != null) {
             pocoDriver.closeDriver();
             SibTool.stopProxy(udId, targetPort);
@@ -1096,33 +1096,33 @@ public class IOSStepHandler {
         return we;
     }
 
-    public void setFindElementInterval(HandleDes handleDes, int retry, int interval) {
-        handleDes.setStepDes("Set Global Find XCTest Element Interval");
-        handleDes.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+    public void setFindElementInterval(HandleContext handleContext, int retry, int interval) {
+        handleContext.setStepDes("Set Global Find XCTest Element Interval");
+        handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         iosDriver.setDefaultFindElementInterval(retry, interval);
     }
 
-    public void stepHold(HandleDes handleDes, int time) {
-        handleDes.setStepDes("设置全局步骤间隔");
-        handleDes.setDetail("间隔" + time + " ms");
+    public void stepHold(HandleContext handleContext, int time) {
+        handleContext.setStepDes("设置全局步骤间隔");
+        handleContext.setDetail("间隔" + time + " ms");
         holdTime = time;
     }
 
-    public void sendKeyForce(HandleDes handleDes, String text) {
+    public void sendKeyForce(HandleContext handleContext, String text) {
         text = TextHandler.replaceTrans(text, globalParams);
-        handleDes.setStepDes("键盘输入文本");
-        handleDes.setDetail("键盘输入" + text);
+        handleContext.setStepDes("键盘输入文本");
+        handleContext.setDetail("键盘输入" + text);
         try {
             iosDriver.sendKeys(text);
         } catch (SonicRespException e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void setPasteboard(HandleDes handleDes, String text) {
+    public void setPasteboard(HandleContext handleContext, String text) {
         text = TextHandler.replaceTrans(text, globalParams);
-        handleDes.setStepDes("Set text to clipboard");
-        handleDes.setDetail("Set text: " + text);
+        handleContext.setStepDes("Set text to clipboard");
+        handleContext.setDetail("Set text: " + text);
         try {
             iosDriver.appActivate("com.apple.springboard");
             iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
@@ -1130,14 +1130,14 @@ public class IOSStepHandler {
             iosDriver.setPasteboard(PasteboardType.PLAIN_TEXT, text);
             iosDriver.pressButton(SystemButton.HOME);
         } catch (SonicRespException | InterruptedException e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public String getPasteboard(HandleDes handleDes) {
+    public String getPasteboard(HandleContext handleContext) {
         String text = "";
-        handleDes.setStepDes("Get clipboard text");
-        handleDes.setDetail("");
+        handleContext.setStepDes("Get clipboard text");
+        handleContext.setDetail("");
         try {
             iosDriver.appActivate("com.apple.springboard");
             iosDriver.sendSiriCommand("open WebDriverAgentRunner-Runner");
@@ -1145,7 +1145,7 @@ public class IOSStepHandler {
             text = new String(iosDriver.getPasteboard(PasteboardType.PLAIN_TEXT), StandardCharsets.UTF_8);
             iosDriver.pressButton(SystemButton.HOME);
         } catch (SonicRespException | InterruptedException e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
         return text;
     }
@@ -1161,9 +1161,9 @@ public class IOSStepHandler {
         return new int[]{(int) x, (int) y};
     }
 
-    public void runScript(HandleDes handleDes, String script, String type) {
-        handleDes.setStepDes("Run Custom Scripts");
-        handleDes.setDetail("Script: <br>" + script);
+    public void runScript(HandleContext handleContext, String script, String type) {
+        handleContext.setStepDes("Run Custom Scripts");
+        handleContext.setDetail("Script: <br>" + script);
         try {
             switch (type) {
                 case "Groovy":
@@ -1180,193 +1180,193 @@ public class IOSStepHandler {
                         String re = ProcessCommandTool.getProcessLocalCommandStr(String.format("python %s %s %s %s", temp.getAbsolutePath(), iosDriver.getSessionId(), udId, globalParams.toJSONString()));
                         log.sendStepLog(StepType.INFO, "", "Run result: <br>" + re);
                     } catch (Exception e) {
-                        handleDes.setE(e);
+                        handleContext.setE(e);
                     } finally {
                         temp.delete();
                     }
                     break;
             }
         } catch (Throwable e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void runStep(JSONObject stepJSON, HandleDes handleDes) throws Throwable {
+    public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
             case "stepHold":
-                stepHold(handleDes, Integer.parseInt(step.getString("content")));
+                stepHold(handleContext, Integer.parseInt(step.getString("content")));
                 break;
             case "siriCommand":
-                siriCommand(handleDes, step.getString("content"));
+                siriCommand(handleContext, step.getString("content"));
                 break;
             case "readText":
-                readText(handleDes, step.getString("content"), step.getString("text"));
+                readText(handleContext, step.getString("content"), step.getString("text"));
                 break;
             case "clickByImg":
-                clickByImg(handleDes, eleList.getJSONObject(0).getString("eleName")
+                clickByImg(handleContext, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "click":
-                click(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                click(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "sendKeys":
-                sendKeys(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                sendKeys(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
                 break;
             case "getText":
-                getTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                getTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
                 break;
             case "isExistEle":
-                isExistEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
                 break;
             case "clear":
-                clear(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                clear(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "longPress":
-                longPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                longPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), Integer.parseInt(step.getString("content")));
                 break;
             case "swipe":
-                swipePoint(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                swipePoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                         , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
                 break;
             case "swipe2":
-                swipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                swipe(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                         , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
                 break;
             case "tap":
-                tap(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
+                tap(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "longPressPoint":
-                longPressPoint(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                longPressPoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                         , Integer.parseInt(step.getString("content")));
                 break;
             case "pause":
-                pause(handleDes, Integer.parseInt(step.getString("content")));
+                pause(handleContext, Integer.parseInt(step.getString("content")));
                 break;
             case "checkImage":
-                checkImage(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                checkImage(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                         , step.getDouble("content"));
                 break;
             case "stepScreen":
-                stepScreen(handleDes);
+                stepScreen(handleContext);
                 break;
             case "openApp":
-                openApp(handleDes, step.getString("text"));
+                openApp(handleContext, step.getString("text"));
                 break;
             case "terminate":
-                terminate(handleDes, step.getString("text"));
+                terminate(handleContext, step.getString("text"));
                 break;
             case "install":
-                install(handleDes, step.getString("text"));
+                install(handleContext, step.getString("text"));
                 break;
             case "uninstall":
-                uninstall(handleDes, step.getString("text"));
+                uninstall(handleContext, step.getString("text"));
                 break;
             case "runBack":
-                runBackground(handleDes, Long.parseLong(step.getString("content")));
+                runBackground(handleContext, Long.parseLong(step.getString("content")));
                 break;
             case "lock":
-                lock(handleDes);
+                lock(handleContext);
                 break;
             case "unLock":
-                unLock(handleDes);
+                unLock(handleContext);
                 break;
             case "keyCode":
-                keyCode(handleDes, step.getString("content"));
+                keyCode(handleContext, step.getString("content"));
                 break;
             case "assertEquals":
             case "assertTrue":
             case "assertNotTrue":
                 String actual = TextHandler.replaceTrans(step.getString("text"), globalParams);
                 String expect = TextHandler.replaceTrans(step.getString("content"), globalParams);
-                asserts(handleDes, actual, expect, step.getString("stepType"));
+                asserts(handleContext, actual, expect, step.getString("stepType"));
                 break;
             case "getTextValue":
-                globalParams.put(step.getString("content"), getText(handleDes, eleList.getJSONObject(0).getString("eleName")
+                globalParams.put(step.getString("content"), getText(handleContext, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
                 break;
             case "sendKeyForce":
-                sendKeyForce(handleDes, step.getString("content"));
+                sendKeyForce(handleContext, step.getString("content"));
                 break;
             case "publicStep":
-                publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
+                publicStep(handleContext, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
                 return;
             case "findElementInterval":
-                setFindElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
+                setFindElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
                 break;
             case "setPasteboard":
-                setPasteboard(handleDes, step.getString("content"));
+                setPasteboard(handleContext, step.getString("content"));
                 break;
             case "getPasteboard":
-                globalParams.put(step.getString("content"), getPasteboard(handleDes));
+                globalParams.put(step.getString("content"), getPasteboard(handleContext));
                 break;
             case "runScript":
-                runScript(handleDes, step.getString("content"), step.getString("text"));
+                runScript(handleContext, step.getString("content"), step.getString("text"));
                 break;
             case "startPocoDriver":
-                startPocoDriver(handleDes, step.getString("content"), step.getInteger("text"));
+                startPocoDriver(handleContext, step.getString("content"), step.getInteger("text"));
                 break;
             case "setDefaultFindPocoElementInterval":
-                setDefaultFindPocoElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
+                setDefaultFindPocoElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
                 break;
             case "isExistPocoEle":
-                isExistPocoEle(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                isExistPocoEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
                 break;
             case "pocoClick":
-                pocoClick(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                pocoClick(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "pocoLongPress":
-                pocoLongPress(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                pocoLongPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue")
                         , Integer.parseInt(step.getString("content")));
                 break;
             case "pocoSwipe":
-                pocoSwipe(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                pocoSwipe(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                         , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
                 break;
             case "setTheRealPositionOfTheWindow":
-                setTheRealPositionOfTheWindow(handleDes, step.getString("content"));
+                setTheRealPositionOfTheWindow(handleContext, step.getString("content"));
                 break;
             case "getPocoElementAttr":
-                getPocoElementAttr(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                getPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
                 break;
             case "getPocoTextValue":
-                globalParams.put(step.getString("content"), getPocoText(handleDes, eleList.getJSONObject(0).getString("eleName")
+                globalParams.put(step.getString("content"), getPocoText(handleContext, eleList.getJSONObject(0).getString("eleName")
                         , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
                 break;
             case "getPocoText":
-                getPocoTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                getPocoTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
                 break;
             case "freezeSource":
-                freezeSource(handleDes);
+                freezeSource(handleContext);
                 break;
             case "thawSource":
-                thawSource(handleDes);
+                thawSource(handleContext);
                 break;
             case "closePocoDriver":
-                closePocoDriver(handleDes);
+                closePocoDriver(handleContext);
                 break;
         }
-        switchType(step, handleDes);
+        switchType(step, handleContext);
     }
 
-    public void switchType(JSONObject stepJson, HandleDes handleDes) throws Throwable {
+    public void switchType(JSONObject stepJson, HandleContext handleContext) throws Throwable {
         Integer error = stepJson.getInteger("error");
-        String stepDes = handleDes.getStepDes();
-        String detail = handleDes.getDetail();
-        Throwable e = handleDes.getE();
+        String stepDes = handleContext.getStepDes();
+        String detail = handleContext.getDetail();
+        Throwable e = handleContext.getE();
         if (e != null) {
             switch (error) {
                 case ErrorType.IGNORE:
@@ -1395,7 +1395,7 @@ public class IOSStepHandler {
             }
             // 非条件步骤清除异常对象
             if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
-                handleDes.clear();
+                handleContext.clear();
             }
         } else {
             log.sendStepLog(StepType.PASS, stepDes, detail);

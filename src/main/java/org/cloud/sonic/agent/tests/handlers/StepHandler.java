@@ -18,7 +18,7 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 
@@ -31,7 +31,7 @@ public interface StepHandler {
     /**
      * 如果返回null则表示任务停止了
      */
-    HandleDes runStep(JSONObject step, HandleDes handleDes, RunStepThread thread) throws Throwable;
+    HandleContext runStep(JSONObject step, HandleContext handleContext, RunStepThread thread) throws Throwable;
 
     ConditionEnum getCondition();
 
