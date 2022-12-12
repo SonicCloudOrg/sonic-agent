@@ -18,7 +18,8 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.aspect.PocoIteratorCheck;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.enums.SonicEnum;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
@@ -46,13 +47,12 @@ public class StepHandlers implements ApplicationListener<ContextRefreshedEvent> 
 
     private final ConcurrentHashMap<ConditionEnum, StepHandler> stepHandlers =
             new ConcurrentHashMap<>(8);
-
-    public HandleDes runStep(JSONObject stepJSON, HandleDes handleDes, RunStepThread thread) throws Throwable {
+    public HandleContext runStep(JSONObject stepJSON, HandleContext handleContext, RunStepThread thread) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         Integer conditionType = step.getInteger("conditionType");
         getSupportedCondition(SonicEnum.valueToEnum(ConditionEnum.class, conditionType))
-                .runStep(stepJSON, handleDes, thread);
-        return handleDes;
+                .runStep(stepJSON, handleContext, thread);
+        return handleContext;
     }
 
     @NonNull

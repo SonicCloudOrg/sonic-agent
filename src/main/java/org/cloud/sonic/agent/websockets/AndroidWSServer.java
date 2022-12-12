@@ -32,7 +32,7 @@ import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tools.*;
@@ -308,7 +308,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 switch (msg.getString("detail")) {
                     case "poco": {
                         AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
-                            androidStepHandler.startPocoDriver(new HandleDes(), msg.getString("engine"), msg.getInteger("port"));
+                            androidStepHandler.startPocoDriver(new HandleContext(), msg.getString("engine"), msg.getInteger("port"));
                             JSONObject poco = new JSONObject();
                             try {
                                 poco.put("result", androidStepHandler.getPocoDriver().getPageSourceForJsonString());
@@ -318,7 +318,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             }
                             poco.put("msg", "poco");
                             BytesTool.sendText(session, poco.toJSONString());
-                            androidStepHandler.closePocoDriver(new HandleDes());
+                            androidStepHandler.closePocoDriver(new HandleContext());
                         });
                         break;
                     }
@@ -404,7 +404,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 try {
                                     JSONObject result = new JSONObject();
-                                    androidStepHandler.switchWindowMode(new HandleDes(), msg.getBoolean("isMulti"));
+                                    androidStepHandler.switchWindowMode(new HandleContext(), msg.getBoolean("isMulti"));
                                     result.put("msg", "tree");
                                     result.put("detail", finalAndroidStepHandler.getResource());
                                     result.put("webView", finalAndroidStepHandler.getWebView());

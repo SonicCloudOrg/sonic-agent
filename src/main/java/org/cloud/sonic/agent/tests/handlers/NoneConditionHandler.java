@@ -18,8 +18,9 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.aspect.PocoIteratorCheck;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.common.models.HandleDes;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
@@ -38,25 +39,26 @@ import org.springframework.stereotype.Component;
 public class NoneConditionHandler implements StepHandler {
 
     @Override
-    public HandleDes runStep(JSONObject stepJSON, HandleDes handleDes, RunStepThread thread) throws Throwable {
+    @PocoIteratorCheck
+    public HandleContext runStep(JSONObject stepJSON, HandleContext handleContext, RunStepThread thread) throws Throwable {
         if (thread.isStopped()) {
             return null;
         }
-        handleDes.clear();
+        handleContext.clear();
 
         switch (thread.getPlatformType()) {
             case PlatformType.ANDROID:
                 AndroidRunStepThread androidRunStepThread = (AndroidRunStepThread) thread;
                 AndroidStepHandler androidStepHandler = androidRunStepThread.getAndroidTestTaskBootThread().getAndroidStepHandler();
-                androidStepHandler.runStep(stepJSON, handleDes);
+                androidStepHandler.runStep(stepJSON, handleContext);
                 break;
             case PlatformType.IOS:
                 IOSRunStepThread iosRunStepThread = (IOSRunStepThread) thread;
                 IOSStepHandler iosStepHandler = iosRunStepThread.getIosTestTaskBootThread().getIosStepHandler();
-                iosStepHandler.runStep(stepJSON, handleDes);
+                iosStepHandler.runStep(stepJSON, handleContext);
                 break;
         }
-        return handleDes;
+        return handleContext;
     }
 
     @Override
