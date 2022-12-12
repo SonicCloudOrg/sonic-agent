@@ -3,16 +3,16 @@
  *   Copyright (C) 2022 SonicCloudOrg
  *
  *   This program is free software: you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation, either version 3 of the License, or
+ *   it under the terms of the GNU Affero General Public License as published
+ *   by the Free Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU Affero General Public License for more details.
  *
- *   You should have received a copy of the GNU General Public License
+ *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package org.cloud.sonic.agent.transport;
@@ -44,6 +44,7 @@ import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.PHCTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -99,6 +100,7 @@ public class TransportClient extends WebSocketClient {
                         agentInfo.put("version", "v" + version);
                         agentInfo.put("systemType", System.getProperty("os.name"));
                         agentInfo.put("host", host);
+                        agentInfo.put("hasHub", PHCTool.isSupport() ? 1 : 0);
                         TransportWorker.client.send(agentInfo.toJSONString());
                         if (isEnableAndroid) {
                             IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
@@ -150,6 +152,9 @@ public class TransportClient extends WebSocketClient {
                     heartBeat.put("msg", "heartBeat");
                     heartBeat.put("status", "alive");
                     TransportWorker.send(heartBeat);
+                    break;
+                case "hub":
+                    PHCTool.setPosition(jsonObject.getInteger("position"), jsonObject.getString("type"));
                     break;
                 case "runStep":
                     if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {

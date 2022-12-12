@@ -55,7 +55,7 @@ jobs:
       - name: mkdir
         run: mkdir -p sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins
       - name: package
-        run: mvn clean package -Dplatform=${{ matrix.platform }}
+        run: mvn clean package -Dplatform=${{ matrix.platform }} -Dmaven.test.skip=true
       - name: mvJar-linux86
         run: cp -r target/sonic-agent-${{ matrix.platform }}.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
       - name: copy
@@ -108,7 +108,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}.zip;src/main/docker/docker-compose.yml;src/main/docker/docker-compose2.yml
+          file: sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}.zip;src/main/docker/docker-compose.yml
           tag_name: ${{ steps.previoustag.outputs.tag }}
           update_latest_release: true
           draft: false
