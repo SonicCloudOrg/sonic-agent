@@ -83,7 +83,7 @@ jobs:
       - name: mkdir
         run: mkdir -p sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins
       - name: package
-        run: mvn clean package -Dplatform=${{ matrix.platform }} -Dmaven.test.skip=true
+        run: mvn clean package -Dplatform=${{ matrix.platform }} -DreleaseMode=true -Dmaven.test.skip=true
       - name: mvJar-linux86
         run: cp -r target/sonic-agent-${{ matrix.platform }}.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
       - name: copy

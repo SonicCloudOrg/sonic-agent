@@ -43,6 +43,8 @@ public class TransportConnectionThread implements Runnable {
     Integer serverPort = Integer.valueOf(SpringTool.getPropertiesValue("sonic.server.port"));
     String key = String.valueOf(SpringTool.getPropertiesValue("sonic.agent.key"));
 
+    boolean isRelease = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.release-mode"));
+
     @Override
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
@@ -50,9 +52,8 @@ public class TransportConnectionThread implements Runnable {
             if (!TransportWorker.isKeyAuth) {
                 return;
             }
-            //开发环境去掉/server
-            String url = String.format("ws://%s:%d/server/websockets/agent/%s",
-                    serverHost, serverPort, key).replace(":80/", "/");
+            String url = String.format("ws://%s:%d%s/websockets/agent/%s",
+                    serverHost, serverPort, isRelease ? "/server" : "", key).replace(":80/", "/");
             URI uri = URI.create(url);
             TransportClient transportClient = new TransportClient(uri);
             transportClient.connect();

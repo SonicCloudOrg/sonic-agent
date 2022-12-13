@@ -12,6 +12,7 @@ sonic:
   sib: 1.3.3
   sas: 0.0.2
   saus: 5.7.4
+  release-mode: @project.properties.releaseMode@
 
 logging:
   file:
