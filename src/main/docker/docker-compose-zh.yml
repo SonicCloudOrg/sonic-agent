@@ -1,7 +1,7 @@
 version: '3'
 services:
   sonic-agent:
-    image: "sonicorg/sonic-agent-linux:SONIC_VERSION"
+    image: "dockerproxy.com/sonicorg/sonic-agent-linux:SONIC_VERSION"
     environment:
       # 对应server的env配置，注意防火墙关闭对应端口
       - SONIC_SERVER_HOST=192.168.1.1

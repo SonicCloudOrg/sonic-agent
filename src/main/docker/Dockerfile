@@ -1,4 +1,4 @@
-FROM registry.cn-hongkong.aliyuncs.com/sonic-cloud/sonic-agent-linux-base:v1.0.1
+FROM sonicorg/sonic-agent-linux-base:v1.0.1
 
 ADD /mini /root/mini
 ADD /plugins /root/plugins
