@@ -49,6 +49,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -69,6 +70,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     private static String uiaApkVersion;
     private static String apkVersion;
     private static RestTemplate restTemplate;
+
+    private static Map<String, Integer> forwardPortMap = new ConcurrentHashMap<>();
     @Value("${sonic.saa}")
     private String ver;
     @Value("${sonic.saus}")
@@ -288,18 +291,30 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      * @date 2021/8/16 19:52
      */
     public static void forward(IDevice iDevice, int port, String service) {
+        String name = String.format("process-%s-forward-%s", iDevice.getSerialNumber(), service);
+        Integer oldP = forwardPortMap.get(name);
+        if (oldP != null) {
+            removeForward(iDevice, oldP, service);
+        }
         try {
             logger.info("{} device {} port forward to {}", iDevice.getSerialNumber(), service, port);
             iDevice.createForward(port, service, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
+            forwardPortMap.put(name, port);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
     }
 
     public static void forward(IDevice iDevice, int port, int target) {
+        String name = String.format("process-%s-forward-%d", iDevice.getSerialNumber(), target);
+        Integer oldP = forwardPortMap.get(name);
+        if (oldP != null) {
+            removeForward(iDevice, oldP, target);
+        }
         try {
             logger.info("{} device {} forward to {}", iDevice.getSerialNumber(), target, port);
             iDevice.createForward(port, target);
+            forwardPortMap.put(name, port);
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -318,6 +333,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         try {
             logger.info("cancel {} device {} port forward to {}", iDevice.getSerialNumber(), serviceName, port);
             iDevice.removeForward(port, serviceName, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
+            String name = String.format("process-%s-forward-%s", iDevice.getSerialNumber(), serviceName);
+            if (forwardPortMap.get(name) != null) {
+                forwardPortMap.remove(name);
+            }
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -327,6 +346,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         try {
             logger.info("cancel {} device {} forward to {}", iDevice.getSerialNumber(), target, port);
             iDevice.removeForward(port, target);
+            String name = String.format("process-%s-forward-%d", iDevice.getSerialNumber(), target);
+            if (forwardPortMap.get(name) != null) {
+                forwardPortMap.remove(name);
+            }
         } catch (Exception e) {
             logger.error(e.getMessage());
         }
@@ -734,7 +757,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                         }, 0, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
             } finally {
-                AndroidDeviceBridgeTool.removeForward(iDevice, port, 6790);
+                removeForward(iDevice, port, 6790);
             }
         }
 
