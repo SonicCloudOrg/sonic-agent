@@ -99,7 +99,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-vision-core</artifactId>
-            <version>1.0.7-${platform}</version>
+            <version>1.0.8-${platform}</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
