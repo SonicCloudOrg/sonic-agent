@@ -19,6 +19,8 @@ package org.cloud.sonic.agent.tools.file;
 
 import com.alibaba.fastjson.JSONObject;
 import net.coobird.thumbnailator.Thumbnails;
+
+import org.cloud.sonic.agent.tools.MacIpTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Calendar;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -56,9 +59,13 @@ public class UploadTools {
 
     private static RestTemplate restTemplate;
 
+    /**
+     * @param restTemplate
+     */
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate) {
         UploadTools.restTemplate = restTemplate;
+        List<String> networks = MacIpTool.networkServices();
         baseUrl = "http://" + host + ":" + port + (isRelease ? "/server" : "") + "/api/folder".replace(":80/", "/");
     }
 
