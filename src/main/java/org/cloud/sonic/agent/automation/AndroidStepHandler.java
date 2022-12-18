@@ -1042,7 +1042,7 @@ public class AndroidStepHandler {
                         try {
                             int random = new Random().nextInt(totalCount);
                             if (random >= 0 && random < finalSystemEvent) {
-                                int key = new Random().nextInt(9);
+                                int key = new Random().nextInt(4);
                                 String keyType = "";
                                 switch (key) {
                                     case 0:
@@ -1056,21 +1056,6 @@ public class AndroidStepHandler {
                                         break;
                                     case 3:
                                         keyType = "APP_SWITCH";
-                                        break;
-                                    case 4:
-                                        keyType = "BRIGHTNESS_DOWN";
-                                        break;
-                                    case 5:
-                                        keyType = "BRIGHTNESS_UP";
-                                        break;
-                                    case 6:
-                                        keyType = "VOLUME_UP";
-                                        break;
-                                    case 7:
-                                        keyType = "VOLUME_DOWN";
-                                        break;
-                                    case 8:
-                                        keyType = "VOLUME_MUTE";
                                         break;
                                 }
                                 AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.valueOf(keyType).getCode());
