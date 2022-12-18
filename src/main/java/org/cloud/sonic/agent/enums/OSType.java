@@ -2,7 +2,7 @@ package org.cloud.sonic.agent.enums;
 
 /**
  * @author qilululi
- * 用于系統相關的參數
+ * 用于系统相关的参数
 */
 public enum OSType {
     MacOS       ("MacOS"),

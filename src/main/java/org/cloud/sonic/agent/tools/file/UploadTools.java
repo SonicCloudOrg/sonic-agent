@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.SocketException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
@@ -61,11 +62,15 @@ public class UploadTools {
 
     /**
      * @param restTemplate
+     * @throws SocketException
      */
     @Autowired
-    public void setRestTemplate(RestTemplate restTemplate) {
+    public void setRestTemplate(RestTemplate restTemplate) throws SocketException {
         UploadTools.restTemplate = restTemplate;
-        List<String> networks = MacIpTool.networkServices();
+        List<String> ipV4Address = MacIpTool.getIpV4Address();
+        if (ipV4Address.size() != 0){
+            host = ipV4Address.get(0); 
+        }
         baseUrl = "http://" + host + ":" + port + (isRelease ? "/server" : "") + "/api/folder".replace(":80/", "/");
     }
 
