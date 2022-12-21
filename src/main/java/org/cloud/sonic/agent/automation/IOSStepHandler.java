@@ -1298,7 +1298,7 @@ public class IOSStepHandler {
                 break;
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
-                return;
+                break;
             case "findElementInterval":
                 setFindElementInterval(handleDes, step.getInteger("content"), step.getInteger("text"));
                 break;

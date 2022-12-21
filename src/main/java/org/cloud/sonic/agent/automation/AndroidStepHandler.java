@@ -511,6 +511,8 @@ public class AndroidStepHandler {
     }
 
     public void toWebView(HandleDes handleDes, String packageName, String process) {
+        packageName = TextHandler.replaceTrans(packageName, globalParams);
+        process = TextHandler.replaceTrans(process, globalParams);
         handleDes.setStepDes("切换到" + packageName + " WebView");
         handleDes.setDetail("AndroidProcess: " + process);
         try {
@@ -823,6 +825,7 @@ public class AndroidStepHandler {
     }
 
     public void toHandle(HandleDes handleDes, String params) throws Exception {
+        params = TextHandler.replaceTrans(params, globalParams);
         handleDes.setStepDes("切换Handle");
         handleDes.setDetail("");
         Thread.sleep(1000);
@@ -1880,7 +1883,7 @@ public class AndroidStepHandler {
                 break;
             case "publicStep":
                 publicStep(handleDes, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
-                return;
+                break;
             case "getWebViewText":
                 getWebViewTextAndAssert(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
