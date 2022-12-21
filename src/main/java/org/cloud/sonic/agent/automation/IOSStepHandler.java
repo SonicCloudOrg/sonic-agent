@@ -182,8 +182,10 @@ public class IOSStepHandler {
         return iosDriver;
     }
 
+    private boolean isLockStatus = false;
+
     public void setResultDetailStatus(int status) {
-        if (status > this.status) {
+        if (!isLockStatus && status > this.status) {
             this.status = status;
         }
     }
@@ -762,9 +764,8 @@ public class IOSStepHandler {
     }
 
     public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
-        handleDes.setStepDes("执行公共步骤 " + name);
-        handleDes.setDetail("");
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」开始执行", "");
+        isLockStatus = true;
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
             try {
@@ -774,6 +775,13 @@ public class IOSStepHandler {
                 handleDes.setE(e);
                 break;
             }
+        }
+        isLockStatus = false;
+        handleDes.setStepDes("IGNORE");
+        if (handleDes.getE() != null) {
+            handleDes.setStepDes("执行公共步骤 " + name);
+            handleDes.setDetail("");
+            handleDes.setE(new SonicRespException("Exception thrown during child step running."));
         }
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
@@ -1397,7 +1405,7 @@ public class IOSStepHandler {
             if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
                 handleDes.clear();
             }
-        } else {
+        } else if (!"IGNORE".equals(stepDes)) {
             log.sendStepLog(StepType.PASS, stepDes, detail);
         }
     }

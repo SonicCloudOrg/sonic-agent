@@ -68,10 +68,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -204,6 +200,8 @@ public class AndroidStepHandler {
         return androidDriver;
     }
 
+    private boolean isLockStatus = false;
+
     /**
      * @param status
      * @return void
@@ -212,7 +210,7 @@ public class AndroidStepHandler {
      * @date 2021/8/16 23:46
      */
     public void setResultDetailStatus(int status) {
-        if (status > this.status) {
+        if (!isLockStatus && status > this.status) {
             this.status = status;
         }
     }
@@ -1209,9 +1207,8 @@ public class AndroidStepHandler {
     }
 
     public void publicStep(HandleDes handleDes, String name, JSONArray stepArray) {
-        handleDes.setStepDes("执行公共步骤 " + name);
-        handleDes.setDetail("");
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」开始执行", "");
+        isLockStatus = true;
         for (Object publicStep : stepArray) {
             JSONObject stepDetail = (JSONObject) publicStep;
             try {
@@ -1221,6 +1218,13 @@ public class AndroidStepHandler {
                 handleDes.setE(e);
                 break;
             }
+        }
+        isLockStatus = false;
+        handleDes.setStepDes("IGNORE");
+        if (handleDes.getE() != null) {
+            handleDes.setStepDes("执行公共步骤 " + name);
+            handleDes.setDetail("");
+            handleDes.setE(new SonicRespException("Exception thrown during child step running."));
         }
         log.sendStepLog(StepType.WARN, "公共步骤「" + name + "」执行完毕", "");
     }
@@ -2005,7 +2009,7 @@ public class AndroidStepHandler {
             if (stepJson.getInteger("conditionType").equals(0)) {
                 handleDes.clear();
             }
-        } else {
+        } else if (!"IGNORE".equals(stepDes)) {
             log.sendStepLog(StepType.PASS, stepDes, detail);
         }
     }
