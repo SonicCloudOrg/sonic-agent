@@ -21,7 +21,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import org.cloud.sonic.agent.aspect.PocoIteratorCheck;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.common.enums.AndroidKey;
@@ -1365,7 +1364,7 @@ public class AndroidStepHandler {
         }
     }
 
-    public void iteratorElement(HandleContext handleContext, String des, String selector, String value) {
+    public void iteratorPocoElement(HandleContext handleContext, String des, String selector, String value) {
 
         List<PocoElement> pocoElements = null;
 
@@ -1641,6 +1640,60 @@ public class AndroidStepHandler {
                 break;
         }
         return we;
+    }
+
+    public void iteratorAndroidElement(HandleContext handleContext, String des, String selector, String value) {
+
+        List<AndroidElement> androidElements = null;
+
+        if (handleContext.iteratorAndroidElement == null){
+            handleContext.setStepDes("迭代控件列表 " + des );
+            try {
+                androidElements = findEleList(selector,value);
+                handleContext.iteratorAndroidElement = androidElements.iterator();
+            } catch (Throwable e) {
+                handleContext.setE(e);
+                return;
+            }
+            handleContext.setDetail("控件列表长度：" +  androidElements.size());
+        }
+
+        if (handleContext.iteratorAndroidElement.hasNext()){
+            handleContext.currentIteratorAndroidElement = handleContext.iteratorAndroidElement.next();
+            handleContext.setStepDes("当前迭代控件："+handleContext.currentIteratorAndroidElement);
+            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorAndroidElement);
+
+        }else {
+            handleContext.iteratorAndroidElement = null;
+            handleContext.currentIteratorAndroidElement = null;
+            handleContext.setE(new Exception("exit while"));
+        }
+    }
+
+    public List<AndroidElement> findEleList(String selector, String pathValue) throws SonicRespException {
+        List<AndroidElement> androidElements = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        switch (selector) {
+            case "id":
+                androidElements = androidDriver.findElementList(AndroidSelector.Id, pathValue);
+                break;
+            case "accessibilityId":
+                androidElements = androidDriver.findElementList(AndroidSelector.ACCESSIBILITY_ID, pathValue);
+                break;
+            case "xpath":
+                androidElements = androidDriver.findElementList(AndroidSelector.XPATH, pathValue);
+                break;
+            case "className":
+                androidElements = androidDriver.findElementList(AndroidSelector.CLASS_NAME, pathValue);
+                break;
+            case "androidUIAutomator":
+                androidElements = androidDriver.findElementList(AndroidSelector.UIAUTOMATOR, pathValue);
+                break;
+            default:
+                log.sendStepLog(StepType.ERROR, "查找控件元素数组失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                break;
+        }
+        return androidElements;
     }
 
     public void setFindElementInterval(HandleContext handleContext, int retry, int interval) {
@@ -2049,8 +2102,13 @@ public class AndroidStepHandler {
                 closeKeyboard(handleContext);
                 break;
             case "iteratorPocoElement":
-                iteratorElement(handleContext, eleList.getJSONObject(0).getString("eleName"),eleList.getJSONObject(0).getString("eleType")
+                iteratorPocoElement(handleContext, eleList.getJSONObject(0).getString("eleName"),eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "iteratorAndroidElement":
+                iteratorAndroidElement(handleContext, eleList.getJSONObject(0).getString("eleName"),eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
         }
         switchType(step, handleContext);
     }

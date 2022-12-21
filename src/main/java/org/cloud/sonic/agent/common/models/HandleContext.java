@@ -17,6 +17,7 @@
  */
 package org.cloud.sonic.agent.common.models;
 
+import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.poco.models.PocoElement;
 
 import java.util.Iterator;
@@ -34,6 +35,10 @@ public class HandleContext {
     public Iterator<PocoElement> iteratorPocoElement;
 
     public PocoElement currentIteratorPocoElement;
+
+    public Iterator<AndroidElement> iteratorAndroidElement;
+
+    public AndroidElement currentIteratorAndroidElement;
 
     public HandleContext(){
         this.stepDes = "";
