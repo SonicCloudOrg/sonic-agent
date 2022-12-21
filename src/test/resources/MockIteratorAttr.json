@@ -1,0 +1,175 @@
+{
+  "msg": "runStep",
+  "pf": 1,
+  "gp": {},
+  "sessionId": "0",
+  "pwd": "",
+  "udId": "829ed1f",
+  "steps": [
+    {
+      "step": {
+        "stepType": "startPocoDriver",
+        "caseId": 1,
+        "elements": [],
+        "conditionType": 0,
+        "id": 1,
+        "sort": 1,
+        "text": "5001",
+        "error": 3,
+        "projectId": 1,
+        "content": "UNITY_3D",
+        "parentId": 0,
+        "platform": 1
+      }
+    },
+    {
+      "step": {
+        "stepType": "iteratorPocoElement",
+        "sort": 2,
+        "error": 1,
+        "content": "true",
+        "parentId": 0,
+        "platform": 1,
+        "caseId": 1,
+        "childSteps": [
+          {
+            "stepType": "getPocoElementAttr",
+            "sort": 11,
+            "error": 1,
+            "content": "star",
+            "parentId": 0,
+            "platform": 1,
+            "caseId": 2,
+            "childSteps": [
+              {
+                "stepType": "pocoSwipe",
+                "caseId": 2,
+                "elements": [
+                  {
+                    "eleType": "pocoIterator",
+                    "eleValue": "childDemo",
+                    "id": 1,
+                    "moduleId": 0,
+                    "eleName": "当前迭代节点",
+                    "projectId": 1
+                  },
+                  {
+                    "eleType": "poco",
+                    "eleValue": "poco(\"shell\")",
+                    "id": 5,
+                    "moduleId": 0,
+                    "eleName": "贝壳",
+                    "projectId": 1
+                  }
+                ],
+                "conditionType": 0,
+                "id": 12,
+                "sort": 12,
+                "text": "",
+                "error": 3,
+                "projectId": 1,
+                "content": "",
+                "parentId": 11,
+                "platform": 1
+              },
+
+              {
+                "stepType": "iteratorPocoElement",
+                "sort": 2,
+                "error": 1,
+                "content": "true",
+                "parentId": 0,
+                "platform": 1,
+                "caseId": 1,
+                "childSteps": [
+                  {
+                    "stepType": "pocoClick",
+                    "caseId": 1,
+                    "elements": [
+                      {
+                        "eleType": "pocoIterator",
+                        "eleValue": "demo",
+                        "id": 1,
+                        "moduleId": 0,
+                        "eleName": "子迭代测试点击",
+                        "projectId": 1
+                      }
+                    ],
+                    "conditionType": 0,
+                    "id": 6,
+                    "sort": 5,
+                    "text": "",
+                    "error": 3,
+                    "projectId": 1,
+                    "content": "",
+                    "parentId": 5,
+                    "platform": 1
+                  }
+                ],
+                "elements": [
+                  {
+                    "eleType": "poco",
+                    "eleValue": "poco(\"star\")",
+                    "id": 2,
+                    "moduleId": 0,
+                    "eleName": "star2",
+                    "projectId": 1
+                  }
+                ],
+                "conditionType": 4,
+                "id": 8,
+                "text": "",
+                "projectId": 1
+              }
+            ],
+            "elements": [
+              {
+                "eleType": "pocoIterator",
+                "eleValue": "demo",
+                "id": 5,
+                "moduleId": 0,
+                "eleName": "当前迭代节点",
+                "projectId": 1
+              }
+            ],
+            "conditionType": 1,
+            "id": 11,
+            "text": "name",
+            "projectId": 1
+          }
+        ],
+        "elements": [
+          {
+            "eleType": "poco",
+            "eleValue": "poco(\"star\")",
+            "id": 2,
+            "moduleId": 0,
+            "eleName": "star2",
+            "projectId": 1
+          }
+        ],
+        "conditionType": 4,
+        "id": 8,
+        "text": "",
+        "projectId": 1
+      }
+    },
+    {
+      "step": {
+        "stepType": "closePocoDriver",
+        "caseId": 1,
+        "elements": [],
+        "conditionType": 0,
+        "id": 10,
+        "sort": 3,
+        "text": "",
+        "error": 3,
+        "projectId": 1,
+        "content": "",
+        "parentId": 0,
+        "platform": 1
+      }
+    }
+  ],
+  "cid": 1
+}

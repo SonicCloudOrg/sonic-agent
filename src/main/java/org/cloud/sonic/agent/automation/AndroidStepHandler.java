@@ -1383,7 +1383,7 @@ public class AndroidStepHandler {
 
         if (handleContext.iteratorPocoElement.hasNext()){
             handleContext.currentIteratorPocoElement = handleContext.iteratorPocoElement.next();
-
+            handleContext.setStepDes("当前迭代控件："+handleContext.currentIteratorPocoElement.currentNodeSelector);
             handleContext.setDetail("迭代控件：" + handleContext.currentIteratorPocoElement.getPayload());
 
         }else {
