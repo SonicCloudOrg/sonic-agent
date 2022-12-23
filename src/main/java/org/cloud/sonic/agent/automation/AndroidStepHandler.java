@@ -1658,6 +1658,26 @@ public class AndroidStepHandler {
         }
     }
 
+    public void webViewRefresh(HandleDes handleDes) {
+        handleDes.setStepDes("刷新页面");
+        handleDes.setDetail("");
+        try {
+            chromeDriver.navigate().refresh();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
+    public void webViewBack(HandleDes handleDes) {
+        handleDes.setStepDes("回退页面");
+        handleDes.setDetail("");
+        try {
+            chromeDriver.navigate().back();
+        } catch (Exception e) {
+            handleDes.setE(e);
+        }
+    }
+
     public String getWebViewText(HandleDes handleDes, String des, String selector, String pathValue) {
         String s = "";
         handleDes.setStepDes("获取" + des + "文本");
@@ -1907,6 +1927,12 @@ public class AndroidStepHandler {
             case "webViewClick":
                 webViewClick(handleDes, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "webViewRefresh":
+                webViewRefresh(handleDes);
+                break;
+            case "webViewBack":
+                webViewBack(handleDes);
                 break;
             case "getWebViewTextValue":
                 globalParams.put(step.getString("content"), getWebViewText(handleDes, eleList.getJSONObject(0).getString("eleName")
