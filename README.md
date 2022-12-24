@@ -29,7 +29,7 @@
 </p>
 
 ### Official Website
-[Sonic Official Website](https://sonic-cloud.gitee.io)
+[Sonic Official Website](https://sonic-cloud.cn)
 
 ## Background
 
@@ -44,7 +44,7 @@
 
 ## How to package
 
-[Look Here!](https://sonic-cloud.gitee.io/#/Contribute?tag=con-agent)
+[Look Here!](https://sonic-cloud.cn/contribute?tag=con-agent)
 
 ## Sponsors
 

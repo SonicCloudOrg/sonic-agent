@@ -107,7 +107,7 @@ public class EnvCheckTool {
         if (!StringUtils.hasText(sdkPath)) {
             System.out.println("系统变量【ANDROID_HOME】返回值为空！");
             printFail(type);
-            throw new RuntimeException(String.format("提示：可参考https://www.cnblogs.com/nebie/p/9145627.html" +
+            throw new RuntimeException(String.format("提示：可参考 https://sonic-cloud.cn/deploy?tag=agent " +
                     "下载安卓SDK并设置ANDROID_HOME环境变量"));
         }
         printPass(type);
