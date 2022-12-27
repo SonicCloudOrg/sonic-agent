@@ -45,6 +45,7 @@ import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.driver.android.AndroidDriver;
 import org.cloud.sonic.driver.android.enmus.AndroidSelector;
 import org.cloud.sonic.driver.android.service.AndroidElement;
+import org.cloud.sonic.driver.common.models.BaseElement;
 import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.poco.PocoDriver;
@@ -1368,26 +1369,30 @@ public class AndroidStepHandler {
 
         List<PocoElement> pocoElements = null;
 
-        if (handleContext.iteratorPocoElement == null){
-            handleContext.setStepDes("迭代控件列表 " + des );
+        if (handleContext.iteratorElement == null) {
+            handleContext.setStepDes("迭代控件列表 " + des);
             try {
-                pocoElements = findPocoEleList(selector,value);
-                handleContext.iteratorPocoElement = pocoElements.iterator();
+                pocoElements = findPocoEleList(selector, value);
+                List<BaseElement> res = new ArrayList<>();
+                for (PocoElement element : pocoElements) {
+                    res.add((BaseElement) element);
+                }
+                handleContext.iteratorElement = res.iterator();
             } catch (Throwable e) {
                 handleContext.setE(e);
                 return;
             }
-            handleContext.setDetail("控件列表长度：" +  pocoElements.size());
+            handleContext.setDetail("控件列表长度：" + pocoElements.size());
         }
 
-        if (handleContext.iteratorPocoElement.hasNext()){
-            handleContext.currentIteratorPocoElement = handleContext.iteratorPocoElement.next();
-            handleContext.setStepDes("当前迭代控件："+handleContext.currentIteratorPocoElement.currentNodeSelector);
-            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorPocoElement.getPayload());
+        if (handleContext.iteratorElement.hasNext()) {
+            handleContext.currentIteratorElement = handleContext.iteratorElement.next();
+            handleContext.setStepDes("当前迭代控件：" + handleContext.currentIteratorElement);
+            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorElement);
 
-        }else {
-            handleContext.iteratorPocoElement = null;
-            handleContext.currentIteratorPocoElement = null;
+        } else {
+            handleContext.iteratorElement = null;
+            handleContext.currentIteratorElement = null;
             handleContext.setE(new Exception("exit while"));
         }
     }
@@ -1620,6 +1625,7 @@ public class AndroidStepHandler {
         AndroidElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
+            case "androidIterator":
             case "id":
                 we = androidDriver.findElement(AndroidSelector.Id, pathValue);
                 break;
@@ -1646,26 +1652,30 @@ public class AndroidStepHandler {
 
         List<AndroidElement> androidElements = null;
 
-        if (handleContext.iteratorAndroidElement == null){
-            handleContext.setStepDes("迭代控件列表 " + des );
+        if (handleContext.iteratorElement == null) {
+            handleContext.setStepDes("迭代控件列表 " + des);
             try {
-                androidElements = findEleList(selector,value);
-                handleContext.iteratorAndroidElement = androidElements.iterator();
+                androidElements = findEleList(selector, value);
+                List<BaseElement> res = new ArrayList<>();
+                for (AndroidElement element : androidElements) {
+                    res.add((BaseElement) element);
+                }
+                handleContext.iteratorElement = res.iterator();
             } catch (Throwable e) {
                 handleContext.setE(e);
                 return;
             }
-            handleContext.setDetail("控件列表长度：" +  androidElements.size());
+            handleContext.setDetail("控件列表长度：" + androidElements.size());
         }
 
-        if (handleContext.iteratorAndroidElement.hasNext()){
-            handleContext.currentIteratorAndroidElement = handleContext.iteratorAndroidElement.next();
-            handleContext.setStepDes("当前迭代控件："+handleContext.currentIteratorAndroidElement);
-            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorAndroidElement);
+        if (handleContext.iteratorElement.hasNext()) {
+            handleContext.currentIteratorElement = handleContext.iteratorElement.next();
+            handleContext.setStepDes("当前迭代控件：" + handleContext.currentIteratorElement);
+            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorElement);
 
-        }else {
-            handleContext.iteratorAndroidElement = null;
-            handleContext.currentIteratorAndroidElement = null;
+        } else {
+            handleContext.iteratorElement = null;
+            handleContext.currentIteratorElement = null;
             handleContext.setE(new Exception("exit while"));
         }
     }
@@ -1674,6 +1684,7 @@ public class AndroidStepHandler {
         List<AndroidElement> androidElements = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
+            case "androidIterator":
             case "id":
                 androidElements = androidDriver.findElementList(AndroidSelector.Id, pathValue);
                 break;
@@ -1873,6 +1884,7 @@ public class AndroidStepHandler {
             handleContext.setE(e);
         }
     }
+
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
@@ -2102,11 +2114,11 @@ public class AndroidStepHandler {
                 closeKeyboard(handleContext);
                 break;
             case "iteratorPocoElement":
-                iteratorPocoElement(handleContext, eleList.getJSONObject(0).getString("eleName"),eleList.getJSONObject(0).getString("eleType")
+                iteratorPocoElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "iteratorAndroidElement":
-                iteratorAndroidElement(handleContext, eleList.getJSONObject(0).getString("eleName"),eleList.getJSONObject(0).getString("eleType")
+                iteratorAndroidElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
         }
@@ -2118,7 +2130,7 @@ public class AndroidStepHandler {
         String stepDes = handleContext.getStepDes();
         String detail = handleContext.getDetail();
         Throwable e = handleContext.getE();
-        if (e != null&&!"exit while".equals(e.getMessage())) {
+        if (e != null && !"exit while".equals(e.getMessage())) {
             switch (error) {
                 case ErrorType.IGNORE:
                     if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
