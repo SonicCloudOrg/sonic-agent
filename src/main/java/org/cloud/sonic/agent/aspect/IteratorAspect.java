@@ -70,9 +70,9 @@ public class IteratorAspect {
 
             for (int i = 0; i < eleList.size(); i++) {
                 JSONObject ele = eleList.getJSONObject(i);
-                if ("pocoIterator".equals(ele.get("eleType").toString())) {
-                    ele.put("eleValue", uniquelyIdentifies);
-                } else if ("androidIterator".equals(ele.get("eleType").toString())) {
+                if ("pocoIterator".equals(ele.get("eleType").toString())
+                        || "androidIterator".equals(ele.get("eleType").toString())
+                        || "iOSIterator".equals(ele.get("eleType").toString())) {
                     ele.put("eleValue", uniquelyIdentifies);
                 }
                 eleList.set(i, new JSONObject(ele));

@@ -38,7 +38,9 @@ import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.enums.PasteboardType;
+import org.cloud.sonic.driver.common.models.BaseElement;
 import org.cloud.sonic.driver.common.models.WindowSize;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.ios.IOSDriver;
@@ -62,6 +64,7 @@ import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
@@ -1107,6 +1110,44 @@ public class IOSStepHandler {
         return we;
     }
 
+    public List<IOSElement> findEleList(String selector, String pathValue) throws SonicRespException {
+        List<IOSElement> iosElements = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        switch (selector) {
+            case "id":
+                iosElements = iosDriver.findElementList(IOSSelector.Id, pathValue);
+                break;
+            case "accessibilityId":
+                iosElements = iosDriver.findElementList(IOSSelector.ACCESSIBILITY_ID, pathValue);
+                break;
+            case "nsPredicate":
+                iosElements = iosDriver.findElementList(IOSSelector.PREDICATE, pathValue);
+                break;
+            case "name":
+                iosElements = iosDriver.findElementList(IOSSelector.NAME, pathValue);
+                break;
+            case "xpath":
+                iosElements = iosDriver.findElementList(IOSSelector.XPATH, pathValue);
+                break;
+            case "classChain":
+                iosElements = iosDriver.findElementList(IOSSelector.CLASS_CHAIN, pathValue);
+                break;
+            case "className":
+                iosElements = iosDriver.findElementList(IOSSelector.CLASS_NAME, pathValue);
+                break;
+            case "linkText":
+                iosElements = iosDriver.findElementList(IOSSelector.LINK_TEXT, pathValue);
+                break;
+            case "partialLinkText":
+                iosElements = iosDriver.findElementList(IOSSelector.PARTIAL_LINK_TEXT, pathValue);
+                break;
+            default:
+                log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                break;
+        }
+        return iosElements;
+    }
+
     public void setFindElementInterval(HandleContext handleContext, int retry, int interval) {
         handleContext.setStepDes("Set Global Find XCTest Element Interval");
         handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
@@ -1201,6 +1242,113 @@ public class IOSStepHandler {
             handleContext.setE(e);
         }
     }
+    public List<PocoElement> findPocoEleList(String selector, String pathValue) throws Throwable {
+        List<PocoElement> pocoElements = null;
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        int wait = 0;
+        String errMsg = "";
+        while (wait < retryInit) {
+            wait++;
+            pocoDriver.getPageSourceForXmlElement();
+            try {
+                switch (selector) {
+                    case "poco":
+                        pocoElements = pocoDriver.findElements(PocoSelector.POCO, pathValue);
+                        break;
+                    case "xpath":
+                        pocoElements = pocoDriver.findElements(PocoSelector.XPATH, pathValue);
+                        break;
+                    case "cssSelector":
+                    case "pocoIterator":
+                        pocoElements = pocoDriver.findElements(PocoSelector.CSS_SELECTOR, pathValue);
+                        break;
+                    default:
+                        log.sendStepLog(StepType.ERROR, "查找控件元素列表失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                        break;
+                }
+                if (pocoElements != null) {
+                    break;
+                }
+            } catch (Throwable e) {
+                errMsg = e.getMessage();
+            }
+            if (wait < retryInit) {
+                try {
+                    Thread.sleep(intervalInit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (pocoElements == null) {
+            throw new SonicRespException(errMsg);
+        }
+        return pocoElements;
+    }
+    public void iteratorPocoElement(HandleContext handleContext, String des, String selector, String value) {
+
+        List<PocoElement> pocoElements = null;
+
+        if (handleContext.iteratorElement == null) {
+            handleContext.setStepDes("迭代控件列表 " + des);
+            try {
+                pocoElements = findPocoEleList(selector, value);
+                List<BaseElement> res = new ArrayList<>();
+                for (PocoElement element : pocoElements) {
+                    res.add((BaseElement) element);
+                }
+                handleContext.iteratorElement = res.iterator();
+            } catch (Throwable e) {
+                handleContext.setE(e);
+                return;
+            }
+            handleContext.setDetail("控件列表长度：" + pocoElements.size());
+        }
+
+        if (handleContext.iteratorElement.hasNext()) {
+            handleContext.currentIteratorElement = handleContext.iteratorElement.next();
+            handleContext.setStepDes("当前迭代控件：" + handleContext.currentIteratorElement);
+            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorElement);
+
+        } else {
+            handleContext.iteratorElement = null;
+            handleContext.currentIteratorElement = null;
+            handleContext.setE(new Exception("exit while"));
+        }
+    }
+
+    public void iteratorIOSElement(HandleContext handleContext, String des, String selector, String value) {
+
+        List<IOSElement> iOSElements = null;
+
+        if (handleContext.iteratorElement == null) {
+            handleContext.setStepDes("迭代控件列表 " + des);
+            try {
+                iOSElements = findEleList(selector, value);
+                List<BaseElement> res = new ArrayList<>();
+                for (IOSElement element : iOSElements) {
+                    res.add((BaseElement) element);
+                }
+                handleContext.iteratorElement = res.iterator();
+            } catch (Throwable e) {
+                handleContext.setE(e);
+                return;
+            }
+            handleContext.setDetail("控件列表长度：" + iOSElements.size());
+        }
+
+        if (handleContext.iteratorElement.hasNext()) {
+            handleContext.currentIteratorElement = handleContext.iteratorElement.next();
+            handleContext.setStepDes("当前迭代控件：" + handleContext.currentIteratorElement);
+            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorElement);
+
+        } else {
+            handleContext.iteratorElement = null;
+            handleContext.currentIteratorElement = null;
+            handleContext.setE(new Exception("exit while"));
+        }
+    }
+
 
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
@@ -1368,6 +1516,14 @@ public class IOSStepHandler {
                 break;
             case "closePocoDriver":
                 closePocoDriver(handleContext);
+                break;
+            case "iteratorPocoElement":
+                iteratorPocoElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
+                break;
+            case "iteratorIOSElement":
+                iteratorIOSElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                        , eleList.getJSONObject(0).getString("eleValue"));
                 break;
         }
         switchType(step, handleContext);

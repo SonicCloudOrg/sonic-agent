@@ -1682,7 +1682,6 @@ public class AndroidStepHandler {
         List<AndroidElement> androidElements = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
-            case "androidIterator":
             case "id":
                 androidElements = androidDriver.findElementList(AndroidSelector.Id, pathValue);
                 break;
