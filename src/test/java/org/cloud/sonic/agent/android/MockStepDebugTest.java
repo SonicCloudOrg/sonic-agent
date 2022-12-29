@@ -20,8 +20,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -55,6 +53,14 @@ public class MockStepDebugTest {
     @Test
     public void testPocoIterator() throws IOException {
         stepRunner(getMockTestData("MockIteratorData.json"));
+    }
+    @Test
+    public void testPocoIteratorAttr() throws IOException{
+        stepRunner(getMockTestData("MockIteratorAttr.json"));
+    }
+    @Test
+    public void testAndroidIterator() throws IOException {
+        stepRunner(getMockTestData("MockIteratorAndroid.json"));
     }
 
     private JSONObject getMockTestData(String fileName) throws IOException {

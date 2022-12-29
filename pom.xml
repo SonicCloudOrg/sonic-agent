@@ -70,7 +70,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-driver-core</artifactId>
-            <version>1.1.17</version>
+            <version>1.1.19</version>
         </dependency>
         <!--    压缩图片    -->
         <dependency>
@@ -113,7 +113,6 @@
             <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>

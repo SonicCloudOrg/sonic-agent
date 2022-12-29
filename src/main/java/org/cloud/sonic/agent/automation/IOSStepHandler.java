@@ -1070,6 +1070,9 @@ public class IOSStepHandler {
         IOSElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
+            case "iOSIterator":
+                we = iosDriver.findElement(pathValue);
+                break;
             case "id":
                 we = iosDriver.findElement(IOSSelector.Id, pathValue);
                 break;
