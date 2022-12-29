@@ -1,0 +1,62 @@
+{
+  "msg": "runStep",
+  "pf": 1,
+  "gp": {},
+  "sessionId": "0",
+  "pwd": "",
+  "udId": "829ed1f",
+  "steps": [
+    {
+      "step": {
+        "stepType": "iteratorAndroidElement",
+        "sort": 2,
+        "error": 1,
+        "content": "true",
+        "parentId": 0,
+        "platform": 1,
+        "caseId": 1,
+        "childSteps": [
+          {
+            "stepType": "longPress",
+            "caseId": 1,
+            "elements": [
+              {
+                "eleType": "androidIterator",
+                "eleValue": "demo",
+                "id": 2,
+                "moduleId": 0,
+                "eleName": "iphone number list",
+                "projectId": 1,
+              }
+            ],
+            "conditionType": 0,
+            "id": 3,
+            "sort": 3,
+            "text": "",
+            "error": 3,
+            "projectId": 1,
+            "content": "3",
+            "parentId": 0,
+            "platform": 1
+          }
+        ],
+        "elements": [
+          {
+            "eleType": "id",
+            "eleValue": "com.android.contacts:id/name",
+            "id": 2,
+            "moduleId": 0,
+            "eleName": "star2",
+            "projectId": 1,
+            "content" : 3
+          }
+        ],
+        "conditionType": 4,
+        "id": 8,
+        "text": "",
+        "projectId": 1
+      }
+    }
+  ],
+  "cid": 1
+}

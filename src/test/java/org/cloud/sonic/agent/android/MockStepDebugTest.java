@@ -58,6 +58,10 @@ public class MockStepDebugTest {
     public void testPocoIteratorAttr() throws IOException{
         stepRunner(getMockTestData("MockIteratorAttr.json"));
     }
+    @Test
+    public void testAndroidIterator() throws IOException {
+        stepRunner(getMockTestData("MockIteratorAndroid.json"));
+    }
 
     private JSONObject getMockTestData(String fileName) throws IOException {
 //        System.out.println(this.getClass().getResource("/"+ileName).getPath());
