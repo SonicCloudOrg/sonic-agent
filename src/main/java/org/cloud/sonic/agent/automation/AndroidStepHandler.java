@@ -1365,24 +1365,24 @@ public class AndroidStepHandler {
 
         List<PocoElement> pocoElements = null;
 
-        if (handleContext.iteratorPocoElement == null){
-            handleContext.setStepDes("迭代控件列表 " + des );
+        if (handleContext.iteratorPocoElement == null) {
+            handleContext.setStepDes("迭代控件列表 " + des);
             try {
-                pocoElements = findPocoEleList(selector,value);
+                pocoElements = findPocoEleList(selector, value);
                 handleContext.iteratorPocoElement = pocoElements.iterator();
             } catch (Throwable e) {
                 handleContext.setE(e);
                 return;
             }
-            handleContext.setDetail("控件列表长度：" +  pocoElements.size());
+            handleContext.setDetail("控件列表长度：" + pocoElements.size());
         }
 
-        if (handleContext.iteratorPocoElement.hasNext()){
+        if (handleContext.iteratorPocoElement.hasNext()) {
             handleContext.currentIteratorPocoElement = handleContext.iteratorPocoElement.next();
 
             handleContext.setDetail("迭代控件：" + handleContext.currentIteratorPocoElement.getPayload());
 
-        }else {
+        } else {
             handleContext.iteratorPocoElement = null;
             handleContext.currentIteratorPocoElement = null;
             handleContext.setE(new Exception("exit while"));
@@ -1732,23 +1732,23 @@ public class AndroidStepHandler {
         }
     }
 
-    public void webViewRefresh(HandleDes handleDes) {
-        handleDes.setStepDes("刷新页面");
-        handleDes.setDetail("");
+    public void webViewRefresh(HandleContext handleContext) {
+        handleContext.setStepDes("刷新页面");
+        handleContext.setDetail("");
         try {
             chromeDriver.navigate().refresh();
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
-    public void webViewBack(HandleDes handleDes) {
-        handleDes.setStepDes("回退页面");
-        handleDes.setDetail("");
+    public void webViewBack(HandleContext handleContext) {
+        handleContext.setStepDes("回退页面");
+        handleContext.setDetail("");
         try {
             chromeDriver.navigate().back();
         } catch (Exception e) {
-            handleDes.setE(e);
+            handleContext.setE(e);
         }
     }
 
@@ -1836,6 +1836,7 @@ public class AndroidStepHandler {
             handleContext.setE(e);
         }
     }
+
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
@@ -2002,10 +2003,10 @@ public class AndroidStepHandler {
                         , eleList.getJSONObject(0).getString("eleValue"));
                 break;
             case "webViewRefresh":
-                webViewRefresh(handleDes);
+                webViewRefresh(handleContext);
                 break;
             case "webViewBack":
-                webViewBack(handleDes);
+                webViewBack(handleContext);
                 break;
             case "getWebViewTextValue":
                 globalParams.put(step.getString("content"), getWebViewText(handleContext, eleList.getJSONObject(0).getString("eleName")
@@ -2071,7 +2072,7 @@ public class AndroidStepHandler {
                 closeKeyboard(handleContext);
                 break;
             case "iteratorPocoElement":
-                iteratorElement(handleContext, eleList.getJSONObject(0).getString("eleName"),eleList.getJSONObject(0).getString("eleType")
+                iteratorElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                         , eleList.getJSONObject(0).getString("eleValue"));
         }
         switchType(step, handleContext);
@@ -2082,7 +2083,7 @@ public class AndroidStepHandler {
         String stepDes = handleContext.getStepDes();
         String detail = handleContext.getDetail();
         Throwable e = handleContext.getE();
-        if (e != null&&!"exit while".equals(e.getMessage())) {
+        if (e != null && !"exit while".equals(e.getMessage())) {
             switch (error) {
                 case ErrorType.IGNORE:
                     if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
