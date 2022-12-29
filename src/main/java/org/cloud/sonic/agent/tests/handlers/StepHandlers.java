@@ -18,7 +18,6 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.aspect.PocoIteratorCheck;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.enums.SonicEnum;

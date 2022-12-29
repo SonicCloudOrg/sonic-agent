@@ -18,7 +18,7 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.aspect.PocoIteratorCheck;
+import org.cloud.sonic.agent.aspect.IteratorCheck;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
@@ -43,7 +43,7 @@ public class WhileHandler implements StepHandler {
     private StepHandlers stepHandlers;
 
     @Override
-    @PocoIteratorCheck
+    @IteratorCheck
     public HandleContext runStep(JSONObject stepJSON, HandleContext handleContext, RunStepThread thread) throws Throwable {
         if (thread.isStopped()) {
             return null;

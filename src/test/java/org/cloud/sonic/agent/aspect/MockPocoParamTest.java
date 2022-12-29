@@ -52,7 +52,7 @@ public class MockPocoParamTest {
 
     @Test
     public void testMockCurrentElementNotNull(){
-        handleContext.currentIteratorPocoElement = new PocoElement(new RootElement());
+        handleContext.currentIteratorElement = new PocoElement(new RootElement());
         testAop.runStep(mockStepData,handleContext);
     }
 

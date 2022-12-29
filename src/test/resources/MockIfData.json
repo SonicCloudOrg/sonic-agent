@@ -1,0 +1,208 @@
+{
+  "msg": "runStep",
+  "pf": 1,
+  "gp": {},
+  "sessionId": "3",
+  "pwd": "",
+  "udId": "829ed1f",
+  "steps": [
+    {
+      "step": {
+        "stepType": "startPocoDriver",
+        "caseId": 2,
+        "elements": [],
+        "conditionType": 0,
+        "id": 17,
+        "sort": 10,
+        "text": "5001",
+        "error": 3,
+        "projectId": 1,
+        "content": "UNITY_3D",
+        "parentId": 0,
+        "platform": 1
+      }
+    },
+    {
+      "step": {
+        "stepType": "getPocoElementAttr",
+        "sort": 11,
+        "error": 1,
+        "content": "shell",
+        "parentId": 0,
+        "platform": 1,
+        "caseId": 2,
+        "childSteps": [
+          {
+            "stepType": "pocoSwipe",
+            "caseId": 2,
+            "elements": [
+              {
+                "eleType": "poco",
+                "eleValue": "poco(name=\"star\", type=\"Image\")",
+                "id": 1,
+                "moduleId": 0,
+                "eleName": "star1",
+                "projectId": 1
+              },
+              {
+                "eleType": "poco",
+                "eleValue": "poco(\"shell\")",
+                "id": 5,
+                "moduleId": 0,
+                "eleName": "贝壳",
+                "projectId": 1
+              }
+            ],
+            "conditionType": 0,
+            "id": 12,
+            "sort": 12,
+            "text": "",
+            "error": 3,
+            "projectId": 1,
+            "content": "",
+            "parentId": 11,
+            "platform": 1
+          }
+        ],
+        "elements": [
+          {
+            "eleType": "poco",
+            "eleValue": "poco(\"shell\")",
+            "id": 5,
+            "moduleId": 0,
+            "eleName": "贝壳",
+            "projectId": 1
+          }
+        ],
+        "conditionType": 1,
+        "id": 11,
+        "text": "name",
+        "projectId": 1
+      }
+    },
+    {
+      "step": {
+        "stepType": "getPocoElementAttr",
+        "sort": 13,
+        "error": 1,
+        "content": "Image",
+        "parentId": 0,
+        "platform": 1,
+        "caseId": 2,
+        "childSteps": [
+          {
+            "stepType": "pocoSwipe",
+            "caseId": 2,
+            "elements": [
+              {
+                "eleType": "poco",
+                "eleValue": "poco(\"star\")[1]",
+                "id": 2,
+                "moduleId": 0,
+                "eleName": "star2",
+                "projectId": 1
+              },
+              {
+                "eleType": "poco",
+                "eleValue": "poco(\"shell\")",
+                "id": 5,
+                "moduleId": 0,
+                "eleName": "贝壳",
+                "projectId": 1
+              }
+            ],
+            "conditionType": 0,
+            "id": 15,
+            "sort": 15,
+            "text": "",
+            "error": 3,
+            "projectId": 1,
+            "content": "",
+            "parentId": 14,
+            "platform": 1
+          }
+        ],
+        "elements": [
+          {
+            "eleType": "poco",
+            "eleValue": "poco(\"shell\")",
+            "id": 5,
+            "moduleId": 0,
+            "eleName": "贝壳",
+            "projectId": 1
+          }
+        ],
+        "conditionType": 2,
+        "id": 14,
+        "text": "type",
+        "projectId": 1
+      }
+    },
+    {
+      "step": {
+        "stepType": "else",
+        "sort": 14,
+        "error": 1,
+        "content": "",
+        "parentId": 0,
+        "platform": 1,
+        "caseId": 2,
+        "childSteps": [
+          {
+            "stepType": "pocoSwipe",
+            "caseId": 2,
+            "elements": [
+              {
+                "eleType": "poco",
+                "eleValue": "poco(\"star\")[2]",
+                "id": 3,
+                "moduleId": 0,
+                "eleName": "star3",
+                "projectId": 1
+              },
+              {
+                "eleType": "poco",
+                "eleValue": "poco(\"shell\")",
+                "id": 5,
+                "moduleId": 0,
+                "eleName": "贝壳",
+                "projectId": 1
+              }
+            ],
+            "conditionType": 0,
+            "id": 16,
+            "sort": 16,
+            "text": "",
+            "error": 3,
+            "projectId": 1,
+            "content": "",
+            "parentId": 13,
+            "platform": 1
+          }
+        ],
+        "elements": [],
+        "conditionType": 3,
+        "id": 13,
+        "text": "",
+        "projectId": 1
+      }
+    },
+    {
+      "step": {
+        "stepType": "closePocoDriver",
+        "caseId": 2,
+        "elements": [],
+        "conditionType": 0,
+        "id": 18,
+        "sort": 17,
+        "text": "",
+        "error": 3,
+        "projectId": 1,
+        "content": "",
+        "parentId": 0,
+        "platform": 1
+      }
+    }
+  ],
+  "cid": 2
+}
