@@ -17,9 +17,7 @@
  */
 package org.cloud.sonic.agent.common.models;
 
-import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.models.BaseElement;
-import org.cloud.sonic.driver.poco.models.PocoElement;
 
 import java.util.Iterator;
 

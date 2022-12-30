@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.aspect;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -28,6 +29,7 @@ import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.springframework.context.annotation.Configuration;
 
 @Aspect
+@Slf4j
 @Configuration
 public class IteratorAspect {
     @Pointcut("@annotation(org.cloud.sonic.agent.aspect.IteratorCheck)")
@@ -40,7 +42,7 @@ public class IteratorAspect {
         try {
             return proceedingJoinPoint.proceed(objects);
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            log.info(throwable.getMessage());
         }
         return null;
     }
