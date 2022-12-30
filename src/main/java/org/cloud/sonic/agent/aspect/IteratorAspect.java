@@ -25,7 +25,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.cloud.sonic.agent.common.models.HandleContext;
-import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.springframework.context.annotation.Configuration;
 
 @Aspect
@@ -39,15 +38,10 @@ public class IteratorAspect {
     @Around(value = "serviceAspect()")
     public Object around(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
         Object[] objects = processInputArg(proceedingJoinPoint.getArgs());
-        try {
-            return proceedingJoinPoint.proceed(objects);
-        } catch (Throwable throwable) {
-            log.info(throwable.getMessage());
-        }
-        return null;
+        return proceedingJoinPoint.proceed(objects);
     }
 
-    private Object[] processInputArg(Object[] args) throws SonicRespException {
+    private Object[] processInputArg(Object[] args) {
         HandleContext handleContext = null;
         for (Object arg : args) {
             if (arg instanceof HandleContext) {
@@ -63,22 +57,26 @@ public class IteratorAspect {
             }
         }
 
-        if (paramStep != null && handleContext != null && handleContext.currentIteratorElement != null) {
+        try {
+            if (paramStep != null && handleContext != null && handleContext.currentIteratorElement != null) {
 
-            String uniquelyIdentifies = handleContext.currentIteratorElement.getUniquelyIdentifies();
+                String uniquelyIdentifies = handleContext.currentIteratorElement.getUniquelyIdentifies();
 
-            JSONObject step = paramStep.getJSONObject("step");
-            JSONArray eleList = step.getJSONArray("elements");
+                JSONObject step = paramStep.getJSONObject("step");
+                JSONArray eleList = step.getJSONArray("elements");
 
-            for (int i = 0; i < eleList.size(); i++) {
-                JSONObject ele = eleList.getJSONObject(i);
-                if ("pocoIterator".equals(ele.get("eleType").toString())) {
-                    ele.put("eleValue", uniquelyIdentifies);
-                } else if ("androidIterator".equals(ele.get("eleType").toString())) {
-                    ele.put("eleValue", uniquelyIdentifies);
+                for (int i = 0; i < eleList.size(); i++) {
+                    JSONObject ele = eleList.getJSONObject(i);
+                    if ("pocoIterator".equals(ele.get("eleType").toString())) {
+                        ele.put("eleValue", uniquelyIdentifies);
+                    } else if ("androidIterator".equals(ele.get("eleType").toString())) {
+                        ele.put("eleValue", uniquelyIdentifies);
+                    }
+                    eleList.set(i, new JSONObject(ele));
                 }
-                eleList.set(i, new JSONObject(ele));
             }
+        } catch (Throwable e) {
+            log.info(e.getMessage());
         }
         return args;
     }
