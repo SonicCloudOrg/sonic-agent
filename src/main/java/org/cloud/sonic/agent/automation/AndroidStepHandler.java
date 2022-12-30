@@ -704,6 +704,17 @@ public class AndroidStepHandler {
         }
     }
 
+    public void getUrl(HandleContext handleContext, String expect) {
+        String title = chromeDriver.getCurrentUrl();
+        handleContext.setStepDes("验证网页网址");
+        handleContext.setDetail("网址：" + title + "，期望值：" + expect);
+        try {
+            assertEquals(title, expect);
+        } catch (AssertionError e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void getTitle(HandleContext handleContext, String expect) {
         String title = chromeDriver.getTitle();
         handleContext.setStepDes("验证网页标题");
@@ -1933,6 +1944,9 @@ public class AndroidStepHandler {
                 break;
             case "getTitle":
                 getTitle(handleContext, step.getString("content"));
+                break;
+            case "getUrl":
+                getUrl(handleContext, step.getString("content"));
                 break;
             case "getActivity":
                 getActivity(handleContext, step.getString("content"));

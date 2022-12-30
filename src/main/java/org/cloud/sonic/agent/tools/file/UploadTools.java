@@ -86,7 +86,7 @@ public class UploadTools {
         param.add("file", resource);
         param.add("type", type);
         ResponseEntity<JSONObject> responseEntity =
-                restTemplate.postForEntity(baseUrl + "/upload", param, JSONObject.class);
+                restTemplate.postForEntity(baseUrl + "/upload/v2", param, JSONObject.class);
         if (responseEntity.getBody().getInteger("code") == 2000) {
             if (uploadFile.exists()) {
                 uploadFile.delete();
@@ -97,7 +97,7 @@ public class UploadTools {
         } else {
             logger.info("发送失败！" + responseEntity.getBody());
         }
-        return responseEntity.getBody().getString("data");
+        return baseUrl + "/" + responseEntity.getBody().getString("data");
     }
 
     public static String uploadPatchRecord(File uploadFile) {
