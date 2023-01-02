@@ -804,7 +804,8 @@ public class IOSStepHandler {
                 switch (selector) {
                     case "poco" -> pocoElement = pocoDriver.findElement(PocoSelector.POCO, pathValue);
                     case "xpath" -> pocoElement = pocoDriver.findElement(PocoSelector.XPATH, pathValue);
-                    case "cssSelector" -> pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
+                    case "cssSelector", "pocoIterator" ->
+                            pocoElement = pocoDriver.findElement(PocoSelector.CSS_SELECTOR, pathValue);
                     default ->
                             log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
                 }
