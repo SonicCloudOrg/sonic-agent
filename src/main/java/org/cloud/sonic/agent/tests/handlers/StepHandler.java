@@ -18,8 +18,8 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 
 /**
@@ -39,7 +39,7 @@ public interface StepHandler {
         if (step.containsKey("pubSteps")) {
             return step;
         }
-        return new JSONObject(){
+        return new JSONObject() {
             {
                 put("step", step);
             }

@@ -24,7 +24,8 @@ public class DevicesLockMap {
      */
     private static Map<String, Semaphore> devicesLockMap = new ConcurrentHashMap<>();
 
-    /**xxx
+    /**
+     * xxx
      * 用设备序列号上锁（无）
      *
      * @see #lockByUdId(String, Long, TimeUnit)
@@ -36,10 +37,10 @@ public class DevicesLockMap {
     /**
      * 用设备序列号上锁（可设置超时）
      *
-     * @param udId       设备序列号
-     * @param timeOut    获取锁超时时间    此参数必须和 timeUnit 同时存在
-     * @param timeUnit   时间单位         此参数必须和 timeOut 同时存在
-     * @return           true: 上锁成功   false: 上锁失败
+     * @param udId     设备序列号
+     * @param timeOut  获取锁超时时间    此参数必须和 timeUnit 同时存在
+     * @param timeUnit 时间单位         此参数必须和 timeOut 同时存在
+     * @return true: 上锁成功   false: 上锁失败
      */
     public static boolean lockByUdId(String udId, Long timeOut, TimeUnit timeUnit) throws InterruptedException {
         // 校验参数
@@ -81,7 +82,7 @@ public class DevicesLockMap {
     /**
      * 解锁并从map中移除锁
      *
-     * @param udId   设备序列号
+     * @param udId 设备序列号
      */
     public static void unlockAndRemoveByUdId(String udId) {
         Assert.hasText(udId, "udId must not be blank");

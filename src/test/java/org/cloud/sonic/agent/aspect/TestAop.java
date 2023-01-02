@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class TestAop {
     @IteratorCheck
-    public void runStep(JSONObject stepJSON, HandleContext handleContext){
+    public void runStep(JSONObject stepJSON, HandleContext handleContext) {
         System.out.println(stepJSON.toJSONString());
-        assert handleContext.currentIteratorElement!=null;
+        assert handleContext.currentIteratorElement != null;
     }
 }

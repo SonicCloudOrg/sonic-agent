@@ -35,7 +35,7 @@ public class HandleContext {
 
     public BaseElement currentIteratorElement;
 
-    public HandleContext(){
+    public HandleContext() {
         this.stepDes = "";
         this.detail = "";
         this.e = null;

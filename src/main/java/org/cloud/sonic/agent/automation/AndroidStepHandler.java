@@ -266,7 +266,7 @@ public class AndroidStepHandler {
     }
 
     /**
-     * @param xpath    父级节点xpath
+     * @param xpath 父级节点xpath
      * @return com.alibaba.fastjson.JSONArray
      * @author ZhouYiXun
      * @des 获取子节点信息

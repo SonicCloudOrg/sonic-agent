@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.websocket.Session;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendByte;

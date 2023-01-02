@@ -107,7 +107,7 @@ public class ScrcpyLocalThread extends Thread {
                             if (res.contains("Device")) {
                                 isFinish.release();
                                 isRetry.set(true);
-                            }else if(!isRetry.get()){
+                            } else if (!isRetry.get()) {
                                 log.info("scrcpy服务启动失败！");
                                 JSONObject support = new JSONObject();
                                 support.put("msg", "support");
@@ -115,9 +115,11 @@ public class ScrcpyLocalThread extends Thread {
                                 sendText(session, support.toJSONString());
                             }
                         }
+
                         @Override
                         public void flush() {
                         }
+
                         @Override
                         public boolean isCancelled() {
                             return false;

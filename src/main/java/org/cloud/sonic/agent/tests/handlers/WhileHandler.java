@@ -19,9 +19,9 @@ package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.aspect.IteratorCheck;
-import org.cloud.sonic.agent.common.models.HandleContext;
-import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -57,7 +57,7 @@ public class WhileHandler implements StepHandler {
         thread.getLogTool().sendStepLog(StepType.PASS, "开始执行「while」步骤", "");
         noneConditionHandler.runStep(stepJSON, handleContext, thread);
         int i = 1;
-        while(handleContext.getE() == null && !thread.isStopped()) {
+        while (handleContext.getE() == null && !thread.isStopped()) {
             // 条件步骤成功，取出while下所属的步骤丢给stepHandlers处理
             thread.getLogTool().sendStepLog(StepType.PASS, "「while」步骤通过，开始执行第「" + i + "」次子步骤循环", "");
             for (JSONObject step : steps) {
@@ -66,16 +66,16 @@ public class WhileHandler implements StepHandler {
             thread.getLogTool().sendStepLog(StepType.PASS, "第「" + i + "」次子步骤执行完毕", "");
 
             handleContext.clear();
-            thread.getLogTool().sendStepLog(StepType.PASS, "开始执行第「" + (i+1) + "」次「while」步骤", "");
+            thread.getLogTool().sendStepLog(StepType.PASS, "开始执行第「" + (i + 1) + "」次「while」步骤", "");
             noneConditionHandler.runStep(stepJSON, handleContext, thread);
 
             i++;
         }
         if (handleContext.getE() != null) {
-            if ("exit while".equals(handleContext.getE().getMessage())){
+            if ("exit while".equals(handleContext.getE().getMessage())) {
                 handleContext.setE(null);
                 thread.getLogTool().sendStepLog(StepType.WARN, "「while」步骤执行退出，循环结束", "");
-            }else {
+            } else {
                 thread.getLogTool().sendStepLog(StepType.WARN, "「while」步骤执行失败，循环结束", "");
             }
         }

@@ -18,9 +18,9 @@
 package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.enums.SonicEnum;
+import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +46,7 @@ public class StepHandlers implements ApplicationListener<ContextRefreshedEvent> 
 
     private final ConcurrentHashMap<ConditionEnum, StepHandler> stepHandlers =
             new ConcurrentHashMap<>(8);
+
     public HandleContext runStep(JSONObject stepJSON, HandleContext handleContext, RunStepThread thread) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         Integer conditionType = step.getInteger("conditionType");

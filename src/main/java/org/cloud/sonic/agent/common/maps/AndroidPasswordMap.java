@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class AndroidPasswordMap {
     private static Map<String, String> devicePasswordMap = new ConcurrentHashMap<String, String>();
+
     public static Map<String, String> getMap() {
         return devicePasswordMap;
     }

@@ -39,7 +39,7 @@ public class SuiteListener implements ISuiteListener {
     @Override
     public void onStart(ISuite suite) {
         String runningTestsMapKey = getRunningTestsMapKey(suite);
-        if (runningTestsMapKey == null || runningTestsMapKey.length() == 0){
+        if (runningTestsMapKey == null || runningTestsMapKey.length() == 0) {
             return;
         }
         runningTestsMap.put(runningTestsMapKey, true);
@@ -48,26 +48,26 @@ public class SuiteListener implements ISuiteListener {
     @Override
     public void onFinish(ISuite suite) {
         String runningTestsMapKey = getRunningTestsMapKey(suite);
-        if (runningTestsMapKey == null || runningTestsMapKey.length() == 0){
+        if (runningTestsMapKey == null || runningTestsMapKey.length() == 0) {
             return;
         }
         // 加上udId，避免先完成的设备移除后，后完成的设备无法执行后续操作
         runningTestsMap.remove(runningTestsMapKey);
     }
 
-    private String getRunningTestsMapKey(ISuite suite){
+    private String getRunningTestsMapKey(ISuite suite) {
         JSONObject dataInfoJson = JSON.parseObject(suite.getParameter("dataInfo"));
         String rid = dataInfoJson.getString("rid");
         JSONArray deviceArray = dataInfoJson.getJSONArray("device");
-        if (CollectionUtils.isEmpty(deviceArray)){
+        if (CollectionUtils.isEmpty(deviceArray)) {
             return null;
         }
         JSONObject jsonObject = deviceArray.getJSONObject(0);
-        if (jsonObject == null){
+        if (jsonObject == null) {
             return null;
         }
         String udId = jsonObject.getString("udId");
-        if (udId == null || udId.length() == 0){
+        if (udId == null || udId.length() == 0) {
             return null;
         }
         return rid + "-" + udId;

@@ -57,12 +57,12 @@ public class TaskManager {
     /**
      * 记录正在运行的rid记录
      */
-    private static Set<String> runningRidSet =  Collections.synchronizedSet(new HashSet<>());
+    private static Set<String> runningRidSet = Collections.synchronizedSet(new HashSet<>());
 
     /**
      * 记录正在运行的udId记录
      */
-    private static Set<String> runningUdIdSet =  Collections.synchronizedSet(new HashSet<>());
+    private static Set<String> runningUdIdSet = Collections.synchronizedSet(new HashSet<>());
 
     private static final Lock lock = new ReentrantLock();
 
@@ -84,8 +84,8 @@ public class TaskManager {
         addBootThread(bootThread.getName(), bootThread);
 
         String[] split = bootThread.getName().split("-");
-        runningRidSet.add(split[split.length-3] + "-" + split[split.length-1]);
-        runningUdIdSet.add(split[split.length-1]);
+        runningRidSet.add(split[split.length - 3] + "-" + split[split.length - 1]);
+        runningUdIdSet.add(split[split.length - 1]);
     }
 
     /**
@@ -198,8 +198,8 @@ public class TaskManager {
         childThreadsMap.remove(key);
 
         String[] split = key.split("-");
-        runningRidSet.remove(split[split.length-3] + "-" + split[split.length-1]);
-        runningUdIdSet.remove(split[split.length-1]);
+        runningRidSet.remove(split[split.length - 3] + "-" + split[split.length - 1]);
+        runningUdIdSet.remove(split[split.length - 1]);
     }
 
     /**
@@ -217,15 +217,15 @@ public class TaskManager {
             bootThreadsMap.remove(k);
 
             String[] split = k.split("-");
-            runningRidSet.remove(split[split.length-3] + "-" + split[split.length-1]);
-            runningUdIdSet.remove(split[split.length-1]);
+            runningRidSet.remove(split[split.length - 3] + "-" + split[split.length - 1]);
+            runningUdIdSet.remove(split[split.length - 1]);
         });
         // 删除boot衍生的线程
         terminatedThread.forEach((key, value) -> {
             childThreadsMap.remove(key);
             String[] split = key.split("-");
-            runningRidSet.remove(split[split.length-3] + "-" + split[split.length-1]);
-            runningUdIdSet.remove(split[split.length-1]);
+            runningRidSet.remove(split[split.length - 3] + "-" + split[split.length - 1]);
+            runningUdIdSet.remove(split[split.length - 1]);
         });
     }
 
@@ -270,7 +270,7 @@ public class TaskManager {
      * 不能使用 {@link Thread#stop()} 、{@link Thread#interrupt()} ，
      * 因为目前的websocket会用当前所属线程做一些事，强制停止会导致一些问题
      *
-     * @param key  子线程key
+     * @param key 子线程key
      */
     public static void forceStopDebugStepThread(String key) {
         Set<Thread> threads = childThreadsMap.get(key);

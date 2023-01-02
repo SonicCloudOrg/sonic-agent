@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class AndroidDeviceManagerMap {
     private static Map<String, String> deviceStatusMap = new ConcurrentHashMap<String, String>();
+
     public static Map<String, String> getMap() {
         return deviceStatusMap;
     }

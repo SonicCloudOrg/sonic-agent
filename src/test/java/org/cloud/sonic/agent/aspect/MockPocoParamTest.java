@@ -14,7 +14,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@EnableAspectJAutoProxy(proxyTargetClass = true,exposeProxy = true)
+@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class MockPocoParamTest {
     JSONObject mockStepData;
@@ -22,28 +22,28 @@ public class MockPocoParamTest {
     HandleContext handleContext;
 
     @Before
-    public void initData(){
+    public void initData() {
         JSONObject step = new JSONObject();
         JSONArray elements = new JSONArray();
 
         JSONObject pocoIteratorEle = new JSONObject();
-        pocoIteratorEle.put("eleType","poco");
-        pocoIteratorEle.put("eleValue","currentIteratorPoco");
+        pocoIteratorEle.put("eleType", "poco");
+        pocoIteratorEle.put("eleValue", "currentIteratorPoco");
 
         JSONObject pocoEle = new JSONObject();
-        pocoEle.put("eleType","poco");
-        pocoEle.put("eleValue","xxxdddcc");
+        pocoEle.put("eleType", "poco");
+        pocoEle.put("eleValue", "xxxdddcc");
 
-        for (int i=0;i<10;i++){
-            if (i%2==0){
+        for (int i = 0; i < 10; i++) {
+            if (i % 2 == 0) {
                 elements.add(new JSONObject(pocoIteratorEle));
-            }else {
+            } else {
                 elements.add(new JSONObject(pocoEle));
             }
         }
-        step.put("elements",elements);
+        step.put("elements", elements);
         mockStepData = new JSONObject();
-        mockStepData.put("step",step);
+        mockStepData.put("step", step);
         handleContext = new HandleContext();
     }
 
@@ -51,13 +51,13 @@ public class MockPocoParamTest {
     private TestAop testAop;
 
     @Test
-    public void testMockCurrentElementNotNull(){
+    public void testMockCurrentElementNotNull() {
         handleContext.currentIteratorElement = new PocoElement(new RootElement());
-        testAop.runStep(mockStepData,handleContext);
+        testAop.runStep(mockStepData, handleContext);
     }
 
     @Test
-    public void testMockCurrentElementISNull(){
-        testAop.runStep(mockStepData,handleContext);
+    public void testMockCurrentElementISNull() {
+        testAop.runStep(mockStepData, handleContext);
     }
 }

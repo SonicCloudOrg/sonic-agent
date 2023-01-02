@@ -32,9 +32,9 @@ public class ScheduleTool {
     );
 
     public static void scheduleAtFixedRate(Runnable command,
-                                    long initialDelay,
-                                    long period,
-                                    TimeUnit unit) {
+                                           long initialDelay,
+                                           long period,
+                                           TimeUnit unit) {
         scheduledExecutorService.scheduleAtFixedRate(command, initialDelay, period, unit);
     }
 

@@ -42,7 +42,7 @@ public class CertController {
         model.addAttribute("cerMsg", "👉 点击下载cer证书");
         model.addAttribute("cerName", "sonic-go-mitmproxy-ca-cert.cer");
         model.addAttribute("cerUrl", "/download/sonic-go-mitmproxy-ca-cert.cer");
-        model.addAttribute("version", "Version: "+version);
+        model.addAttribute("version", "Version: " + version);
         return "download";
     }
 }

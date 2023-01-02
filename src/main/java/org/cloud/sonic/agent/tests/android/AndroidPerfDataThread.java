@@ -1,6 +1,5 @@
 package org.cloud.sonic.agent.tests.android;
 
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

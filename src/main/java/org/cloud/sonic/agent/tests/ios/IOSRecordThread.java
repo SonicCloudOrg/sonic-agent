@@ -1,6 +1,5 @@
 package org.cloud.sonic.agent.tests.ios;
 
-import org.cloud.sonic.agent.automation.IOSStepHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

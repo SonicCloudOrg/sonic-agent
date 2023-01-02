@@ -26,7 +26,7 @@
                 "id": 2,
                 "moduleId": 0,
                 "eleName": "iphone number list",
-                "projectId": 1,
+                "projectId": 1
               }
             ],
             "conditionType": 0,
@@ -48,7 +48,7 @@
             "moduleId": 0,
             "eleName": "star2",
             "projectId": 1,
-            "content" : 3
+            "content": 3
           }
         ],
         "conditionType": 4,

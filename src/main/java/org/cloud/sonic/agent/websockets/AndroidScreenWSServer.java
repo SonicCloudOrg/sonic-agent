@@ -102,7 +102,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info("{} send: {}",session.getId(), msg);
+        logger.info("{} send: {}", session.getId(), msg);
         switch (msg.getString("type")) {
             case "switch": {
                 typeMap.put(session, msg.getString("detail"));
@@ -206,7 +206,6 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             BytesTool.sendText(session, picFinish.toJSONString());
         }
     }
-
 
 
     private void exit(Session session) {

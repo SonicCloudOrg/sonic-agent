@@ -1,16 +1,14 @@
 package org.cloud.sonic.agent.android;
 
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.util.IOUtils;
 import com.android.ddmlib.IDevice;
-import com.google.common.io.Resources;
 import lombok.Getter;
 import lombok.Setter;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tests.handlers.*;
+import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,11 +17,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@EnableAspectJAutoProxy(proxyTargetClass = true,exposeProxy = true)
+@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 public class MockStepDebugTest {
     AndroidStepHandler androidStepHandler;
     @Getter
@@ -54,10 +54,12 @@ public class MockStepDebugTest {
     public void testPocoIterator() throws IOException {
         stepRunner(getMockTestData("MockIteratorData.json"));
     }
+
     @Test
-    public void testPocoIteratorAttr() throws IOException{
+    public void testPocoIteratorAttr() throws IOException {
         stepRunner(getMockTestData("MockIteratorAttr.json"));
     }
+
     @Test
     public void testAndroidIterator() throws IOException {
         stepRunner(getMockTestData("MockIteratorAndroid.json"));
@@ -65,7 +67,7 @@ public class MockStepDebugTest {
 
     private JSONObject getMockTestData(String fileName) throws IOException {
 //        System.out.println(this.getClass().getResource("/"+ileName).getPath());
-        BufferedReader in = new BufferedReader(new FileReader(this.getClass().getResource("/"+fileName).getPath()));
+        BufferedReader in = new BufferedReader(new FileReader(this.getClass().getResource("/" + fileName).getPath()));
         StringBuilder jsonStr = new StringBuilder();
         String str;
         while ((str = in.readLine()) != null) {

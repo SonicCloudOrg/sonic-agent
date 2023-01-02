@@ -1178,6 +1178,7 @@ public class IOSStepHandler {
             handleContext.setE(e);
         }
     }
+
     public List<PocoElement> findPocoEleList(String selector, String pathValue) throws Throwable {
         List<PocoElement> pocoElements = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);

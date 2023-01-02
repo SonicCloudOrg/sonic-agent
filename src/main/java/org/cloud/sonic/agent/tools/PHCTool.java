@@ -57,7 +57,7 @@ public class PHCTool {
             }
             log.info("hub is not ready.");
             return false;
-        }catch (Exception e){
+        } catch (Exception e) {
             log.info("hub is not ready. ignore...");
             return false;
         }
