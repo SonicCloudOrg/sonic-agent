@@ -1046,7 +1046,12 @@ public class IOSStepHandler {
     public void freezeSource(HandleContext handleContext) {
         handleContext.setStepDes("冻结控件树");
         handleContext.setDetail("");
-        pocoDriver.freezeSource();
+        try {
+            pocoDriver.getPageSourceForJsonString();
+            pocoDriver.freezeSource();
+        } catch (Throwable e) {
+            handleContext.setE(e);
+        }
     }
 
     public void thawSource(HandleContext handleContext) {
@@ -1285,6 +1290,7 @@ public class IOSStepHandler {
         }
         return pocoElements;
     }
+
     public void iteratorPocoElement(HandleContext handleContext, String des, String selector, String value) {
 
         List<PocoElement> pocoElements = null;
@@ -1302,17 +1308,20 @@ public class IOSStepHandler {
                 handleContext.setE(e);
                 return;
             }
-            handleContext.setDetail("控件列表长度：" + pocoElements.size());
+            log.sendStepLog(StepType.INFO, "", "迭代控件列表长度：" + pocoElements.size());
         }
 
         if (handleContext.iteratorElement.hasNext()) {
             handleContext.currentIteratorElement = handleContext.iteratorElement.next();
-            handleContext.setStepDes("当前迭代控件：" + handleContext.currentIteratorElement);
-            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorElement);
+            PocoElement p = (PocoElement) handleContext.currentIteratorElement;
+            handleContext.setStepDes("当前迭代控件：" + p.currentNodeSelector);
+            handleContext.setDetail("控件信息：" + p.getPayload().toString());
 
         } else {
             handleContext.iteratorElement = null;
             handleContext.currentIteratorElement = null;
+            log.sendStepLog(StepType.INFO, "", "迭代控件列表完毕...");
+            handleContext.setStepDes("迭代控件列表 " + des);
             handleContext.setE(new Exception("exit while"));
         }
     }
@@ -1334,17 +1343,24 @@ public class IOSStepHandler {
                 handleContext.setE(e);
                 return;
             }
-            handleContext.setDetail("控件列表长度：" + iOSElements.size());
+            log.sendStepLog(StepType.INFO, "", "迭代控件列表长度：" + iOSElements.size());
         }
 
         if (handleContext.iteratorElement.hasNext()) {
             handleContext.currentIteratorElement = handleContext.iteratorElement.next();
-            handleContext.setStepDes("当前迭代控件：" + handleContext.currentIteratorElement);
-            handleContext.setDetail("迭代控件：" + handleContext.currentIteratorElement);
+            IOSElement i = (IOSElement) handleContext.currentIteratorElement;
+            try {
+                handleContext.setStepDes("当前迭代控件：" + i.getUniquelyIdentifies());
+                handleContext.setDetail("控件信息：" + handleContext.currentIteratorElement);
+            } catch (Exception e) {
+                handleContext.setE(e);
+            }
 
         } else {
             handleContext.iteratorElement = null;
             handleContext.currentIteratorElement = null;
+            log.sendStepLog(StepType.INFO, "", "迭代控件列表完毕...");
+            handleContext.setStepDes("迭代控件列表 " + des);
             handleContext.setE(new Exception("exit while"));
         }
     }
