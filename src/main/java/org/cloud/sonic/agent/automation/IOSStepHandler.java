@@ -1400,7 +1400,7 @@ public class IOSStepHandler {
         String stepDes = handleContext.getStepDes();
         String detail = handleContext.getDetail();
         Throwable e = handleContext.getE();
-        if (e != null) {
+        if (e != null && !"exit while".equals(e.getMessage())) {
             switch (error) {
                 case ErrorType.IGNORE:
                     if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
