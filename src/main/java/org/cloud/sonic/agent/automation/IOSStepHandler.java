@@ -583,7 +583,7 @@ public class IOSStepHandler {
 
     public void logElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
-        handleContext.setDetail("属性：" + attr);
+        handleContext.setDetail("目标属性：" + attr);
         try {
             String attrValue = findEle(selector, pathValue).getAttribute(attr);
             log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
@@ -594,7 +594,7 @@ public class IOSStepHandler {
 
     public void logPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
-        handleContext.setDetail("属性：" + attr);
+        handleContext.setDetail("目标属性：" + attr);
         try {
             String attrValue = findPocoEle(selector, pathValue).getAttribute(attr);
             log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
