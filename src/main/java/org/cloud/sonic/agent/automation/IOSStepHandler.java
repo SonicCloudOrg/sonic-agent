@@ -565,6 +565,44 @@ public class IOSStepHandler {
         }
     }
 
+    public void getElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr, String expect) {
+        handleContext.setStepDes("验证控件 " + des + " 属性");
+        handleContext.setDetail("属性：" + attr + "，期望值：" + expect);
+        try {
+            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            try {
+                assertEquals(attrValue, expect);
+            } catch (AssertionError e) {
+                handleContext.setE(e);
+            }
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void logElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
+        handleContext.setStepDes("日志输出控件 " + des + " 属性");
+        handleContext.setDetail("属性：" + attr);
+        try {
+            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void logPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
+        handleContext.setStepDes("日志输出控件 " + des + " 属性");
+        handleContext.setDetail("属性：" + attr);
+        try {
+            String attrValue = findPocoEle(selector, pathValue).getAttribute(attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+        } catch (Throwable e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void clickByImg(HandleContext handleContext, String des, String pathValue) {
         handleContext.setStepDes("点击图片" + des);
         handleContext.setDetail(pathValue);
@@ -1238,7 +1276,7 @@ public class IOSStepHandler {
             handleContext.currentIteratorElement = handleContext.iteratorElement.next();
             PocoElement p = (PocoElement) handleContext.currentIteratorElement;
             handleContext.setStepDes("当前迭代控件：" + p.currentNodeSelector);
-            handleContext.setDetail("控件信息：" + p.getPayload().toString());
+            handleContext.setDetail("");
 
         } else {
             handleContext.iteratorElement = null;
@@ -1271,7 +1309,7 @@ public class IOSStepHandler {
             IOSElement i = (IOSElement) handleContext.currentIteratorElement;
             try {
                 handleContext.setStepDes("当前迭代控件：" + i.getUniquelyIdentifies());
-                handleContext.setDetail("控件信息：" + handleContext.currentIteratorElement);
+                handleContext.setDetail("");
             } catch (Exception e) {
                 handleContext.setE(e);
             }
@@ -1299,6 +1337,12 @@ public class IOSStepHandler {
             case "click" ->
                     click(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
+            case "getElementAttr" ->
+                    getElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
+            case "logElementAttr" ->
+                    logElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
             case "sendKeys" ->
                     sendKeys(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
@@ -1364,6 +1408,9 @@ public class IOSStepHandler {
             case "pocoClick" ->
                     pocoClick(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
+            case "logPocoElementAttr" ->
+                    logPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
             case "pocoLongPress" ->
                     pocoLongPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue")
