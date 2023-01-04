@@ -586,17 +586,17 @@ public class IOSStepHandler {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
         handleContext.setDetail("目标属性：" + attr);
         List<String> attrs = JSON.parseArray(attr, String.class);
-        String logs = "";
+        StringBuilder logs = new StringBuilder();
         for (String a : attrs) {
             try {
                 String attrValue = findEle(selector, pathValue).getAttribute(a);
-                logs += (String.format(" %s=%s,", a, attrValue));
+                logs.append(String.format(" %s=%s,", a, attrValue));
             } catch (Exception e) {
                 handleContext.setE(e);
             }
         }
         if (logs.length() > 0) {
-            logs = logs.substring(0, logs.length() - 1);
+            logs = new StringBuilder(logs.substring(0, logs.length() - 1));
         }
         log.sendStepLog(StepType.INFO, "", "属性获取结果:" + logs);
     }
@@ -605,17 +605,17 @@ public class IOSStepHandler {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
         handleContext.setDetail("目标属性：" + attr);
         List<String> attrs = JSON.parseArray(attr, String.class);
-        String logs = "";
+        StringBuilder logs = new StringBuilder();
         for (String a : attrs) {
             try {
                 String attrValue = findPocoEle(selector, pathValue).getAttribute(a);
-                logs += (String.format(" %s=%s,", a, attrValue));
+                logs.append(String.format(" %s=%s,", a, attrValue));
             } catch (Throwable e) {
                 handleContext.setE(e);
             }
         }
         if (logs.length() > 0) {
-            logs = logs.substring(0, logs.length() - 1);
+            logs = new StringBuilder(logs.substring(0, logs.length() - 1));
         }
         log.sendStepLog(StepType.INFO, "", "属性获取结果:" + logs);
     }
