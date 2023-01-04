@@ -749,23 +749,39 @@ public class AndroidStepHandler {
     public void logElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
         handleContext.setDetail("目标属性：" + attr);
-        try {
-            String attrValue = findEle(selector, pathValue).getAttribute(attr);
-            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
-        } catch (Exception e) {
-            handleContext.setE(e);
+        List<String> attrs = JSON.parseArray(attr, String.class);
+        String logs = "";
+        for (String a : attrs) {
+            try {
+                String attrValue = findEle(selector, pathValue).getAttribute(a);
+                logs += (String.format(" %s=%s,", a, attrValue));
+            } catch (Exception e) {
+                handleContext.setE(e);
+            }
         }
+        if (logs.length() > 0) {
+            logs = logs.substring(0, logs.length() - 1);
+        }
+        log.sendStepLog(StepType.INFO, "", "属性获取结果:" + logs);
     }
 
     public void logPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
         handleContext.setDetail("目标属性：" + attr);
-        try {
-            String attrValue = findPocoEle(selector, pathValue).getAttribute(attr);
-            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
-        } catch (Throwable e) {
-            handleContext.setE(e);
+        List<String> attrs = JSON.parseArray(attr, String.class);
+        String logs = "";
+        for (String a : attrs) {
+            try {
+                String attrValue = findPocoEle(selector, pathValue).getAttribute(a);
+                logs += (String.format(" %s=%s,", a, attrValue));
+            } catch (Throwable e) {
+                handleContext.setE(e);
+            }
         }
+        if (logs.length() > 0) {
+            logs = logs.substring(0, logs.length() - 1);
+        }
+        log.sendStepLog(StepType.INFO, "", "属性获取结果:" + logs);
     }
 
     public void clickByImg(HandleContext handleContext, String des, String pathValue) {
