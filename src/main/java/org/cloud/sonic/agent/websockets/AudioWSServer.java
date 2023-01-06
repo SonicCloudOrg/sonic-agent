@@ -109,7 +109,7 @@ public class AudioWSServer {
                         if (Thread.interrupted() || lengthBytes.length == 0) {
                             break;
                         }
-                        StringBuffer binStr = new StringBuffer();
+                        StringBuilder binStr = new StringBuilder();
                         for (byte lengthByte : lengthBytes) {
                             binStr.append(lengthByte);
                         }
@@ -138,7 +138,7 @@ public class AudioWSServer {
                         }
                     }
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
             AndroidDeviceBridgeTool.removeForward(iDevice, appAudioPort, "sonicaudioservice");
         });

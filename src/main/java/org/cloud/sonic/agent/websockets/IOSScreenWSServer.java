@@ -140,7 +140,6 @@ public class IOSScreenWSServer implements IIOSWSServer {
     }
 
     private void exit(Session session) {
-        String udId = udIdMap.get(session);
         WebSocketSessionMap.removeSession(session);
         removeUdIdMapAndSet(session);
         try {

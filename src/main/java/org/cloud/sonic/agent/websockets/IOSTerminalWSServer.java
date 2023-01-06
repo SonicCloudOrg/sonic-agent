@@ -65,18 +65,10 @@ public class IOSTerminalWSServer implements IIOSWSServer {
         logger.info("{} send: {}", session.getId(), msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
-            case "processList":
-                SibTool.getProcessList(udId, session);
-                break;
-            case "appList":
-                SibTool.getAppList(udId, session);
-                break;
-            case "syslog":
-                SibTool.getSysLog(udId, msg.getString("filter"), session);
-                break;
-            case "stopSyslog":
-                SibTool.stopSysLog(udId);
-                break;
+            case "processList" -> SibTool.getProcessList(udId, session);
+            case "appList" -> SibTool.getAppList(udId, session);
+            case "syslog" -> SibTool.getSysLog(udId, msg.getString("filter"), session);
+            case "stopSyslog" -> SibTool.stopSysLog(udId);
         }
     }
 

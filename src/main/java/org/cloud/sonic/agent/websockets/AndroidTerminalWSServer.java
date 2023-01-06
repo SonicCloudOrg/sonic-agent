@@ -339,7 +339,7 @@ public class AndroidTerminalWSServer {
                 }
                 if (isr != null) {
                     try {
-                        br.close();
+                        isr.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

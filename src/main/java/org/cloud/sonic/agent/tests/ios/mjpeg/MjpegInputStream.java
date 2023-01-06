@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
  * ***************************************************************************
  * This code is built with reference to Swebcam-capture
  *
- * @see https://github.com/sarxos/webcam-capture/blob/master/webcam-capture/src/main/java/com/github/sarxos/webcam/util/MjpegInputStream.java
+ * @see {https://github.com/sarxos/webcam-capture/blob/master/webcam-capture/src/main/java/com/github/sarxos/webcam/util/MjpegInputStream.java}
  * ***************************************************************************
  */
 @Slf4j

@@ -104,7 +104,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
         JSONObject msg = JSON.parseObject(message);
         logger.info("{} send: {}", session.getId(), msg);
         switch (msg.getString("type")) {
-            case "switch": {
+            case "switch" -> {
                 typeMap.put(session, msg.getString("detail"));
                 if (rotationMap.get(session) == null) {
                     IDevice iDevice = udIdMap.get(session);
@@ -114,12 +114,10 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                                 .replaceAll("\n", "")
                                 .replaceAll("\t", "");
 
-                        String finalPath = path;
-
                         Thread rotationPro = new Thread(() -> {
                             try {
                                 //开始启动
-                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginMonitorService", finalPath)
+                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginMonitorService", path)
                                         , new IShellOutputReceiver() {
                                             @Override
                                             public void addOutput(byte[] bytes, int i, int i1) {
@@ -154,12 +152,10 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                 } else {
                     startScreen(session);
                 }
-                break;
             }
-            case "pic": {
+            case "pic" -> {
                 picMap.put(session, msg.getString("detail"));
                 startScreen(session);
-                break;
             }
         }
     }
@@ -179,17 +175,14 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                 }
                 while (ScreenMap.getMap().get(session) != null);
             }
-            if (typeMap.get(session) == null) {
-                typeMap.put(session, "scrcpy");
-            }
+            typeMap.putIfAbsent(session, "scrcpy");
             switch (typeMap.get(session)) {
-                case "scrcpy": {
+                case "scrcpy" -> {
                     ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
                     Thread scrcpyThread = scrcpyServerUtil.start(iDevice.getSerialNumber(), rotationStatusMap.get(session), session);
                     ScreenMap.getMap().put(session, scrcpyThread);
-                    break;
                 }
-                case "minicap": {
+                case "minicap" -> {
                     MiniCapUtil miniCapUtil = new MiniCapUtil();
                     AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                     Thread miniCapThread = miniCapUtil.start(
@@ -198,7 +191,6 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                             rotationStatusMap.get(session), session
                     );
                     ScreenMap.getMap().put(session, miniCapThread);
-                    break;
                 }
             }
             JSONObject picFinish = new JSONObject();

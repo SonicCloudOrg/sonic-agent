@@ -133,6 +133,9 @@ public class AndroidStepHandler {
             throw out;
         }
         androidDriver.getUiaClient().setGlobalTimeOut(60000);
+        JSONObject appiumSettings = new JSONObject();
+        appiumSettings.put("allowInvisibleElements", true);
+        androidDriver.setAppiumSettings(appiumSettings);
         log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
