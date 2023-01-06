@@ -24,7 +24,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 
 @Component
@@ -54,15 +57,13 @@ public class SGMTool {
     }
 
     public static String getCommand(int pPort, int webPort) {
-        String command = String.format(
+        return String.format(
                 "%s -cert_path %s -addr :%d -web_addr :%d", sgm, pFile, pPort, webPort);
-        return command;
     }
 
     public static String getCommand() {
-        String command = String.format(
+        return String.format(
                 "%s -cert_path %s", sgm, pFile);
-        return command;
     }
 
     public static void startProxy(String udId, String command) {
@@ -79,6 +80,31 @@ public class SGMTool {
                 ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", command});
             } else if (system.contains("linux") || system.contains("mac")) {
                 ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", command});
+            }
+            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
+            BufferedReader stdInput = new BufferedReader(inputStreamReader);
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                if (s.contains("Proxy start listen")) {
+                    Thread.sleep(300);
+                    break;
+                }
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             GlobalProcessMap.getMap().put(processName, ps);
         } catch (Exception e) {
