@@ -133,9 +133,6 @@ public class AndroidStepHandler {
             throw out;
         }
         androidDriver.getUiaClient().setGlobalTimeOut(60000);
-        JSONObject appiumSettings = new JSONObject();
-        appiumSettings.put("allowInvisibleElements", true);
-        androidDriver.setAppiumSettings(appiumSettings);
         log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
@@ -148,6 +145,14 @@ public class AndroidStepHandler {
         handleContext.setDetail("切换为： " + (isMulti ? "多窗口模式" : "单窗口模式"));
         JSONObject settings = new JSONObject();
         settings.put("enableMultiWindows", isMulti);
+        androidDriver.setAppiumSettings(settings);
+    }
+
+    public void switchVisibleMode(HandleContext handleContext, boolean isVisible) throws SonicRespException {
+        handleContext.setStepDes("切换Displayed控件展示");
+        handleContext.setDetail("切换为： " + (isVisible ? "显示" : "隐藏"));
+        JSONObject settings = new JSONObject();
+        settings.put("allowInvisibleElements", isVisible);
         androidDriver.setAppiumSettings(settings);
     }
 
@@ -2032,6 +2037,7 @@ public class AndroidStepHandler {
             case "thawSource" -> thawSource(handleContext);
             case "closePocoDriver" -> closePocoDriver(handleContext);
             case "switchWindowMode" -> switchWindowMode(handleContext, step.getBoolean("content"));
+            case "switchVisibleMode" -> switchVisibleMode(handleContext, step.getBoolean("content"));
             case "closeKeyboard" -> closeKeyboard(handleContext);
             case "iteratorPocoElement" ->
                     iteratorPocoElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")

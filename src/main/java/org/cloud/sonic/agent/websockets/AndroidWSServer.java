@@ -370,7 +370,8 @@ public class AndroidWSServer implements IAndroidWSServer {
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 try {
                                     JSONObject result = new JSONObject();
-                                    androidStepHandler.switchWindowMode(new HandleContext(), msg.getBoolean("isMulti"));
+                                    androidStepHandler.switchWindowMode(new HandleContext(), msg.getBoolean("isMulti") != null && msg.getBoolean("isMulti"));
+                                    androidStepHandler.switchVisibleMode(new HandleContext(), msg.getBoolean("isVisible") != null && msg.getBoolean("isVisible"));
                                     result.put("msg", "tree");
                                     result.put("detail", androidStepHandler.getResource());
                                     result.put("webView", androidStepHandler.getWebView());
