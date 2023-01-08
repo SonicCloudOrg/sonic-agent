@@ -149,7 +149,7 @@ public class AndroidStepHandler {
     }
 
     public void switchVisibleMode(HandleContext handleContext, boolean isVisible) throws SonicRespException {
-        handleContext.setStepDes("切换Displayed控件展示");
+        handleContext.setStepDes("切换Invisible控件展示");
         handleContext.setDetail("切换为： " + (isVisible ? "显示" : "隐藏"));
         JSONObject settings = new JSONObject();
         settings.put("allowInvisibleElements", isVisible);
