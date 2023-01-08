@@ -25,10 +25,7 @@ import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
-import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.PortTool;
-import org.cloud.sonic.agent.tools.ProcessCommandTool;
-import org.cloud.sonic.agent.tools.ScheduleTool;
+import org.cloud.sonic.agent.tools.*;
 import org.cloud.sonic.agent.transport.TransportWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +95,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
         if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {
             logger.info(String.format("Start sonic-ios-bridge failed! Please check sib's version or use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
-            System.exit(0);
+            AgentManagerTool.stop();
         }
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             String processName = "sib";

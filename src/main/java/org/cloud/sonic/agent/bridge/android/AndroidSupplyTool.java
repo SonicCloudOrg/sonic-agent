@@ -22,6 +22,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.LogUtil;
+import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
@@ -74,7 +75,7 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sas));
         if (ver.size() == 0 || !BytesTool.versionCheck(sasVersion, ver.get(0))) {
             log.info(String.format("Start sonic-android-supply failed! Please check sonic-android-supply version or use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
-            System.exit(0);
+            AgentManagerTool.stop();
         }
     }
 

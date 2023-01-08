@@ -52,7 +52,7 @@ public class SGMTool {
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgm));
         if (ver.size() == 0 || !BytesTool.versionCheck(sgmVersion, ver.get(0).replace("sonic-go-mitmproxy:", "").trim())) {
             logger.info(String.format("Start sonic-go-mitmproxy failed! Please check sonic-go-mitmproxy version or use [chmod -R 777 %s], if still failed, you can try with [sudo]", pFile));
-            System.exit(0);
+            AgentManagerTool.stop();
         }
     }
 
