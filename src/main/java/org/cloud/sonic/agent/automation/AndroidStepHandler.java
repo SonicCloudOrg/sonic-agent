@@ -91,6 +91,12 @@ public class AndroidStepHandler {
     private int pocoPort = 0;
     private int targetPort = 0;
 
+    private String targetPackage = "";
+
+    public String getTargetPackage() {
+        return targetPackage;
+    }
+
     public LogUtil getLog() {
         return log;
     }
@@ -382,6 +388,7 @@ public class AndroidStepHandler {
         handleContext.setDetail("App包名： " + appPackage);
         try {
             AndroidDeviceBridgeTool.activateApp(iDevice, appPackage);
+            targetPackage = appPackage;
         } catch (Exception e) {
             handleContext.setE(e);
         }

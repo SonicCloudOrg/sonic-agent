@@ -200,16 +200,8 @@ public class AndroidWSServer implements IAndroidWSServer {
         log.info("{} send: {}", session.getId(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
-            case "startPerfmon" -> {
-                if (msg.getString("bundleId") != null && msg.getString("bundleId").length() > 0) {
-                    AndroidSupplyTool.startProcessPerfmon(iDevice.getSerialNumber(), msg.getString("bundleId"), session, null, 1000);
-                }
-                AndroidSupplyTool.startSystemPerfmon(iDevice.getSerialNumber(), session, null, 1000);
-            }
-            case "stopPerfmon" -> {
-                AndroidSupplyTool.stopSystemPerfmon(iDevice.getSerialNumber());
-                AndroidSupplyTool.stopProcessPerfmon(iDevice.getSerialNumber());
-            }
+            case "startPerfmon" -> AndroidSupplyTool.startPerfmon(iDevice.getSerialNumber(), msg.getString("bundleId"),session, null, 1000);
+            case "stopPerfmon" -> AndroidSupplyTool.stopPerfmon(iDevice.getSerialNumber());
             case "startKeyboard" -> {
                 String currentIme = AndroidDeviceBridgeTool.executeCommand(iDevice, "settings get secure default_input_method");
                 if (!currentIme.contains("org.cloud.sonic.android/.keyboard.SonicKeyboard")) {
@@ -471,6 +463,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidDeviceBridgeTool.clearProxy(iDevice);
             AndroidDeviceBridgeTool.clearWebView(iDevice);
             AndroidSupplyTool.stopShare(iDevice.getSerialNumber());
+            AndroidSupplyTool.stopPerfmon(iDevice.getSerialNumber());
             SGMTool.stopProxy(iDevice.getSerialNumber());
             AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
         }

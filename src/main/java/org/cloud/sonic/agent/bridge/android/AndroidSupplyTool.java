@@ -119,8 +119,8 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
         }
     }
 
-    public static void stopSystemPerfmon(String udId) {
-        String processName = String.format("process-%s-system-perfmon", udId);
+    public static void stopPerfmon(String udId) {
+        String processName = String.format("process-%s-perfmon", udId);
         if (GlobalProcessMap.getMap().get(processName) != null) {
             Process ps = GlobalProcessMap.getMap().get(processName);
             ps.children().forEach(ProcessHandle::destroy);
@@ -128,17 +128,18 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
         }
     }
 
-    public static void startSystemPerfmon(String udId, Session session, LogUtil logUtil, int interval) {
-        stopSystemPerfmon(udId);
+    public static void startPerfmon(String udId, String pkg, Session session, LogUtil logUtil, int interval) {
+        stopPerfmon(udId);
         if (isEnable) {
             Process ps = null;
-            String commandLine = "%s perfmon system -i %d -s %s -j";
+            String commandLine = "%s perfmon -s %s -r %d %s -j";
             String system = System.getProperty("os.name").toLowerCase();
+            String tail = pkg.length() == 0 ? "" : (" -p " + pkg);
             try {
                 if (system.contains("win")) {
-                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sas, interval, udId)});
+                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sas, udId, interval, tail)});
                 } else if (system.contains("linux") || system.contains("mac")) {
-                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sas, interval, udId)});
+                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sas, udId, interval, tail)});
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -168,7 +169,7 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                log.info("system perfmon print thread shutdown.");
+                log.info("perfmon print thread shutdown.");
             });
             psErr.start();
             Thread pro = new Thread(() -> {
@@ -204,105 +205,10 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                log.info("system perfmon print thread shutdown.");
+                log.info("perfmon print thread shutdown.");
             });
             pro.start();
-            String processName = String.format("process-%s-system-perfmon", udId);
-            GlobalProcessMap.getMap().put(processName, ps);
-        } else {
-            log.info("sonic-android-supply is not enable, please open it in config file.");
-        }
-    }
-
-    public static void stopProcessPerfmon(String udId) {
-        String processName = String.format("process-%s-process-perfmon", udId);
-        if (GlobalProcessMap.getMap().get(processName) != null) {
-            Process ps = GlobalProcessMap.getMap().get(processName);
-            ps.children().forEach(ProcessHandle::destroy);
-            ps.destroy();
-        }
-    }
-
-    public static void startProcessPerfmon(String udId, String pkg, Session session, LogUtil logUtil, int interval) {
-        stopProcessPerfmon(udId);
-        if (isEnable) {
-            Process ps = null;
-            String commandLine = "%s perfmon process -i %d -n %s -s %s -j";
-            String system = System.getProperty("os.name").toLowerCase();
-            try {
-                if (system.contains("win")) {
-                    ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sas, interval, pkg, udId)});
-                } else if (system.contains("linux") || system.contains("mac")) {
-                    ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sas, interval, pkg, udId)});
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
-            BufferedReader stdInput = new BufferedReader(inputStreamReader);
-            InputStreamReader err = new InputStreamReader(ps.getErrorStream());
-            BufferedReader stdInputErr = new BufferedReader(err);
-            Thread psErr = new Thread(() -> {
-                String s;
-                while (true) {
-                    try {
-                        if ((s = stdInputErr.readLine()) == null) break;
-                    } catch (IOException e) {
-                        log.info(e.getMessage());
-                        break;
-                    }
-                    log.info(s);
-                }
-                try {
-                    stdInputErr.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    err.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                log.info("process perfmon print thread shutdown.");
-            });
-            psErr.start();
-            Thread pro = new Thread(() -> {
-                String s;
-                while (true) {
-                    try {
-                        if ((s = stdInput.readLine()) == null) break;
-                    } catch (IOException e) {
-                        log.info(e.getMessage());
-                        break;
-                    }
-                    try {
-                        JSONObject perf = JSON.parseObject(s);
-                        if (session != null) {
-                            JSONObject perfDetail = new JSONObject();
-                            perfDetail.put("msg", "perfDetail");
-                            perfDetail.put("detail", perf);
-                            sendText(session, perfDetail.toJSONString());
-                        }
-                        if (logUtil != null) {
-                            logUtil.sendPerLog(perf.toJSONString());
-                        }
-                    } catch (Exception e) {
-                    }
-                }
-                try {
-                    stdInput.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    inputStreamReader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                log.info("process perfmon print thread shutdown.");
-            });
-            pro.start();
-            String processName = String.format("process-%s-process-perfmon", udId);
+            String processName = String.format("process-%s-perfmon", udId);
             GlobalProcessMap.getMap().put(processName, ps);
         } else {
             log.info("sonic-android-supply is not enable, please open it in config file.");
