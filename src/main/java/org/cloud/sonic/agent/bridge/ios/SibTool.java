@@ -174,39 +174,40 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static void sendDisConnectStatus(JSONObject jsonObject) {
-        JSONObject deviceStatus = new JSONObject();
-        deviceStatus.put("msg", "deviceDetail");
-        deviceStatus.put("udId", jsonObject.getString("serialNumber"));
-        deviceStatus.put("status", DeviceStatus.DISCONNECTED);
-        deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
-        deviceStatus.put("platform", PlatformType.IOS);
-        logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
-        TransportWorker.send(deviceStatus);
-        IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
-        DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
+        if (StringUtils.hasText(jsonObject.getString("serialNumber"))) {
+            JSONObject deviceStatus = new JSONObject();
+            deviceStatus.put("msg", "deviceDetail");
+            deviceStatus.put("udId", jsonObject.getString("serialNumber"));
+            deviceStatus.put("status", DeviceStatus.DISCONNECTED);
+            deviceStatus.put("platform", PlatformType.IOS);
+            logger.info("iOS devices: " + jsonObject.getString("serialNumber") + " OFFLINE!");
+            TransportWorker.send(deviceStatus);
+            IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
+            DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
+        }
     }
 
     public static void sendOnlineStatus(JSONObject jsonObject) {
         if (StringUtils.hasText(jsonObject.getString("serialNumber"))) {
             mount(jsonObject.getString("serialNumber"));
+            JSONObject detail = jsonObject.getJSONObject("deviceDetail");
+            JSONObject deviceStatus = new JSONObject();
+            deviceStatus.put("msg", "deviceDetail");
+            deviceStatus.put("udId", jsonObject.getString("serialNumber"));
+            deviceStatus.put("name", detail.getString("deviceName"));
+            deviceStatus.put("model", detail.getString("generationName"));
+            deviceStatus.put("status", DeviceStatus.ONLINE);
+            deviceStatus.put("platform", PlatformType.IOS);
+            deviceStatus.put("version", detail.getString("productVersion"));
+            deviceStatus.put("size", getSize(jsonObject.getString("serialNumber")));
+            deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
+            deviceStatus.put("manufacturer", "APPLE");
+            logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
+            TransportWorker.send(deviceStatus);
+            IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
+            IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
+            DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
         }
-        JSONObject detail = jsonObject.getJSONObject("deviceDetail");
-        JSONObject deviceStatus = new JSONObject();
-        deviceStatus.put("msg", "deviceDetail");
-        deviceStatus.put("udId", jsonObject.getString("serialNumber"));
-        deviceStatus.put("name", detail.getString("deviceName"));
-        deviceStatus.put("model", detail.getString("generationName"));
-        deviceStatus.put("status", DeviceStatus.ONLINE);
-        deviceStatus.put("platform", PlatformType.IOS);
-        deviceStatus.put("version", detail.getString("productVersion"));
-        deviceStatus.put("size", IOSInfoMap.getSizeMap().get(jsonObject.getString("serialNumber")));
-        deviceStatus.put("cpu", detail.getString("cpuArchitecture"));
-        deviceStatus.put("manufacturer", "APPLE");
-        logger.info("iOS Devices: " + jsonObject.getString("serialNumber") + " ONLINE!");
-        TransportWorker.send(deviceStatus);
-        IOSInfoMap.getDetailMap().put(jsonObject.getString("serialNumber"), detail);
-        IOSDeviceManagerMap.getMap().remove(jsonObject.getString("serialNumber"));
-        DevicesBatteryMap.getTempMap().remove(jsonObject.getString("serialNumber"));
     }
 
     public static String getName(String udId) {
@@ -724,6 +725,18 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     public static int getOrientation(String udId) {
         String commandLine = "%s orientation -u %s";
         return BytesTool.getInt(ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId)));
+    }
+
+    public static String getSize(String udId) {
+        String commandLine = "%s info -d com.apple.mobile.iTunes -u %s";
+        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
+        String size = "";
+        try {
+            JSONObject r = JSON.parseObject(re);
+            size = r.getInteger("ScreenWidth") + "x" + r.getInteger("ScreenHeight");
+        } catch (Throwable ignored) {
+        }
+        return size;
     }
 
     public static void mount(String udId) {

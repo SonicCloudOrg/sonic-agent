@@ -367,6 +367,12 @@ public class AndroidWSServer implements IAndroidWSServer {
                             openDriver(iDevice, session);
                         }
                     }
+                    case "closeDriver" -> {
+                        if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
+                            androidStepHandler.closeAndroidDriver();
+                            HandlerMap.getAndroidMap().remove(session.getId());
+                        }
+                    }
                     case "tree" -> {
                         if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {

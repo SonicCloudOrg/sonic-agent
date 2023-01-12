@@ -28,7 +28,6 @@ public class IOSDeviceLocalStatus {
     public static void send(String udId, String status) {
         JSONObject deviceDetail = new JSONObject();
         deviceDetail.put("msg", "deviceDetail");
-        deviceDetail.put("size", IOSInfoMap.getSizeMap().get(udId));
         deviceDetail.put("udId", udId);
         deviceDetail.put("status", status);
         TransportWorker.send(deviceDetail);

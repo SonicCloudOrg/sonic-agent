@@ -134,7 +134,6 @@ public class IOSStepHandler {
         JSONObject appiumSettings = new JSONObject();
         appiumSettings.put("snapshotMaxDepth", 30);
         appiumSettings(appiumSettings);
-        IOSInfoMap.getSizeMap().put(udId, windowSize.getWidth() + "x" + windowSize.getHeight());
     }
 
     public void closeIOSDriver() {
