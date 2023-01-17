@@ -121,30 +121,16 @@ public class AndroidWSServer implements IAndroidWSServer {
         } else {
             log.info("Sonic Apk version not newest or not install, starting install...");
             try {
-                iDevice.uninstallPackage("org.cloud.sonic.android");
+                AndroidDeviceBridgeTool.uninstall(iDevice, "org.cloud.sonic.android");
             } catch (InstallException e) {
                 log.info("uninstall sonic Apk err...");
             }
             try {
-                iDevice.installPackage("plugins/sonic-android-apk.apk",
-                        true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
-                        , "-r", "-t", "-g");
+                AndroidDeviceBridgeTool.install(iDevice, "plugins/sonic-android-apk.apk");
             } catch (InstallException e) {
-                if (e.getMessage().contains("Unknown option: -g")) {
-                    try {
-                        iDevice.installPackage("plugins/sonic-android-apk.apk",
-                                true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
-                                , "-r", "-t");
-                    } catch (InstallException e2) {
-                        e2.printStackTrace();
-                        log.info("Sonic Apk install failed.");
-                        return;
-                    }
-                } else {
-                    e.printStackTrace();
-                    log.info("Sonic Apk install failed.");
-                    return;
-                }
+                e.printStackTrace();
+                log.info("Sonic Apk install failed.");
+                return;
             }
             AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android POST_NOTIFICATION allow");
             AndroidDeviceBridgeTool.executeCommand(iDevice, "appops set org.cloud.sonic.android RUN_IN_BACKGROUND allow");
@@ -200,7 +186,8 @@ public class AndroidWSServer implements IAndroidWSServer {
         log.info("{} send: {}", session.getId(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
-            case "startPerfmon" -> AndroidSupplyTool.startPerfmon(iDevice.getSerialNumber(), msg.getString("bundleId"),session, null, 1000);
+            case "startPerfmon" ->
+                    AndroidSupplyTool.startPerfmon(iDevice.getSerialNumber(), msg.getString("bundleId"), session, null, 1000);
             case "stopPerfmon" -> AndroidSupplyTool.stopPerfmon(iDevice.getSerialNumber());
             case "startKeyboard" -> {
                 String currentIme = AndroidDeviceBridgeTool.executeCommand(iDevice, "settings get secure default_input_method");
@@ -239,7 +226,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "uninstallApp" -> {
                 JSONObject result = new JSONObject();
                 try {
-                    iDevice.uninstallPackage(msg.getString("detail"));
+                    AndroidDeviceBridgeTool.uninstall(iDevice, msg.getString("detail"));
                     result.put("detail", "success");
                 } catch (InstallException e) {
                     result.put("detail", "fail");
@@ -352,9 +339,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                             if (msg.getString("apk").contains("http")) {
                                 localFile = DownloadTool.download(msg.getString("apk"));
                             }
-                            iDevice.installPackage(localFile.getAbsolutePath()
-                                    , true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
-                                    , "-r", "-t", "-g");
+                            AndroidDeviceBridgeTool.install(iDevice, localFile.getAbsolutePath());
                             result.put("status", "success");
                         } catch (IOException | InstallException e) {
                             result.put("status", "fail");

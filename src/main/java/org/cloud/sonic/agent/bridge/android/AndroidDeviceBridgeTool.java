@@ -263,6 +263,28 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         return output.getOutput();
     }
 
+    public static void install(IDevice iDevice, String path) throws InstallException {
+        try {
+            iDevice.installPackage(path,
+                    true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                    , "-r", "-t", "-g");
+        } catch (InstallException e) {
+            if (e.getMessage().contains("Unknown option: -g")) {
+                try {
+                    iDevice.installPackage(path,
+                            true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                            , "-r", "-t");
+                } catch (InstallException e2) {
+                    logger.info("{} install failed.", path);
+                    throw e2;
+                }
+            } else {
+                logger.info("{} install failed.", path);
+                throw e;
+            }
+        }
+    }
+
     public static boolean checkSonicApkVersion(IDevice iDevice) {
         String all = executeCommand(iDevice, "dumpsys package org.cloud.sonic.android");
         if (!all.contains("versionName=" + apkVersion)) {
@@ -388,12 +410,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public static void pressKey(IDevice iDevice, int keyNum) {
         executeCommand(iDevice, String.format("input keyevent %s", keyNum));
-    }
-
-    public static void install(IDevice iDevice, String path) throws InstallException {
-        iDevice.installPackage(path,
-                true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
-                , "-r", "-t", "-g");
     }
 
     public static void uninstall(IDevice iDevice, String bundleId) throws InstallException {
@@ -679,14 +695,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             s.interrupt();
         }
         if (!checkUiaApkVersion(iDevice)) {
-            iDevice.uninstallPackage("io.appium.uiautomator2.server");
-            iDevice.uninstallPackage("io.appium.uiautomator2.server.test");
-            iDevice.installPackage("plugins/sonic-appium-uiautomator2-server.apk",
-                    true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
-                    , "-r", "-t");
-            iDevice.installPackage("plugins/sonic-appium-uiautomator2-server-test.apk",
-                    true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
-                    , "-r", "-t");
+            uninstall(iDevice, "io.appium.uiautomator2.server");
+            uninstall(iDevice, "io.appium.uiautomator2.server.test");
+            install(iDevice, "plugins/sonic-appium-uiautomator2-server.apk");
+            install(iDevice, "plugins/sonic-appium-uiautomator2-server-test.apk");
             executeCommand(iDevice, "appops set io.appium.uiautomator2.server RUN_IN_BACKGROUND allow");
             executeCommand(iDevice, "appops set io.appium.uiautomator2.server.test RUN_IN_BACKGROUND allow");
             executeCommand(iDevice, "dumpsys deviceidle whitelist +io.appium.uiautomator2.server");
