@@ -60,7 +60,6 @@
             <version>1.18.24</version>
             <scope>compile</scope>
         </dependency>
-        <!--    json对象    -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
@@ -72,7 +71,6 @@
             <artifactId>sonic-driver-core</artifactId>
             <version>1.1.19</version>
         </dependency>
-        <!--    压缩图片    -->
         <dependency>
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
@@ -82,7 +80,7 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.9.10</version>
+            <version>7.7.1</version>
         </dependency>
         <!--    selenium    -->
         <dependency>
@@ -90,7 +88,6 @@
             <artifactId>selenium-java</artifactId>
             <version>3.141.59</version>
         </dependency>
-        <!--    解析xml    -->
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
@@ -125,7 +122,6 @@
         </dependency>
     </dependencies>
 
-    <!-- 镜像加速   -->
     <repositories>
         <repository>
             <id>google</id>
@@ -145,7 +141,6 @@
         </repository>
     </repositories>
 
-    <!-- 打包构建配置  -->
     <build>
         <resources>
             <resource>
@@ -153,7 +148,6 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
-        <!--   最终打包的jar包名，使用artifactId     -->
         <finalName>${project.artifactId}-${platform}</finalName>
         <plugins>
             <plugin>
