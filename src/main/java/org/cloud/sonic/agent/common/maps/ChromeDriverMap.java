@@ -20,6 +20,9 @@ package org.cloud.sonic.agent.common.maps;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @see {http://chromedriver.storage.googleapis.com/index.html}
+ */
 public class ChromeDriverMap {
     private static Map<String, String> chromeDriverMap = new HashMap<>() {
         {
@@ -63,6 +66,7 @@ public class ChromeDriverMap {
             put("107", "107.0.5304.62");
             put("108", "108.0.5359.71");
             put("109", "109.0.5414.25");
+            put("110", "110.0.5481.30");
         }
     };
 
