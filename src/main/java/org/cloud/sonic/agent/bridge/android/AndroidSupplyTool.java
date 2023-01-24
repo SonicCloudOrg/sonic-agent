@@ -192,7 +192,7 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
                         if (logUtil != null) {
                             logUtil.sendPerLog(perf.toJSONString());
                         }
-                    } catch (Exception e) {
+                    } catch (Exception ignored) {
                     }
                 }
                 try {

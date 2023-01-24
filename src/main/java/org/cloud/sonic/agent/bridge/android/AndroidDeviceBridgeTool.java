@@ -132,7 +132,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
         int count = 0;
         //获取设备列表，超时后退出
-        while (androidDebugBridge.hasInitialDeviceList() == false) {
+        while (!androidDebugBridge.hasInitialDeviceList()) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -194,7 +194,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     public static IDevice getIDeviceByUdId(String udId) {
         IDevice iDevice = null;
         IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
-        if (iDevices.length == 0) {
+        if (iDevices == null || iDevices.length == 0) {
             return null;
         }
         for (IDevice device : iDevices) {
@@ -287,20 +287,12 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
     public static boolean checkSonicApkVersion(IDevice iDevice) {
         String all = executeCommand(iDevice, "dumpsys package org.cloud.sonic.android");
-        if (!all.contains("versionName=" + apkVersion)) {
-            return false;
-        } else {
-            return true;
-        }
+        return all.contains("versionName=" + apkVersion);
     }
 
     public static boolean checkUiaApkVersion(IDevice iDevice) {
         String all = executeCommand(iDevice, "dumpsys package io.appium.uiautomator2.server");
-        if (!all.contains("versionName=" + uiaApkVersion)) {
-            return false;
-        } else {
-            return true;
-        }
+        return all.contains("versionName=" + uiaApkVersion);
     }
 
     /**
@@ -354,7 +346,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     public static void removeForward(IDevice iDevice, int port, String serviceName) {
         try {
             logger.info("cancel {} device {} port forward to {}", iDevice.getSerialNumber(), serviceName, port);
-            iDevice.removeForward(port, serviceName, IDevice.DeviceUnixSocketNamespace.ABSTRACT);
+            iDevice.removeForward(port);
             String name = String.format("process-%s-forward-%s", iDevice.getSerialNumber(), serviceName);
             if (forwardPortMap.get(name) != null) {
                 forwardPortMap.remove(name);
@@ -367,7 +359,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     public static void removeForward(IDevice iDevice, int port, int target) {
         try {
             logger.info("cancel {} device {} forward to {}", iDevice.getSerialNumber(), target, port);
-            iDevice.removeForward(port, target);
+            iDevice.removeForward(port);
             String name = String.format("process-%s-forward-%d", iDevice.getSerialNumber(), target);
             if (forwardPortMap.get(name) != null) {
                 forwardPortMap.remove(name);
@@ -445,7 +437,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public static String matchMiniCapFile(String sdk) {
         String filePath;
-        if (Integer.valueOf(sdk) < 16) {
+        if (Integer.parseInt(sdk) < 16) {
             filePath = "minicap-nopie";
         } else {
             filePath = "minicap";
@@ -465,25 +457,23 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         int p = getScreen(iDevice);
         try {
             switch (type) {
-                case "abort":
-                    executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0");
-                    break;
-                case "add":
+                case "abort" -> executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0");
+                case "add" -> {
                     if (p == 3) {
                         p = 0;
                     } else {
                         p++;
                     }
                     executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:" + p);
-                    break;
-                case "sub":
+                }
+                case "sub" -> {
                     if (p == 0) {
                         p = 3;
                     } else {
                         p--;
                     }
                     executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:user_rotation --bind value:i:" + p);
-                    break;
+                }
             }
         } catch (Exception e) {
             logger.error(e.getMessage());
@@ -503,10 +493,9 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
 
     public static int getOrientation(IDevice iDevice) {
         String inputs = executeCommand(iDevice, "dumpsys input");
-        if (inputs.indexOf("SurfaceOrientation") != -1) {
+        if (inputs.contains("SurfaceOrientation")) {
             String orientationS = inputs.substring(inputs.indexOf("SurfaceOrientation")).trim();
-            int o = BytesTool.getInt(orientationS.substring(20, orientationS.indexOf("\n")));
-            return o;
+            return BytesTool.getInt(orientationS.substring(20, orientationS.indexOf("\n")));
         } else {
             inputs = executeCommand(iDevice, "dumpsys window displays");
             String orientationS = inputs.substring(inputs.indexOf("cur=")).trim();
@@ -558,46 +547,44 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
     }
 
     public static String getCurrentPackage(IDevice iDevice) {
-        Integer api = Integer.parseInt(iDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
+        int api = Integer.parseInt(iDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
         String cmd = AndroidDeviceBridgeTool.executeCommand(iDevice,
-                String.format("dumpsys window %s", ((api != null && api >= 29) ? "displays" : "windows")));
+                String.format("dumpsys window %s", api >= 29 ? "displays" : "windows"));
         String result = "";
         try {
             String start = cmd.substring(cmd.indexOf("mCurrentFocus="));
             String end = start.substring(0, start.indexOf("/"));
             result = end.substring(end.lastIndexOf(" ") + 1);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         if (result.length() == 0) {
             try {
                 String start = cmd.substring(cmd.indexOf("mFocusedApp="));
                 String startCut = start.substring(0, start.indexOf("/"));
-                String packageName = startCut.substring(startCut.lastIndexOf(" ") + 1);
-                result = packageName;
-            } catch (Exception e) {
+                result = startCut.substring(startCut.lastIndexOf(" ") + 1);
+            } catch (Exception ignored) {
             }
         }
         return result;
     }
 
     public static String getCurrentActivity(IDevice iDevice) {
-        Integer api = Integer.parseInt(iDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
+        int api = Integer.parseInt(iDevice.getProperty(IDevice.PROP_BUILD_API_LEVEL));
         String cmd = AndroidDeviceBridgeTool.executeCommand(iDevice,
-                String.format("dumpsys window %s", ((api != null && api >= 29) ? "displays" : "windows")));
+                String.format("dumpsys window %s", api >= 29 ? "displays" : "windows"));
         String result = "";
         try {
             String start = cmd.substring(cmd.indexOf("mCurrentFocus="));
             String end = start.substring(start.indexOf("/") + 1);
             result = end.substring(0, end.indexOf("}"));
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         if (result.length() == 0) {
             try {
                 String start = cmd.substring(cmd.indexOf("mFocusedApp="));
                 String end = start.substring(start.indexOf("/") + 1);
-                String endCut = end.substring(0, end.indexOf(" "));
-                result = endCut;
-            } catch (Exception e) {
+                result = end.substring(0, end.indexOf(" "));
+            } catch (Exception ignored) {
             }
         }
         return result;
@@ -608,13 +595,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             File image = DownloadTool.download(url);
             iDevice.pushFile(image.getAbsolutePath(), "/sdcard/DCIM/Camera/" + image.getName());
             executeCommand(iDevice, "am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///sdcard/DCIM/Camera/" + image.getName());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (AdbCommandRejectedException e) {
-            e.printStackTrace();
-        } catch (SyncException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
+        } catch (IOException | AdbCommandRejectedException | SyncException | TimeoutException e) {
             e.printStackTrace();
         }
     }
@@ -767,7 +748,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                                 return false;
                             }
                         }, 0, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             } finally {
                 removeForward(iDevice, port, 6790);
             }
@@ -812,7 +793,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         if (search.exists()) {
             return search;
         }
-        int end = (chromeVersion.indexOf(".") != -1 ? chromeVersion.indexOf(".") : chromeVersion.length() - 1);
+        int end = (chromeVersion.contains(".") ? chromeVersion.indexOf(".") : chromeVersion.length() - 1);
         String major = chromeVersion.substring(0, end);
         HttpHeaders headers = new HttpHeaders();
         if (system.contains("win")) {
@@ -837,16 +818,15 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             }
         }
         File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip", ChromeDriverMap.getMap().get(major), system));
-        File driver = FileTool.unZipChromeDriver(file, chromeVersion);
-        return driver;
+        return FileTool.unZipChromeDriver(file, chromeVersion);
     }
 
     public static List<JSONObject> getWebView(IDevice iDevice) {
         clearWebView(iDevice);
         List<JSONObject> has = new ArrayList<>();
         Set<String> webSet = new HashSet<>();
-        List<String> out = Arrays.asList(AndroidDeviceBridgeTool
-                .executeCommand(iDevice, "cat /proc/net/unix").split("\n"));
+        String[] out = AndroidDeviceBridgeTool
+                .executeCommand(iDevice, "cat /proc/net/unix").split("\n");
         for (String w : out) {
             if (w.contains("webview") || w.contains("WebView") || w.contains("_devtools_remote")) {
                 if (w.contains("@") && w.indexOf("@") + 1 < w.length()) {
@@ -894,8 +874,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                         r.put("children", child);
                         result.add(r);
                     }
-                } catch (Exception e) {
-                    continue;
+                } catch (Exception ignored) {
                 }
             }
             AndroidWebViewMap.getMap().put(iDevice, has);
