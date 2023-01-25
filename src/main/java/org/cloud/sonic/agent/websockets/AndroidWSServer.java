@@ -75,7 +75,8 @@ public class AndroidWSServer implements IAndroidWSServer {
     private int port;
     @Autowired
     private AgentManagerTool agentManagerTool;
-    private AndroidTouchHandler androidTouchHandler;
+
+    private AndroidTouchHandler androidTouchHandler = new AndroidTouchHandler();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
