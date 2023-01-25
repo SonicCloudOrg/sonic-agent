@@ -67,7 +67,7 @@ public class AndroidTerminalWSServer {
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
         if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
-            logger.info("拦截访问！");
+            logger.info("Auth Failed!");
             return;
         }
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);

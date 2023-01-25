@@ -49,7 +49,7 @@ public class WebViewWSServer {
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("port") int port, @PathParam("id") String id) throws Exception {
         if (secretKey.length() == 0 || (!secretKey.equals(key))) {
-            logger.info("拦截访问！");
+            logger.info("Auth Failed!");
             return;
         }
         URI uri = new URI("ws://localhost:" + port + "/devtools/page/" + id);

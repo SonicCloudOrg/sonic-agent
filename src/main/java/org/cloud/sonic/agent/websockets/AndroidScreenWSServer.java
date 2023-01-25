@@ -58,13 +58,13 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
         if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
-            logger.info("拦截访问！");
+            logger.info("Auth Failed!");
             return;
         }
         session.getUserProperties().put("udId", udId);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
-            logger.info("设备未连接，请检查！");
+            logger.info("Target device is not connecting, please check the connection.");
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
