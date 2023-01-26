@@ -117,18 +117,13 @@ public class AndroidWSServer implements IAndroidWSServer {
             return;
         }
 
-        String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
-                .replaceAll("package:", "")
-                .replaceAll("\n", "")
-                .replaceAll("\t", "");
-
         AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SonicServiceActivity");
         AndroidAPKMap.getMap().put(udId, true);
         if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
             AndroidDeviceBridgeTool.pressKey(iDevice, 3);
         }
 
-        androidTouchHandler.startTouch(session, iDevice, path);
+        androidTouchHandler.startTouch(iDevice);
 
         AndroidSupplyTool.startShare(udId, session);
 
@@ -216,17 +211,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             }
             case "scan" -> AndroidDeviceBridgeTool.pushToCamera(iDevice, msg.getString("url"));
             case "text" -> AndroidDeviceBridgeTool.executeCommand(iDevice, "am broadcast -a SONIC_KEYBOARD --es msg \"" + msg.getString("detail") + "\"");
-            case "touch" -> {
-                OutputStream outputStream = androidTouchHandler.getOutputStream(session);
-                if (outputStream != null) {
-                    try {
-                        outputStream.write(msg.getString("detail").getBytes());
-                        outputStream.flush();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            case "touch" -> androidTouchHandler.writeToOutputStream(iDevice, msg.getString("detail"));
             case "keyEvent" -> AndroidDeviceBridgeTool.pressKey(iDevice, msg.getInteger("detail"));
             case "pullFile" -> {
                 JSONObject result = new JSONObject();
@@ -435,8 +420,8 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidSupplyTool.stopPerfmon(iDevice.getSerialNumber());
             SGMTool.stopProxy(iDevice.getSerialNumber());
             AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
+            androidTouchHandler.stopTouch(iDevice);
         }
-        androidTouchHandler.stopTouch(session);
         removeUdIdMapAndSet(session);
         WebSocketSessionMap.removeSession(session);
         try {

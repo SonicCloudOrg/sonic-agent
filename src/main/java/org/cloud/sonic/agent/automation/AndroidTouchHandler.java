@@ -23,13 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tools.PortTool;
 
-import javax.websocket.Session;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
@@ -37,16 +34,80 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class AndroidTouchHandler {
-    private Map<Session, OutputStream> outputMap = new ConcurrentHashMap<>();
-    private List<Session> NotStopSession = new ArrayList<>();
-    private Map<Session, Thread> touchMap = new ConcurrentHashMap<>();
+    private final Map<String, OutputStream> outputMap = new ConcurrentHashMap<>();
+    private final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
+    private int touchMode = TouchMode.SONIC_APK;
 
-    public OutputStream getOutputStream(Session session){
-        return outputMap.get(session);
+    public interface TouchMode {
+        int SONIC_APK = 1;
+        int ADB = 2;
+        int APPIUM_SERVER = 3;
     }
 
-    public void startTouch(Session session, IDevice iDevice, String path) {
+    public void switchTouchMode(int mode) {
+        touchMode = mode;
+    }
+
+    public void tap(IDevice iDevice, int x, int y) {
+        switch (touchMode) {
+            case TouchMode.SONIC_APK -> {
+                writeToOutputStream(iDevice, String.format("down %d %d\n", x, y));
+                writeToOutputStream(iDevice, "up\n");
+            }
+            case TouchMode.ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
+            default -> throw new IllegalStateException("Unexpected value: " + touchMode);
+        }
+    }
+
+    public void longPress(IDevice iDevice, int x, int y, int time) {
+        switch (touchMode) {
+            case TouchMode.SONIC_APK -> {
+                writeToOutputStream(iDevice, String.format("down %d %d\n", x, y));
+                try {
+                    Thread.sleep(time);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                writeToOutputStream(iDevice, "up\n");
+            }
+            case TouchMode.ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
+            default -> throw new IllegalStateException("Unexpected value: " + touchMode);
+        }
+    }
+
+    public void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) {
+        switch (touchMode) {
+            case TouchMode.SONIC_APK -> {
+                writeToOutputStream(iDevice, String.format("down %d %d\n", x1, y1));
+                writeToOutputStream(iDevice, String.format("move %d %d\n", x2, y2));
+                writeToOutputStream(iDevice, "up\n");
+            }
+            case TouchMode.ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            default -> throw new IllegalStateException("Unexpected value: " + touchMode);
+        }
+    }
+
+    public void writeToOutputStream(IDevice iDevice, String msg) {
+        OutputStream outputStream = outputMap.get(iDevice.getSerialNumber());
+        if (outputStream != null) {
+            try {
+                outputStream.write(msg.getBytes());
+                outputStream.flush();
+            } catch (IOException e) {
+                log.info("write to apk failed cause by: {}, auto switch to adb touch mode...", e.getMessage());
+                switchTouchMode(TouchMode.ADB);
+            }
+        }
+    }
+
+    public void startTouch(IDevice iDevice) {
+        String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
+                .replaceAll("package:", "")
+                .replaceAll("\n", "")
+                .replaceAll("\t", "");
+
         Semaphore isTouchFinish = new Semaphore(0);
+        String udId = iDevice.getSerialNumber();
 
         Thread touchPro = new Thread(() -> {
             try {
@@ -56,11 +117,7 @@ public class AndroidTouchHandler {
                             public void addOutput(byte[] bytes, int i, int i1) {
                                 String res = new String(bytes, i, i1);
                                 log.info(res);
-                                if (res.contains("Address already in use")) {
-                                    NotStopSession.add(session);
-                                    isTouchFinish.release();
-                                }
-                                if (res.startsWith("starting")) {
+                                if (res.contains("Address already in use") || res.startsWith("starting")) {
                                     isTouchFinish.release();
                                 }
                             }
@@ -75,8 +132,7 @@ public class AndroidTouchHandler {
                             }
                         }, 0, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                log.info("{} device touch service launch err"
-                        , iDevice.getSerialNumber());
+                log.info("{} device touch service launch err", udId);
                 log.error(e.getMessage());
             }
         });
@@ -107,7 +163,7 @@ public class AndroidTouchHandler {
             try {
                 touchSocket = new Socket("localhost", finalTouchPort);
                 outputStream = touchSocket.getOutputStream();
-                outputMap.put(session, outputStream);
+                outputMap.put(udId, outputStream);
                 while (touchSocket.isConnected() && !Thread.interrupted()) {
                     Thread.sleep(1000);
                 }
@@ -118,7 +174,6 @@ public class AndroidTouchHandler {
                     touchPro.interrupt();
                     log.info("touch thread closed.");
                 }
-                NotStopSession.remove(session);
                 if (touchSocket != null && touchSocket.isConnected()) {
                     try {
                         touchSocket.close();
@@ -136,12 +191,12 @@ public class AndroidTouchHandler {
                     }
                 }
             }
-            outputMap.remove(session);
+            outputMap.remove(udId);
             AndroidDeviceBridgeTool.removeForward(iDevice, finalTouchPort, "sonictouchservice");
         });
         touchSocketThread.start();
         int w = 0;
-        while (outputMap.get(session) == null) {
+        while (outputMap.get(udId) == null) {
             if (w > 10) {
                 break;
             }
@@ -152,22 +207,23 @@ public class AndroidTouchHandler {
             }
             w++;
         }
-        touchMap.put(session, touchSocketThread);
+        touchMap.put(udId, touchSocketThread);
     }
 
-    public void stopTouch(Session session) {
-        if (outputMap.get(session) != null) {
+    public void stopTouch(IDevice iDevice) {
+        String udId = iDevice.getSerialNumber();
+        if (outputMap.get(udId) != null) {
             try {
-                outputMap.get(session).write("release \n".getBytes(StandardCharsets.UTF_8));
-                outputMap.get(session).flush();
+                outputMap.get(udId).write("release \n".getBytes(StandardCharsets.UTF_8));
+                outputMap.get(udId).flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        if (touchMap.get(session) != null) {
-            touchMap.get(session).interrupt();
+        if (touchMap.get(udId) != null) {
+            touchMap.get(udId).interrupt();
             int wait = 0;
-            while (!touchMap.get(session).isInterrupted()) {
+            while (!touchMap.get(udId).isInterrupted()) {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -179,6 +235,6 @@ public class AndroidTouchHandler {
                 }
             }
         }
-        touchMap.remove(session);
+        touchMap.remove(udId);
     }
 }
