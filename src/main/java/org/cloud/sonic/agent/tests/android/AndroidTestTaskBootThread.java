@@ -20,6 +20,7 @@ package org.cloud.sonic.agent.tests.android;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.automation.AndroidTouchHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
@@ -181,6 +182,7 @@ public class AndroidTestTaskBootThread extends Thread {
     public void run() {
 
         boolean startTestSuccess = false;
+        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
 
         try {
             int wait = 0;
@@ -198,12 +200,17 @@ public class AndroidTestTaskBootThread extends Thread {
 
             startTestSuccess = true;
             try {
-                IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
                 int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
+                if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
+                    androidStepHandler.androidTouchHandler.switchTouchMode(AndroidTouchHandler.TouchMode.ADB);
+                } else {
+                    androidStepHandler.androidTouchHandler.startTouch(iDevice);
+                }
                 androidStepHandler.startAndroidDriver(iDevice, port);
             } catch (Exception e) {
                 log.error(e.getMessage());
                 androidStepHandler.closeAndroidDriver();
+                androidStepHandler.androidTouchHandler.stopTouch(iDevice);
                 androidStepHandler.sendStatus();
                 AndroidDeviceLocalStatus.finishError(udId);
                 return;
@@ -212,6 +219,7 @@ public class AndroidTestTaskBootThread extends Thread {
             //电量过低退出测试
             if (androidStepHandler.getBattery()) {
                 androidStepHandler.closeAndroidDriver();
+                androidStepHandler.androidTouchHandler.stopTouch(iDevice);
                 androidStepHandler.sendStatus();
                 AndroidDeviceLocalStatus.finish(udId);
                 return;
@@ -238,6 +246,7 @@ public class AndroidTestTaskBootThread extends Thread {
             if (startTestSuccess) {
                 AndroidDeviceLocalStatus.finish(udId);
                 androidStepHandler.closeAndroidDriver();
+                androidStepHandler.androidTouchHandler.stopTouch(iDevice);
             }
             androidStepHandler.sendStatus();
             finished.release();

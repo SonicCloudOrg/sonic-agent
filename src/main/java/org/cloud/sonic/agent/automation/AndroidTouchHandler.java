@@ -54,7 +54,8 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, String.format("down %d %d\n", x, y));
                 writeToOutputStream(iDevice, "up\n");
             }
-            case TouchMode.ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
+            case TouchMode.ADB ->
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
             default -> throw new IllegalStateException("Unexpected value: " + touchMode);
         }
     }
@@ -70,7 +71,8 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case TouchMode.ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
+            case TouchMode.ADB ->
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
             default -> throw new IllegalStateException("Unexpected value: " + touchMode);
         }
     }
@@ -82,7 +84,8 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, String.format("move %d %d\n", x2, y2));
                 writeToOutputStream(iDevice, "up\n");
             }
-            case TouchMode.ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            case TouchMode.ADB ->
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
             default -> throw new IllegalStateException("Unexpected value: " + touchMode);
         }
     }
@@ -101,6 +104,9 @@ public class AndroidTouchHandler {
     }
 
     public void startTouch(IDevice iDevice) {
+        if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
+            AndroidDeviceBridgeTool.pressKey(iDevice, 3);
+        }
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
                 .replaceAll("package:", "")
                 .replaceAll("\n", "")

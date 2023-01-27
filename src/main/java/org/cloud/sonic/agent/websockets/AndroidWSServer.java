@@ -119,9 +119,6 @@ public class AndroidWSServer implements IAndroidWSServer {
 
         AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SonicServiceActivity");
         AndroidAPKMap.getMap().put(udId, true);
-        if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
-            AndroidDeviceBridgeTool.pressKey(iDevice, 3);
-        }
 
         androidTouchHandler.startTouch(iDevice);
 
