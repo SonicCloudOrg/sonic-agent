@@ -22,8 +22,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
@@ -105,7 +105,7 @@ public class TransportClient extends WebSocketClient {
                         if (isEnableAndroid) {
                             IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
                             for (IDevice d : iDevices) {
-                                String status = AndroidDeviceManagerMap.getMap().get(d.getSerialNumber());
+                                String status = AndroidDeviceManagerMap.getStatusMap().get(d.getSerialNumber());
                                 if (status != null) {
                                     AndroidDeviceLocalStatus.send(d.getSerialNumber(), status);
                                 } else {

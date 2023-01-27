@@ -18,7 +18,7 @@
 package org.cloud.sonic.agent.tests.ios;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;

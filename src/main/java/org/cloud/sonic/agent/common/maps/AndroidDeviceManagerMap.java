@@ -11,7 +11,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AndroidDeviceManagerMap {
     private static Map<String, String> deviceStatusMap = new ConcurrentHashMap<String, String>();
 
-    public static Map<String, String> getMap() {
+    public static Map<String, String> getStatusMap() {
         return deviceStatusMap;
+    }
+
+    private static Map<String, Integer> rotationStatusMap = new ConcurrentHashMap<>();
+
+    public static Map<String, Integer> getRotationMap() {
+        return rotationStatusMap;
     }
 }

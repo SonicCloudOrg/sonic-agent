@@ -18,7 +18,7 @@
 package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidSupplyTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

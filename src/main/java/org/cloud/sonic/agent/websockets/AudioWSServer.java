@@ -69,7 +69,7 @@ public class AudioWSServer {
             }
         }
         if (!isInstall) {
-            logger.info("等待安装超时！");
+            logger.info("Waiting for apk install timeout!");
         } else {
             startAudio(session);
         }

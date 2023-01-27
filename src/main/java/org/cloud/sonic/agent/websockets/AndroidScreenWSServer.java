@@ -20,16 +20,16 @@ package org.cloud.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import com.android.ddmlib.IShellOutputReceiver;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
+import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tests.android.scrcpy.ScrcpyServerUtil;
+import org.cloud.sonic.agent.tests.handlers.AndroidMonitorHandler;
 import org.cloud.sonic.agent.tools.BytesTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -39,32 +39,30 @@ import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
+@Slf4j
 @ServerEndpoint(value = "/websockets/android/screen/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class AndroidScreenWSServer implements IAndroidWSServer {
-
-    private final Logger logger = LoggerFactory.getLogger(AndroidScreenWSServer.class);
     @Value("${sonic.agent.key}")
     private String key;
-    private Map<Session, Thread> rotationMap = new ConcurrentHashMap<>();
-    private Map<Session, Integer> rotationStatusMap = new ConcurrentHashMap<>();
-    private Map<Session, String> typeMap = new ConcurrentHashMap<>();
-    private Map<Session, String> picMap = new ConcurrentHashMap<>();
+    private Map<String, String> typeMap = new ConcurrentHashMap<>();
+    private Map<String, String> picMap = new ConcurrentHashMap<>();
+
+    private AndroidMonitorHandler androidMonitorHandler = new AndroidMonitorHandler();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
         if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
-            logger.info("Auth Failed!");
+            log.info("Auth Failed!");
             return;
         }
         session.getUserProperties().put("udId", udId);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
-            logger.info("Target device is not connecting, please check the connection.");
+            log.info("Target device is not connecting, please check the connection.");
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
@@ -80,7 +78,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             }
         }
         if (!isInstall) {
-            logger.info("等待安装超时！");
+            log.info("Waiting for apk install timeout!");
             removeUdIdMapAndSet(session);
         }
     }
@@ -92,7 +90,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
 
     @OnError
     public void onError(Session session, Throwable error) {
-        logger.error(error.getMessage());
+        log.error(error.getMessage());
         error.printStackTrace();
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
@@ -102,59 +100,27 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info("{} send: {}", session.getId(), msg);
+        log.info("{} send: {}", session.getId(), msg);
+        String udId = session.getUserProperties().get("udId").toString();
         switch (msg.getString("type")) {
             case "switch" -> {
-                typeMap.put(session, msg.getString("detail"));
-                if (rotationMap.get(session) == null) {
-                    IDevice iDevice = udIdMap.get(session);
-                    if (iDevice != null) {
-                        String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
-                                .replaceAll("package:", "")
-                                .replaceAll("\n", "")
-                                .replaceAll("\t", "");
-
-                        Thread rotationPro = new Thread(() -> {
-                            try {
-                                //开始启动
-                                iDevice.executeShellCommand(String.format("CLASSPATH=%s exec app_process /system/bin org.cloud.sonic.android.plugin.SonicPluginMonitorService", path)
-                                        , new IShellOutputReceiver() {
-                                            @Override
-                                            public void addOutput(byte[] bytes, int i, int i1) {
-                                                String res = new String(bytes, i, i1).replaceAll("\n", "").replaceAll("\r", "");
-                                                logger.info(iDevice.getSerialNumber() + " rotation: " + res);
-                                                rotationStatusMap.put(session, Integer.parseInt(res));
-                                                JSONObject rotationJson = new JSONObject();
-                                                rotationJson.put("msg", "rotation");
-                                                rotationJson.put("value", Integer.parseInt(res) * 90);
-                                                BytesTool.sendText(session, rotationJson.toJSONString());
-                                                startScreen(session);
-                                            }
-
-                                            @Override
-                                            public void flush() {
-                                            }
-
-                                            @Override
-                                            public boolean isCancelled() {
-                                                return false;
-                                            }
-                                        }, 0, TimeUnit.MILLISECONDS);
-                            } catch (Exception e) {
-                                logger.info("{} rotation service stopped."
-                                        , iDevice.getSerialNumber());
-                                logger.error(e.getMessage());
-                            }
-                        });
-                        rotationPro.start();
-                        rotationMap.put(session, rotationPro);
-                    }
+                typeMap.put(udId, msg.getString("detail"));
+                IDevice iDevice = udIdMap.get(session);
+                if (!androidMonitorHandler.isMonitorRunning(iDevice)) {
+                    androidMonitorHandler.startMonitor(iDevice, res -> {
+                        AndroidDeviceManagerMap.getRotationMap().put(udId, Integer.parseInt(res));
+                        JSONObject rotationJson = new JSONObject();
+                        rotationJson.put("msg", "rotation");
+                        rotationJson.put("value", Integer.parseInt(res) * 90);
+                        BytesTool.sendText(session, rotationJson.toJSONString());
+                        startScreen(session);
+                    });
                 } else {
                     startScreen(session);
                 }
             }
             case "pic" -> {
-                picMap.put(session, msg.getString("detail"));
+                picMap.put(udId, msg.getString("detail"));
                 startScreen(session);
             }
         }
@@ -175,11 +141,11 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                 }
                 while (ScreenMap.getMap().get(session) != null);
             }
-            typeMap.putIfAbsent(session, "scrcpy");
-            switch (typeMap.get(session)) {
+            typeMap.putIfAbsent(iDevice.getSerialNumber(), "scrcpy");
+            switch (typeMap.get(iDevice.getSerialNumber())) {
                 case "scrcpy" -> {
                     ScrcpyServerUtil scrcpyServerUtil = new ScrcpyServerUtil();
-                    Thread scrcpyThread = scrcpyServerUtil.start(iDevice.getSerialNumber(), rotationStatusMap.get(session), session);
+                    Thread scrcpyThread = scrcpyServerUtil.start(iDevice.getSerialNumber(), AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber()), session);
                     ScreenMap.getMap().put(session, scrcpyThread);
                 }
                 case "minicap" -> {
@@ -187,8 +153,8 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                     AtomicReference<String[]> banner = new AtomicReference<>(new String[24]);
                     Thread miniCapThread = miniCapUtil.start(
                             iDevice.getSerialNumber(), banner, null,
-                            picMap.get(session) == null ? "high" : picMap.get(session),
-                            rotationStatusMap.get(session), session
+                            picMap.get(iDevice.getSerialNumber()) == null ? "high" : picMap.get(iDevice.getSerialNumber()),
+                            AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber()), session
                     );
                     ScreenMap.getMap().put(session, miniCapThread);
                 }
@@ -201,16 +167,15 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
 
 
     private void exit(Session session) {
+        String udId = session.getUserProperties().get("udId").toString();
+        androidMonitorHandler.stopMonitor(udIdMap.get(session));
         removeUdIdMapAndSet(session);
-        if (rotationMap.get(session) != null) {
-            rotationMap.get(session).interrupt();
-        }
-        rotationMap.remove(session);
+        AndroidDeviceManagerMap.getRotationMap().remove(udId);
         if (ScreenMap.getMap().get(session) != null) {
             ScreenMap.getMap().get(session).interrupt();
         }
-        typeMap.remove(session);
-        picMap.remove(session);
+        typeMap.remove(udId);
+        picMap.remove(udId);
         try {
             session.close();
         } catch (IOException e) {

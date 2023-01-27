@@ -17,8 +17,8 @@
  */
 package org.cloud.sonic.agent.tests.script;
 
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 
 public interface GroovyScript {
     void runAndroid(AndroidStepHandler androidStepHandler, String script);
