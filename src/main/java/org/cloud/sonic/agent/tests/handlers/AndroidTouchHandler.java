@@ -21,6 +21,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.tools.PortTool;
 
 import java.io.IOException;
@@ -38,6 +39,9 @@ public class AndroidTouchHandler {
     private final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
     private int touchMode = TouchMode.SONIC_APK;
 
+    private int width;
+    private int height;
+
     public interface TouchMode {
         int SONIC_APK = 1;
         int ADB = 2;
@@ -51,7 +55,8 @@ public class AndroidTouchHandler {
     public void tap(IDevice iDevice, int x, int y) {
         switch (touchMode) {
             case TouchMode.SONIC_APK -> {
-                writeToOutputStream(iDevice, String.format("down %d %d\n", x, y));
+                int[] re = transferWithRotation(iDevice, x, y);
+                writeToOutputStream(iDevice, String.format("down %d %d\n", re[0], re[1]));
                 writeToOutputStream(iDevice, "up\n");
             }
             case TouchMode.ADB ->
@@ -90,6 +95,18 @@ public class AndroidTouchHandler {
         }
     }
 
+    private int[] transferWithRotation(IDevice iDevice, int x, int y) {
+        int directionStatus = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
+        if (directionStatus != 0 && directionStatus != 2) {
+            x = directionStatus == 1 ? width - x : x - width * 3;
+            y = directionStatus == 1 ? y : -y;
+        } else {
+            x = directionStatus == 2 ? width - x : x;
+            y = directionStatus == 2 ? height - y : y;
+        }
+        return new int[]{x, y};
+    }
+
     public void writeToOutputStream(IDevice iDevice, String msg) {
         OutputStream outputStream = outputMap.get(iDevice.getSerialNumber());
         if (outputStream != null) {
@@ -104,6 +121,10 @@ public class AndroidTouchHandler {
     }
 
     public void startTouch(IDevice iDevice) {
+        stopTouch(iDevice);
+        String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
+        width = Integer.parseInt(size.split("x")[0]);
+        height = Integer.parseInt(size.split("x")[1]);
         if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
             AndroidDeviceBridgeTool.pressKey(iDevice, 3);
         }

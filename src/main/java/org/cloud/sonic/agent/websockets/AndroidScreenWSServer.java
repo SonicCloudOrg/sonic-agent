@@ -108,7 +108,6 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                 IDevice iDevice = udIdMap.get(session);
                 if (!androidMonitorHandler.isMonitorRunning(iDevice)) {
                     androidMonitorHandler.startMonitor(iDevice, res -> {
-                        AndroidDeviceManagerMap.getRotationMap().put(udId, Integer.parseInt(res));
                         JSONObject rotationJson = new JSONObject();
                         rotationJson.put("msg", "rotation");
                         rotationJson.put("value", Integer.parseInt(res) * 90);

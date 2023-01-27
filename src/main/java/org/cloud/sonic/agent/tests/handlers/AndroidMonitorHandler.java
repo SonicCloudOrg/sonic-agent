@@ -4,6 +4,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,16 +12,16 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class AndroidMonitorHandler {
-    private Map<String, Thread> rotationMap = new ConcurrentHashMap<>();
+    private final Map<String, Thread> rotationMap = new ConcurrentHashMap<>();
 
     public interface IMonitorOutputReceiver {
         void output(String res);
     }
 
-    class MonitorOutputReceiver implements IShellOutputReceiver {
+    public class MonitorOutputReceiver implements IShellOutputReceiver {
 
-        private IDevice iDevice;
-        private IMonitorOutputReceiver receiver;
+        private final IDevice iDevice;
+        private final IMonitorOutputReceiver receiver;
 
         public MonitorOutputReceiver(IDevice iDevice, IMonitorOutputReceiver receiver) {
             this.iDevice = iDevice;
@@ -31,6 +32,7 @@ public class AndroidMonitorHandler {
         public void addOutput(byte[] data, int offset, int length) {
             String res = new String(data, offset, length).replaceAll("\n", "").replaceAll("\r", "");
             log.info(iDevice.getSerialNumber() + " rotation: " + res);
+            AndroidDeviceManagerMap.getRotationMap().put(iDevice.getSerialNumber(), Integer.parseInt(res));
             receiver.output(res);
         }
 
@@ -50,6 +52,7 @@ public class AndroidMonitorHandler {
     }
 
     public void startMonitor(IDevice iDevice, IMonitorOutputReceiver receiver) {
+        stopMonitor(iDevice);
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
                 .replaceAll("package:", "")
                 .replaceAll("\n", "")
