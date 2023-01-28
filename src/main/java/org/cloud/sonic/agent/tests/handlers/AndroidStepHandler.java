@@ -29,6 +29,7 @@ import org.cloud.sonic.agent.common.enums.SonicEnum;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
@@ -1559,7 +1560,10 @@ public class AndroidStepHandler {
 
     public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
         int[] pos = new int[2];
-        int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+        Integer screenOrientation = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
+        if (screenOrientation == null) {
+            screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+        }
 
         int width = screenWindowPosition[2], height = screenWindowPosition[3];
 
@@ -1863,7 +1867,10 @@ public class AndroidStepHandler {
 
     private int[] computedPoint(double x, double y) {
         if (x <= 1 && y <= 1) {
-            int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+            Integer screenOrientation = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
+            if (screenOrientation == null) {
+                screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+            }
             String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
             String[] winSize = size.split("x");
             if (screenOrientation == 1 || screenOrientation == 3) {

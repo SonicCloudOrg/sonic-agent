@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
@@ -38,9 +39,7 @@ public class AndroidTouchHandler {
     private final Map<String, OutputStream> outputMap = new ConcurrentHashMap<>();
     private final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
     private int touchMode = TouchMode.SONIC_APK;
-
-    private int width;
-    private int height;
+    private final Map<String, int[]> sizeMap = new ConcurrentHashMap<>();
 
     public interface TouchMode {
         int SONIC_APK = 1;
@@ -97,14 +96,26 @@ public class AndroidTouchHandler {
 
     private int[] transferWithRotation(IDevice iDevice, int x, int y) {
         int directionStatus = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
-        if (directionStatus != 0 && directionStatus != 2) {
-            x = directionStatus == 1 ? width - x : x - width * 3;
-            y = directionStatus == 1 ? y : -y;
+        int _x;
+        int _y;
+        int width;
+        int height;
+        if (sizeMap.get(iDevice.getSerialNumber()) != null) {
+            width = sizeMap.get(iDevice.getSerialNumber())[0];
+            height = sizeMap.get(iDevice.getSerialNumber())[1];
         } else {
-            x = directionStatus == 2 ? width - x : x;
-            y = directionStatus == 2 ? height - y : y;
+            String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
+            width = Integer.parseInt(size.split("x")[0]);
+            height = Integer.parseInt(size.split("x")[1]);
         }
-        return new int[]{x, y};
+        if (directionStatus == 1 || directionStatus == 3) {
+            _x = directionStatus == 1 ? width - y : x - width * 3;
+            _y = directionStatus == 1 ? x : -y;
+        } else {
+            _x = directionStatus == 2 ? width - x : x;
+            _y = directionStatus == 2 ? height - y : y;
+        }
+        return new int[]{_x, _y};
     }
 
     public void writeToOutputStream(IDevice iDevice, String msg) {
@@ -123,8 +134,7 @@ public class AndroidTouchHandler {
     public void startTouch(IDevice iDevice) {
         stopTouch(iDevice);
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
-        width = Integer.parseInt(size.split("x")[0]);
-        height = Integer.parseInt(size.split("x")[1]);
+        sizeMap.put(iDevice.getSerialNumber(), Arrays.stream(size.split("x")).mapToInt(Integer::parseInt).toArray());
         if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
             AndroidDeviceBridgeTool.pressKey(iDevice, 3);
         }
@@ -220,6 +230,7 @@ public class AndroidTouchHandler {
             }
             outputMap.remove(udId);
             AndroidDeviceBridgeTool.removeForward(iDevice, finalTouchPort, "sonictouchservice");
+            sizeMap.remove(udId);
         });
         touchSocketThread.start();
         int w = 0;
