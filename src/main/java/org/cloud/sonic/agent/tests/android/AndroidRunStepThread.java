@@ -72,7 +72,6 @@ public class AndroidRunStepThread extends RunStepThread {
             try {
                 stepHandlers.runStep(step, handleContext, this);
             } catch (Throwable e) {
-                e.printStackTrace();
                 log.info(e.getMessage());
                 break;
             }

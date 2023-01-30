@@ -18,7 +18,7 @@ public class AndroidMonitorHandler {
         void output(String res);
     }
 
-    public class MonitorOutputReceiver implements IShellOutputReceiver {
+    public static class MonitorOutputReceiver implements IShellOutputReceiver {
 
         private final IDevice iDevice;
         private final IMonitorOutputReceiver receiver;
