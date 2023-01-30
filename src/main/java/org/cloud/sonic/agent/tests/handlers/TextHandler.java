@@ -19,7 +19,9 @@ package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSONObject;
 
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Random;
 
 /**
  * @author Eason
@@ -42,6 +44,21 @@ public class TextHandler {
                 text = text.substring(0, text.indexOf("}}") + 2);
                 if (globalParams.getString(middle) != null) {
                     text = text.replace("{{" + middle + "}}", globalParams.getString(middle));
+                } else {
+                    if (middle.matches("random\\[\\d\\]")) {
+                        int t = Integer.parseInt(middle.replace("random[", "").replace("]", ""));
+                        int digit = (int) Math.pow(10, t - 1);
+                        int rs = new Random().nextInt(digit * 10);
+                        if (rs < digit) {
+                            rs += digit;
+                        }
+                        text = text.replace("{{" + middle + "}}", rs + "");
+                    }
+                    if (middle.matches("random\\[\\d-\\d\\]")) {
+                        String t = middle.replace("random[", "").replace("]", "");
+                        int[] size = Arrays.stream(t.split("-")).mapToInt(Integer::parseInt).toArray();
+                        text = text.replace("{{" + middle + "}}", (int) (Math.random() * (size[1] - size[0] + 1)) + size[0] + "");
+                    }
                 }
                 text = text + replaceTrans(child, globalParams);
             }
