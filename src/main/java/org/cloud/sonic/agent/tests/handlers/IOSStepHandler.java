@@ -1428,7 +1428,7 @@ public class IOSStepHandler {
             case "pocoLongPress" ->
                     pocoLongPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue")
-                            , Integer.parseInt(step.getString("content")));
+                            , step.getInteger("content"));
             case "pocoSwipe" ->
                     pocoSwipe(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
