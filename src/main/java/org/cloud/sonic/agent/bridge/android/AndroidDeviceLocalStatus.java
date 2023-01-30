@@ -54,9 +54,9 @@ public class AndroidDeviceLocalStatus {
      */
     public static boolean startTest(String udId) {
         synchronized (AndroidDeviceLocalStatus.class) {
-            if (AndroidDeviceManagerMap.getMap().get(udId) == null) {
+            if (AndroidDeviceManagerMap.getStatusMap().get(udId) == null) {
                 send(udId, DeviceStatus.TESTING);
-                AndroidDeviceManagerMap.getMap().put(udId, DeviceStatus.TESTING);
+                AndroidDeviceManagerMap.getStatusMap().put(udId, DeviceStatus.TESTING);
                 return true;
             } else {
                 return false;
@@ -73,7 +73,7 @@ public class AndroidDeviceLocalStatus {
      */
     public static void startDebug(String udId) {
         send(udId, DeviceStatus.DEBUGGING);
-        AndroidDeviceManagerMap.getMap().put(udId, DeviceStatus.DEBUGGING);
+        AndroidDeviceManagerMap.getStatusMap().put(udId, DeviceStatus.DEBUGGING);
     }
 
     /**
@@ -85,13 +85,13 @@ public class AndroidDeviceLocalStatus {
      */
     public static void finish(String udId) {
         if (AndroidDeviceBridgeTool.getIDeviceByUdId(udId) != null
-                && AndroidDeviceManagerMap.getMap().get(udId) != null) {
-            if (AndroidDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.DEBUGGING)
-                    || AndroidDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.TESTING)) {
+                && AndroidDeviceManagerMap.getStatusMap().get(udId) != null) {
+            if (AndroidDeviceManagerMap.getStatusMap().get(udId).equals(DeviceStatus.DEBUGGING)
+                    || AndroidDeviceManagerMap.getStatusMap().get(udId).equals(DeviceStatus.TESTING)) {
                 send(udId, DeviceStatus.ONLINE);
             }
         }
-        AndroidDeviceManagerMap.getMap().remove(udId);
+        AndroidDeviceManagerMap.getStatusMap().remove(udId);
     }
 
     /**
@@ -103,12 +103,12 @@ public class AndroidDeviceLocalStatus {
      */
     public static void finishError(String udId) {
         if (AndroidDeviceBridgeTool.getIDeviceByUdId(udId) != null
-                && AndroidDeviceManagerMap.getMap().get(udId) != null) {
-            if (AndroidDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.DEBUGGING)
-                    || AndroidDeviceManagerMap.getMap().get(udId).equals(DeviceStatus.TESTING)) {
+                && AndroidDeviceManagerMap.getStatusMap().get(udId) != null) {
+            if (AndroidDeviceManagerMap.getStatusMap().get(udId).equals(DeviceStatus.DEBUGGING)
+                    || AndroidDeviceManagerMap.getStatusMap().get(udId).equals(DeviceStatus.TESTING)) {
                 send(udId, DeviceStatus.ERROR);
             }
         }
-        AndroidDeviceManagerMap.getMap().remove(udId);
+        AndroidDeviceManagerMap.getStatusMap().remove(udId);
     }
 }

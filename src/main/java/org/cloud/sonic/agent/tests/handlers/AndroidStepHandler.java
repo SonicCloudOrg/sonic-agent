@@ -15,7 +15,7 @@
  *   You should have received a copy of the GNU Affero General Public License
  *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.cloud.sonic.agent.automation;
+package org.cloud.sonic.agent.tests.handlers;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -29,11 +29,11 @@ import org.cloud.sonic.agent.common.enums.SonicEnum;
 import org.cloud.sonic.agent.common.interfaces.ErrorType;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.common.RunStepThread;
-import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tests.script.GroovyScript;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.BytesTool;
@@ -603,7 +603,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("长按" + des);
         handleContext.setDetail("长按坐标" + time + "毫秒 (" + point[0] + "," + point[1] + ")");
         try {
-            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", point[0], point[1], point[0], point[1], time));
+            AndroidTouchHandler.longPress(iDevice, point[0], point[1], time);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -632,7 +632,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("点击" + des);
         handleContext.setDetail("点击坐标(" + point[0] + "," + point[1] + ")");
         try {
-            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", point[0], point[1]));
+            AndroidTouchHandler.tap(iDevice, point[0], point[1]);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -648,7 +648,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("滑动拖拽" + des1 + "到" + des2);
         handleContext.setDetail("拖动坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
         try {
-            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", point1[0], point1[1], point2[0], point2[1], 300));
+            AndroidTouchHandler.swipe(iDevice, point1[0], point1[1], point2[0], point2[1]);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -664,7 +664,7 @@ public class AndroidStepHandler {
             int y2 = webElement2.getRect().getY();
             handleContext.setStepDes("滑动拖拽" + des + "到" + des2);
             handleContext.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
-            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -677,7 +677,7 @@ public class AndroidStepHandler {
             AndroidElement webElement = findEle(selector, pathValue);
             int x = webElement.getRect().getX();
             int y = webElement.getRect().getY();
-            AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
+            AndroidTouchHandler.longPress(iDevice, x, y, time);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -858,7 +858,7 @@ public class AndroidStepHandler {
         }
         if (findResult != null) {
             try {
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", findResult.getX(), findResult.getY()));
+                AndroidTouchHandler.tap(iDevice, findResult.getX(), findResult.getY());
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
                 handleContext.setE(e);
@@ -1112,19 +1112,19 @@ public class AndroidStepHandler {
                             if (random >= finalSystemEvent && random < (finalSystemEvent + finalTapEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
+                                AndroidTouchHandler.tap(iDevice, x, y);
                             }
                             if (random >= (finalSystemEvent + finalTapEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, (new Random().nextInt(3) + 1) * 1000));
+                                AndroidTouchHandler.longPress(iDevice, x, y, (new Random().nextInt(3) + 1) * 1000);
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent)) {
                                 int x1 = new Random().nextInt(width - 60) + 60;
                                 int y1 = new Random().nextInt(height - 80) + 80;
                                 int x2 = new Random().nextInt(width - 60) + 60;
                                 int y2 = new Random().nextInt(height - 80) + 80;
-                                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 200));
+                                AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2);
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent)) {
                                 int a = new Random().nextInt(2);
@@ -1434,7 +1434,7 @@ public class AndroidStepHandler {
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", realCoordinates[0], realCoordinates[1]));
+                AndroidTouchHandler.tap(iDevice, realCoordinates[0], realCoordinates[1]);
             } else {
                 throw new SonicRespException(value + " not found!");
             }
@@ -1451,7 +1451,7 @@ public class AndroidStepHandler {
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates[0], realCoordinates[1], realCoordinates[0], realCoordinates[1], time));
+                AndroidTouchHandler.longPress(iDevice, realCoordinates[0], realCoordinates[1], time);
             } else {
                 throw new SonicRespException(value + " not found!");
             }
@@ -1472,7 +1472,7 @@ public class AndroidStepHandler {
 
                 List<Float> pos2 = w2.getPayload().getPos();
                 int[] realCoordinate2 = getTheRealCoordinatesOfPoco(pos2.get(0), pos2.get(1));
-                AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1], 300));
+                AndroidTouchHandler.swipe(iDevice, realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1]);
             } else {
                 throw new SonicRespException(value + " or " + value2 + " not found!");
             }
@@ -1559,7 +1559,10 @@ public class AndroidStepHandler {
 
     public int[] getTheRealCoordinatesOfPoco(double pocoX, double pocoY) {
         int[] pos = new int[2];
-        int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+        Integer screenOrientation = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
+        if (screenOrientation == null) {
+            screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+        }
 
         int width = screenWindowPosition[2], height = screenWindowPosition[3];
 
@@ -1841,6 +1844,10 @@ public class AndroidStepHandler {
         text = TextHandler.replaceTrans(text, globalParams);
         handleContext.setStepDes("Sonic输入法输入文本");
         handleContext.setDetail("输入" + text);
+        if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
+            handleContext.setE(new SonicRespException("Sonic Apk install failed."));
+            return;
+        }
         String currentIme = AndroidDeviceBridgeTool.executeCommand(iDevice, "settings get secure default_input_method");
         if (!currentIme.contains("org.cloud.sonic.android/.keyboard.SonicKeyboard")) {
             AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
@@ -1859,7 +1866,10 @@ public class AndroidStepHandler {
 
     private int[] computedPoint(double x, double y) {
         if (x <= 1 && y <= 1) {
-            int screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+            Integer screenOrientation = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
+            if (screenOrientation == null) {
+                screenOrientation = AndroidDeviceBridgeTool.getOrientation(iDevice);
+            }
             String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
             String[] winSize = size.split("x");
             if (screenOrientation == 1 || screenOrientation == 3) {

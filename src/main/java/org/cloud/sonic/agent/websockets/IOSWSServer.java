@@ -19,7 +19,7 @@ package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
@@ -81,14 +81,14 @@ public class IOSWSServer implements IIOSWSServer {
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
         if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
-            logger.info("拦截访问！");
+            logger.info("Auth Failed!");
             return;
         }
 
         session.getUserProperties().put("udId", udId);
         boolean lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
         if (!lockSuccess) {
-            logger.info("30s内获取设备锁失败，请确保设备无人使用");
+            logger.info("Fail to get device lock... please make sure device is not busy.");
             return;
         }
         logger.info("ios lock udId：{}", udId);
@@ -103,7 +103,7 @@ public class IOSWSServer implements IIOSWSServer {
 
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
-            logger.info("设备未连接，请检查！");
+            logger.info("Target device is not connecting, please check the connection.");
             return;
         }
         saveUdIdMapAndSet(session, udId);

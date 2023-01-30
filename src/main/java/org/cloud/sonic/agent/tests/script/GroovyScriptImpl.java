@@ -19,8 +19,8 @@ package org.cloud.sonic.agent.tests.script;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
-import org.cloud.sonic.agent.automation.IOSStepHandler;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 
 public class GroovyScriptImpl implements GroovyScript {
     @Override

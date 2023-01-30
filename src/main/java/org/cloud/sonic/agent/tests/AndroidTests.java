@@ -19,7 +19,7 @@ package org.cloud.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.automation.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;

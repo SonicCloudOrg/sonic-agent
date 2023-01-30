@@ -51,13 +51,13 @@ public class IOSScreenWSServer implements IIOSWSServer {
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws InterruptedException {
         if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
-            log.info("拦截访问！");
+            log.info("Auth Failed!");
             return;
         }
 
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
-            log.info("设备未连接，请检查！");
+            log.info("Target device is not connecting, please check the connection.");
             return;
         }
         saveUdIdMapAndSet(session, udId);
