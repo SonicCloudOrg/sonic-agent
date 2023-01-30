@@ -31,9 +31,11 @@ public class AndroidMonitorHandler {
         @Override
         public void addOutput(byte[] data, int offset, int length) {
             String res = new String(data, offset, length).replaceAll("\n", "").replaceAll("\r", "");
-            log.info(iDevice.getSerialNumber() + " rotation: " + res);
-            AndroidDeviceManagerMap.getRotationMap().put(iDevice.getSerialNumber(), Integer.parseInt(res));
-            receiver.output(res);
+            if (res.length() > 0) {
+                log.info(iDevice.getSerialNumber() + " rotation: " + res);
+                AndroidDeviceManagerMap.getRotationMap().put(iDevice.getSerialNumber(), Integer.parseInt(res));
+                receiver.output(res);
+            }
         }
 
         @Override

@@ -36,10 +36,10 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class AndroidTouchHandler {
-    private final Map<String, OutputStream> outputMap = new ConcurrentHashMap<>();
-    private final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
-    private int touchMode = TouchMode.SONIC_APK;
-    private final Map<String, int[]> sizeMap = new ConcurrentHashMap<>();
+    private static final Map<String, OutputStream> outputMap = new ConcurrentHashMap<>();
+    private static final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
+    private static int touchMode = TouchMode.SONIC_APK;
+    private static final Map<String, int[]> sizeMap = new ConcurrentHashMap<>();
 
     public interface TouchMode {
         int SONIC_APK = 1;
@@ -47,15 +47,20 @@ public class AndroidTouchHandler {
         int APPIUM_SERVER = 3;
     }
 
-    public void switchTouchMode(int mode) {
+    public static void switchTouchMode(int mode) {
         touchMode = mode;
     }
 
-    public void tap(IDevice iDevice, int x, int y) {
+    public static void tap(IDevice iDevice, int x, int y) {
         switch (touchMode) {
             case TouchMode.SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
                 writeToOutputStream(iDevice, String.format("down %d %d\n", re[0], re[1]));
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 writeToOutputStream(iDevice, "up\n");
             }
             case TouchMode.ADB ->
@@ -64,10 +69,11 @@ public class AndroidTouchHandler {
         }
     }
 
-    public void longPress(IDevice iDevice, int x, int y, int time) {
+    public static void longPress(IDevice iDevice, int x, int y, int time) {
         switch (touchMode) {
             case TouchMode.SONIC_APK -> {
-                writeToOutputStream(iDevice, String.format("down %d %d\n", x, y));
+                int[] re = transferWithRotation(iDevice, x, y);
+                writeToOutputStream(iDevice, String.format("down %d %d\n", re[0], re[1]));
                 try {
                     Thread.sleep(time);
                 } catch (InterruptedException e) {
@@ -81,11 +87,23 @@ public class AndroidTouchHandler {
         }
     }
 
-    public void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) {
+    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) {
         switch (touchMode) {
             case TouchMode.SONIC_APK -> {
-                writeToOutputStream(iDevice, String.format("down %d %d\n", x1, y1));
-                writeToOutputStream(iDevice, String.format("move %d %d\n", x2, y2));
+                int[] re1 = transferWithRotation(iDevice, x1, y1);
+                int[] re2 = transferWithRotation(iDevice, x2, y2);
+                writeToOutputStream(iDevice, String.format("down %d %d\n", re1[0], re1[1]));
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                writeToOutputStream(iDevice, String.format("move %d %d\n", re2[0], re2[1]));
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 writeToOutputStream(iDevice, "up\n");
             }
             case TouchMode.ADB ->
@@ -94,7 +112,7 @@ public class AndroidTouchHandler {
         }
     }
 
-    private int[] transferWithRotation(IDevice iDevice, int x, int y) {
+    private static int[] transferWithRotation(IDevice iDevice, int x, int y) {
         int directionStatus = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
         int _x;
         int _y;
@@ -109,8 +127,8 @@ public class AndroidTouchHandler {
             height = Integer.parseInt(size.split("x")[1]);
         }
         if (directionStatus == 1 || directionStatus == 3) {
-            _x = directionStatus == 1 ? width - y : x - width * 3;
-            _y = directionStatus == 1 ? x : -y;
+            _x = directionStatus == 1 ? width - y : y - width * 3;
+            _y = directionStatus == 1 ? x : -x;
         } else {
             _x = directionStatus == 2 ? width - x : x;
             _y = directionStatus == 2 ? height - y : y;
@@ -118,7 +136,7 @@ public class AndroidTouchHandler {
         return new int[]{_x, _y};
     }
 
-    public void writeToOutputStream(IDevice iDevice, String msg) {
+    public static void writeToOutputStream(IDevice iDevice, String msg) {
         OutputStream outputStream = outputMap.get(iDevice.getSerialNumber());
         if (outputStream != null) {
             try {
@@ -128,10 +146,12 @@ public class AndroidTouchHandler {
                 log.info("write to apk failed cause by: {}, auto switch to adb touch mode...", e.getMessage());
                 switchTouchMode(TouchMode.ADB);
             }
+        } else {
+            log.info("{} write output stream is null.", iDevice.getSerialNumber());
         }
     }
 
-    public void startTouch(IDevice iDevice) {
+    public static void startTouch(IDevice iDevice) {
         stopTouch(iDevice);
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
         sizeMap.put(iDevice.getSerialNumber(), Arrays.stream(size.split("x")).mapToInt(Integer::parseInt).toArray());
@@ -248,7 +268,7 @@ public class AndroidTouchHandler {
         touchMap.put(udId, touchSocketThread);
     }
 
-    public void stopTouch(IDevice iDevice) {
+    public static void stopTouch(IDevice iDevice) {
         String udId = iDevice.getSerialNumber();
         if (outputMap.get(udId) != null) {
             try {

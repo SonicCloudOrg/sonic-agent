@@ -69,8 +69,6 @@ public class AndroidWSServer implements IAndroidWSServer {
     @Autowired
     private AgentManagerTool agentManagerTool;
 
-    private AndroidTouchHandler androidTouchHandler = new AndroidTouchHandler();
-
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
@@ -113,7 +111,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         AndroidDeviceBridgeTool.executeCommand(iDevice, "am start -n org.cloud.sonic.android/.SonicServiceActivity");
         AndroidAPKMap.getMap().put(udId, true);
 
-        androidTouchHandler.startTouch(iDevice);
+        AndroidTouchHandler.startTouch(iDevice);
 
         AndroidSupplyTool.startShare(udId, session);
 
@@ -201,7 +199,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             }
             case "scan" -> AndroidDeviceBridgeTool.pushToCamera(iDevice, msg.getString("url"));
             case "text" -> AndroidDeviceBridgeTool.executeCommand(iDevice, "am broadcast -a SONIC_KEYBOARD --es msg \"" + msg.getString("detail") + "\"");
-            case "touch" -> androidTouchHandler.writeToOutputStream(iDevice, msg.getString("detail"));
+            case "touch" -> AndroidTouchHandler.writeToOutputStream(iDevice, msg.getString("detail"));
             case "keyEvent" -> AndroidDeviceBridgeTool.pressKey(iDevice, msg.getInteger("detail"));
             case "pullFile" -> {
                 JSONObject result = new JSONObject();
@@ -410,7 +408,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidSupplyTool.stopPerfmon(iDevice.getSerialNumber());
             SGMTool.stopProxy(iDevice.getSerialNumber());
             AndroidAPKMap.getMap().remove(iDevice.getSerialNumber());
-            androidTouchHandler.stopTouch(iDevice);
+            AndroidTouchHandler.stopTouch(iDevice);
         }
         removeUdIdMapAndSet(session);
         WebSocketSessionMap.removeSession(session);
