@@ -17,9 +17,8 @@
  */
 package org.cloud.sonic.agent.tools;
 
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -29,13 +28,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 @Component
+@Slf4j
 public class SGMTool {
-    private static final Logger logger = LoggerFactory.getLogger(SGMTool.class);
-    private static String pFile = new File("plugins").getAbsolutePath();
-    private static File sgmBinary = new File(pFile + File.separator + "sonic-go-mitmproxy");
-    private static String sgm = sgmBinary.getAbsolutePath();
+    private static final String pFile = new File("plugins").getAbsolutePath();
+    private static final File sgmBinary = new File(pFile + File.separator + "sonic-go-mitmproxy");
+    private static final String sgm = sgmBinary.getAbsolutePath();
     private static String sgmVersion;
     @Value("${sonic.sgm}")
     private String ver;
@@ -51,7 +51,7 @@ public class SGMTool {
         sgmBinary.setReadable(true);
         List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgm));
         if (ver.size() == 0 || !BytesTool.versionCheck(sgmVersion, ver.get(0).replace("sonic-go-mitmproxy:", "").trim())) {
-            logger.info(String.format("Start sonic-go-mitmproxy failed! Please check sonic-go-mitmproxy version or use [chmod -R 777 %s], if still failed, you can try with [sudo]", pFile));
+            log.info(String.format("Start sonic-go-mitmproxy failed! Please check sonic-go-mitmproxy version or use [chmod -R 777 %s], if still failed, you can try with [sudo]", pFile));
             AgentManagerTool.stop();
         }
     }
@@ -83,28 +83,48 @@ public class SGMTool {
             }
             InputStreamReader inputStreamReader = new InputStreamReader(ps.getInputStream());
             BufferedReader stdInput = new BufferedReader(inputStreamReader);
-            String s;
-            while (true) {
+            Semaphore isFinish = new Semaphore(0);
+            new Thread(() -> {
+                String s;
+                while (true) {
+                    try {
+                        if ((s = stdInput.readLine()) == null) break;
+                    } catch (IOException e) {
+                        log.info(e.getMessage());
+                        break;
+                    }
+                    if (s.contains("Proxy start listen")) {
+                        try {
+                            Thread.sleep(300);
+                        } catch (InterruptedException ignored) {
+                        }
+                        isFinish.release();
+                    }
+                }
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    stdInput.close();
                 } catch (IOException e) {
-                    logger.info(e.getMessage());
-                    break;
+                    e.printStackTrace();
                 }
-                if (s.contains("Proxy start listen")) {
-                    Thread.sleep(300);
-                    break;
+                try {
+                    inputStreamReader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            }
-            try {
-                stdInput.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                inputStreamReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+                log.info("{} web proxy done.", udId);
+            }).start();
+            int wait = 0;
+            while (!isFinish.tryAcquire()) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+                wait++;
+                if (wait >= 120) {
+                    log.info("{} web proxy start timeout!", udId);
+                    return;
+                }
             }
             GlobalProcessMap.getMap().put(processName, ps);
         } catch (Exception e) {
