@@ -268,7 +268,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                     , "-r", "-t", "-g");
         } catch (InstallException e) {
-            if (e.getMessage().contains("Unknown option: -g")) {
+            if (e.getMessage() != null && e.getMessage().contains("Unknown option: -g")) {
                 try {
                     iDevice.installPackage(path,
                             true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
@@ -456,7 +456,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         int p = getScreen(iDevice);
         try {
             switch (type) {
-                case "abort" -> executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0");
+                case "abort" ->
+                        executeCommand(iDevice, "content insert --uri content://settings/system --bind name:s:accelerometer_rotation --bind value:i:0");
                 case "add" -> {
                     if (p == 3) {
                         p = 0;
