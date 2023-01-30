@@ -1343,7 +1343,7 @@ public class IOSStepHandler {
         JSONArray eleList = step.getJSONArray("elements");
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
-            case "stepHold" -> stepHold(handleContext, Integer.parseInt(step.getString("content")));
+            case "stepHold" -> stepHold(handleContext, step.getInteger("content"));
             case "siriCommand" -> siriCommand(handleContext, step.getString("content"));
             case "readText" -> readText(handleContext, step.getString("content"), step.getString("text"));
             case "clickByImg" -> clickByImg(handleContext, eleList.getJSONObject(0).getString("eleName")
@@ -1371,7 +1371,7 @@ public class IOSStepHandler {
                             , eleList.getJSONObject(0).getString("eleValue"));
             case "longPress" ->
                     longPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), Integer.parseInt(step.getString("content")));
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getInteger("content"));
             case "swipe" ->
                     swipePoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
@@ -1382,8 +1382,8 @@ public class IOSStepHandler {
                     tap(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
             case "longPressPoint" ->
                     longPressPoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
-                            , Integer.parseInt(step.getString("content")));
-            case "pause" -> pause(handleContext, Integer.parseInt(step.getString("content")));
+                            , step.getInteger("content"));
+            case "pause" -> pause(handleContext, step.getInteger("content"));
             case "checkImage" ->
                     checkImage(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                             , step.getDouble("content"));
@@ -1392,7 +1392,7 @@ public class IOSStepHandler {
             case "terminate" -> terminate(handleContext, step.getString("text"));
             case "install" -> install(handleContext, step.getString("text"));
             case "uninstall" -> uninstall(handleContext, step.getString("text"));
-            case "runBack" -> runBackground(handleContext, Long.parseLong(step.getString("content")));
+            case "runBack" -> runBackground(handleContext, step.getLong("content"));
             case "lock" -> lock(handleContext);
             case "unLock" -> unLock(handleContext);
             case "keyCode" -> keyCode(handleContext, step.getString("content"));

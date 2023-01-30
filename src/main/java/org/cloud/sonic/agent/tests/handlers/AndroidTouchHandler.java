@@ -38,22 +38,26 @@ import java.util.concurrent.TimeUnit;
 public class AndroidTouchHandler {
     private static final Map<String, OutputStream> outputMap = new ConcurrentHashMap<>();
     private static final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
-    private static int touchMode = TouchMode.SONIC_APK;
+    private static final Map<String, TouchMode> touchModeMap = new ConcurrentHashMap<>();
     private static final Map<String, int[]> sizeMap = new ConcurrentHashMap<>();
 
-    public interface TouchMode {
-        int SONIC_APK = 1;
-        int ADB = 2;
-        int APPIUM_SERVER = 3;
+    public enum TouchMode {
+        SONIC_APK,
+        ADB,
+        APPIUM_SERVER;
     }
 
-    public static void switchTouchMode(int mode) {
-        touchMode = mode;
+    public static void switchTouchMode(IDevice iDevice, TouchMode mode) {
+        touchModeMap.put(iDevice.getSerialNumber(), mode);
+    }
+
+    public static TouchMode getTouchMode(IDevice iDevice) {
+        return touchModeMap.get(iDevice.getSerialNumber()) == null ? TouchMode.SONIC_APK : touchModeMap.get(iDevice.getSerialNumber());
     }
 
     public static void tap(IDevice iDevice, int x, int y) {
-        switch (touchMode) {
-            case TouchMode.SONIC_APK -> {
+        switch (getTouchMode(iDevice)) {
+            case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
                 writeToOutputStream(iDevice, String.format("down %d %d\n", re[0], re[1]));
                 try {
@@ -63,15 +67,15 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case TouchMode.ADB ->
+            case ADB ->
                     AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
-            default -> throw new IllegalStateException("Unexpected value: " + touchMode);
+            default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
 
     public static void longPress(IDevice iDevice, int x, int y, int time) {
-        switch (touchMode) {
-            case TouchMode.SONIC_APK -> {
+        switch (getTouchMode(iDevice)) {
+            case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
                 writeToOutputStream(iDevice, String.format("down %d %d\n", re[0], re[1]));
                 try {
@@ -81,15 +85,15 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case TouchMode.ADB ->
+            case ADB ->
                     AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
-            default -> throw new IllegalStateException("Unexpected value: " + touchMode);
+            default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
 
     public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) {
-        switch (touchMode) {
-            case TouchMode.SONIC_APK -> {
+        switch (getTouchMode(iDevice)) {
+            case SONIC_APK -> {
                 int[] re1 = transferWithRotation(iDevice, x1, y1);
                 int[] re2 = transferWithRotation(iDevice, x2, y2);
                 writeToOutputStream(iDevice, String.format("down %d %d\n", re1[0], re1[1]));
@@ -106,9 +110,9 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case TouchMode.ADB ->
+            case ADB ->
                     AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
-            default -> throw new IllegalStateException("Unexpected value: " + touchMode);
+            default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
 
@@ -144,7 +148,7 @@ public class AndroidTouchHandler {
                 outputStream.flush();
             } catch (IOException e) {
                 log.info("write to apk failed cause by: {}, auto switch to adb touch mode...", e.getMessage());
-                switchTouchMode(TouchMode.ADB);
+                switchTouchMode(iDevice, TouchMode.ADB);
             }
         } else {
             log.info("{} write output stream is null.", iDevice.getSerialNumber());
@@ -293,6 +297,7 @@ public class AndroidTouchHandler {
                 }
             }
         }
+        touchModeMap.remove(udId);
         touchMap.remove(udId);
     }
 }

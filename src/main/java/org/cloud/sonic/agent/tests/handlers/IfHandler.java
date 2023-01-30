@@ -55,7 +55,11 @@ public class IfHandler implements StepHandler {
         List<JSONObject> steps = conditionStep.getJSONArray("childSteps").toJavaList(JSONObject.class);
         // 执行条件步骤
         thread.getLogTool().sendStepLog(StepType.PASS, "开始执行「if」步骤", "");
-        noneConditionHandler.runStep(stepJSON, handleContext, thread);
+        try {
+            noneConditionHandler.runStep(stepJSON, handleContext, thread);
+        } catch (Throwable e) {
+            handleContext.setE(e);
+        }
         // 上述步骤无异常则取出if下的步骤，再次丢给 stepHandlers 处理
         if (handleContext.getE() == null) {
             thread.getLogTool().sendStepLog(StepType.PASS, "「if」步骤通过，开始执行子步骤", "");

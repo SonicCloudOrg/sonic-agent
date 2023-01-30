@@ -55,7 +55,11 @@ public class WhileHandler implements StepHandler {
         List<JSONObject> steps = conditionStep.getJSONArray("childSteps").toJavaList(JSONObject.class);
         // 设置了判断条件步骤，则先运行判断条件的步骤
         thread.getLogTool().sendStepLog(StepType.PASS, "开始执行「while」步骤", "");
-        noneConditionHandler.runStep(stepJSON, handleContext, thread);
+        try {
+            noneConditionHandler.runStep(stepJSON, handleContext, thread);
+        } catch (Throwable e) {
+            handleContext.setE(e);
+        }
         int i = 1;
         while (handleContext.getE() == null && !thread.isStopped()) {
             // 条件步骤成功，取出while下所属的步骤丢给stepHandlers处理

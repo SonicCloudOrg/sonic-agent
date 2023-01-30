@@ -19,14 +19,13 @@ package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
-import org.cloud.sonic.agent.tests.handlers.AndroidMonitorHandler;
-import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
-import org.cloud.sonic.agent.tests.handlers.AndroidTouchHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.tests.TaskManager;
-import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tests.handlers.AndroidMonitorHandler;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.handlers.AndroidTouchHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,9 +204,10 @@ public class AndroidTestTaskBootThread extends Thread {
             try {
                 int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
                 if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
-                    AndroidTouchHandler.switchTouchMode(AndroidTouchHandler.TouchMode.ADB);
+                    AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.ADB);
                 } else {
-                    androidMonitorHandler.startMonitor(iDevice, res -> {});
+                    androidMonitorHandler.startMonitor(iDevice, res -> {
+                    });
                     AndroidTouchHandler.startTouch(iDevice);
                 }
                 androidStepHandler.startAndroidDriver(iDevice, port);

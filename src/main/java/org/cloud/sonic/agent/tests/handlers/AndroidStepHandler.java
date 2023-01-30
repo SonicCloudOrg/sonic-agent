@@ -1913,13 +1913,20 @@ public class AndroidStepHandler {
         }
     }
 
+    public void switchTouchMode(HandleContext handleContext, String mode) {
+        handleContext.setStepDes("设置触控模式");
+        handleContext.setDetail("切换为 " + mode + " 模式");
+        AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.valueOf(mode));
+    }
+
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         JSONArray eleList = step.getJSONArray("elements");
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
+            case "switchTouchMode" -> switchTouchMode(handleContext, step.getString("content"));
             case "appReset" -> appReset(handleContext, step.getString("text"));
-            case "stepHold" -> stepHold(handleContext, Integer.parseInt(step.getString("content")));
+            case "stepHold" -> stepHold(handleContext, step.getInteger("content"));
             case "toWebView" -> toWebView(handleContext, step.getString("content"), step.getString("text"));
             case "toHandle" -> toHandle(handleContext, step.getString("content"));
             case "readText" -> readText(handleContext, step.getString("content"), step.getString("text"));
@@ -1954,7 +1961,7 @@ public class AndroidStepHandler {
                             , eleList.getJSONObject(0).getString("eleValue"));
             case "longPress" ->
                     longPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), Integer.parseInt(step.getString("content")));
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getInteger("content"));
             case "swipe" ->
                     swipePoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
@@ -1965,8 +1972,8 @@ public class AndroidStepHandler {
                     tap(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
             case "longPressPoint" ->
                     longPressPoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
-                            , Integer.parseInt(step.getString("content")));
-            case "pause" -> pause(handleContext, Integer.parseInt(step.getString("content")));
+                            , step.getInteger("content"));
+            case "pause" -> pause(handleContext, step.getInteger("content"));
             case "checkImage" ->
                     checkImage(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                             , step.getDouble("content"));
@@ -2035,7 +2042,7 @@ public class AndroidStepHandler {
             case "pocoLongPress" ->
                     pocoLongPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue")
-                            , Integer.parseInt(step.getString("content")));
+                            , step.getInteger("content"));
             case "pocoSwipe" ->
                     pocoSwipe(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
