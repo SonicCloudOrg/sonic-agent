@@ -59,6 +59,11 @@ public class TextHandler {
                         int[] size = Arrays.stream(t.split("-")).mapToInt(Integer::parseInt).toArray();
                         text = text.replace("{{" + middle + "}}", (int) (Math.random() * (size[1] - size[0] + 1)) + size[0] + "");
                     }
+                    if (middle.matches("random\\[.+\\|.+\\]")) {
+                        String t = middle.replace("random[", "").replace("]", "");
+                        String[] size = t.split("\\|");
+                        text = text.replace("{{" + middle + "}}", size[new Random().nextInt(size.length)]);
+                    }
                 }
                 text = text + replaceTrans(child, globalParams);
             }

@@ -30,6 +30,7 @@ public class TextHandlerTest {
         Assert.assertTrue(Integer.parseInt(s) < 1000);
         s = TextHandler.replaceTrans("{{random[3-6]}}", jsonObject);
         Assert.assertTrue(Integer.parseInt(s) <= 6 && Integer.parseInt(s) >= 3);
-//        s = TextHandler.replaceTrans("{{random[1|2]}}", jsonObject);
+        s = TextHandler.replaceTrans("{{random[h|2|3]}}", jsonObject);
+        Assert.assertEquals(1, s.length());
     }
 }
