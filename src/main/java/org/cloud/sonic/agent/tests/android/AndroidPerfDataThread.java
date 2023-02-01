@@ -18,10 +18,9 @@
 package org.cloud.sonic.agent.tests.android;
 
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidSupplyTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
 
 /**
  * android性能数据获取线程
@@ -29,9 +28,8 @@ import org.slf4j.LoggerFactory;
  * @author Eason(main) JayWenStar(until e1a877b7)
  * @date 2021/12/2 12:29 上午
  */
+@Slf4j
 public class AndroidPerfDataThread extends Thread {
-
-    private final Logger log = LoggerFactory.getLogger(AndroidPerfDataThread.class);
 
     /**
      * 占用符逻辑参考：{@link AndroidTestTaskBootThread#ANDROID_TEST_TASK_BOOT_PRE}
