@@ -22,6 +22,7 @@ import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.tests.ios.mjpeg.MjpegInputStream;
+import org.cloud.sonic.agent.tools.BytesTool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendByte;
 
@@ -46,6 +49,7 @@ public class IOSScreenWSServer implements IIOSWSServer {
     private String key;
     @Value("${sonic.agent.port}")
     private int port;
+    private Timer timer = new Timer();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -127,6 +131,15 @@ public class IOSScreenWSServer implements IIOSWSServer {
             }
             log.info("screen done.");
         }).start();
+
+        timer.schedule(new TimerTask() {
+            public void run() {
+                log.info("time up!");
+                if (session.isOpen()) {
+                    exit(session);
+                }
+            }
+        }, (long) BytesTool.remoteTimeout * 1000 * 60);
     }
 
     @OnClose
@@ -140,13 +153,15 @@ public class IOSScreenWSServer implements IIOSWSServer {
     }
 
     private void exit(Session session) {
-        WebSocketSessionMap.removeSession(session);
-        removeUdIdMapAndSet(session);
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        synchronized (session) {
+            WebSocketSessionMap.removeSession(session);
+            removeUdIdMapAndSet(session);
+            try {
+                session.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            log.info("{} : quit.", session.getId());
         }
-        log.info("{} : quit.", session.getId());
     }
 }

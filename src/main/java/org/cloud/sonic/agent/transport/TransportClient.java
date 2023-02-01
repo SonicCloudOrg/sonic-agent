@@ -22,8 +22,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
-import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
-import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
@@ -40,6 +38,8 @@ import org.cloud.sonic.agent.tests.SuiteListener;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
+import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
@@ -85,12 +85,27 @@ public class TransportClient extends WebSocketClient {
         log.info("Agent <- Server message: {}", jsonObject);
         TransportWorker.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
-                case "auth": {
+                case "settings" -> {
+                    if (jsonObject.getInteger("id") != null) {
+                        BytesTool.agentId = jsonObject.getInteger("id");
+                    }
+                    if (jsonObject.getInteger("highTemp") != null) {
+                        BytesTool.highTemp = jsonObject.getInteger("highTemp");
+                    }
+                    if (jsonObject.getInteger("highTempTime") != null) {
+                        BytesTool.highTempTime = jsonObject.getInteger("highTempTime");
+                    }
+                    if (jsonObject.getInteger("remoteTimeout") != null) {
+                        BytesTool.remoteTimeout = jsonObject.getInteger("remoteTimeout");
+                    }
+                }
+                case "auth" -> {
                     if (jsonObject.getString("result").equals("pass")) {
                         log.info("server auth successful!");
                         BytesTool.agentId = jsonObject.getInteger("id");
                         BytesTool.highTemp = jsonObject.getInteger("highTemp");
                         BytesTool.highTempTime = jsonObject.getInteger("highTempTime");
+                        BytesTool.remoteTimeout = jsonObject.getInteger("remoteTimeout");
                         BytesTool.agentHost = host;
                         TransportWorker.client = this;
                         JSONObject agentInfo = new JSONObject();
@@ -128,13 +143,9 @@ public class TransportClient extends WebSocketClient {
                         TransportWorker.isKeyAuth = false;
                         log.info("server auth failed!");
                     }
-                    break;
                 }
-                case "shutdown": {
-                    AgentManagerTool.stop();
-                    break;
-                }
-                case "reboot":
+                case "shutdown" -> AgentManagerTool.stop();
+                case "reboot" -> {
                     if (jsonObject.getInteger("platform") == PlatformType.ANDROID) {
                         IDevice rebootDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(jsonObject.getString("udId"));
                         if (rebootDevice != null) {
@@ -146,25 +157,23 @@ public class TransportClient extends WebSocketClient {
                             SibTool.reboot(jsonObject.getString("udId"));
                         }
                     }
-                    break;
-                case "heartBeat":
+                }
+                case "heartBeat" -> {
                     JSONObject heartBeat = new JSONObject();
                     heartBeat.put("msg", "heartBeat");
                     heartBeat.put("status", "alive");
                     TransportWorker.send(heartBeat);
-                    break;
-                case "hub":
-                    PHCTool.setPosition(jsonObject.getInteger("position"), jsonObject.getString("type"));
-                    break;
-                case "runStep":
+                }
+                case "hub" -> PHCTool.setPosition(jsonObject.getInteger("position"), jsonObject.getString("type"));
+                case "runStep" -> {
                     if (jsonObject.getInteger("pf") == PlatformType.ANDROID) {
                         runAndroidStep(jsonObject);
                     }
                     if (jsonObject.getInteger("pf") == PlatformType.IOS) {
                         runIOSStep(jsonObject);
                     }
-                    break;
-                case "suite":
+                }
+                case "suite" -> {
                     List<JSONObject> cases = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
                     TestNG tng = new TestNG();
                     List<XmlSuite> suiteList = new ArrayList<>();
@@ -191,8 +200,8 @@ public class TransportClient extends WebSocketClient {
                     tng.setXmlSuites(suiteList);
                     tng.addListener(new SuiteListener());
                     tng.run();
-                    break;
-                case "forceStopSuite":
+                }
+                case "forceStopSuite" -> {
                     List<JSONObject> caseList = jsonObject.getJSONArray("cases").toJavaList(JSONObject.class);
                     for (JSONObject aCase : caseList) {
                         int resultId = (int) aCase.get("rid");
@@ -204,7 +213,7 @@ public class TransportClient extends WebSocketClient {
                             TaskManager.forceStopSuite(jsonObject.getInteger("pf"), resultId, caseId, udId);
                         }
                     }
-                    break;
+                }
             }
         });
     }

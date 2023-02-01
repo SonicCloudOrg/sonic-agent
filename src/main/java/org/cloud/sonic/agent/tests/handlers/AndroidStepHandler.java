@@ -182,9 +182,8 @@ public class AndroidStepHandler {
                 log.sendStepLog(StepType.PASS, "退出连接设备", "");
             }
         } catch (Exception e) {
-            log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", "");
+            log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", e.fillInStackTrace().toString());
             setResultDetailStatus(ResultDetailStatus.WARN);
-            e.printStackTrace();
         } finally {
             Thread s = AndroidThreadMap.getMap().get(String.format("%s-uia-thread", iDevice.getSerialNumber()));
             if (s != null) {

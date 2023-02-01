@@ -146,10 +146,9 @@ public class IOSStepHandler {
                 pocoDriver = null;
             }
         } catch (Exception e) {
-            log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", "");
+            log.sendStepLog(StepType.WARN, "测试终止异常！请检查设备连接状态", e.fillInStackTrace().toString());
             //测试异常
             setResultDetailStatus(ResultDetailStatus.WARN);
-            e.printStackTrace();
         } finally {
             if (IOSProcessMap.getMap().get(udId) != null) {
                 List<Process> processList = IOSProcessMap.getMap().get(udId);

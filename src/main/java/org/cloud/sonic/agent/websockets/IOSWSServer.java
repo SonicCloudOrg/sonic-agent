@@ -19,7 +19,7 @@ package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
@@ -30,6 +30,7 @@ import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.TaskManager;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.BytesTool;
@@ -43,8 +44,6 @@ import org.cloud.sonic.driver.common.tool.RespHandler;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.cloud.sonic.driver.ios.IOSDriver;
 import org.cloud.sonic.driver.ios.enums.SystemButton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -57,17 +56,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 @Component
+@Slf4j
 @ServerEndpoint(value = "/websockets/ios/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
 public class IOSWSServer implements IIOSWSServer {
-    private final Logger logger = LoggerFactory.getLogger(IOSWSServer.class);
 
     public static Map<String, Integer> screenMap = new HashMap<>();
     @Value("${sonic.agent.key}")
@@ -77,21 +74,23 @@ public class IOSWSServer implements IIOSWSServer {
     @Autowired
     private AgentManagerTool agentManagerTool;
 
+    private Timer timer = new Timer();
+
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
         if (secretKey.length() == 0 || (!secretKey.equals(key)) || token.length() == 0) {
-            logger.info("Auth Failed!");
+            log.info("Auth Failed!");
             return;
         }
 
         session.getUserProperties().put("udId", udId);
         boolean lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
         if (!lockSuccess) {
-            logger.info("Fail to get device lock... please make sure device is not busy.");
+            log.info("Fail to get device lock... please make sure device is not busy.");
             return;
         }
-        logger.info("ios lock udId：{}", udId);
+        log.info("ios lock udId：{}", udId);
         IOSDeviceLocalStatus.startDebug(udId);
 
         // 更新使用用户
@@ -103,9 +102,22 @@ public class IOSWSServer implements IIOSWSServer {
 
         WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
-            logger.info("Target device is not connecting, please check the connection.");
+            log.info("Target device is not connecting, please check the connection.");
             return;
         }
+
+        timer.schedule(new TimerTask() {
+            public void run() {
+                log.info("time up!");
+                if (session.isOpen()) {
+                    JSONObject errMsg = new JSONObject();
+                    errMsg.put("msg", "error");
+                    BytesTool.sendText(session, errMsg.toJSONString());
+                    exit(session);
+                }
+            }
+        }, (long) BytesTool.remoteTimeout * 1000 * 60);
+
         saveUdIdMapAndSet(session, udId);
         if (SibTool.getOrientation(udId) != 1) {
             SibTool.launch(udId, "com.apple.springboard");
@@ -134,7 +146,7 @@ public class IOSWSServer implements IIOSWSServer {
                 iosStepHandler.appiumSettings(appiumSettings);
                 HandlerMap.getIOSMap().put(session.getId(), iosStepHandler);
             } catch (Exception e) {
-                logger.error(e.getMessage());
+                log.error(e.getMessage());
                 result.put("status", "error");
                 result.put("detail", "初始化 WebDriverAgent 失败！");
                 iosStepHandler.closeIOSDriver();
@@ -155,13 +167,13 @@ public class IOSWSServer implements IIOSWSServer {
             exit(session);
         } finally {
             DevicesLockMap.unlockAndRemoveByUdId(udId);
-            logger.info("ios unlock udId：{}", udId);
+            log.info("ios unlock udId：{}", udId);
         }
     }
 
     @OnError
     public void onError(Session session, Throwable error) {
-        logger.error(error.getMessage());
+        log.info(error.fillInStackTrace().toString());
         JSONObject errMsg = new JSONObject();
         errMsg.put("msg", "error");
         sendText(session, errMsg.toJSONString());
@@ -170,7 +182,7 @@ public class IOSWSServer implements IIOSWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        logger.info("{} send: {}", session.getId(), msg);
+        log.info("{} send: {}", session.getId(), msg);
         String udId = udIdMap.get(session);
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             IOSDriver iosDriver = null;
@@ -378,7 +390,7 @@ public class IOSWSServer implements IIOSWSServer {
                                         result.put("img", iosStepHandler.stepScreen(handleContext));
                                     }
                                     if (handleContext.getE() != null) {
-                                        logger.error(handleContext.getE().getMessage());
+                                        log.error(handleContext.getE().getMessage());
                                         JSONObject resultFail = new JSONObject();
                                         resultFail.put("msg", "treeFail");
                                         sendText(session, resultFail.toJSONString());
@@ -386,7 +398,7 @@ public class IOSWSServer implements IIOSWSServer {
                                         sendText(session, result.toJSONString());
                                     }
                                 } catch (Throwable e) {
-                                    logger.error(e.getMessage());
+                                    log.error(e.getMessage());
                                     JSONObject result = new JSONObject();
                                     result.put("msg", "treeFail");
                                     sendText(session, result.toJSONString());
@@ -438,28 +450,30 @@ public class IOSWSServer implements IIOSWSServer {
     }
 
     private void exit(Session session) {
-        String udId = udIdMap.get(session);
-        screenMap.remove(udId);
-        SibTool.stopOrientationWatcher(udId);
-        try {
-            HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
-        } catch (Exception e) {
-            logger.info("关闭driver异常!");
-        } finally {
-            HandlerMap.getIOSMap().remove(session.getId());
+        synchronized (session) {
+            String udId = udIdMap.get(session);
+            screenMap.remove(udId);
+            SibTool.stopOrientationWatcher(udId);
+            try {
+                HandlerMap.getIOSMap().get(session.getId()).closeIOSDriver();
+            } catch (Exception e) {
+                log.info("close driver failed.");
+            } finally {
+                HandlerMap.getIOSMap().remove(session.getId());
+            }
+            SibTool.stopWebInspector(udId);
+            SibTool.stopPerfmon(udId);
+            SibTool.stopShare(udId);
+            SGMTool.stopProxy(udId);
+            IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
+            WebSocketSessionMap.removeSession(session);
+            removeUdIdMapAndSet(session);
+            try {
+                session.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            log.info("{} : quit.", session.getId());
         }
-        SibTool.stopWebInspector(udId);
-        SibTool.stopPerfmon(udId);
-        SibTool.stopShare(udId);
-        SGMTool.stopProxy(udId);
-        IOSDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
-        WebSocketSessionMap.removeSession(session);
-        removeUdIdMapAndSet(session);
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        logger.info("{} : quit.", session.getId());
     }
 }

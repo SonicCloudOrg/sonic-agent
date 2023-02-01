@@ -17,8 +17,7 @@
  */
 package org.cloud.sonic.agent.tools;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.websocket.Session;
 import java.io.IOException;
@@ -32,13 +31,15 @@ import java.util.regex.Pattern;
  * @des
  * @date 2021/8/26 22:23
  */
+@Slf4j
 public class BytesTool {
-    private static final Logger log = LoggerFactory.getLogger(BytesTool.class);
 
     public static int agentId = 0;
     public static String agentHost = "";
     public static int highTemp = 0;
     public static int highTempTime = 0;
+
+    public static int remoteTimeout = 480;
 
     public static int toInt(byte[] b) {
         int res = 0;
@@ -149,6 +150,6 @@ public class BytesTool {
     }
 
     public static int[] parseVersion(String s) {
-        return Arrays.asList(s.split("\\.")).stream().mapToInt(Integer::parseInt).toArray();
+        return Arrays.stream(s.split("\\.")).mapToInt(Integer::parseInt).toArray();
     }
 }

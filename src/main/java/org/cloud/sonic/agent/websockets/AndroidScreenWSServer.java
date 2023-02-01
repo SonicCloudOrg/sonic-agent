@@ -26,6 +26,7 @@ import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.ScreenMap;
+import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tests.android.scrcpy.ScrcpyServerUtil;
 import org.cloud.sonic.agent.tests.handlers.AndroidMonitorHandler;
@@ -38,6 +39,8 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -51,6 +54,8 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     private Map<String, String> picMap = new ConcurrentHashMap<>();
 
     private AndroidMonitorHandler androidMonitorHandler = new AndroidMonitorHandler();
+
+    private Timer timer = new Timer();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -66,6 +71,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
+        WebSocketSessionMap.addSession(session);
         saveUdIdMapAndSet(session, iDevice);
         int wait = 0;
         boolean isInstall = true;
@@ -81,6 +87,16 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             log.info("Waiting for apk install timeout!");
             removeUdIdMapAndSet(session);
         }
+
+        timer.schedule(new TimerTask() {
+            public void run() {
+                log.info("time up!");
+                if (session.isOpen()) {
+                    exit(session);
+                }
+            }
+        }, (long) BytesTool.remoteTimeout * 1000 * 60);
+
     }
 
     @OnClose
@@ -164,21 +180,23 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
         }
     }
 
-
     private void exit(Session session) {
-        String udId = session.getUserProperties().get("udId").toString();
-        androidMonitorHandler.stopMonitor(udIdMap.get(session));
-        removeUdIdMapAndSet(session);
-        AndroidDeviceManagerMap.getRotationMap().remove(udId);
-        if (ScreenMap.getMap().get(session) != null) {
-            ScreenMap.getMap().get(session).interrupt();
-        }
-        typeMap.remove(udId);
-        picMap.remove(udId);
-        try {
-            session.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        synchronized (session) {
+            String udId = session.getUserProperties().get("udId").toString();
+            androidMonitorHandler.stopMonitor(udIdMap.get(session));
+            WebSocketSessionMap.removeSession(session);
+            removeUdIdMapAndSet(session);
+            AndroidDeviceManagerMap.getRotationMap().remove(udId);
+            if (ScreenMap.getMap().get(session) != null) {
+                ScreenMap.getMap().get(session).interrupt();
+            }
+            typeMap.remove(udId);
+            picMap.remove(udId);
+            try {
+                session.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
