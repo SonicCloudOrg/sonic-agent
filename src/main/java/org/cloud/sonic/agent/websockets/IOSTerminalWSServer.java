@@ -24,6 +24,7 @@ import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -43,8 +44,6 @@ public class IOSTerminalWSServer implements IIOSWSServer {
     @Value("${sonic.agent.key}")
     private String key;
 
-    private Timer timer = new Timer();
-
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
@@ -52,29 +51,36 @@ public class IOSTerminalWSServer implements IIOSWSServer {
             log.info("Auth Failed!");
             return;
         }
-        WebSocketSessionMap.addSession(session);
+
         if (!SibTool.getDeviceList().contains(udId)) {
             log.info("Target device is not connecting, please check the connection.");
             return;
         }
+
+        session.getUserProperties().put("udId", udId);
+        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getName(), udId));
+        WebSocketSessionMap.addSession(session);
         saveUdIdMapAndSet(session, udId);
+
         JSONObject ter = new JSONObject();
         ter.put("msg", "terminal");
         sendText(session, ter.toJSONString());
-        timer.schedule(new TimerTask() {
-            public void run() {
-                log.info("time up!");
-                if (session.isOpen()) {
-                    exit(session);
-                }
+
+        ScheduleTool.schedule(() -> {
+            log.info("time up!");
+            if (session.isOpen()) {
+                JSONObject errMsg = new JSONObject();
+                errMsg.put("msg", "error");
+                BytesTool.sendText(session, errMsg.toJSONString());
+                exit(session);
             }
-        }, (long) BytesTool.remoteTimeout * 1000 * 60);
+        }, BytesTool.remoteTimeout);
     }
 
     @OnMessage
     public void onMessage(String message, Session session) throws InterruptedException {
         JSONObject msg = JSON.parseObject(message);
-        log.info("{} send: {}", session.getId(), msg);
+        log.info("{} send: {}", session.getUserProperties().get("id").toString(), msg);
         String udId = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "processList" -> SibTool.getProcessList(udId, session);
@@ -109,7 +115,7 @@ public class IOSTerminalWSServer implements IIOSWSServer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            log.info("{} : quit.", session.getId());
+            log.info("{} : quit.", session.getUserProperties().get("id").toString());
         }
     }
 }

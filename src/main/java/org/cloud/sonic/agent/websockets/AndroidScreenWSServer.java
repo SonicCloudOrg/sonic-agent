@@ -31,6 +31,7 @@ import org.cloud.sonic.agent.tests.android.minicap.MiniCapUtil;
 import org.cloud.sonic.agent.tests.android.scrcpy.ScrcpyServerUtil;
 import org.cloud.sonic.agent.tests.handlers.AndroidMonitorHandler;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -39,8 +40,6 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,8 +54,6 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
 
     private AndroidMonitorHandler androidMonitorHandler = new AndroidMonitorHandler();
 
-    private Timer timer = new Timer();
-
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
@@ -64,15 +61,18 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             log.info("Auth Failed!");
             return;
         }
-        session.getUserProperties().put("udId", udId);
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
         if (iDevice == null) {
             log.info("Target device is not connecting, please check the connection.");
             return;
         }
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
+
+        session.getUserProperties().put("udId", udId);
+        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getName(), udId));
         WebSocketSessionMap.addSession(session);
         saveUdIdMapAndSet(session, iDevice);
+
         int wait = 0;
         boolean isInstall = true;
         while (AndroidAPKMap.getMap().get(udId) == null || (!AndroidAPKMap.getMap().get(udId))) {
@@ -88,14 +88,15 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             removeUdIdMapAndSet(session);
         }
 
-        timer.schedule(new TimerTask() {
-            public void run() {
-                log.info("time up!");
-                if (session.isOpen()) {
-                    exit(session);
-                }
+        ScheduleTool.schedule(() -> {
+            log.info("time up!");
+            if (session.isOpen()) {
+                JSONObject errMsg = new JSONObject();
+                errMsg.put("msg", "error");
+                BytesTool.sendText(session, errMsg.toJSONString());
+                exit(session);
             }
-        }, (long) BytesTool.remoteTimeout * 1000 * 60);
+        }, BytesTool.remoteTimeout);
 
     }
 
@@ -116,7 +117,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        log.info("{} send: {}", session.getId(), msg);
+        log.info("{} send: {}", session.getUserProperties().get("id").toString(), msg);
         String udId = session.getUserProperties().get("udId").toString();
         switch (msg.getString("type")) {
             case "switch" -> {
@@ -197,6 +198,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            log.info("{} : quit.", session.getUserProperties().get("id").toString());
         }
     }
 }

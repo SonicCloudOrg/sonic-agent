@@ -18,13 +18,13 @@
 package org.cloud.sonic.agent.websockets;
 
 import com.android.ddmlib.IDevice;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
+import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -42,9 +42,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@Slf4j
 @ServerEndpoint(value = "/websockets/audio/{key}/{udId}", configurator = WsEndpointConfigure.class)
-public class AudioWSServer {
-    private final Logger logger = LoggerFactory.getLogger(AudioWSServer.class);
+public class AudioWSServer implements IAndroidWSServer{
     @Value("${sonic.agent.key}")
     private String key;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
@@ -53,11 +53,16 @@ public class AudioWSServer {
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey, @PathParam("udId") String udId) throws Exception {
         if (secretKey.length() == 0 || (!secretKey.equals(key))) {
-            logger.info("Auth Failed!");
+            log.info("Auth Failed!");
             return;
         }
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        udIdMap.put(session, iDevice);
+
+        session.getUserProperties().put("udId", udId);
+        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getName(), udId));
+        WebSocketSessionMap.addSession(session);
+        saveUdIdMapAndSet(session, iDevice);
+
         int wait = 0;
         boolean isInstall = true;
         while (AndroidAPKMap.getMap().get(udId) == null || (!AndroidAPKMap.getMap().get(udId))) {
@@ -69,7 +74,7 @@ public class AudioWSServer {
             }
         }
         if (!isInstall) {
-            logger.info("Waiting for apk install timeout!");
+            log.info("Waiting for apk install timeout!");
         } else {
             startAudio(session);
         }
@@ -168,7 +173,7 @@ public class AudioWSServer {
 //    @OnMessage
 //    public void onMessage(String message, Session session) {
 //        JSONObject msg = JSON.parseObject(message);
-//        logger.info("{} send: {}",session.getId(), msg);
+//        log.info("{} send: {}",session.getUserProperties().get("id").toString(), msg);
 //        switch (msg.getString("type")) {
 //            case "start":
 //                startAudio(session);
@@ -186,17 +191,18 @@ public class AudioWSServer {
 
     @OnError
     public void onError(Session session, Throwable error) {
-        logger.error("音频socket发生错误，刷新瞬间可无视：", error);
+        log.error("音频socket发生错误，刷新瞬间可无视：", error);
     }
 
     private void exit(Session session) {
         stopAudio(session);
-        udIdMap.remove(session);
+        WebSocketSessionMap.removeSession(session);
+        removeUdIdMapAndSet(session);
         try {
             session.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.info("{} : quit.", session.getId());
+        log.info("{} : quit.", session.getUserProperties().get("id").toString());
     }
 }

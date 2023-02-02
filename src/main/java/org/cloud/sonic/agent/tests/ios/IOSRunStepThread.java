@@ -20,7 +20,7 @@ package org.cloud.sonic.agent.tests.ios;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.models.HandleContext;
-import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.StepHandlers;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.slf4j.Logger;

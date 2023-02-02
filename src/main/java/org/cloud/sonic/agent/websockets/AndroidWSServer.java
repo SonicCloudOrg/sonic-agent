@@ -36,10 +36,7 @@ import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
 import org.cloud.sonic.agent.tests.handlers.AndroidTouchHandler;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.PortTool;
-import org.cloud.sonic.agent.tools.SGMTool;
+import org.cloud.sonic.agent.tools.*;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.cloud.sonic.agent.transport.TransportWorker;
@@ -56,8 +53,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Calendar;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -70,7 +65,6 @@ public class AndroidWSServer implements IAndroidWSServer {
     private int port;
     @Autowired
     private AgentManagerTool agentManagerTool;
-    private Timer timer = new Timer();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
@@ -80,7 +74,6 @@ public class AndroidWSServer implements IAndroidWSServer {
             return;
         }
 
-        session.getUserProperties().put("udId", udId);
         boolean lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
         if (!lockSuccess) {
             log.info("Fail to get device lock... please make sure device is not busy.");
@@ -89,6 +82,17 @@ public class AndroidWSServer implements IAndroidWSServer {
         log.info("android lock udId：{}", udId);
         AndroidDeviceLocalStatus.startDebug(udId);
 
+        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+        if (iDevice == null) {
+            log.info("Target device is not connecting, please check the connection.");
+            return;
+        }
+
+        session.getUserProperties().put("udId", udId);
+        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getName(), udId));
+        WebSocketSessionMap.addSession(session);
+        saveUdIdMapAndSet(session, iDevice);
+
         // 更新使用用户
         JSONObject jsonDebug = new JSONObject();
         jsonDebug.put("msg", "debugUser");
@@ -96,24 +100,15 @@ public class AndroidWSServer implements IAndroidWSServer {
         jsonDebug.put("udId", udId);
         TransportWorker.send(jsonDebug);
 
-        WebSocketSessionMap.addSession(session);
-        IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        if (iDevice == null) {
-            log.info("Target device is not connecting, please check the connection.");
-            return;
-        }
-
-        timer.schedule(new TimerTask() {
-            public void run() {
-                log.info("time up!");
-                if (session.isOpen()) {
-                    JSONObject errMsg = new JSONObject();
-                    errMsg.put("msg", "error");
-                    BytesTool.sendText(session, errMsg.toJSONString());
-                    exit(session);
-                }
+        ScheduleTool.schedule(() -> {
+            log.info("time up!");
+            if (session.isOpen()) {
+                JSONObject errMsg = new JSONObject();
+                errMsg.put("msg", "error");
+                BytesTool.sendText(session, errMsg.toJSONString());
+                exit(session);
             }
-        }, (long) BytesTool.remoteTimeout * 1000 * 60);
+        }, BytesTool.remoteTimeout);
 
         saveUdIdMapAndSet(session, iDevice);
 
@@ -162,7 +157,7 @@ public class AndroidWSServer implements IAndroidWSServer {
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        log.info("{} send: {}", session.getId(), msg);
+        log.info("{} send: {}", session.getUserProperties().get("id").toString(), msg);
         IDevice iDevice = udIdMap.get(session);
         switch (msg.getString("type")) {
             case "startPerfmon" ->
@@ -246,7 +241,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 BytesTool.sendText(session, result.toJSONString());
             }
             case "debug" -> {
-                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
+                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getUserProperties().get("id").toString());
                 switch (msg.getString("detail")) {
                     case "poco" -> AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                         androidStepHandler.startPocoDriver(new HandleContext(), msg.getString("engine"), msg.getInteger("port"));
@@ -267,7 +262,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                         jsonDebug.put("key", key);
                         jsonDebug.put("udId", iDevice.getSerialNumber());
                         jsonDebug.put("pwd", msg.getString("pwd"));
-                        jsonDebug.put("sessionId", session.getId());
+                        jsonDebug.put("sessionId", session.getUserProperties().get("id").toString());
                         jsonDebug.put("caseId", msg.getInteger("caseId"));
                         TransportWorker.send(jsonDebug);
                     }
@@ -324,7 +319,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     case "closeDriver" -> {
                         if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
                             androidStepHandler.closeAndroidDriver();
-                            HandlerMap.getAndroidMap().remove(session.getId());
+                            HandlerMap.getAndroidMap().remove(session.getUserProperties().get("id").toString());
                         }
                     }
                     case "tree" -> {
@@ -383,7 +378,7 @@ public class AndroidWSServer implements IAndroidWSServer {
     private void openDriver(IDevice iDevice, Session session) {
         synchronized (session) {
             AndroidStepHandler androidStepHandler = new AndroidStepHandler();
-            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getId());
+            androidStepHandler.setTestMode(0, 0, iDevice.getSerialNumber(), DeviceStatus.DEBUGGING, session.getUserProperties().get("id").toString());
             JSONObject result = new JSONObject();
             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                 try {
@@ -392,7 +387,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     androidStepHandler.startAndroidDriver(iDevice, port);
                     result.put("status", "success");
                     result.put("detail", "初始化 UIAutomator2 Server 完成！");
-                    HandlerMap.getAndroidMap().put(session.getId(), androidStepHandler);
+                    HandlerMap.getAndroidMap().put(session.getUserProperties().get("id").toString(), androidStepHandler);
                 } catch (Exception e) {
                     log.error(e.getMessage());
                     result.put("status", "error");
@@ -411,14 +406,14 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
             IDevice iDevice = udIdMap.get(session);
             try {
-                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getId());
+                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getUserProperties().get("id").toString());
                 if (androidStepHandler != null) {
                     androidStepHandler.closeAndroidDriver();
                 }
             } catch (Exception e) {
                 log.info("close driver failed.");
             } finally {
-                HandlerMap.getAndroidMap().remove(session.getId());
+                HandlerMap.getAndroidMap().remove(session.getUserProperties().get("id").toString());
             }
             if (iDevice != null) {
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
@@ -436,7 +431,7 @@ public class AndroidWSServer implements IAndroidWSServer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            log.info("{} : quit.", session.getId());
+            log.info("{} : quit.", session.getUserProperties().get("id").toString());
         }
     }
 }

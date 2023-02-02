@@ -29,6 +29,7 @@ import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -62,8 +63,6 @@ public class AndroidTerminalWSServer implements IAndroidWSServer{
     private Map<Session, OutputStream> outputStreamMap = new ConcurrentHashMap<>();
     private Map<Session, Future<?>> logcatMap = new ConcurrentHashMap<>();
 
-    private Timer timer = new Timer();
-
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,
                        @PathParam("udId") String udId, @PathParam("token") String token) throws Exception {
@@ -71,10 +70,12 @@ public class AndroidTerminalWSServer implements IAndroidWSServer{
             log.info("Auth Failed!");
             return;
         }
-        WebSocketSessionMap.addSession(session);
 
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
 
+        session.getUserProperties().put("udId", udId);
+        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getName(), udId));
+        WebSocketSessionMap.addSession(session);
         saveUdIdMapAndSet(session, iDevice);
 
         String username = iDevice.getProperty("ro.product.device");
@@ -106,14 +107,16 @@ public class AndroidTerminalWSServer implements IAndroidWSServer{
         if (!isInstall) {
             log.info("Waiting for apk install timeout!");
         }
-        timer.schedule(new TimerTask() {
-            public void run() {
-                log.info("time up!");
-                if (session.isOpen()) {
-                    exit(session);
-                }
+
+        ScheduleTool.schedule(() -> {
+            log.info("time up!");
+            if (session.isOpen()) {
+                JSONObject errMsg = new JSONObject();
+                errMsg.put("msg", "error");
+                BytesTool.sendText(session, errMsg.toJSONString());
+                exit(session);
             }
-        }, (long) BytesTool.remoteTimeout * 1000 * 60);
+        }, BytesTool.remoteTimeout);
 
         startService(udIdMap.get(session), session);
     }
@@ -121,7 +124,7 @@ public class AndroidTerminalWSServer implements IAndroidWSServer{
     @OnMessage
     public void onMessage(String message, Session session) {
         JSONObject msg = JSON.parseObject(message);
-        log.info("{} send: {}", session.getId(), msg);
+        log.info("{} send: {}", session.getUserProperties().get("id").toString(), msg);
         switch (msg.getString("type")) {
             case "appList": {
                 startService(udIdMap.get(session), session);
@@ -292,7 +295,7 @@ public class AndroidTerminalWSServer implements IAndroidWSServer{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            log.info("{} : quit.", session.getId());
+            log.info("{} : quit.", session.getUserProperties().get("id").toString());
         }
     }
 

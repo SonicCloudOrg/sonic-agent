@@ -20,7 +20,7 @@ package org.cloud.sonic.agent.tests.handlers;
 import com.alibaba.fastjson.JSONObject;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.models.HandleContext;
-import org.cloud.sonic.agent.tests.common.RunStepThread;
+import org.cloud.sonic.agent.tests.RunStepThread;
 
 /**
  * @author JayWenStar

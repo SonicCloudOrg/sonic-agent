@@ -38,4 +38,12 @@ public class ScheduleTool {
         scheduledExecutorService.scheduleAtFixedRate(command, initialDelay, period, unit);
     }
 
+    public static void schedule(Runnable command, long initialDelay, TimeUnit unit) {
+        scheduledExecutorService.schedule(command, initialDelay, unit);
+    }
+
+    public static void schedule(Runnable command, long initialDelay) {
+        scheduledExecutorService.schedule(command, initialDelay, TimeUnit.MINUTES);
+    }
+
 }

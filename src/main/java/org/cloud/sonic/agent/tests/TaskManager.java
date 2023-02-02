@@ -19,7 +19,6 @@ package org.cloud.sonic.agent.tests;
 
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
-import org.cloud.sonic.agent.tests.common.RunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

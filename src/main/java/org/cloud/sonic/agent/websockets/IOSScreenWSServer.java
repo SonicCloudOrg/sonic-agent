@@ -17,12 +17,14 @@
  */
 package org.cloud.sonic.agent.websockets;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
 import org.cloud.sonic.agent.tests.ios.mjpeg.MjpegInputStream;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -59,11 +61,14 @@ public class IOSScreenWSServer implements IIOSWSServer {
             return;
         }
 
-        WebSocketSessionMap.addSession(session);
         if (!SibTool.getDeviceList().contains(udId)) {
             log.info("Target device is not connecting, please check the connection.");
             return;
         }
+
+        session.getUserProperties().put("udId", udId);
+        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getName(), udId));
+        WebSocketSessionMap.addSession(session);
         saveUdIdMapAndSet(session, udId);
 
         int screenPort = 0;
@@ -132,14 +137,15 @@ public class IOSScreenWSServer implements IIOSWSServer {
             log.info("screen done.");
         }).start();
 
-        timer.schedule(new TimerTask() {
-            public void run() {
-                log.info("time up!");
-                if (session.isOpen()) {
-                    exit(session);
-                }
+        ScheduleTool.schedule(() -> {
+            log.info("time up!");
+            if (session.isOpen()) {
+                JSONObject errMsg = new JSONObject();
+                errMsg.put("msg", "error");
+                BytesTool.sendText(session, errMsg.toJSONString());
+                exit(session);
             }
-        }, (long) BytesTool.remoteTimeout * 1000 * 60);
+        }, BytesTool.remoteTimeout);
     }
 
     @OnClose
@@ -161,7 +167,7 @@ public class IOSScreenWSServer implements IIOSWSServer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            log.info("{} : quit.", session.getId());
+            log.info("{} : quit.", session.getUserProperties().get("id").toString());
         }
     }
 }
