@@ -69,7 +69,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
         AndroidDeviceBridgeTool.screen(iDevice, "abort");
 
         session.getUserProperties().put("udId", udId);
-        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getName(), udId));
+        session.getUserProperties().put("id", String.format("%s-%s", this.getClass().getSimpleName(), udId));
         WebSocketSessionMap.addSession(session);
         saveUdIdMapAndSet(session, iDevice);
 
