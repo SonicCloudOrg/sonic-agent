@@ -421,7 +421,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("锁定屏幕");
         handleContext.setDetail("");
         try {
-            AndroidDeviceBridgeTool.pressKey(iDevice, 26);
+            AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.POWER);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -431,7 +431,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("解锁屏幕");
         handleContext.setDetail("");
         try {
-            AndroidDeviceBridgeTool.pressKey(iDevice, 26);
+            AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.POWER);
         } catch (Exception e) {
             handleContext.setE(e);
         }

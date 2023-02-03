@@ -26,6 +26,7 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.android.AndroidSupplyTool;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
+import org.cloud.sonic.agent.common.enums.AndroidKey;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.maps.AndroidAPKMap;
 import org.cloud.sonic.agent.common.maps.DevicesLockMap;
@@ -107,6 +108,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 errMsg.put("msg", "error");
                 BytesTool.sendText(session, errMsg.toJSONString());
                 exit(session);
+                AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.HOME);
             }
         }, BytesTool.remoteTimeout);
 

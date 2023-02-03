@@ -26,12 +26,10 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
+import org.cloud.sonic.agent.common.enums.AndroidKey;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
-import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
-import org.cloud.sonic.agent.common.maps.AndroidPasswordMap;
-import org.cloud.sonic.agent.common.maps.HandlerMap;
-import org.cloud.sonic.agent.common.maps.IOSDeviceManagerMap;
+import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.tests.AndroidTests;
 import org.cloud.sonic.agent.tests.IOSTests;
 import org.cloud.sonic.agent.tests.SuiteListener;
@@ -46,6 +44,7 @@ import org.cloud.sonic.agent.tools.AgentManagerTool;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PHCTool;
 import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import org.testng.TestNG;
@@ -53,11 +52,10 @@ import org.testng.xml.XmlClass;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
+import javax.websocket.Session;
+import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public class TransportClient extends WebSocketClient {
@@ -85,6 +83,45 @@ public class TransportClient extends WebSocketClient {
         log.info("Agent <- Server message: {}", jsonObject);
         TransportWorker.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
+                case "stopDebug" -> {
+                    String udId = jsonObject.getString("udId");
+                    List<String> sessionList = Arrays.asList("AndroidWSServer", "AndroidTerminalWSServer", "AndroidScreenWSServer",
+                            "AudioWSServer", "IOSWSServer", "IOSTerminalWSServer", "IOSScreenWSServer");
+                    for (String ss : sessionList) {
+                        Session session = WebSocketSessionMap.getSession(String.format("%s-%s", ss, udId));
+                        if (session == null) {
+                            continue;
+                        }
+                        if (session.isOpen()) {
+                            if (ss.equals("IOSWSServer")) {
+                                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
+                                if (iosStepHandler != null) {
+                                    try {
+                                        iosStepHandler.getDriver().pressButton("home");
+                                    } catch (SonicRespException ignored) {
+                                    }
+                                }
+                            }
+                            if (ss.equals("AndroidWSServer") || ss.equals("IOSWSServer")) {
+                                JSONObject errMsg = new JSONObject();
+                                errMsg.put("msg", "error");
+                                BytesTool.sendText(session, errMsg.toJSONString());
+                            }
+                            try {
+                                session.close();
+                            } catch (IOException e) {
+                                log.info(e.fillInStackTrace().toString());
+                            }
+                            if (ss.equals("AndroidWSServer")) {
+                                IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+                                if (iDevice != null) {
+                                    AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.HOME);
+                                }
+                            }
+                            log.info("{}-{} closed.", ss, udId);
+                        }
+                    }
+                }
                 case "settings" -> {
                     if (jsonObject.getInteger("id") != null) {
                         BytesTool.agentId = jsonObject.getInteger("id");

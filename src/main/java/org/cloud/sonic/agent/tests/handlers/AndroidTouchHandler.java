@@ -21,6 +21,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
+import org.cloud.sonic.agent.common.enums.AndroidKey;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.tools.PortTool;
 
@@ -160,7 +161,7 @@ public class AndroidTouchHandler {
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
         sizeMap.put(iDevice.getSerialNumber(), Arrays.stream(size.split("x")).mapToInt(Integer::parseInt).toArray());
         if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
-            AndroidDeviceBridgeTool.pressKey(iDevice, 3);
+            AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.HOME);
         }
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
                 .replaceAll("package:", "")

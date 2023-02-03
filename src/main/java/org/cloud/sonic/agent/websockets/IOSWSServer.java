@@ -53,7 +53,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
@@ -107,6 +109,13 @@ public class IOSWSServer implements IIOSWSServer {
         ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
+                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
+                if (iosStepHandler != null) {
+                    try {
+                        iosStepHandler.getDriver().pressButton("home");
+                    } catch (SonicRespException ignored) {
+                    }
+                }
                 JSONObject errMsg = new JSONObject();
                 errMsg.put("msg", "error");
                 BytesTool.sendText(session, errMsg.toJSONString());
@@ -451,7 +460,10 @@ public class IOSWSServer implements IIOSWSServer {
             screenMap.remove(udId);
             SibTool.stopOrientationWatcher(udId);
             try {
-                HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString()).closeIOSDriver();
+                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
+                if (iosStepHandler != null) {
+                    iosStepHandler.closeIOSDriver();
+                }
             } catch (Exception e) {
                 log.info("close driver failed.");
             } finally {

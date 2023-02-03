@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
 import lombok.extern.slf4j.Slf4j;
+import org.cloud.sonic.agent.common.enums.AndroidKey;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.common.maps.AndroidWebViewMap;
 import org.cloud.sonic.agent.common.maps.ChromeDriverMap;
@@ -401,6 +402,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
      */
     public static void pressKey(IDevice iDevice, int keyNum) {
         executeCommand(iDevice, String.format("input keyevent %s", keyNum));
+    }
+
+    public static void pressKey(IDevice iDevice, AndroidKey androidKey) {
+        executeCommand(iDevice, String.format("input keyevent %s", androidKey.getCode()));
     }
 
     public static void uninstall(IDevice iDevice, String bundleId) throws InstallException {
