@@ -27,6 +27,15 @@ jobs:
         run: ver=${{ steps.previoustag.outputs.tag }} && new_ver=${ver:1} && sed -i "s/SONIC_VERSION/${new_ver}/g" pom.xml
       - name: login docker hub
         run: echo "${{ secrets.ACCESS_TOKEN }}" | docker login -u zhouyixun --password-stdin
+      - run: rm -rf plugins/sonic-android-apk.apk
+      - name: saa-download
+        uses: robinraju/release-downloader@v1.4
+        with:
+          repository: SonicCloudOrg/sonic-android-apk
+          latest: true
+          fileName: "sonic-android-apk.apk"
+      - name: saa
+        run: mv sonic-android-apk.apk plugins/sonic-android-apk.apk
       - name: sas-download
         uses: robinraju/release-downloader@v1.4
         with:
