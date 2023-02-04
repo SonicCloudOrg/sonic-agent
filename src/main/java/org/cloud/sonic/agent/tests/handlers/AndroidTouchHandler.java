@@ -68,8 +68,7 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case ADB ->
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
+            case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
@@ -118,7 +117,10 @@ public class AndroidTouchHandler {
     }
 
     private static int[] transferWithRotation(IDevice iDevice, int x, int y) {
-        int directionStatus = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
+        Integer directionStatus = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
+        if (directionStatus == null) {
+            directionStatus = 0;
+        }
         int _x;
         int _y;
         int width;
