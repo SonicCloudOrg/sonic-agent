@@ -7,10 +7,10 @@ spring:
     active: @project.artifactId@
 
 sonic:
-  saa: 2.0.5
+  saa: 2.0.6
   sgm: 1.3.4
   sib: 1.3.7
-  sas: 0.1.1
+  sas: 0.1.2
   saus: 5.7.4
   release-mode: @releaseMode@
 
