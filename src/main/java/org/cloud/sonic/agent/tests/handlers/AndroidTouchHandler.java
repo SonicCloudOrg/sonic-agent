@@ -62,7 +62,7 @@ public class AndroidTouchHandler {
                 int[] re = transferWithRotation(iDevice, x, y);
                 writeToOutputStream(iDevice, String.format("down %d %d\n", re[0], re[1]));
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(300);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -98,13 +98,13 @@ public class AndroidTouchHandler {
                 int[] re2 = transferWithRotation(iDevice, x2, y2);
                 writeToOutputStream(iDevice, String.format("down %d %d\n", re1[0], re1[1]));
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(300);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 writeToOutputStream(iDevice, String.format("move %d %d\n", re2[0], re2[1]));
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(200);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

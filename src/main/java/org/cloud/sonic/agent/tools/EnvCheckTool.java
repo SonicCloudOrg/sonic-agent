@@ -80,7 +80,6 @@ public class EnvCheckTool {
         File config = new File("config/application-sonic-agent.yml");
         File mini = new File("mini");
         File plugins = new File("plugins");
-        // fixme 本地测试请关闭授权
         if (system.contains("linux") || system.contains("mac")) {
             try {
                 Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format("chmod -R 777 %s", new File("").getAbsolutePath())});
