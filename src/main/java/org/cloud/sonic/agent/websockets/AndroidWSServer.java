@@ -329,8 +329,11 @@ public class AndroidWSServer implements IAndroidWSServer {
                             AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                                 try {
                                     JSONObject result = new JSONObject();
-                                    androidStepHandler.switchWindowMode(new HandleContext(), msg.getBoolean("isMulti") != null && msg.getBoolean("isMulti"));
-                                    androidStepHandler.switchVisibleMode(new HandleContext(), msg.getBoolean("isVisible") != null && msg.getBoolean("isVisible"));
+                                    JSONObject settings = new JSONObject();
+                                    settings.put("enableMultiWindows", msg.getBoolean("isMulti") != null && msg.getBoolean("isMulti"));
+                                    settings.put("ignoreUnimportantViews", msg.getBoolean("isIgnore") != null && msg.getBoolean("isIgnore"));
+                                    settings.put("allowInvisibleElements", msg.getBoolean("isVisible") != null && msg.getBoolean("isVisible"));
+                                    androidStepHandler.getAndroidDriver().setAppiumSettings(settings);
                                     result.put("msg", "tree");
                                     result.put("detail", androidStepHandler.getResource());
                                     result.put("webView", androidStepHandler.getWebView());

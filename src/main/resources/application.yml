@@ -2,7 +2,7 @@ spring:
   version: @project.version@
   application:
     name: @project.artifactId@
-    des: "Agent of Sonic cloud real machine platform."
+    des: "Agent of Sonic Cloud Real Machine Platform"
   profiles:
     active: @project.artifactId@
 
@@ -10,7 +10,7 @@ sonic:
   saa: 2.0.6
   sgm: 1.3.4
   sib: 1.3.7
-  sas: 0.1.2
+  sas: 0.1.4
   saus: 5.7.4
   release-mode: @releaseMode@
 

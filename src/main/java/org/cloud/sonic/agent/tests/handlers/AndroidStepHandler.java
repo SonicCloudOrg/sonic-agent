@@ -154,6 +154,14 @@ public class AndroidStepHandler {
         androidDriver.setAppiumSettings(settings);
     }
 
+    public void switchIgnoreMode(HandleContext handleContext, boolean isIgnore) throws SonicRespException {
+        handleContext.setStepDes("切换忽略不重要视图模式");
+        handleContext.setDetail("切换为： " + (isIgnore ? "忽略" : "不忽略"));
+        JSONObject settings = new JSONObject();
+        settings.put("ignoreUnimportantViews", isIgnore);
+        androidDriver.setAppiumSettings(settings);
+    }
+
     public void switchVisibleMode(HandleContext handleContext, boolean isVisible) throws SonicRespException {
         handleContext.setStepDes("切换Invisible控件展示");
         handleContext.setDetail("切换为： " + (isVisible ? "显示" : "隐藏"));
@@ -2060,6 +2068,7 @@ public class AndroidStepHandler {
             case "thawSource" -> thawSource(handleContext);
             case "closePocoDriver" -> closePocoDriver(handleContext);
             case "switchWindowMode" -> switchWindowMode(handleContext, step.getBoolean("content"));
+            case "switchIgnoreMode" -> switchIgnoreMode(handleContext, step.getBoolean("content"));
             case "switchVisibleMode" -> switchVisibleMode(handleContext, step.getBoolean("content"));
             case "closeKeyboard" -> closeKeyboard(handleContext);
             case "iteratorPocoElement" ->
