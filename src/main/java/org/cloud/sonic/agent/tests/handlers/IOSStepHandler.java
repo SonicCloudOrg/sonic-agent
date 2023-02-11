@@ -833,7 +833,7 @@ public class IOSStepHandler {
     private int retryInit = 3;
 
     public void setDefaultFindPocoElementInterval(HandleContext handleContext, Integer retry, Integer interval) {
-        handleContext.setStepDes("Set Global Find Poco Element Interval");
+        handleContext.setStepDes("设置查找POCO控件策略");
         handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         if (retry != null) {
             retryInit = retry;
@@ -1137,7 +1137,7 @@ public class IOSStepHandler {
     }
 
     public void setFindElementInterval(HandleContext handleContext, int retry, int interval) {
-        handleContext.setStepDes("Set Global Find XCTest Element Interval");
+        handleContext.setStepDes("设置查找原生控件策略");
         handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         iosDriver.setDefaultFindElementInterval(retry, interval);
     }

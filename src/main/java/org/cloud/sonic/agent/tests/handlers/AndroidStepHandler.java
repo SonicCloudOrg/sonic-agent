@@ -1299,7 +1299,7 @@ public class AndroidStepHandler {
     private int retryInit = 3;
 
     public void setDefaultFindPocoElementInterval(HandleContext handleContext, Integer retry, Integer interval) {
-        handleContext.setStepDes("Set Global Find Poco Element Interval");
+        handleContext.setStepDes("设置查找POCO控件策略");
         handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         if (retry != null) {
             retryInit = retry;
@@ -1716,7 +1716,7 @@ public class AndroidStepHandler {
     }
 
     public void setFindElementInterval(HandleContext handleContext, int retry, int interval) {
-        handleContext.setStepDes("Set Global Find Android Element Interval");
+        handleContext.setStepDes("设置查找原生控件策略");
         handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         androidDriver.setDefaultFindElementInterval(retry, interval);
     }
