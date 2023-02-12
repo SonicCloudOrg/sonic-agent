@@ -143,7 +143,6 @@ public class IOSWSServer implements IIOSWSServer {
                 result.put("height", iosStepHandler.getDriver().getWindowSize().getHeight());
                 result.put("wda", ports[0]);
                 screenMap.put(udId, ports[1]);
-                result.put("detail", "初始化 WebDriverAgent 完成！");
                 JSONObject appiumSettings = new JSONObject();
                 appiumSettings.put("mjpegServerFramerate", 60);
                 appiumSettings.put("mjpegScalingFactor", 100);
@@ -153,7 +152,6 @@ public class IOSWSServer implements IIOSWSServer {
             } catch (Exception e) {
                 log.error(e.getMessage());
                 result.put("status", "error");
-                result.put("detail", "初始化 WebDriverAgent 失败！");
                 iosStepHandler.closeIOSDriver();
             } finally {
                 result.put("msg", "openDriver");
@@ -430,7 +428,7 @@ public class IOSWSServer implements IIOSWSServer {
                                     }
                                     result.put("img", UploadTools.upload(output, "keepFiles"));
                                 } catch (Exception e) {
-                                    result.put("errMsg", "获取元素截图失败！");
+                                    log.info(e.fillInStackTrace().toString());
                                 }
                                 sendText(session, result.toJSONString());
                             }

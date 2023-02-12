@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Slf4j
 @ServerEndpoint(value = "/websockets/audio/{key}/{udId}", configurator = WsEndpointConfigure.class)
-public class AudioWSServer implements IAndroidWSServer{
+public class AudioWSServer implements IAndroidWSServer {
     @Value("${sonic.agent.key}")
     private String key;
     private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
@@ -191,7 +191,7 @@ public class AudioWSServer implements IAndroidWSServer{
 
     @OnError
     public void onError(Session session, Throwable error) {
-        log.error("音频socket发生错误，刷新瞬间可无视：", error);
+        log.info("Audio socket error, cause: {}, ignore...", error.getMessage());
     }
 
     private void exit(Session session) {

@@ -56,7 +56,7 @@ public class WebViewWSServer {
         WebSocketClient webSocketClient = new WebSocketClient(uri) {
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
-                logger.info("连接成功!");
+                logger.info("Connected!");
             }
 
             @Override
@@ -66,7 +66,7 @@ public class WebViewWSServer {
 
             @Override
             public void onClose(int i, String s, boolean b) {
-                logger.info("连接断开!");
+                logger.info("Disconnected!");
             }
 
             @Override

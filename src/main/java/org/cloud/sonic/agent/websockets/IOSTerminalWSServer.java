@@ -32,8 +32,6 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 

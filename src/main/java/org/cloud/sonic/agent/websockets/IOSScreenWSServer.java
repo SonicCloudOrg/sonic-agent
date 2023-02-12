@@ -38,8 +38,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendByte;
 
@@ -51,7 +49,6 @@ public class IOSScreenWSServer implements IIOSWSServer {
     private String key;
     @Value("${sonic.agent.port}")
     private int port;
-    private Timer timer = new Timer();
 
     @OnOpen
     public void onOpen(Session session, @PathParam("key") String secretKey,

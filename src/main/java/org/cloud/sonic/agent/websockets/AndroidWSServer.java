@@ -369,7 +369,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                                     }
                                     result.put("img", UploadTools.upload(output, "keepFiles"));
                                 } catch (Exception e) {
-                                    result.put("errMsg", "获取元素截图失败！");
+                                    log.info(e.fillInStackTrace().toString());
                                 }
                                 BytesTool.sendText(session, result.toJSONString());
                             });
@@ -391,12 +391,10 @@ public class AndroidWSServer implements IAndroidWSServer {
                     int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
                     androidStepHandler.startAndroidDriver(iDevice, port);
                     result.put("status", "success");
-                    result.put("detail", "初始化 UIAutomator2 Server 完成！");
                     HandlerMap.getAndroidMap().put(session.getUserProperties().get("id").toString(), androidStepHandler);
                 } catch (Exception e) {
                     log.error(e.getMessage());
                     result.put("status", "error");
-                    result.put("detail", "初始化 UIAutomator2 Server 失败！");
                     androidStepHandler.closeAndroidDriver();
                 } finally {
                     result.put("msg", "openDriver");
