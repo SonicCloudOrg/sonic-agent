@@ -91,6 +91,8 @@ public class AndroidStepHandler {
     private int pocoPort = 0;
     private int targetPort = 0;
 
+    AndroidMonitorHandler androidMonitorHandler = new AndroidMonitorHandler();
+
     private String targetPackage = "";
 
     public String getTargetPackage() {
@@ -1924,6 +1926,15 @@ public class AndroidStepHandler {
         handleContext.setStepDes("设置触控模式");
         handleContext.setDetail("切换为 " + mode + " 模式");
         AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.valueOf(mode));
+        if (AndroidTouchHandler.TouchMode.valueOf(mode) == AndroidTouchHandler.TouchMode.SONIC_APK) {
+            if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
+                AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.ADB);
+            } else {
+                androidMonitorHandler.startMonitor(iDevice, res -> {
+                });
+                AndroidTouchHandler.startTouch(iDevice);
+            }
+        }
     }
 
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {

@@ -184,7 +184,6 @@ public class AndroidTestTaskBootThread extends Thread {
 
         boolean startTestSuccess = false;
         IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-        AndroidMonitorHandler androidMonitorHandler = new AndroidMonitorHandler();
 
         try {
             int wait = 0;
@@ -203,13 +202,6 @@ public class AndroidTestTaskBootThread extends Thread {
             startTestSuccess = true;
             try {
                 int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
-                if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
-                    AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.ADB);
-                } else {
-                    androidMonitorHandler.startMonitor(iDevice, res -> {
-                    });
-                    AndroidTouchHandler.startTouch(iDevice);
-                }
                 androidStepHandler.startAndroidDriver(iDevice, port);
             } catch (Exception e) {
                 log.error(e.getMessage());

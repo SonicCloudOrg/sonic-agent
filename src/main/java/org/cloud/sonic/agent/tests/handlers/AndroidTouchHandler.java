@@ -53,7 +53,7 @@ public class AndroidTouchHandler {
     }
 
     public static TouchMode getTouchMode(IDevice iDevice) {
-        return touchModeMap.get(iDevice.getSerialNumber()) == null ? TouchMode.SONIC_APK : touchModeMap.get(iDevice.getSerialNumber());
+        return touchModeMap.get(iDevice.getSerialNumber()) == null ? TouchMode.ADB : touchModeMap.get(iDevice.getSerialNumber());
     }
 
     public static void tap(IDevice iDevice, int x, int y) {
