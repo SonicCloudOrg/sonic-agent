@@ -1851,8 +1851,8 @@ public class AndroidStepHandler {
 
     public void sendKeyForce(HandleContext handleContext, String text) {
         text = TextHandler.replaceTrans(text, globalParams);
-        handleContext.setStepDes("sendKeyForce");
-        handleContext.setDetail(String.format("Input「%s」.", text));
+        handleContext.setStepDes("Sonic输入法输入文本");
+        handleContext.setDetail("输入" + text);
         if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
             handleContext.setE(new SonicRespException("Sonic Apk install failed."));
             return;
@@ -1866,7 +1866,7 @@ public class AndroidStepHandler {
     }
 
     private void closeKeyboard(HandleContext handleContext) {
-        handleContext.setStepDes("closeKeyboard");
+        handleContext.setStepDes("关闭Sonic输入法");
         handleContext.setDetail("");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "ime disable org.cloud.sonic.android/.keyboard.SonicKeyboard");
     }
@@ -1893,7 +1893,7 @@ public class AndroidStepHandler {
     }
 
     public void runScript(HandleContext handleContext, String script, String type) {
-        handleContext.setStepDes("runScript");
+        handleContext.setStepDes("Run Custom Scripts");
         handleContext.setDetail("Script: <br>" + script);
         try {
             switch (type) {
@@ -1923,8 +1923,8 @@ public class AndroidStepHandler {
     }
 
     public void switchTouchMode(HandleContext handleContext, String mode) {
-        handleContext.setStepDes("switchTouchMode");
-        handleContext.setDetail(String.format("Switch touch mode to 「%s」.", mode));
+        handleContext.setStepDes("设置触控模式");
+        handleContext.setDetail("切换为 " + mode + " 模式");
         AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.valueOf(mode));
         if (AndroidTouchHandler.TouchMode.valueOf(mode) == AndroidTouchHandler.TouchMode.SONIC_APK) {
             if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
