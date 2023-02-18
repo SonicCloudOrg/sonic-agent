@@ -51,7 +51,7 @@ public class IOSPerfDataThread extends Thread {
             SibTool.startPerfmon(udId, "", null,
                     iosStepHandler.getLog(), perf.getInteger("perfInterval"));
             boolean hasTarget = false;
-            while (iosTestTaskBootThread.getRunStepThread().isAlive()) {
+            while (!iosTestTaskBootThread.getRunStepThread().isStopped()) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
@@ -64,6 +64,7 @@ public class IOSPerfDataThread extends Thread {
                 }
             }
             SibTool.stopPerfmon(udId);
+            log.info("{} perf done.", udId);
         }
     }
 }

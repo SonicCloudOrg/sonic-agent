@@ -87,7 +87,7 @@ public class AndroidTests {
         AndroidTestTaskBootThread bootThread = new AndroidTestTaskBootThread(jsonObject, androidStepHandler);
         // runningTestsMap的key在rid的基础上再加上udid，避免分发到设备上的用例不均，先执行的完的用例remove rid，导致用例执行不完全的问题
         if (!runningTestsMap.containsKey(rid + "-" + udId)) {
-            logger.info("任务【{}】中断，跳过", bootThread.getName());
+            logger.info("Task【{}】interrupted, skip.", bootThread.getName());
             return;
         }
         TaskManager.startBootThread(bootThread);
@@ -98,10 +98,10 @@ public class AndroidTests {
             e.printStackTrace();
         }
         if (bootThread.getForceStop()) {
-            logger.info("任务【{}】中断，跳过", bootThread.getName());
+            logger.info("Task【{}】interrupted, skip.", bootThread.getName());
             return;
         }
-        logger.info("任务【{}】完成", bootThread.getName());
+        logger.info("Task【{}】finish.", bootThread.getName());
     }
 
 }

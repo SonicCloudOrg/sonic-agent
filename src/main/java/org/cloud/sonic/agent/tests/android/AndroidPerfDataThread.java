@@ -58,7 +58,7 @@ public class AndroidPerfDataThread extends Thread {
             AndroidSupplyTool.startPerfmon(udId, "", null,
                     androidStepHandler.getLog(), perf.getInteger("perfInterval"));
             boolean hasTarget = false;
-            while (androidTestTaskBootThread.getRunStepThread().isAlive()) {
+            while (!androidTestTaskBootThread.getRunStepThread().isStopped()) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
@@ -71,6 +71,7 @@ public class AndroidPerfDataThread extends Thread {
                 }
             }
             AndroidSupplyTool.stopPerfmon(udId);
+            log.info("{} perf done.", udId);
         }
     }
 }

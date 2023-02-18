@@ -233,7 +233,7 @@ public class AndroidTestTaskBootThread extends Thread {
                 Thread.sleep(1000);
             }
         } catch (InterruptedException e) {
-            log.error("任务异常，中断：{}", e.getMessage());
+            log.error("Task error, stopping... cause by: {}", e.getMessage());
             androidStepHandler.setResultDetailStatus(ResultDetailStatus.FAIL);
             forceStop = true;
         } finally {
