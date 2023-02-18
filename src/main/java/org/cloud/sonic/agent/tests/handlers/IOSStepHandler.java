@@ -810,7 +810,7 @@ public class IOSStepHandler {
         }
         isLockStatus = false;
         handleContext.setStepDes("IGNORE");
-        if (handleContext.getE() != null) {
+        if (handleContext.getE() != null && (!handleContext.getE().getMessage().startsWith("IGNORE:"))) {
             handleContext.setStepDes("执行公共步骤 " + name);
             handleContext.setDetail("");
             handleContext.setE(new SonicRespException("Exception thrown during child step running."));

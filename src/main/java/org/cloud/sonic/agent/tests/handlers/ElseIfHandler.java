@@ -23,6 +23,7 @@ import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.RunStepThread;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -74,6 +75,7 @@ public class ElseIfHandler implements StepHandler {
             }
             thread.getLogTool().sendStepLog(StepType.PASS, "「else if」子步骤执行完毕", "");
         } else {
+            handleContext.setE(new SonicRespException("IGNORE:" + handleContext.getE().getMessage()));
             thread.getLogTool().sendStepLog(StepType.WARN, "「else if」步骤执行失败，跳过", "");
         }
         return handleContext;
