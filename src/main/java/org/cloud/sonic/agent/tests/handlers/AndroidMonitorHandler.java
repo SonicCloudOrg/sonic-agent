@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class AndroidMonitorHandler {
-    private final Map<String, Thread> rotationMap = new ConcurrentHashMap<>();
+    private final static Map<String, Thread> rotationMap = new ConcurrentHashMap<>();
 
     public interface IMonitorOutputReceiver {
         void output(String res);
@@ -66,11 +66,11 @@ public class AndroidMonitorHandler {
         }
     }
 
-    public boolean isMonitorRunning(IDevice iDevice) {
+    public static boolean isMonitorRunning(IDevice iDevice) {
         return rotationMap.get(iDevice.getSerialNumber()) != null;
     }
 
-    public void startMonitor(IDevice iDevice, IMonitorOutputReceiver receiver) {
+    public static void startMonitor(IDevice iDevice, IMonitorOutputReceiver receiver) {
         stopMonitor(iDevice);
         String path = AndroidDeviceBridgeTool.executeCommand(iDevice, "pm path org.cloud.sonic.android").trim()
                 .replaceAll("package:", "")
@@ -92,7 +92,7 @@ public class AndroidMonitorHandler {
         rotationMap.put(iDevice.getSerialNumber(), rotationPro);
     }
 
-    public void stopMonitor(IDevice iDevice) {
+    public static void stopMonitor(IDevice iDevice) {
         if (rotationMap.get(iDevice.getSerialNumber()) != null) {
             rotationMap.get(iDevice.getSerialNumber()).interrupt();
         }

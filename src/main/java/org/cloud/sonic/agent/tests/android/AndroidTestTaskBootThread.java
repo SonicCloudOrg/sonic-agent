@@ -206,8 +206,6 @@ public class AndroidTestTaskBootThread extends Thread {
             } catch (Exception e) {
                 log.error(e.getMessage());
                 androidStepHandler.closeAndroidDriver();
-                androidMonitorHandler.stopMonitor(iDevice);
-                AndroidTouchHandler.stopTouch(iDevice);
                 androidStepHandler.sendStatus();
                 AndroidDeviceLocalStatus.finishError(udId);
                 return;
@@ -216,8 +214,6 @@ public class AndroidTestTaskBootThread extends Thread {
             //电量过低退出测试
             if (androidStepHandler.getBattery()) {
                 androidStepHandler.closeAndroidDriver();
-                androidMonitorHandler.stopMonitor(iDevice);
-                AndroidTouchHandler.stopTouch(iDevice);
                 androidStepHandler.sendStatus();
                 AndroidDeviceLocalStatus.finish(udId);
                 return;
@@ -244,8 +240,6 @@ public class AndroidTestTaskBootThread extends Thread {
             if (startTestSuccess) {
                 AndroidDeviceLocalStatus.finish(udId);
                 androidStepHandler.closeAndroidDriver();
-                androidMonitorHandler.stopMonitor(iDevice);
-                AndroidTouchHandler.stopTouch(iDevice);
             }
             androidStepHandler.sendStatus();
             finished.release();

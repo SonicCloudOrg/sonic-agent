@@ -91,8 +91,6 @@ public class AndroidStepHandler {
     private int pocoPort = 0;
     private int targetPort = 0;
 
-    AndroidMonitorHandler androidMonitorHandler = new AndroidMonitorHandler();
-
     private String targetPackage = "";
 
     public String getTargetPackage() {
@@ -178,6 +176,8 @@ public class AndroidStepHandler {
      * @date 2021/8/16 20:21
      */
     public void closeAndroidDriver() {
+        AndroidMonitorHandler.stopMonitor(iDevice);
+        AndroidTouchHandler.stopTouch(iDevice);
         try {
             if (chromeDriver != null) {
                 chromeDriver.quit();
@@ -1930,9 +1930,13 @@ public class AndroidStepHandler {
             if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
                 AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.ADB);
             } else {
-                androidMonitorHandler.startMonitor(iDevice, res -> {
-                });
-                AndroidTouchHandler.startTouch(iDevice);
+                if(!AndroidMonitorHandler.isMonitorRunning(iDevice)) {
+                    AndroidMonitorHandler.startMonitor(iDevice, res -> {
+                    });
+                }
+                if(!AndroidTouchHandler.isTouchRunning(iDevice)) {
+                    AndroidTouchHandler.startTouch(iDevice);
+                }
             }
         }
     }
