@@ -158,10 +158,6 @@ public class AndroidTouchHandler {
         }
     }
 
-    public static boolean isTouchRunning(IDevice iDevice) {
-        return touchMap.get(iDevice.getSerialNumber()) != null;
-    }
-
     public static void startTouch(IDevice iDevice) {
         stopTouch(iDevice);
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);

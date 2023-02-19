@@ -176,8 +176,6 @@ public class AndroidStepHandler {
      * @date 2021/8/16 20:21
      */
     public void closeAndroidDriver() {
-        AndroidMonitorHandler.stopMonitor(iDevice);
-        AndroidTouchHandler.stopTouch(iDevice);
         try {
             if (chromeDriver != null) {
                 chromeDriver.quit();
@@ -1926,19 +1924,6 @@ public class AndroidStepHandler {
         handleContext.setStepDes("设置触控模式");
         handleContext.setDetail("切换为 " + mode + " 模式");
         AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.valueOf(mode));
-        if (AndroidTouchHandler.TouchMode.valueOf(mode) == AndroidTouchHandler.TouchMode.SONIC_APK) {
-            if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
-                AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.ADB);
-            } else {
-                if(!AndroidMonitorHandler.isMonitorRunning(iDevice)) {
-                    AndroidMonitorHandler.startMonitor(iDevice, res -> {
-                    });
-                }
-                if(!AndroidTouchHandler.isTouchRunning(iDevice)) {
-                    AndroidTouchHandler.startTouch(iDevice);
-                }
-            }
-        }
     }
 
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {

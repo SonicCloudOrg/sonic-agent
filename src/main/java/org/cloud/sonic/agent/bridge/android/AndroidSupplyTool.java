@@ -132,9 +132,9 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
         stopPerfmon(udId);
         if (isEnable) {
             Process ps = null;
-            String commandLine = "%s perfmon -s %s -r %d %s -j";
+            String commandLine = "%s perfmon -s %s -r %d %s -j --sys-cpu --sys-mem --sys-network";
             String system = System.getProperty("os.name").toLowerCase();
-            String tail = pkg.length() == 0 ? "" : (" -p " + pkg);
+            String tail = pkg.length() == 0 ? "" : (" --proc-cpu --proc-fps --proc-mem --proc-threads -p " + pkg);
             try {
                 if (system.contains("win")) {
                     ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sas, udId, interval, tail)});
