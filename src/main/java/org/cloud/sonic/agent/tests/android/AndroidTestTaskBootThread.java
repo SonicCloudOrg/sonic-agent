@@ -193,7 +193,6 @@ public class AndroidTestTaskBootThread extends Thread {
                 androidStepHandler.waitDevice(wait);
                 if (wait >= 6 * 10) {
                     androidStepHandler.waitDeviceTimeOut();
-                    androidStepHandler.sendStatus();
                     return;
                 } else {
                     Thread.sleep(10000);
@@ -216,7 +215,6 @@ public class AndroidTestTaskBootThread extends Thread {
                 androidStepHandler.closeAndroidDriver();
                 androidMonitorHandler.stopMonitor(iDevice);
                 AndroidTouchHandler.stopTouch(iDevice);
-                androidStepHandler.sendStatus();
                 AndroidDeviceLocalStatus.finishError(udId);
                 return;
             }
@@ -226,7 +224,6 @@ public class AndroidTestTaskBootThread extends Thread {
                 androidStepHandler.closeAndroidDriver();
                 androidMonitorHandler.stopMonitor(iDevice);
                 AndroidTouchHandler.stopTouch(iDevice);
-                androidStepHandler.sendStatus();
                 AndroidDeviceLocalStatus.finish(udId);
                 return;
             }
