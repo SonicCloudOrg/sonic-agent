@@ -170,7 +170,6 @@ public class IOSTestTaskBootThread extends Thread {
                 iosStepHandler.waitDevice(wait);
                 if (wait >= 6 * 10) {
                     iosStepHandler.waitDeviceTimeOut();
-                    iosStepHandler.sendStatus();
                     return;
                 } else {
                     Thread.sleep(10000);
@@ -185,7 +184,6 @@ public class IOSTestTaskBootThread extends Thread {
             } catch (Exception e) {
                 log.error(e.getMessage());
                 iosStepHandler.closeIOSDriver();
-                iosStepHandler.sendStatus();
                 IOSDeviceLocalStatus.finishError(udId);
                 return;
             }
@@ -193,7 +191,6 @@ public class IOSTestTaskBootThread extends Thread {
             //电量过低退出测试
             if (iosStepHandler.getBattery()) {
                 iosStepHandler.closeIOSDriver();
-                iosStepHandler.sendStatus();
                 IOSDeviceLocalStatus.finish(udId);
                 return;
             }
