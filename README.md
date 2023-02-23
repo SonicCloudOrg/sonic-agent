@@ -43,7 +43,11 @@
 >
 >If you want to support, you can give me a star. ⭐
 
-## How to package
+## Deploy
+
+[Look Here!](https://sonic-cloud.cn/deploy/agent-deploy.html)
+
+## Package
 
 [Look Here!](https://sonic-cloud.cn/contribute?tag=con-agent)
 
