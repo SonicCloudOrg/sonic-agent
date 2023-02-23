@@ -42,6 +42,10 @@
 >
 > 如果你想支持，可以给我一个star。⭐
 
+## 部署方式
+
+[查看这里](https://sonic-cloud.cn/deploy/agent-deploy.html)
+
 ## 打包方式
 
 [查看这里](https://sonic-cloud.cn/contribute?tag=con-agent)
