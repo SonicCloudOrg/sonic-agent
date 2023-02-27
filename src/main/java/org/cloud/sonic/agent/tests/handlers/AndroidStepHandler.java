@@ -394,7 +394,10 @@ public class AndroidStepHandler {
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
         handleContext.setDetail("App包名： " + appPackage);
         try {
-            AndroidDeviceBridgeTool.activateApp(iDevice, appPackage);
+            String result = AndroidDeviceBridgeTool.activateApp(iDevice, appPackage);
+            if (result.contains("No activities found to run")) {
+                throw new Exception(result);
+            }
             targetPackage = appPackage;
         } catch (Exception e) {
             handleContext.setE(e);
