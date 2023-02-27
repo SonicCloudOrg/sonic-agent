@@ -416,8 +416,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         executeCommand(iDevice, String.format("am force-stop %s", bundleId));
     }
 
-    public static void activateApp(IDevice iDevice, String bundleId) {
-        executeCommand(iDevice, String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", bundleId));
+    public static String activateApp(IDevice iDevice, String bundleId) {
+        return executeCommand(iDevice, String.format("monkey -p %s -c android.intent.category.LAUNCHER 1", bundleId));
     }
 
     /**
