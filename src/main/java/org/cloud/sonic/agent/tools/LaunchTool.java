@@ -17,6 +17,7 @@
  */
 package org.cloud.sonic.agent.tools;
 
+import jakarta.annotation.PreDestroy;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.transport.TransportConnectionThread;
@@ -28,7 +29,6 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PreDestroy;
 import java.io.File;
 import java.util.List;
 

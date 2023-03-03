@@ -23,7 +23,7 @@ import org.cloud.sonic.agent.tools.BytesTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;

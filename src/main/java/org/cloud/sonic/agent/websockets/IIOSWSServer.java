@@ -19,7 +19,7 @@ package org.cloud.sonic.agent.websockets;
 
 import org.springframework.util.StringUtils;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;

@@ -1634,14 +1634,14 @@ public class AndroidStepHandler {
         WebElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
-            case "id" -> we = chromeDriver.findElementById(pathValue);
-            case "name" -> we = chromeDriver.findElementByName(pathValue);
-            case "xpath" -> we = chromeDriver.findElementByXPath(pathValue);
-            case "cssSelector" -> we = chromeDriver.findElementByCssSelector(pathValue);
-            case "className" -> we = chromeDriver.findElementByClassName(pathValue);
-            case "tagName" -> we = chromeDriver.findElementByTagName(pathValue);
-            case "linkText" -> we = chromeDriver.findElementByLinkText(pathValue);
-            case "partialLinkText" -> we = chromeDriver.findElementByPartialLinkText(pathValue);
+            case "id" -> we = chromeDriver.findElement(By.id(pathValue));
+            case "name" -> we = chromeDriver.findElement(By.name(pathValue));
+            case "xpath" -> we = chromeDriver.findElement(By.xpath(pathValue));
+            case "cssSelector" -> we = chromeDriver.findElement(By.cssSelector(pathValue));
+            case "className" -> we = chromeDriver.findElement(By.className(pathValue));
+            case "tagName" -> we = chromeDriver.findElement(By.tagName(pathValue));
+            case "linkText" -> we = chromeDriver.findElement(By.linkText(pathValue));
+            case "partialLinkText" -> we = chromeDriver.findElement(By.partialLinkText(pathValue));
             case "cssSelectorAndText" -> we = getWebElementByCssAndText(pathValue);
             default ->
                     log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
