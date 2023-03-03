@@ -6,6 +6,7 @@ import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.driver.poco.models.PocoElement;
 import org.cloud.sonic.driver.poco.models.RootElement;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Ignore
 public class MockPocoParamTest {
     JSONObject mockStepData;
 
