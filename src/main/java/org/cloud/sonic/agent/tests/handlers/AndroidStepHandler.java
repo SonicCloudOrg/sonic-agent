@@ -743,6 +743,9 @@ public class AndroidStepHandler {
                     e.printStackTrace();
                 }
             }
+            default -> {
+                throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
+            }
         }
     }
 
