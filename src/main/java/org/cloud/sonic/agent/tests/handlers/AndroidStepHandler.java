@@ -680,7 +680,7 @@ public class AndroidStepHandler {
         }
     }
 
-    public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception {
+    public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception{
         handleContext.setStepDes("从手机中心位置开始滑动" + distance + "像素");
 
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
@@ -698,7 +698,8 @@ public class AndroidStepHandler {
             case "up" -> {
                 targetY = centerY - distance;
                 if (targetY < 0) {
-                    throw new Exception("滑动距离超出手机顶部！");
+                    targetY = 0;
+                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出手机顶部，默认取顶部边界值"+"<"+targetY+">");
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
@@ -709,7 +710,8 @@ public class AndroidStepHandler {
             case "down" -> {
                 targetY = centerY + distance;
                 if (targetY > height) {
-                    throw new Exception("滑动距离超出手机底部！");
+                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出手机底部，默认取底部边界值"+"<"+targetY+">");
+                    targetY = height;
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
@@ -720,7 +722,8 @@ public class AndroidStepHandler {
             case "left" -> {
                 targetX = centerX - distance;
                 if (targetX < 0) {
-                    throw new Exception("滑动距离超出手机左侧边界！");
+                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出手机左侧，默认取左侧边界值"+"<"+targetX+">");
+                    targetX = 0;
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
@@ -731,7 +734,8 @@ public class AndroidStepHandler {
             case "right" -> {
                 targetX = centerX + distance;
                 if (targetX > width) {
-                    throw new Exception("滑动距离超出手机右侧边界！");
+                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出手机右侧，默认取右侧边界值"+"<"+targetX+">");
+                    targetX = width;
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
