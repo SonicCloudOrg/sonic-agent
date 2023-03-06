@@ -691,8 +691,8 @@ public class AndroidStepHandler {
 
         int centerX = (int) Math.ceil(width / 2.0);
         int centerY = (int) Math.ceil(height / 2.0);
-        int targetY;
-        int targetX;
+        int targetY = 0;
+        int targetX = 0;
 
         switch (slideDirection) {
             case "up" -> {
@@ -700,7 +700,6 @@ public class AndroidStepHandler {
                 if (targetY < 0) {
                     throw new Exception("滑动距离超出手机顶部！");
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
@@ -712,7 +711,6 @@ public class AndroidStepHandler {
                 if (targetY > height) {
                     throw new Exception("滑动距离超出手机底部！");
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
@@ -724,7 +722,6 @@ public class AndroidStepHandler {
                 if (targetX < 0) {
                     throw new Exception("滑动距离超出手机左侧边界！");
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
@@ -736,20 +733,16 @@ public class AndroidStepHandler {
                 if (targetX > width) {
                     throw new Exception("滑动距离超出手机右侧边界！");
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            default -> {
-                throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
-            }
+            default -> throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
         }
+        handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + (targetX == 0 ? centerX : targetX) + "," + (centerY == 0 ? centerY : targetY) + ")");
     }
-
-
 
 
     public void longPress(HandleContext handleContext, String des, String selector, String pathValue, int time) {
