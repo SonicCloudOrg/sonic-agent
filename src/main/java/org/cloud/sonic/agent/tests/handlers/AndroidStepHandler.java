@@ -687,7 +687,7 @@ public class AndroidStepHandler {
         String[] winSize = size.split("x");
         int width = BytesTool.getInt(winSize[0]);
         int height = BytesTool.getInt(winSize[1]);
-        handleContext.setDetail("设备分辨率为：" + width + "x" + height + " 像素");
+        log.sendStepLog(StepType.INFO,"","设备分辨率为：" + width + "x" + height + " 像素");
 
         int centerX = (int) Math.ceil(width / 2.0);
         int centerY = (int) Math.ceil(height / 2.0);
@@ -699,7 +699,7 @@ public class AndroidStepHandler {
                 targetY = centerY - distance;
                 if (targetY < 0) {
                     targetY = 0;
-                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出设备顶部，默认取顶部边界值"+"<"+targetY+">");
+                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备顶部，默认取顶部边界值"+"<"+targetY+">");
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
@@ -710,7 +710,7 @@ public class AndroidStepHandler {
             case "down" -> {
                 targetY = centerY + distance;
                 if (targetY > height) {
-                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出设备底部，默认取底部边界值"+"<"+targetY+">");
+                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备底部，默认取底部边界值"+"<"+targetY+">");
                     targetY = height;
                 }
                 try {
@@ -722,7 +722,7 @@ public class AndroidStepHandler {
             case "left" -> {
                 targetX = centerX - distance;
                 if (targetX < 0) {
-                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出设备左侧，默认取左侧边界值"+"<"+targetX+">");
+                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备左侧，默认取左侧边界值"+"<"+targetX+">");
                     targetX = 0;
                 }
                 try {
@@ -734,7 +734,7 @@ public class AndroidStepHandler {
             case "right" -> {
                 targetX = centerX + distance;
                 if (targetX > width) {
-                    log.sendStepLog(StepType.INFO,"提示:","滑动距离超出设备右侧，默认取右侧边界值"+"<"+targetX+">");
+                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备右侧，默认取右侧边界值"+"<"+targetX+">");
                     targetX = width;
                 }
                 try {
