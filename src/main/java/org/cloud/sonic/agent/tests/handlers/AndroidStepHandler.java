@@ -680,72 +680,75 @@ public class AndroidStepHandler {
         }
     }
 
-    public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception{
+    public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception {
         handleContext.setStepDes("从设备中心位置开始滑动" + distance + "像素");
 
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
         String[] winSize = size.split("x");
         int width = BytesTool.getInt(winSize[0]);
         int height = BytesTool.getInt(winSize[1]);
-        log.sendStepLog(StepType.INFO,"","设备分辨率为：" + width + "x" + height + " 像素");
+        log.sendStepLog(StepType.INFO, "", "设备分辨率为：" + width + "x" + height + " 像素");
 
         int centerX = (int) Math.ceil(width / 2.0);
         int centerY = (int) Math.ceil(height / 2.0);
-        int targetY = 0;
-        int targetX = 0;
+        int targetY;
+        int targetX;
 
         switch (slideDirection) {
             case "up" -> {
                 targetY = centerY - distance;
                 if (targetY < 0) {
                     targetY = 0;
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备顶部，默认取顶部边界值"+"<"+targetY+">");
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备顶部，默认取顶部边界值" + "<" + targetY + ">");
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
             case "down" -> {
                 targetY = centerY + distance;
                 if (targetY > height) {
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备底部，默认取底部边界值"+"<"+targetY+">");
                     targetY = height;
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备底部，默认取底部边界值" + "<" + targetY + ">");
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
             case "left" -> {
                 targetX = centerX - distance;
                 if (targetX < 0) {
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备左侧，默认取左侧边界值"+"<"+targetX+">");
                     targetX = 0;
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备左侧，默认取左侧边界值" + "<" + targetX + ">");
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }
             case "right" -> {
                 targetX = centerX + distance;
                 if (targetX > width) {
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备右侧，默认取右侧边界值"+"<"+targetX+">");
                     targetX = width;
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备右侧，默认取右侧边界值" + "<" + targetX + ">");
                 }
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }
             default -> throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
         }
-        handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + (targetX == 0 ? centerX : targetX) + "," + (centerY == 0 ? centerY : targetY) + ")");
     }
 
 
