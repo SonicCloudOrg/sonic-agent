@@ -126,9 +126,8 @@ public class IOSStepHandler {
             setResultDetailStatus(ResultDetailStatus.FAIL);
             throw out;
         }
-        iosDriver.getWdaClient().setGlobalTimeOut(60000);
+        iosDriver.getWdaClient().setGlobalTimeOut(5 * 60 * 1000);
         log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
-        WindowSize windowSize = iosDriver.getWindowSize();
         JSONObject appiumSettings = new JSONObject();
         appiumSettings.put("snapshotMaxDepth", 30);
         appiumSettings(appiumSettings);
