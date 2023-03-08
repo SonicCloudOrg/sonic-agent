@@ -566,7 +566,7 @@ public class IOSStepHandler {
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
 
             }
-            // 左滑或者右滑起始点x位置的坐标接为最大值或最小值，用来解决滑动距离太短无法翻页等的操作
+            // 左滑或者右滑起始点x位置的坐标为最大值或最小值，用来解决滑动距离太短无法翻页等的操作
             case "left" -> {
                 targetX = centerX - distance;
                 if (targetX < 0) {
