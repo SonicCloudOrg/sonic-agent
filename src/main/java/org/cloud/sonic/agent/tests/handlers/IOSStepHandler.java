@@ -524,7 +524,7 @@ public class IOSStepHandler {
     }
 
     public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception{
-        handleContext.setStepDes("从设备中心位置开始滑动" + distance + "像素");
+        handleContext.setStepDes("从设备中间位置开始滑动" + distance + "像素");
 
         WindowSize size = iosDriver.getWindowSize();
         int width = size.getWidth();
