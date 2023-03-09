@@ -547,7 +547,7 @@ public class IOSStepHandler {
                     iosDriver.swipe(centerX, centerY, centerX, targetY);
                     log.sendStepLog(StepType.INFO,"",centerX + "," + targetY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                   handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
@@ -561,7 +561,7 @@ public class IOSStepHandler {
                 try {
                     iosDriver.swipe(centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
 
@@ -577,7 +577,7 @@ public class IOSStepHandler {
                 try {
                     iosDriver.swipe(width, centerY, targetX, centerY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + width + "," + centerY + ")到(" + targetX + "," + centerY + ")");
 
@@ -592,7 +592,7 @@ public class IOSStepHandler {
                 try {
                     iosDriver.swipe(0, centerY, targetX, centerY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + 0 + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }

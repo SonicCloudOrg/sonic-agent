@@ -65,6 +65,9 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.JavascriptExecutor;
+
+
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
@@ -704,7 +707,7 @@ public class AndroidStepHandler {
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
@@ -717,7 +720,7 @@ public class AndroidStepHandler {
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
@@ -730,7 +733,7 @@ public class AndroidStepHandler {
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }
@@ -743,7 +746,7 @@ public class AndroidStepHandler {
                 try {
                     AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }
@@ -1809,6 +1812,20 @@ public class AndroidStepHandler {
         return element;
     }
 
+    public void webElementScrollToView(HandleContext handleContext, String des, String selector, String pathValue){
+        handleContext.setStepDes("滚动页面元素" + des + " 至顶部可见");
+        WebElement we;
+        try{
+            we = findWebEle(selector, pathValue);
+        } catch (Exception e){
+            handleContext.setE(e);
+            return;
+        }
+        JavascriptExecutor jsExe = chromeDriver;
+        jsExe.executeScript("arguments[0].scrollIntoView();", we);
+        handleContext.setDetail("控件元素" + selector + ":"+ pathValue + "滚动至页面顶部");
+    }
+
     public void isExistWebViewEle(HandleContext handleContext, String des, String selector, String pathValue, boolean expect) {
         handleContext.setStepDes("判断控件 " + des + " 是否存在");
         handleContext.setDetail("期望值：" + (expect ? "存在" : "不存在"));
@@ -2067,6 +2084,7 @@ public class AndroidStepHandler {
             case "publicStep" -> publicStep(handleContext, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
             case "getWebViewText" -> getWebViewTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                     , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            case "webElementScrollToView" -> webElementScrollToView(handleContext,step.getString("text"),step.getString("content"),step.getString("content"));
             case "isExistWebViewEle" -> isExistWebViewEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                     , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
             case "webViewClear" -> webViewClear(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
