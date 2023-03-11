@@ -306,8 +306,13 @@ public class IOSStepHandler {
         handleContext.setStepDes("安装应用");
         path = TextHandler.replaceTrans(path, globalParams);
         handleContext.setDetail("App安装路径： " + path);
+        File localFile = new File(path);
         try {
-            SibTool.install(udId, path);
+            if (path.contains("http")) {
+                localFile = DownloadTool.download(path);
+            }
+            log.sendStepLog(StepType.INFO, "", "开始安装App，请稍后...");
+            SibTool.install(udId, localFile.getAbsolutePath());
         } catch (Exception e) {
             handleContext.setE(e);
         }
