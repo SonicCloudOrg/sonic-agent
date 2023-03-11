@@ -44,7 +44,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;

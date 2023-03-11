@@ -21,7 +21,7 @@ import com.android.ddmlib.IDevice;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.springframework.util.ObjectUtils;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;

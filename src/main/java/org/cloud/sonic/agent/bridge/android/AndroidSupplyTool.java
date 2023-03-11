@@ -34,7 +34,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;

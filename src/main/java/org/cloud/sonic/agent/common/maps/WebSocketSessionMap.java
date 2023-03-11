@@ -3,7 +3,7 @@ package org.cloud.sonic.agent.common.maps;
 import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
