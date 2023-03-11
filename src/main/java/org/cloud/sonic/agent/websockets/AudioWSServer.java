@@ -47,7 +47,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AudioWSServer implements IAndroidWSServer {
     @Value("${sonic.agent.key}")
     private String key;
-    private Map<Session, IDevice> udIdMap = new ConcurrentHashMap<>();
     private Map<Session, Thread> audioMap = new ConcurrentHashMap<>();
 
     @OnOpen

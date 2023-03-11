@@ -9,7 +9,7 @@ spring:
 sonic:
   saa: 2.0.6
   sgm: 1.3.4
-  sib: 1.3.7
+  sib: 1.3.8
   sas: 0.1.7
   saus: 5.7.4
   release-mode: @releaseMode@
