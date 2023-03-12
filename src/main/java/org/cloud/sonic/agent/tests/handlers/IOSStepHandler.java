@@ -20,7 +20,6 @@ package org.cloud.sonic.agent.tests.handlers;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.enums.SonicEnum;
@@ -33,7 +32,6 @@ import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.RunStepThread;
 import org.cloud.sonic.agent.tests.script.GroovyScript;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
-import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
@@ -527,13 +525,11 @@ public class IOSStepHandler {
         }
     }
 
-    public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception{
-        handleContext.setStepDes("从设备中间位置开始滑动" + distance + "像素");
-
+    public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception {
         WindowSize size = iosDriver.getWindowSize();
         int width = size.getWidth();
         int height = size.getHeight();
-        log.sendStepLog(StepType.INFO, "","设备逻辑分辨率为：" + width + "x" + height + " 像素");
+        log.sendStepLog(StepType.INFO, "", "设备逻辑分辨率为：" + width + "x" + height);
 
         int centerX = (int) Math.ceil(width / 2.0);
         int centerY = (int) Math.ceil(height / 2.0);
@@ -542,25 +538,26 @@ public class IOSStepHandler {
 
         switch (slideDirection) {
             case "up" -> {
+                handleContext.setStepDes("从设备中心位置向上滑动" + distance + "像素");
                 targetY = centerY - distance;
                 if (targetY < 0) {
                     targetY = 0;
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备顶部，默认取顶部边界值"+"<"+targetY+">");
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备顶部，默认取顶部边界值" + "<" + targetY + ">");
                 }
                 try {
                     iosDriver.swipe(centerX, centerY, centerX, targetY);
-                    log.sendStepLog(StepType.INFO,"",centerX + "," + targetY);
+                    log.sendStepLog(StepType.INFO, "", centerX + "," + targetY);
                 } catch (Exception e) {
-                   handleContext.setE(e);
+                    handleContext.setE(e);
                 }
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
             case "down" -> {
+                handleContext.setStepDes("从设备中心位置向下滑动" + distance + "像素");
                 targetY = centerY + distance;
                 if (targetY > height) {
                     targetY = height;
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备底部，默认取底部边界值"+"<"+targetY+">");
-
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备底部，默认取底部边界值" + "<" + targetY + ">");
                 }
                 try {
                     iosDriver.swipe(centerX, centerY, centerX, targetY);
@@ -570,13 +567,13 @@ public class IOSStepHandler {
                 handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
 
             }
-            // 左滑或者右滑起始点x位置的坐标为最大值或最小值，用来解决滑动距离太短无法翻页等的操作
+            // The coordinate of the starting point x of left or right sliding is the maximum or minimum value, which is used to solve problems such as too short sliding distance to turn pages.
             case "left" -> {
+                handleContext.setStepDes("从设备中心位置向左滑动" + distance + "像素");
                 targetX = centerX - distance;
                 if (targetX < 0) {
                     targetX = 0;
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备左侧，默认取左侧边界值"+"<"+targetX+">");
-
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备左侧，默认取左侧边界值" + "<" + targetX + ">");
                 }
                 try {
                     iosDriver.swipe(width, centerY, targetX, centerY);
@@ -587,11 +584,11 @@ public class IOSStepHandler {
 
             }
             case "right" -> {
+                handleContext.setStepDes("从设备中心位置向右滑动" + distance + "像素");
                 targetX = centerX + distance;
                 if (targetX > width) {
                     targetX = width;
-                    log.sendStepLog(StepType.INFO,"","滑动距离超出设备右侧，默认取右侧边界值"+"<"+targetX+">");
-
+                    log.sendStepLog(StepType.INFO, "", "滑动距离超出设备右侧，默认取右侧边界值" + "<" + targetX + ">");
                 }
                 try {
                     iosDriver.swipe(0, centerY, targetX, centerY);
@@ -600,9 +597,11 @@ public class IOSStepHandler {
                 }
                 handleContext.setDetail("拖动坐标(" + 0 + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }
-            default -> throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
+            default ->
+                    throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
         }
     }
+
     public void longPress(HandleContext handleContext, String des, String selector, String pathValue, int time) {
         handleContext.setStepDes("长按" + des);
         handleContext.setDetail("长按控件元素" + time + "毫秒 ");
@@ -1457,7 +1456,7 @@ public class IOSStepHandler {
                     swipePoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
             case "swipeByDefinedDirection" ->
-                    swipeByDefinedDirection(handleContext, step.getString("text"),step.getInteger("content"));
+                    swipeByDefinedDirection(handleContext, step.getString("text"), step.getInteger("content"));
             case "swipe2" ->
                     swipe(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
