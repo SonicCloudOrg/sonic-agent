@@ -1710,21 +1710,57 @@ public class AndroidStepHandler {
         return pocoDriver;
     }
 
-    public WebElement findWebEle(String selector, String pathValue) {
+    private int intervalWebInit = 3000;
+    private int retryWebInit = 3;
+
+    public void setDefaultFindWebElementInterval(HandleContext handleContext, Integer retry, Integer interval) {
+        handleContext.setStepDes("设置查找WebView控件策略");
+        handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
+        if (retry != null) {
+            retryWebInit = retry;
+        }
+        if (interval != null) {
+            intervalWebInit = interval;
+        }
+    }
+
+    public WebElement findWebEle(String selector, String pathValue) throws SonicRespException {
         WebElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
-        switch (selector) {
-            case "id" -> we = chromeDriver.findElement(By.id(pathValue));
-            case "name" -> we = chromeDriver.findElement(By.name(pathValue));
-            case "xpath" -> we = chromeDriver.findElement(By.xpath(pathValue));
-            case "cssSelector" -> we = chromeDriver.findElement(By.cssSelector(pathValue));
-            case "className" -> we = chromeDriver.findElement(By.className(pathValue));
-            case "tagName" -> we = chromeDriver.findElement(By.tagName(pathValue));
-            case "linkText" -> we = chromeDriver.findElement(By.linkText(pathValue));
-            case "partialLinkText" -> we = chromeDriver.findElement(By.partialLinkText(pathValue));
-            case "cssSelectorAndText" -> we = getWebElementByCssAndText(pathValue);
-            default ->
-                    log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+        int wait = 0;
+        String errMsg = "";
+        while (wait < retryWebInit) {
+            wait++;
+            try {
+                switch (selector) {
+                    case "id" -> we = chromeDriver.findElement(By.id(pathValue));
+                    case "name" -> we = chromeDriver.findElement(By.name(pathValue));
+                    case "xpath" -> we = chromeDriver.findElement(By.xpath(pathValue));
+                    case "cssSelector" -> we = chromeDriver.findElement(By.cssSelector(pathValue));
+                    case "className" -> we = chromeDriver.findElement(By.className(pathValue));
+                    case "tagName" -> we = chromeDriver.findElement(By.tagName(pathValue));
+                    case "linkText" -> we = chromeDriver.findElement(By.linkText(pathValue));
+                    case "partialLinkText" -> we = chromeDriver.findElement(By.partialLinkText(pathValue));
+                    case "cssSelectorAndText" -> we = getWebElementByCssAndText(pathValue);
+                    default ->
+                            log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                }
+                if (we != null) {
+                    break;
+                }
+            } catch (Throwable e) {
+                errMsg = e.getMessage();
+            }
+            if (wait < retryWebInit) {
+                try {
+                    Thread.sleep(intervalWebInit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (we == null) {
+            throw new SonicRespException(errMsg);
         }
         return we;
     }
@@ -2110,6 +2146,8 @@ public class AndroidStepHandler {
                     runMonkey(handleContext, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
             case "publicStep" ->
                     publicStep(handleContext, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
+            case "setDefaultFindWebElementInterval" ->
+                    setDefaultFindWebElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "getWebViewText" ->
                     getWebViewTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
