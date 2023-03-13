@@ -52,7 +52,7 @@
         <dependency>
             <groupId>com.android.tools.ddms</groupId>
             <artifactId>ddmlib</artifactId>
-            <version>30.4.1</version>
+            <version>30.4.2</version>
         </dependency>
         <!-- lombok -->
         <dependency>
