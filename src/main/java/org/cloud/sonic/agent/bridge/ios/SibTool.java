@@ -532,6 +532,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));
     }
 
+    public static void kill(String udId, String pkg) {
+        String commandLine = "%s app kill -u %s -b %s";
+        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));
+    }
+
     public static void uninstall(String udId, String pkg) {
         String commandLine = "%s app uninstall -u %s -b %s";
         ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));

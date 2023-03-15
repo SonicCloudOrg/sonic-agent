@@ -19,6 +19,9 @@ package org.cloud.sonic.agent.websockets;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
@@ -46,9 +49,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.stream.FileImageOutputStream;
-import jakarta.websocket.*;
-import jakarta.websocket.server.PathParam;
-import jakarta.websocket.server.ServerEndpoint;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
@@ -285,6 +285,7 @@ public class IOSWSServer implements IIOSWSServer {
                 }
                 case "installCert" -> SibTool.launch(udId, "com.apple.mobilesafari");
                 case "launch" -> SibTool.launch(udId, msg.getString("pkg"));
+                case "kill" -> SibTool.kill(udId, msg.getString("pkg"));
                 case "uninstallApp" -> SibTool.uninstall(udId, msg.getString("detail"));
                 case "debug" -> {
                     switch (msg.getString("detail")) {

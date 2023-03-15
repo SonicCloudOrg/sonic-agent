@@ -20,6 +20,9 @@ package org.cloud.sonic.agent.websockets;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.*;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
@@ -47,9 +50,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.imageio.stream.FileImageOutputStream;
-import jakarta.websocket.*;
-import jakarta.websocket.server.PathParam;
-import jakarta.websocket.server.ServerEndpoint;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
@@ -275,6 +275,9 @@ public class AndroidWSServer implements IAndroidWSServer {
                     );
                     case "openApp" -> AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                         AndroidDeviceBridgeTool.activateApp(iDevice, msg.getString("pkg"));
+                    });
+                    case "killApp" -> AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
+                        AndroidDeviceBridgeTool.forceStop(iDevice, msg.getString("pkg"));
                     });
                     case "tap" -> {
                         String xy = msg.getString("point");
