@@ -1713,7 +1713,7 @@ public class AndroidStepHandler {
     private int intervalWebInit = 3000;
     private int retryWebInit = 3;
 
-    public void setDefaultFindWebElementInterval(HandleContext handleContext, Integer retry, Integer interval) {
+    public void setDefaultFindWebViewElementInterval(HandleContext handleContext, Integer retry, Integer interval) {
         handleContext.setStepDes("设置查找WebView控件策略");
         handleContext.setDetail(String.format("Retry count: %d, retry interval: %d ms", retry, interval));
         if (retry != null) {
@@ -2146,8 +2146,8 @@ public class AndroidStepHandler {
                     runMonkey(handleContext, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
             case "publicStep" ->
                     publicStep(handleContext, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
-            case "setDefaultFindWebElementInterval" ->
-                    setDefaultFindWebElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
+            case "setDefaultFindWebViewElementInterval" ->
+                    setDefaultFindWebViewElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "getWebViewText" ->
                     getWebViewTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
