@@ -1553,11 +1553,12 @@ public class IOSStepHandler {
         String stepDes = handleContext.getStepDes();
         String detail = handleContext.getDetail();
         Throwable e = handleContext.getE();
-        if (e != null && !"exit while".equals(e.getMessage())) {
+        if (e != null && !"exit while".equals(e.getMessage()) && !e.getMessage().startsWith("IGNORE:")) {
             switch (error) {
                 case ErrorType.IGNORE:
                     if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
                         log.sendStepLog(StepType.PASS, stepDes + "异常！已忽略...", detail);
+                        handleContext.clear();
                     } else {
                         ConditionEnum conditionType =
                                 SonicEnum.valueToEnum(ConditionEnum.class, stepJson.getInteger("conditionType"));
@@ -1578,10 +1579,6 @@ public class IOSStepHandler {
                     errorScreen();
                     exceptionLog(e);
                     throw e;
-            }
-            // 非条件步骤清除异常对象
-            if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
-                handleContext.clear();
             }
         } else if (!"IGNORE".equals(stepDes)) {
             log.sendStepLog(StepType.PASS, stepDes, detail);

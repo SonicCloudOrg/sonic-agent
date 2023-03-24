@@ -2226,11 +2226,12 @@ public class AndroidStepHandler {
         String stepDes = handleContext.getStepDes();
         String detail = handleContext.getDetail();
         Throwable e = handleContext.getE();
-        if (e != null && !"exit while".equals(e.getMessage())) {
+        if (e != null && !"exit while".equals(e.getMessage()) && !e.getMessage().startsWith("IGNORE:")) {
             switch (error) {
                 case ErrorType.IGNORE:
                     if (stepJson.getInteger("conditionType").equals(ConditionEnum.NONE.getValue())) {
                         log.sendStepLog(StepType.PASS, stepDes + "异常！已忽略...", detail);
+                        handleContext.clear();
                     } else {
                         ConditionEnum conditionType =
                                 SonicEnum.valueToEnum(ConditionEnum.class, stepJson.getInteger("conditionType"));
@@ -2251,9 +2252,6 @@ public class AndroidStepHandler {
                     errorScreen();
                     exceptionLog(e);
                     throw e;
-            }
-            if (stepJson.getInteger("conditionType").equals(0)) {
-                handleContext.clear();
             }
         } else if (!"IGNORE".equals(stepDes)) {
             log.sendStepLog(StepType.PASS, stepDes, detail);
