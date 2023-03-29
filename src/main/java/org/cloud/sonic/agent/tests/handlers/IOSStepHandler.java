@@ -30,7 +30,8 @@ import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.RunStepThread;
-import org.cloud.sonic.agent.tests.script.GroovyScript;
+import org.cloud.sonic.agent.tests.script.PythonScriptImpl;
+import org.cloud.sonic.agent.tests.script.ScriptRunner;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.ProcessCommandTool;
@@ -178,6 +179,14 @@ public class IOSStepHandler {
 
     public IOSDriver getDriver() {
         return iosDriver;
+    }
+
+    public JSONObject getGlobalParams() {
+        return globalParams;
+    }
+
+    public String getUdId() {
+        return udId;
     }
 
     private boolean isLockStatus = false;
@@ -1298,23 +1307,12 @@ public class IOSStepHandler {
         try {
             switch (type) {
                 case "Groovy" -> {
-                    GroovyScript groovyScript = new GroovyScriptImpl();
+                    ScriptRunner groovyScript = new GroovyScriptImpl();
                     groovyScript.runIOS(this, script);
                 }
                 case "Python" -> {
-                    File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
-                    temp.createNewFile();
-                    FileWriter fileWriter = new FileWriter(temp);
-                    fileWriter.write(script);
-                    fileWriter.close();
-                    try {
-                        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format("python %s %s %s %s", temp.getAbsolutePath(), iosDriver.getSessionId(), udId, globalParams.toJSONString()));
-                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + re);
-                    } catch (Exception e) {
-                        handleContext.setE(e);
-                    } finally {
-                        temp.delete();
-                    }
+                    ScriptRunner pythonScript = new PythonScriptImpl();
+                    pythonScript.runIOS(this, script);
                 }
             }
         } catch (Throwable e) {

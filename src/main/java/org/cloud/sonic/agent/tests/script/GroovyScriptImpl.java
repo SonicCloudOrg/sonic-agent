@@ -19,23 +19,58 @@ package org.cloud.sonic.agent.tests.script;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import org.cloud.sonic.agent.common.interfaces.StepType;
+import org.cloud.sonic.agent.tests.LogUtil;
+import org.cloud.sonic.agent.tests.RunStepThread;
 import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
 import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 
-public class GroovyScriptImpl implements GroovyScript {
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+public class GroovyScriptImpl implements ScriptRunner {
     @Override
     public void runAndroid(AndroidStepHandler androidStepHandler, String script) {
         Binding binding = new Binding();
         binding.setVariable("androidStepHandler", androidStepHandler);
-        GroovyShell gs = new GroovyShell(binding);
-        gs.evaluate(script);
+        if (evalIsFailed(androidStepHandler.log, script, binding)) {
+            throw new RuntimeException("Run script failed");
+        }
     }
 
     @Override
     public void runIOS(IOSStepHandler iosStepHandler, String script) {
         Binding binding = new Binding();
         binding.setVariable("iosStepHandler", iosStepHandler);
-        GroovyShell gs = new GroovyShell(binding);
-        gs.evaluate(script);
+        if (evalIsFailed(iosStepHandler.log, script, binding)) {
+            throw new RuntimeException("Run script failed");
+        }
+    }
+
+    private boolean evalIsFailed(LogUtil log, String script, Binding binding) {
+        FutureTask<Object> task = new FutureTask<>(() -> new GroovyShell(binding).evaluate(script));
+        final RunStepThread currentThread = (RunStepThread) Thread.currentThread();
+        Thread evalThread = new Thread(task);
+        evalThread.start();
+        Object ret;
+        while (!currentThread.isStopped()) {
+            try {
+                ret = task.get(1, TimeUnit.SECONDS);
+                log.sendStepLog(StepType.INFO, "Script result", String.valueOf(ret));
+                return false;
+            } catch (TimeoutException ignore) {
+                if (currentThread.isStopped()) {
+                    evalThread.stop();
+                    log.sendStepLog(StepType.WARN, "Script force killed", "");
+                    return !currentThread.isStopped();
+                }
+            } catch (ExecutionException | InterruptedException e) {
+                log.sendStepLog(StepType.ERROR, "Script error", e.toString());
+                return !currentThread.isStopped();
+            }
+        }
+        return true;
     }
 }

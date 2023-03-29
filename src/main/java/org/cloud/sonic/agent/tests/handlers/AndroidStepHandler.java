@@ -34,11 +34,11 @@ import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.RunStepThread;
-import org.cloud.sonic.agent.tests.script.GroovyScript;
+import org.cloud.sonic.agent.tests.script.PythonScriptImpl;
+import org.cloud.sonic.agent.tests.script.ScriptRunner;
 import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
-import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -69,7 +69,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.util.*;
 import java.util.concurrent.Future;
 
@@ -218,6 +217,14 @@ public class AndroidStepHandler {
 
     public AndroidDriver getAndroidDriver() {
         return androidDriver;
+    }
+
+    public JSONObject getGlobalParams() {
+        return globalParams;
+    }
+
+    public IDevice getiDevice() {
+        return iDevice;
     }
 
     private boolean isLockStatus = false;
@@ -2030,23 +2037,12 @@ public class AndroidStepHandler {
         try {
             switch (type) {
                 case "Groovy" -> {
-                    GroovyScript groovyScript = new GroovyScriptImpl();
+                    ScriptRunner groovyScript = new GroovyScriptImpl();
                     groovyScript.runAndroid(this, script);
                 }
                 case "Python" -> {
-                    File temp = new File("test-output" + File.separator + UUID.randomUUID() + ".py");
-                    temp.createNewFile();
-                    FileWriter fileWriter = new FileWriter(temp);
-                    fileWriter.write(script);
-                    fileWriter.close();
-                    try {
-                        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format("python %s %s %s %s", temp.getAbsolutePath(), androidDriver.getSessionId(), iDevice.getSerialNumber(), globalParams.toJSONString()));
-                        log.sendStepLog(StepType.INFO, "", "Run result: <br>" + re);
-                    } catch (Exception e) {
-                        handleContext.setE(e);
-                    } finally {
-                        temp.delete();
-                    }
+                    ScriptRunner pythonScript = new PythonScriptImpl();
+                    pythonScript.runAndroid(this, script);
                 }
             }
         } catch (Throwable e) {

@@ -20,7 +20,7 @@ package org.cloud.sonic.agent.tests.script;
 import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
 import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 
-public interface GroovyScript {
+public interface ScriptRunner {
     void runAndroid(AndroidStepHandler androidStepHandler, String script);
 
     void runIOS(IOSStepHandler iosStepHandler, String script);
