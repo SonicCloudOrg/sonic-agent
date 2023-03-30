@@ -690,7 +690,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             try {
                 uninstall(iDevice, "org.cloud.sonic.android");
             } catch (InstallException e) {
-                log.info("uninstall sonic Apk err...");
+                log.info("uninstall sonic Apk err, cause {}", e.getMessage());
             }
             try {
                 install(iDevice, "plugins/sonic-android-apk.apk");
