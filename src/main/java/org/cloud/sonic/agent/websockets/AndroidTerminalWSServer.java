@@ -21,6 +21,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceThreadPool;
@@ -33,9 +36,6 @@ import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import jakarta.websocket.*;
-import jakarta.websocket.server.PathParam;
-import jakarta.websocket.server.ServerEndpoint;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Slf4j
 @ServerEndpoint(value = "/websockets/android/terminal/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
-public class AndroidTerminalWSServer implements IAndroidWSServer{
+public class AndroidTerminalWSServer implements IAndroidWSServer {
 
     @Value("${sonic.agent.key}")
     private String key;
@@ -78,14 +78,14 @@ public class AndroidTerminalWSServer implements IAndroidWSServer{
 
         String username = iDevice.getProperty("ro.product.device");
         Future<?> terminal = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            log.info(udId + "open terminal");
+            log.info("{} open terminal", udId);
             JSONObject ter = new JSONObject();
             ter.put("msg", "terminal");
             ter.put("user", username);
             BytesTool.sendText(session, ter.toJSONString());
         });
         Future<?> logcat = AndroidDeviceThreadPool.cachedThreadPool.submit(() -> {
-            log.info(udId + "open logcat");
+            log.info("{} open logcat", udId);
             JSONObject ter = new JSONObject();
             ter.put("msg", "logcat");
             BytesTool.sendText(session, ter.toJSONString());
@@ -104,6 +104,7 @@ public class AndroidTerminalWSServer implements IAndroidWSServer{
         }
         if (!isInstall) {
             log.info("Waiting for apk install timeout!");
+            exit(session);
         }
 
         ScheduleTool.schedule(() -> {

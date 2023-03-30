@@ -85,7 +85,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
         }
         if (!isInstall) {
             log.info("Waiting for apk install timeout!");
-            removeUdIdMapAndSet(session);
+            exit(session);
         }
 
         ScheduleTool.schedule(() -> {

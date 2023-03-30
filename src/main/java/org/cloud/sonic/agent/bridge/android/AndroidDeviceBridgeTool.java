@@ -269,18 +269,20 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                     true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
                     , "-r", "-t", "-g");
         } catch (InstallException e) {
-            if (e.getMessage() != null && e.getMessage().contains("Unknown option: -g")) {
+            log.info("{} install failed, cause {}, retry...", path, e.getMessage());
+            try {
+                iDevice.installPackage(path,
+                        true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
+                        , "-r", "-t");
+            } catch (InstallException e2) {
+                log.info("{} install failed, cause {}, retry...", path, e2.getMessage());
                 try {
                     iDevice.installPackage(path,
-                            true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES
-                            , "-r", "-t");
-                } catch (InstallException e2) {
-                    log.info("{} install failed.", path);
-                    throw e2;
+                            true, new InstallReceiver(), 180L, 180L, TimeUnit.MINUTES);
+                } catch (InstallException e3) {
+                    log.info("{} install failed, cause {}", path, e3.getMessage());
+                    throw e3;
                 }
-            } else {
-                log.info("{} install failed.", path);
-                throw e;
             }
         }
     }
