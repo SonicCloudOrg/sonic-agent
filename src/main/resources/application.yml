@@ -9,8 +9,8 @@ spring:
 sonic:
   saa: 2.0.6
   sgm: 1.3.4
-  sib: 1.3.9
-  sas: 0.1.7
+  sib: 1.3.10
+  sas: 0.1.8
   saus: 5.7.4
 
 logging:
