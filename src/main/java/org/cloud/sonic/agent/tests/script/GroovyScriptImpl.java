@@ -54,11 +54,12 @@ public class GroovyScriptImpl implements ScriptRunner {
         final RunStepThread currentThread = (RunStepThread) Thread.currentThread();
         Thread evalThread = new Thread(task);
         evalThread.start();
-        Object ret;
         while (!currentThread.isStopped()) {
             try {
-                ret = task.get(1, TimeUnit.SECONDS);
-                log.sendStepLog(StepType.INFO, "Script result", String.valueOf(ret));
+                Object ret = task.get(1, TimeUnit.SECONDS);
+                if (null != ret) {
+                    log.sendStepLog(StepType.INFO, "Script result", ret.toString());
+                }
                 return false;
             } catch (TimeoutException ignore) {
                 if (currentThread.isStopped()) {
