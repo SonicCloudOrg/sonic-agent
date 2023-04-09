@@ -111,8 +111,8 @@ public class TransportClient extends WebSocketClient {
                                 return;
                             }
 
-                            int sasPort = jsonObject.getInteger("sas-remote-port");
-                            int uiaPort = jsonObject.getInteger("uia2-remote-port");
+                            int sasPort = jsonObject.getInteger("sasRemotePort");
+                            int uiaPort = jsonObject.getInteger("uia2RemotePort");
 
                             if (sasPort != 0) {
                                 AndroidSupplyTool.startShare(udId, sasPort);
@@ -141,9 +141,9 @@ public class TransportClient extends WebSocketClient {
                                 return;
                             }
 
-                            int sibPort = jsonObject.getInteger("sib-remote-port");
-                            int wdaPort = jsonObject.getInteger("wda-server-remote-port");
-                            int wdaMjpegPort = jsonObject.getInteger("wda-mjpeg-remote-port");
+                            int sibPort = jsonObject.getInteger("sibRemotePort");
+                            int wdaPort = jsonObject.getInteger("wdaServerRemotePort");
+                            int wdaMjpegPort = jsonObject.getInteger("wdaMjpegRemotePort");
 
                             if (sibPort != 0) {
                                 SibTool.startShare(udId, sibPort);
