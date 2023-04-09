@@ -706,7 +706,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
-    public static int startUiaServer(IDevice iDevice) throws InstallException {
+    public static int startUiaServer(IDevice iDevice, int port) throws InstallException {
         Thread s = AndroidThreadMap.getMap().get(String.format("%s-uia-thread", iDevice.getSerialNumber()));
         if (s != null) {
             s.interrupt();
@@ -721,7 +721,6 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             executeCommand(iDevice, "dumpsys deviceidle whitelist +io.appium.uiautomator2.server");
             executeCommand(iDevice, "dumpsys deviceidle whitelist +io.appium.uiautomator2.server.test");
         }
-        int port = PortTool.getPort();
         UiaThread uiaThread = new UiaThread(iDevice, port);
         uiaThread.start();
         int wait = 0;
@@ -738,6 +737,10 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
         AndroidThreadMap.getMap().put(String.format("%s-uia-thread", iDevice.getSerialNumber()), uiaThread);
         return port;
+    }
+
+    public static int startUiaServer(IDevice iDevice) throws InstallException {
+        return startUiaServer(iDevice, PortTool.getPort());
     }
 
     static class UiaThread extends Thread {

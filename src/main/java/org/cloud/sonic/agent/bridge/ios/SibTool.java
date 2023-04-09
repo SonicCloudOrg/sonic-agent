@@ -20,6 +20,7 @@ package org.cloud.sonic.agent.bridge.ios;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import jakarta.websocket.Session;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
@@ -44,7 +45,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
-import jakarta.websocket.Session;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -287,6 +287,76 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         processList.add(wdaProcess);
         IOSProcessMap.getMap().put(udId, processList);
         return new int[]{wdaPort, mjpegPort};
+    }
+
+    public static void startWda(String udId, int wdaPort, int mjpegPort) throws IOException, InterruptedException {
+        List<Process> processList;
+        if (IOSProcessMap.getMap().get(udId) != null) {
+            processList = IOSProcessMap.getMap().get(udId);
+            for (Process p : processList) {
+                if (p != null) {
+                    p.children().forEach(ProcessHandle::destroy);
+                    p.destroy();
+                }
+            }
+        }
+        wdaPort = (wdaPort == 0) ? PortTool.getPort() : wdaPort;
+        mjpegPort = (mjpegPort == 0) ? PortTool.getPort() : mjpegPort;
+        Process wdaProcess = null;
+        String commandLine = "%s run wda -u %s -b %s --mjpeg-remote-port 9100" +
+                " --server-remote-port 8100 --mjpeg-local-port %d --server-local-port %d";
+        String system = System.getProperty("os.name").toLowerCase();
+        if (system.contains("win")) {
+            wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
+        } else if (system.contains("linux") || system.contains("mac")) {
+            wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
+        }
+        InputStreamReader inputStreamReader = new InputStreamReader(wdaProcess.getInputStream());
+        BufferedReader stdInput = new BufferedReader(inputStreamReader);
+        Semaphore isFinish = new Semaphore(0);
+        Thread wdaThread = new Thread(() -> {
+            String s;
+            while (true) {
+                try {
+                    if ((s = stdInput.readLine()) == null) break;
+                } catch (IOException e) {
+                    logger.info(e.getMessage());
+                    break;
+                }
+                logger.info(s);
+                if (s.contains("WebDriverAgent server start successful")) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    isFinish.release();
+                }
+            }
+            try {
+                stdInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStreamReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logger.info("WebDriverAgent print thread shutdown.");
+        });
+        wdaThread.start();
+        int wait = 0;
+        while (!isFinish.tryAcquire()) {
+            Thread.sleep(500);
+            wait++;
+            if (wait >= 120) {
+                logger.info(udId + " WebDriverAgent start timeout!");
+            }
+        }
+        processList = new ArrayList<>();
+        processList.add(wdaProcess);
+        IOSProcessMap.getMap().put(udId, processList);
     }
 
     public static void reboot(String udId) {
@@ -896,6 +966,24 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             e.printStackTrace();
         } finally {
             BytesTool.sendText(session, shareJSON.toJSONString());
+        }
+    }
+
+    public static void startShare(String udId, int port) {
+        String processName = String.format("process-%s-sib-share", udId);
+        String commandLine = "%s remote share -u %s -p %d";
+        stopShare(udId);
+        try {
+            String system = System.getProperty("os.name").toLowerCase();
+            Process ps = null;
+            if (system.contains("win")) {
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
+            }
+            GlobalProcessMap.getMap().put(processName, ps);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

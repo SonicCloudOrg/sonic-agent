@@ -21,10 +21,12 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
+import com.android.ddmlib.InstallException;
 import jakarta.websocket.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
+import org.cloud.sonic.agent.bridge.android.AndroidSupplyTool;
 import org.cloud.sonic.agent.bridge.ios.IOSDeviceLocalStatus;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.enums.AndroidKey;
@@ -53,6 +55,7 @@ import org.testng.xml.XmlTest;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -84,24 +87,82 @@ public class TransportClient extends WebSocketClient {
                 case "occupy" -> {
                     String udId = jsonObject.getString("udId");
                     String token = jsonObject.getString("token");
+                    int platform = jsonObject.getInteger("platform");
 
                     boolean lockSuccess = false;
                     try {
                         lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
                     } catch (InterruptedException e) {
-                        log.info("Fail to get device lock, cause {}",e.getMessage());
+                        log.info("Fail to get device lock, cause {}", e.getMessage());
                     }
                     if (!lockSuccess) {
                         log.info("Fail to get device lock... please make sure device is not busy.");
                         return;
                     }
-                    log.info("android lock udId：{}", udId);
-                    AndroidDeviceLocalStatus.startDebug(udId);
 
-                    IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
-                    if (iDevice == null) {
-                        log.info("Target device is not connecting, please check the connection.");
-                        return;
+                    switch (platform) {
+                        case PlatformType.ANDROID -> {
+                            log.info("android lock udId：{}", udId);
+                            AndroidDeviceLocalStatus.startDebug(udId);
+
+                            IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+                            if (iDevice == null) {
+                                log.info("Target device is not connecting, please check the connection.");
+                                return;
+                            }
+
+                            int sasPort = jsonObject.getInteger("sas-remote-port");
+                            int uiaPort = jsonObject.getInteger("uia2-remote-port");
+
+                            if (sasPort != 0) {
+                                AndroidSupplyTool.startShare(udId, sasPort);
+                            }
+
+                            if (uiaPort != 0) {
+                                try {
+                                    AndroidDeviceBridgeTool.startUiaServer(iDevice, uiaPort);
+                                } catch (InstallException e) {
+                                    log.error(e.getMessage());
+                                }
+                            }
+
+                            OccupyMap.map.put(udId,
+                                    ScheduleTool.schedule(() -> {
+                                        log.info("time up!");
+                                        androidRelease(udId);
+                                    }, BytesTool.remoteTimeout));
+                        }
+                        case PlatformType.IOS -> {
+                            log.info("ios lock udId：{}", udId);
+                            IOSDeviceLocalStatus.startDebug(udId);
+
+                            if (!SibTool.getDeviceList().contains(udId)) {
+                                log.info("Target device is not connecting, please check the connection.");
+                                return;
+                            }
+
+                            int sibPort = jsonObject.getInteger("sib-remote-port");
+                            int wdaPort = jsonObject.getInteger("wda-server-remote-port");
+                            int wdaMjpegPort = jsonObject.getInteger("wda-mjpeg-remote-port");
+
+                            if (sibPort != 0) {
+                                SibTool.startShare(udId, sibPort);
+                            }
+
+                            if (wdaPort != 0 || wdaMjpegPort != 0) {
+                                try {
+                                    SibTool.startWda(udId, wdaPort, wdaMjpegPort);
+                                } catch (IOException | InterruptedException e) {
+                                    log.error(e.getMessage());
+                                }
+                            }
+
+                            OccupyMap.map.put(udId,
+                                    ScheduleTool.schedule(() -> {
+                                        log.info("time up!");
+                                        iosRelease(udId);
+                                    }, BytesTool.remoteTimeout));
+                        }
                     }
 
                     JSONObject jsonDebug = new JSONObject();
@@ -109,22 +170,20 @@ public class TransportClient extends WebSocketClient {
                     jsonDebug.put("token", token);
                     jsonDebug.put("udId", udId);
                     TransportWorker.send(jsonDebug);
-
-                    OccupyList.list.add(udId);
-
-//                    ScheduleTool.schedule(() -> {
-//                        log.info("time up!");
-//                        if (session.isOpen()) {
-//                            JSONObject errMsg = new JSONObject();
-//                            errMsg.put("msg", "error");
-//                            BytesTool.sendText(session, errMsg.toJSONString());
-//                            exit(session);
-//                            AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.HOME);
-//                        }
-//                    }, BytesTool.remoteTimeout);
                 }
                 case "release" -> {
-
+                    String udId = jsonObject.getString("udId");
+                    log.info("{} : release.", udId);
+                    ScheduledFuture<?> future = OccupyMap.map.get(udId);
+                    if (future != null) {
+                        future.cancel(true);
+                        OccupyMap.map.remove(udId);
+                        int platform = jsonObject.getInteger("platform");
+                        switch (platform) {
+                            case PlatformType.ANDROID -> androidRelease(udId);
+                            case PlatformType.IOS -> iosRelease(udId);
+                        }
+                    }
                 }
                 case "stopDebug" -> {
                     String udId = jsonObject.getString("udId");
@@ -358,5 +417,33 @@ public class TransportClient extends WebSocketClient {
             }
         };
         TaskManager.startChildThread(task.getName(), task);
+    }
+
+    private void androidRelease(String udId) {
+        AndroidDeviceLocalStatus.finish(udId);
+        Thread s = AndroidThreadMap.getMap().get(String.format("%s-uia-thread", udId));
+        if (s != null) {
+            s.interrupt();
+        }
+        AndroidSupplyTool.stopShare(udId);
+        DevicesLockMap.unlockAndRemoveByUdId(udId);
+        log.info("android unlock udId：{}", udId);
+    }
+
+    private void iosRelease(String udId) {
+        IOSDeviceLocalStatus.finish(udId);
+        SibTool.stopShare(udId);
+        if (IOSProcessMap.getMap().get(udId) != null) {
+            List<Process> processList = IOSProcessMap.getMap().get(udId);
+            for (Process p : processList) {
+                if (p != null) {
+                    p.children().forEach(ProcessHandle::destroy);
+                    p.destroy();
+                }
+            }
+            IOSProcessMap.getMap().remove(udId);
+        }
+        DevicesLockMap.unlockAndRemoveByUdId(udId);
+        log.info("ios unlock udId：{}", udId);
     }
 }

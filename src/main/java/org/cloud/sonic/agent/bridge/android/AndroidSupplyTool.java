@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.bridge.android;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import jakarta.websocket.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.LogUtil;
@@ -34,7 +35,6 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
-import jakarta.websocket.Session;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -107,6 +107,24 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
         } else {
             sasJSON.put("isEnable", false);
             BytesTool.sendText(session, sasJSON.toJSONString());
+        }
+    }
+
+    public static void startShare(String udId, int port) {
+        stopShare(udId);
+        String processName = String.format("process-%s-sas", udId);
+        String commandLine = "%s share -s %s --translate-port %d";
+        try {
+            String system = System.getProperty("os.name").toLowerCase();
+            Process ps = null;
+            if (system.contains("win")) {
+                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sas, udId, port)});
+            } else if (system.contains("linux") || system.contains("mac")) {
+                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sas, udId, port)});
+            }
+            GlobalProcessMap.getMap().put(processName, ps);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
