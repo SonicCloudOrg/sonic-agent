@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.tools;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,12 +39,12 @@ public class ScheduleTool {
         scheduledExecutorService.scheduleAtFixedRate(command, initialDelay, period, unit);
     }
 
-    public static void schedule(Runnable command, long initialDelay, TimeUnit unit) {
-        scheduledExecutorService.schedule(command, initialDelay, unit);
+    public static ScheduledFuture<?> schedule(Runnable command, long initialDelay, TimeUnit unit) {
+        return scheduledExecutorService.schedule(command, initialDelay, unit);
     }
 
-    public static void schedule(Runnable command, long initialDelay) {
-        scheduledExecutorService.schedule(command, initialDelay, TimeUnit.MINUTES);
+    public static ScheduledFuture<?> schedule(Runnable command, long initialDelay) {
+        return schedule(command, initialDelay, TimeUnit.MINUTES);
     }
 
 }

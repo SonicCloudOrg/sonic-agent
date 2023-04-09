@@ -41,6 +41,7 @@ import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Component
@@ -88,7 +89,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
             exit(session);
         }
 
-        ScheduleTool.schedule(() -> {
+        session.getUserProperties().put("schedule",ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
                 JSONObject errMsg = new JSONObject();
@@ -96,7 +97,7 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
                 BytesTool.sendText(session, errMsg.toJSONString());
                 exit(session);
             }
-        }, BytesTool.remoteTimeout);
+        }, BytesTool.remoteTimeout));
 
     }
 
@@ -183,6 +184,8 @@ public class AndroidScreenWSServer implements IAndroidWSServer {
 
     private void exit(Session session) {
         synchronized (session) {
+            ScheduledFuture<?> future = (ScheduledFuture<?>) session.getUserProperties().get("schedule");
+            future.cancel(true);
             String udId = session.getUserProperties().get("udId").toString();
             androidMonitorHandler.stopMonitor(udIdMap.get(session));
             WebSocketSessionMap.removeSession(session);

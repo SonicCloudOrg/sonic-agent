@@ -21,6 +21,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
+import jakarta.websocket.Session;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceLocalStatus;
@@ -40,10 +41,7 @@ import org.cloud.sonic.agent.tests.handlers.AndroidStepHandler;
 import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
-import org.cloud.sonic.agent.tools.AgentManagerTool;
-import org.cloud.sonic.agent.tools.BytesTool;
-import org.cloud.sonic.agent.tools.PHCTool;
-import org.cloud.sonic.agent.tools.SpringTool;
+import org.cloud.sonic.agent.tools.*;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -52,10 +50,10 @@ import org.testng.xml.XmlClass;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
-import jakarta.websocket.Session;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class TransportClient extends WebSocketClient {
@@ -83,6 +81,51 @@ public class TransportClient extends WebSocketClient {
         log.info("Agent <- Server message: {}", jsonObject);
         TransportWorker.cachedThreadPool.execute(() -> {
             switch (jsonObject.getString("msg")) {
+                case "occupy" -> {
+                    String udId = jsonObject.getString("udId");
+                    String token = jsonObject.getString("token");
+
+                    boolean lockSuccess = false;
+                    try {
+                        lockSuccess = DevicesLockMap.lockByUdId(udId, 30L, TimeUnit.SECONDS);
+                    } catch (InterruptedException e) {
+                        log.info("Fail to get device lock, cause {}",e.getMessage());
+                    }
+                    if (!lockSuccess) {
+                        log.info("Fail to get device lock... please make sure device is not busy.");
+                        return;
+                    }
+                    log.info("android lock udId：{}", udId);
+                    AndroidDeviceLocalStatus.startDebug(udId);
+
+                    IDevice iDevice = AndroidDeviceBridgeTool.getIDeviceByUdId(udId);
+                    if (iDevice == null) {
+                        log.info("Target device is not connecting, please check the connection.");
+                        return;
+                    }
+
+                    JSONObject jsonDebug = new JSONObject();
+                    jsonDebug.put("msg", "debugUser");
+                    jsonDebug.put("token", token);
+                    jsonDebug.put("udId", udId);
+                    TransportWorker.send(jsonDebug);
+
+                    OccupyList.list.add(udId);
+
+//                    ScheduleTool.schedule(() -> {
+//                        log.info("time up!");
+//                        if (session.isOpen()) {
+//                            JSONObject errMsg = new JSONObject();
+//                            errMsg.put("msg", "error");
+//                            BytesTool.sendText(session, errMsg.toJSONString());
+//                            exit(session);
+//                            AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.HOME);
+//                        }
+//                    }, BytesTool.remoteTimeout);
+                }
+                case "release" -> {
+
+                }
                 case "stopDebug" -> {
                     String udId = jsonObject.getString("udId");
                     List<String> sessionList = Arrays.asList("AndroidWSServer", "AndroidTerminalWSServer", "AndroidScreenWSServer",

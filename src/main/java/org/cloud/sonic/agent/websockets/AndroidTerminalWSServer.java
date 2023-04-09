@@ -42,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -107,7 +108,7 @@ public class AndroidTerminalWSServer implements IAndroidWSServer {
             exit(session);
         }
 
-        ScheduleTool.schedule(() -> {
+        session.getUserProperties().put("schedule", ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
                 JSONObject errMsg = new JSONObject();
@@ -115,7 +116,7 @@ public class AndroidTerminalWSServer implements IAndroidWSServer {
                 BytesTool.sendText(session, errMsg.toJSONString());
                 exit(session);
             }
-        }, BytesTool.remoteTimeout);
+        }, BytesTool.remoteTimeout));
 
         startService(udIdMap.get(session), session);
     }
@@ -267,6 +268,8 @@ public class AndroidTerminalWSServer implements IAndroidWSServer {
 
     private void exit(Session session) {
         synchronized (session) {
+            ScheduledFuture<?> future = (ScheduledFuture<?>) session.getUserProperties().get("schedule");
+            future.cancel(true);
             WebSocketSessionMap.removeSession(session);
             removeUdIdMapAndSet(session);
             Future<?> cmd = terminalMap.get(session);

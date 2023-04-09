@@ -54,6 +54,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Calendar;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -101,7 +102,7 @@ public class AndroidWSServer implements IAndroidWSServer {
         jsonDebug.put("udId", udId);
         TransportWorker.send(jsonDebug);
 
-        ScheduleTool.schedule(() -> {
+        session.getUserProperties().put("schedule", ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
                 JSONObject errMsg = new JSONObject();
@@ -110,7 +111,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 exit(session);
                 AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.HOME);
             }
-        }, BytesTool.remoteTimeout);
+        }, BytesTool.remoteTimeout));
 
         saveUdIdMapAndSet(session, iDevice);
 
@@ -409,6 +410,8 @@ public class AndroidWSServer implements IAndroidWSServer {
 
     private void exit(Session session) {
         synchronized (session) {
+            ScheduledFuture<?> future = (ScheduledFuture<?>) session.getUserProperties().get("schedule");
+            future.cancel(true);
             AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
             IDevice iDevice = udIdMap.get(session);
             try {
