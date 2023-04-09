@@ -32,6 +32,7 @@ import jakarta.websocket.*;
 import jakarta.websocket.server.PathParam;
 import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
@@ -64,7 +65,7 @@ public class IOSTerminalWSServer implements IIOSWSServer {
         ter.put("msg", "terminal");
         sendText(session, ter.toJSONString());
 
-        ScheduleTool.schedule(() -> {
+        session.getUserProperties().put("schedule", ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
                 JSONObject errMsg = new JSONObject();
@@ -72,7 +73,7 @@ public class IOSTerminalWSServer implements IIOSWSServer {
                 BytesTool.sendText(session, errMsg.toJSONString());
                 exit(session);
             }
-        }, BytesTool.remoteTimeout);
+        }, BytesTool.remoteTimeout));
     }
 
     @OnMessage
@@ -103,6 +104,8 @@ public class IOSTerminalWSServer implements IIOSWSServer {
 
     private void exit(Session session) {
         synchronized (session) {
+            ScheduledFuture<?> future = (ScheduledFuture<?>) session.getUserProperties().get("schedule");
+            future.cancel(true);
             if (udIdMap.get(session) != null) {
                 SibTool.stopSysLog(udIdMap.get(session));
             }

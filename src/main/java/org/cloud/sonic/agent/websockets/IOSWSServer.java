@@ -56,6 +56,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
@@ -106,7 +107,7 @@ public class IOSWSServer implements IIOSWSServer {
         jsonDebug.put("udId", udId);
         TransportWorker.send(jsonDebug);
 
-        ScheduleTool.schedule(() -> {
+        session.getUserProperties().put("schedule", ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
                 IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
@@ -121,7 +122,7 @@ public class IOSWSServer implements IIOSWSServer {
                 BytesTool.sendText(session, errMsg.toJSONString());
                 exit(session);
             }
-        }, BytesTool.remoteTimeout);
+        }, BytesTool.remoteTimeout));
 
         saveUdIdMapAndSet(session, udId);
         if (SibTool.getOrientation(udId) != 1) {
@@ -455,6 +456,8 @@ public class IOSWSServer implements IIOSWSServer {
 
     private void exit(Session session) {
         synchronized (session) {
+            ScheduledFuture<?> future = (ScheduledFuture<?>) session.getUserProperties().get("schedule");
+            future.cancel(true);
             String udId = udIdMap.get(session);
             screenMap.remove(udId);
             SibTool.stopOrientationWatcher(udId);

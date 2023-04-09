@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendByte;
 
@@ -134,7 +135,7 @@ public class IOSScreenWSServer implements IIOSWSServer {
             log.info("screen done.");
         }).start();
 
-        ScheduleTool.schedule(() -> {
+        session.getUserProperties().put("schedule", ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
                 JSONObject errMsg = new JSONObject();
@@ -142,7 +143,7 @@ public class IOSScreenWSServer implements IIOSWSServer {
                 BytesTool.sendText(session, errMsg.toJSONString());
                 exit(session);
             }
-        }, BytesTool.remoteTimeout);
+        }, BytesTool.remoteTimeout));
     }
 
     @OnClose
@@ -157,6 +158,8 @@ public class IOSScreenWSServer implements IIOSWSServer {
 
     private void exit(Session session) {
         synchronized (session) {
+            ScheduledFuture<?> future = (ScheduledFuture<?>) session.getUserProperties().get("schedule");
+            future.cancel(true);
             WebSocketSessionMap.removeSession(session);
             removeUdIdMapAndSet(session);
             try {
