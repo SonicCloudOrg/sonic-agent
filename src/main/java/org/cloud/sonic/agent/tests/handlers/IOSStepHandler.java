@@ -58,6 +58,7 @@ import org.cloud.sonic.vision.models.FindResult;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Document;
+import org.springframework.util.CollectionUtils;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
@@ -1428,6 +1429,9 @@ public class IOSStepHandler {
 
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
+        if (CollectionUtils.isEmpty(step)){
+            step = stepJSON;
+        }
         JSONArray eleList = step.getJSONArray("elements");
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
@@ -1496,7 +1500,7 @@ public class IOSStepHandler {
                             , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
             case "sendKeyForce" -> sendKeyForce(handleContext, step.getString("content"));
             case "publicStep" ->
-                    publicStep(handleContext, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
+                    publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
             case "findElementInterval" ->
                     setFindElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "setPasteboard" -> setPasteboard(handleContext, step.getString("content"));
