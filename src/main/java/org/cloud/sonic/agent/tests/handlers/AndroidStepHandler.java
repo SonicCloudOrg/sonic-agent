@@ -66,6 +66,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.springframework.util.CollectionUtils;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
@@ -2058,6 +2059,10 @@ public class AndroidStepHandler {
 
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
+        // 兼容childSteps
+        if (CollectionUtils.isEmpty(step)){
+            step = stepJSON;
+        }
         JSONArray eleList = step.getJSONArray("elements");
         Thread.sleep(holdTime);
         switch (step.getString("stepType")) {
@@ -2141,7 +2146,7 @@ public class AndroidStepHandler {
             case "monkey" ->
                     runMonkey(handleContext, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
             case "publicStep" ->
-                    publicStep(handleContext, step.getString("content"), stepJSON.getJSONArray("pubSteps"));
+                    publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
             case "setDefaultFindWebViewElementInterval" ->
                     setDefaultFindWebViewElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "getWebViewText" ->
