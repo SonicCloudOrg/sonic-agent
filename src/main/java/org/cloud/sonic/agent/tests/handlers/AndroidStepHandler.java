@@ -34,9 +34,9 @@ import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.RunStepThread;
+import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tests.script.PythonScriptImpl;
 import org.cloud.sonic.agent.tests.script.ScriptRunner;
-import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SpringTool;
@@ -2060,7 +2060,7 @@ public class AndroidStepHandler {
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         // 兼容childSteps
-        if (CollectionUtils.isEmpty(step)){
+        if (CollectionUtils.isEmpty(step)) {
             step = stepJSON;
         }
         JSONArray eleList = step.getJSONArray("elements");
@@ -2145,8 +2145,7 @@ public class AndroidStepHandler {
             case "sendKeyForce" -> sendKeyForce(handleContext, step.getString("content"));
             case "monkey" ->
                     runMonkey(handleContext, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
-            case "publicStep" ->
-                    publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
+            case "publicStep" -> publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
             case "setDefaultFindWebViewElementInterval" ->
                     setDefaultFindWebViewElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "getWebViewText" ->

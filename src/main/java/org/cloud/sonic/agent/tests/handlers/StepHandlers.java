@@ -50,7 +50,7 @@ public class StepHandlers implements ApplicationListener<ContextRefreshedEvent> 
     public HandleContext runStep(JSONObject stepJSON, HandleContext handleContext, RunStepThread thread) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         // 兼容childSteps
-        if (CollectionUtils.isEmpty(step)){
+        if (CollectionUtils.isEmpty(step)) {
             step = stepJSON;
         }
         Integer conditionType = step.getInteger("conditionType");

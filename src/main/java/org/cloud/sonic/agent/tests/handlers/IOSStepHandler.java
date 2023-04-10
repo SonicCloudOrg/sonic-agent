@@ -30,11 +30,10 @@ import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.RunStepThread;
+import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tests.script.PythonScriptImpl;
 import org.cloud.sonic.agent.tests.script.ScriptRunner;
-import org.cloud.sonic.agent.tests.script.GroovyScriptImpl;
 import org.cloud.sonic.agent.tools.PortTool;
-import org.cloud.sonic.agent.tools.ProcessCommandTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
@@ -62,7 +61,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
-import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -1429,7 +1427,7 @@ public class IOSStepHandler {
 
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
-        if (CollectionUtils.isEmpty(step)){
+        if (CollectionUtils.isEmpty(step)) {
             step = stepJSON;
         }
         JSONArray eleList = step.getJSONArray("elements");
@@ -1499,8 +1497,7 @@ public class IOSStepHandler {
                     globalParams.put(step.getString("content"), getText(handleContext, eleList.getJSONObject(0).getString("eleName")
                             , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
             case "sendKeyForce" -> sendKeyForce(handleContext, step.getString("content"));
-            case "publicStep" ->
-                    publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
+            case "publicStep" -> publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
             case "findElementInterval" ->
                     setFindElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "setPasteboard" -> setPasteboard(handleContext, step.getString("content"));
