@@ -110,7 +110,7 @@
         <dependency>
             <groupId>org.apache.groovy</groupId>
             <artifactId>groovy-all</artifactId>
-            <version>4.0.10</version>
+            <version>4.0.11</version>
             <type>pom</type>
         </dependency>
         <dependency>
