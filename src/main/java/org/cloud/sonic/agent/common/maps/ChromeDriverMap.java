@@ -26,6 +26,21 @@ import java.util.Map;
 public class ChromeDriverMap {
     private static Map<String, String> chromeDriverMap = new HashMap<>() {
         {
+            put("55", "2.28");
+            put("56", "2.28");
+            put("57", "2.29");
+            put("58", "2.31");
+            put("59", "2.31");
+            put("60", "2.33");
+            put("61", "2.33");
+            put("62", "2.34");
+            put("63", "2.35");
+            put("64", "2.36");
+            put("65", "2.37");
+            put("66", "2.38");
+            put("67", "2.39");
+            put("68", "2.40");
+            put("69", "2.41");
             put("70", "70.0.3538.97");
             put("71", "71.0.3578.137");
             put("72", "72.0.3626.69");
