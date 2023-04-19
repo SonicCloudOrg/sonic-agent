@@ -78,7 +78,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-driver-core</artifactId>
-            <version>1.1.21</version>
+            <version>1.1.22</version>
         </dependency>
         <dependency>
             <groupId>net.coobird</groupId>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-vision-core</artifactId>
-            <version>1.0.10-${platform}</version>
+            <version>1.0.14-${platform}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.groovy</groupId>
