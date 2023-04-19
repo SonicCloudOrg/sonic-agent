@@ -809,6 +809,24 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         AndroidWebViewMap.getMap().remove(iDevice);
     }
 
+    public static void sendKeysByKeyboard(IDevice iDevice, String msg) {
+        executeCommand(iDevice, String.format("am broadcast -a SONIC_KEYBOARD --es msg \"%s\"", msg));
+    }
+
+    public static boolean setClipperByKeyboard(IDevice iDevice, String msg) {
+        String suc = executeCommand(iDevice, String.format("am broadcast -a SONIC_CLIPPER_SET --es msg \"%s\"", msg));
+        return suc.contains("result=-1");
+    }
+
+    public static String getClipperByKeyboard(IDevice iDevice) {
+        String suc = executeCommand(iDevice, "am broadcast -a SONIC_CLIPPER_GET");
+        if (suc.contains("result=-1")) {
+            return suc.substring(suc.indexOf("data=\"") + 6, suc.length() - 2);
+        } else {
+            return "";
+        }
+    }
+
     public static File getChromeDriver(IDevice iDevice, String packageName) throws IOException {
         String chromeVersion = "";
         List<JSONObject> result = getWebView(iDevice);

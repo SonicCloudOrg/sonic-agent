@@ -1989,10 +1989,10 @@ public class AndroidStepHandler {
         holdTime = time;
     }
 
-    public void sendKeyForce(HandleContext handleContext, String text) {
+    public void setClipperByKeyboard(HandleContext handleContext, String text) {
         text = TextHandler.replaceTrans(text, globalParams);
-        handleContext.setStepDes("Sonic输入法输入文本");
-        handleContext.setDetail("输入" + text);
+        handleContext.setStepDes("设置文本到剪切板");
+        handleContext.setDetail("设置 " + text);
         if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
             handleContext.setE(new SonicRespException("Sonic Apk install failed."));
             return;
@@ -2002,10 +2002,34 @@ public class AndroidStepHandler {
             AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
             AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
         }
-        AndroidDeviceBridgeTool.executeCommand(iDevice, "am broadcast -a SONIC_KEYBOARD --es msg \"" + text + "\"");
+        if (!AndroidDeviceBridgeTool.setClipperByKeyboard(iDevice, text)) {
+            handleContext.setE(new SonicRespException("Set text to clipper failed. Please confirm that your Sonic ime is active."));
+        }
     }
 
-    private void closeKeyboard(HandleContext handleContext) {
+    public String getClipperByKeyboard(HandleContext handleContext) {
+        handleContext.setStepDes("获取剪切板文本");
+        handleContext.setDetail("");
+        return AndroidDeviceBridgeTool.getClipperByKeyboard(iDevice);
+    }
+
+    public void sendKeyForce(HandleContext handleContext, String text) {
+        text = TextHandler.replaceTrans(text, globalParams);
+        handleContext.setStepDes("Sonic输入法输入文本");
+        handleContext.setDetail("输入 " + text);
+        if (!AndroidDeviceBridgeTool.installSonicApk(iDevice)) {
+            handleContext.setE(new SonicRespException("Sonic Apk install failed."));
+            return;
+        }
+        String currentIme = AndroidDeviceBridgeTool.executeCommand(iDevice, "settings get secure default_input_method");
+        if (!currentIme.contains("org.cloud.sonic.android/.keyboard.SonicKeyboard")) {
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "ime enable org.cloud.sonic.android/.keyboard.SonicKeyboard");
+            AndroidDeviceBridgeTool.executeCommand(iDevice, "ime set org.cloud.sonic.android/.keyboard.SonicKeyboard");
+        }
+        AndroidDeviceBridgeTool.sendKeysByKeyboard(iDevice, text);
+    }
+
+    public void closeKeyboard(HandleContext handleContext) {
         handleContext.setStepDes("关闭Sonic输入法");
         handleContext.setDetail("");
         AndroidDeviceBridgeTool.executeCommand(iDevice, "ime disable org.cloud.sonic.android/.keyboard.SonicKeyboard");
@@ -2217,6 +2241,9 @@ public class AndroidStepHandler {
             case "iteratorAndroidElement" ->
                     iteratorAndroidElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
+            case "getClipperByKeyboard" ->
+                    globalParams.put(step.getString("content"), getClipperByKeyboard(handleContext));
+            case "setClipperByKeyboard" -> setClipperByKeyboard(handleContext, step.getString("content"));
         }
         switchType(step, handleContext);
     }

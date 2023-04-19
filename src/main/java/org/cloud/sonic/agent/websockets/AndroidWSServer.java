@@ -57,6 +57,8 @@ import java.util.Calendar;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static org.cloud.sonic.agent.tools.BytesTool.sendText;
+
 @Component
 @Slf4j
 @ServerEndpoint(value = "/websockets/android/{key}/{udId}/{token}", configurator = WsEndpointConfigure.class)
@@ -175,6 +177,13 @@ public class AndroidWSServer implements IAndroidWSServer {
             }
             case "stopKeyboard" ->
                     AndroidDeviceBridgeTool.executeCommand(iDevice, "ime disable org.cloud.sonic.android/.keyboard.SonicKeyboard");
+            case "setPasteboard" -> AndroidDeviceBridgeTool.setClipperByKeyboard(iDevice, msg.getString("detail"));
+            case "getPasteboard" -> {
+                JSONObject paste = new JSONObject();
+                paste.put("msg", "paste");
+                paste.put("detail", AndroidDeviceBridgeTool.getClipperByKeyboard(iDevice));
+                sendText(session, paste.toJSONString());
+            }
             case "clearProxy" -> AndroidDeviceBridgeTool.clearProxy(iDevice);
             case "proxy" -> {
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
@@ -213,8 +222,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 BytesTool.sendText(session, result.toJSONString());
             }
             case "scan" -> AndroidDeviceBridgeTool.pushToCamera(iDevice, msg.getString("url"));
-            case "text" ->
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, "am broadcast -a SONIC_KEYBOARD --es msg \"" + msg.getString("detail") + "\"");
+            case "text" -> AndroidDeviceBridgeTool.sendKeysByKeyboard(iDevice, msg.getString("detail"));
             case "touch" -> AndroidTouchHandler.writeToOutputStream(iDevice, msg.getString("detail"));
             case "keyEvent" -> AndroidDeviceBridgeTool.pressKey(iDevice, msg.getInteger("detail"));
             case "pullFile" -> {
