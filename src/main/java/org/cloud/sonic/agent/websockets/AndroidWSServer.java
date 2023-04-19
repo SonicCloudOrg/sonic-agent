@@ -449,6 +449,9 @@ public class AndroidWSServer implements IAndroidWSServer {
                 e.printStackTrace();
             }
             log.info("{} : quit.", session.getUserProperties().get("id").toString());
+            if (AndroidDeviceBridgeTool.getOrientation(iDevice) != 0) {
+                AndroidDeviceBridgeTool.pressKey(iDevice, AndroidKey.HOME);
+            }
         }
     }
 }
