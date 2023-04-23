@@ -403,6 +403,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     int port = AndroidDeviceBridgeTool.startUiaServer(iDevice);
                     androidStepHandler.startAndroidDriver(iDevice, port);
                     result.put("status", "success");
+                    result.put("port", port);
                     HandlerMap.getAndroidMap().put(session.getUserProperties().get("id").toString(), androidStepHandler);
                 } catch (Exception e) {
                     log.error(e.getMessage());
