@@ -78,7 +78,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-driver-core</artifactId>
-            <version>1.1.22</version>
+            <version>1.1.24</version>
         </dependency>
         <dependency>
             <groupId>net.coobird</groupId>
