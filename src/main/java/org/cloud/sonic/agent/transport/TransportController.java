@@ -21,6 +21,6 @@ public class TransportController {
     @RequestMapping(value = "/**", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE}, produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity catchAll(HttpServletRequest request, HttpServletResponse response) {
         System.out.println(request.getRequestURI());
-        return routingDelegate.redirect(request, response, "http://localhost:" + request.getRequestURI().replace(DELEGATE_PREFIX, ""), request.getRequestURI());
+        return routingDelegate.redirect(request, response, "http://localhost:" + request.getRequestURI().replace(DELEGATE_PREFIX + "/", ""), request.getRequestURI());
     }
 }
