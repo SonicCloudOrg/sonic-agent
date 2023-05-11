@@ -544,9 +544,11 @@ public class AndroidStepHandler {
             if (chromeDriver != null) {
                 chromeDriver.quit();
             }
+            System.setProperty("webdriver.http.factory", "jdk-http-client");
             ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort()
                     .usingDriverExecutable(AndroidDeviceBridgeTool.getChromeDriver(iDevice, packageName)).build();
             ChromeOptions chromeOptions = new ChromeOptions();
+            chromeOptions.addArguments("--remote-allow-origins=*");
             chromeOptions.setExperimentalOption("androidDeviceSerial", iDevice.getSerialNumber());
             chromeOptions.setExperimentalOption("androidPackage", packageName);
             if (process != null && process.length() > 0) {
