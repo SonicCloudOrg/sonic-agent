@@ -31,6 +31,7 @@ import org.cloud.sonic.agent.common.interfaces.ResultDetailStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.AndroidThreadMap;
+import org.cloud.sonic.agent.common.maps.ChromeDriverMap;
 import org.cloud.sonic.agent.common.models.HandleContext;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.RunStepThread;
@@ -544,9 +545,18 @@ public class AndroidStepHandler {
             if (chromeDriver != null) {
                 chromeDriver.quit();
             }
-            System.setProperty("webdriver.http.factory", "jdk-http-client");
+            String fullChromeVersion = AndroidDeviceBridgeTool.getFullChromeVersion(iDevice, packageName);
+            if (fullChromeVersion != null) {
+                String majorChromeVersion = AndroidDeviceBridgeTool.getMajorChromeVersion(fullChromeVersion);
+                if (ChromeDriverMap.shouldUseJdkHttpClient(majorChromeVersion)) {
+                    System.setProperty("webdriver.http.factory", "jdk-http-client");
+                } else {
+                    // 删除webdriver.http.factory配置选项的设置，否则测试完111以上的高版本，再切换回测试低版本会有问题
+                    System.clearProperty("webdriver.http.factory");
+                }
+            }
             ChromeDriverService chromeDriverService = new ChromeDriverService.Builder().usingAnyFreePort()
-                    .usingDriverExecutable(AndroidDeviceBridgeTool.getChromeDriver(iDevice, packageName)).build();
+                    .usingDriverExecutable(AndroidDeviceBridgeTool.getChromeDriver(iDevice, fullChromeVersion)).build();
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.addArguments("--remote-allow-origins=*");
             chromeOptions.setExperimentalOption("androidDeviceSerial", iDevice.getSerialNumber());
