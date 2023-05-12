@@ -44,6 +44,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.*;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -827,7 +828,14 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
     }
 
-    public static File getChromeDriver(IDevice iDevice, String packageName) throws IOException {
+    /**
+     * 获取完整的ChromeVersion，格式:83.0.4103.106
+     *
+     * @param iDevice     IDevice
+     * @param packageName 应用包名
+     * @return 完整的ChromeVersion
+     */
+    public static String getFullChromeVersion(IDevice iDevice, String packageName) {
         String chromeVersion = "";
         List<JSONObject> result = getWebView(iDevice);
         if (result.size() > 0) {
@@ -838,20 +846,50 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 }
             }
         }
-        clearWebView(iDevice);
         if (chromeVersion.length() == 0) {
             return null;
         } else {
             chromeVersion = chromeVersion.replace("Chrome/", "");
         }
+        return chromeVersion;
+    }
+
+    /**
+     * 只获取ChromeVersion的主版本
+     *
+     * @param chromeVersion 完整的ChromeVersion，格式:83.0.4103.106
+     * @return 主版本，如83
+     */
+    public static String getMajorChromeVersion(String chromeVersion) {
+        if (StringUtils.isEmpty(chromeVersion)) {
+            return null;
+        }
+        int end = (chromeVersion.contains(".") ? chromeVersion.indexOf(".") : chromeVersion.length() - 1);
+        return chromeVersion.substring(0, end);
+    }
+
+    /**
+     * 根据IDevice以及完整的ChromeVersion获取chromeDriver
+     *
+     * @param iDevice           IDevice
+     * @param fullChromeVersion 完整的版本号，形如:83.0.4103.106
+     * @return chromeDriver file
+     * @throws IOException IOException
+     */
+    public static File getChromeDriver(IDevice iDevice, String fullChromeVersion) throws IOException {
+        if (fullChromeVersion == null) {
+            return null;
+        }
+        clearWebView(iDevice);
+
         String system = System.getProperty("os.name").toLowerCase();
-        File search = new File(String.format("webview/%s_chromedriver%s", chromeVersion,
+        File search = new File(String.format("webview/%s_chromedriver%s", fullChromeVersion,
                 (system.contains("win") ? ".exe" : "")));
         if (search.exists()) {
             return search;
         }
-        int end = (chromeVersion.contains(".") ? chromeVersion.indexOf(".") : chromeVersion.length() - 1);
-        String major = chromeVersion.substring(0, end);
+
+        String majorChromeVersion = getMajorChromeVersion(fullChromeVersion);
         HttpHeaders headers = new HttpHeaders();
         if (system.contains("win")) {
             system = "win32";
@@ -861,7 +899,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
                 // fix m1 arm version obtained is lower than 87 for special processing
-                String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/", ChromeDriverMap.getMap().get(major)), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
+                String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/",
+                        ChromeDriverMap.getMap().get(majorChromeVersion)), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
                 for (Object obj : JSONArray.parseArray(driverList)) {
                     JSONObject jsonObject = JSONObject.parseObject(obj.toString());
                     String fullName = jsonObject.getString("name");
@@ -874,8 +913,9 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 system = "mac64";
             }
         }
-        File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip", ChromeDriverMap.getMap().get(major), system));
-        return FileTool.unZipChromeDriver(file, chromeVersion);
+        File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip",
+                ChromeDriverMap.getMap().get(majorChromeVersion), system));
+        return FileTool.unZipChromeDriver(file, fullChromeVersion);
     }
 
     public static List<JSONObject> getWebView(IDevice iDevice) {

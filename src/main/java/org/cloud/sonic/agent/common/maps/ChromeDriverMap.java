@@ -82,10 +82,25 @@ public class ChromeDriverMap {
             put("108", "108.0.5359.71");
             put("109", "109.0.5414.25");
             put("110", "110.0.5481.30");
+            put("111", "111.0.5563.64");
+            put("112", "112.0.5615.49");
+            put("113", "113.0.5672.24");
+            put("114", "114.0.5735.16");
         }
     };
 
     public static Map<String, String> getMap() {
         return chromeDriverMap;
+    }
+
+    /**
+     * 解决高版本的上下文切换问题:
+     * https://stackoverflow.com/questions/75678572/java-io-ioexception-invalid-status-code-403-text-forbidden
+     *
+     * @param majorChromeVersion 当前的主版本
+     * @return 是否需要启用jdk-http-client的版本
+     */
+    public static boolean shouldUseJdkHttpClient(String majorChromeVersion) {
+        return Integer.parseInt(majorChromeVersion) >= 111;
     }
 }
