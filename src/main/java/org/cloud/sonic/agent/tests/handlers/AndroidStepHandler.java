@@ -501,19 +501,26 @@ public class AndroidStepHandler {
     }
 
     public void asserts(HandleContext handleContext, String actual, String expect, String type) {
-        handleContext.setDetail("真实值： " + actual + " 期望值： " + expect);
         handleContext.setStepDes("");
         try {
             switch (type) {
                 case "assertEquals" -> {
+                    handleContext.setDetail("真实值： " + actual + " 期望等于： " + expect);
                     handleContext.setStepDes("断言验证(相等)");
                     assertEquals(actual, expect);
                 }
+                case "assertNotEquals" -> {
+                    handleContext.setDetail("真实值： " + actual + " 期望不等于： " + expect);
+                    handleContext.setStepDes("断言验证(不相等)");
+                    assertNotEquals(actual, expect);
+                }
                 case "assertTrue" -> {
+                    handleContext.setDetail("真实值： " + actual + " 期望包含： " + expect);
                     handleContext.setStepDes("断言验证(包含)");
                     assertTrue(actual.contains(expect));
                 }
                 case "assertNotTrue" -> {
+                    handleContext.setDetail("真实值： " + actual + " 期望不包含： " + expect);
                     handleContext.setStepDes("断言验证(不包含)");
                     assertFalse(actual.contains(expect));
                 }
@@ -2170,7 +2177,7 @@ public class AndroidStepHandler {
             case "locationMode" -> locationMode(handleContext, step.getBoolean("content"));
             case "keyCode" -> keyCode(handleContext, step.getString("content"));
             case "keyCodeSelf" -> keyCode(handleContext, step.getInteger("content"));
-            case "assertEquals", "assertTrue", "assertNotTrue" -> {
+            case "assertEquals", "assertNotEquals", "assertTrue", "assertNotTrue" -> {
                 String actual = TextHandler.replaceTrans(step.getString("text"), globalParams);
                 String expect = TextHandler.replaceTrans(step.getString("content"), globalParams);
                 asserts(handleContext, actual, expect, step.getString("stepType"));
