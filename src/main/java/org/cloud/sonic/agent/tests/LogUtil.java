@@ -55,13 +55,13 @@ public class LogUtil {
         message.put("cid", caseId);
         message.put("rid", resultId);
         message.put("udId", udId);
+        logger.info(message.toJSONString());
         if (type.equals(DeviceStatus.DEBUGGING)) {
             sendToWebSocket(WebSocketSessionMap.getSession(sessionId), message);
         }
         if (type.equals(DeviceStatus.TESTING)) {
             sendToServer(message);
         }
-        logger.info(message.toJSONString());
     }
 
     /**
