@@ -97,6 +97,7 @@ public class AndroidStepHandler {
 
     // 断言元素个数，三种元素类型的定义
     private static final int ANDROID_ELEMENT_TYPE = 1001;
+    private static final int WEB_ELEMENT_TYPE = 1002;
 
     public String getTargetPackage() {
         return targetPackage;
@@ -850,6 +851,14 @@ public class AndroidStepHandler {
             case ANDROID_ELEMENT_TYPE:
                 try {
                     elementList = findEleList(selector, pathValue);
+                } catch (SonicRespException e) {
+                    // 查找元素不存在时会抛异常
+                } catch (Exception ignored) {
+                }
+                break;
+            case WEB_ELEMENT_TYPE:
+                try {
+                    elementList = findWebEleList(selector, pathValue);
                 } catch (SonicRespException e) {
                     // 查找元素不存在时会抛异常
                 } catch (Exception ignored) {
@@ -1834,6 +1843,46 @@ public class AndroidStepHandler {
         return we;
     }
 
+    public List<WebElement> findWebEleList(String selector, String pathValue) throws SonicRespException {
+        List<WebElement> we = new ArrayList<>();
+        pathValue = TextHandler.replaceTrans(pathValue, globalParams);
+        int wait = 0;
+        String errMsg = "";
+        while (wait < retryWebInit) {
+            wait++;
+            try {
+                switch (selector) {
+                    case "id" -> we = chromeDriver.findElements(By.id(pathValue));
+                    case "name" -> we = chromeDriver.findElements(By.name(pathValue));
+                    case "xpath" -> we = chromeDriver.findElements(By.xpath(pathValue));
+                    case "cssSelector" -> we = chromeDriver.findElements(By.cssSelector(pathValue));
+                    case "className" -> we = chromeDriver.findElements(By.className(pathValue));
+                    case "tagName" -> we = chromeDriver.findElements(By.tagName(pathValue));
+                    case "linkText" -> we = chromeDriver.findElements(By.linkText(pathValue));
+                    case "partialLinkText" -> we = chromeDriver.findElements(By.partialLinkText(pathValue));
+                    default ->
+                            log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
+                }
+                if (we != null) {
+                    break;
+                }
+            } catch (Throwable e) {
+                errMsg = e.getMessage();
+            }
+            if (wait < retryWebInit) {
+                try {
+                    Thread.sleep(intervalWebInit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (we == null) {
+            throw new SonicRespException(errMsg);
+        }
+        return we;
+    }
+
     public AndroidElement findEle(String selector, String pathValue) throws SonicRespException {
         AndroidElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
@@ -2246,6 +2295,10 @@ public class AndroidStepHandler {
             case "isExistWebViewEle" ->
                     isExistWebViewEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+            case "isExistWebViewEleNum" -> isExistEleNum(handleContext,
+                    eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                    , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"),
+                    step.getInteger("text"), WEB_ELEMENT_TYPE);
             case "webViewClear" ->
                     webViewClear(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
