@@ -95,6 +95,9 @@ public class AndroidStepHandler {
 
     private String targetPackage = "";
 
+    // 断言元素个数，三种元素类型的定义
+    private static final int ANDROID_ELEMENT_TYPE = 1001;
+
     public String getTargetPackage() {
         return targetPackage;
     }
@@ -823,6 +826,45 @@ public class AndroidStepHandler {
         }
         try {
             assertEquals(hasEle, expect);
+        } catch (AssertionError e) {
+            handleContext.setE(e);
+        }
+    }
+
+    /**
+     * 断言元素存在个数的方法
+     *
+     * @param handleContext HandleContext
+     * @param des           元素名称
+     * @param selector      定位方式
+     * @param pathValue     定位值
+     * @param operation     操作类型
+     * @param expectedCount 期望数量
+     * @param elementType   元素的类型
+     */
+    public void isExistEleNum(HandleContext handleContext, String des, String selector, String pathValue, String operation
+            , int expectedCount, int elementType) {
+        handleContext.setStepDes("判断控件 " + des + " 存在的个数");
+        List elementList = new ArrayList<>();
+        switch (elementType) {
+            case ANDROID_ELEMENT_TYPE:
+                try {
+                    elementList = findEleList(selector, pathValue);
+                } catch (SonicRespException e) {
+                    // 查找元素不存在时会抛异常
+                } catch (Exception ignored) {
+                }
+                break;
+            default:
+                handleContext.setE(new AssertionError("未知的元素类型" + elementType + ",无法断言元素个数"));
+                break;
+        }
+        String runDetail = "期望个数：" + operation + " " + expectedCount + "，实际个数：" + " " + (elementList == null ? 0 : elementList.size());
+        handleContext.setDetail(runDetail);
+        AssertUtil assertUtil = new AssertUtil();
+        boolean isSuccess = assertUtil.assertElementNum(operation, expectedCount, elementList);
+        try {
+            assertTrue(isSuccess);
         } catch (AssertionError e) {
             handleContext.setE(e);
         }
@@ -2141,6 +2183,11 @@ public class AndroidStepHandler {
             case "isExistEle" ->
                     isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+            case "isExistEleNum" -> isExistEleNum(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getString("content"),
+                    step.getInteger("text"), ANDROID_ELEMENT_TYPE);
             case "clear" ->
                     clear(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
