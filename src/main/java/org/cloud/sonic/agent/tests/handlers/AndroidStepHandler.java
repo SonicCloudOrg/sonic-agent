@@ -98,6 +98,7 @@ public class AndroidStepHandler {
     // 断言元素个数，三种元素类型的定义
     private static final int ANDROID_ELEMENT_TYPE = 1001;
     private static final int WEB_ELEMENT_TYPE = 1002;
+    private static final int POCO_ELEMENT_TYPE = 1003;
 
     public String getTargetPackage() {
         return targetPackage;
@@ -862,6 +863,13 @@ public class AndroidStepHandler {
                 } catch (SonicRespException e) {
                     // 查找元素不存在时会抛异常
                 } catch (Exception ignored) {
+                }
+                break;
+            case POCO_ELEMENT_TYPE:
+                try {
+                    elementList = findPocoEleList(selector, pathValue);
+                } catch (Throwable e) {
+                    // 查找元素不存在时会抛异常
                 }
                 break;
             default:
@@ -2323,6 +2331,10 @@ public class AndroidStepHandler {
             case "isExistPocoEle" ->
                     isExistPocoEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+            case "isExistPocoEleNum" -> isExistEleNum(handleContext,
+                    eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                    , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"),
+                    step.getInteger("text"), POCO_ELEMENT_TYPE);
             case "pocoClick" ->
                     pocoClick(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
