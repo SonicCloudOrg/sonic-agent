@@ -2234,9 +2234,6 @@ public class AndroidStepHandler {
             case "sendKeysByActions" ->
                     sendKeysByActions(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
-            case "getText" ->
-                    getTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
             case "isExistEle" ->
                     isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
@@ -2295,9 +2292,6 @@ public class AndroidStepHandler {
             case "publicStep" -> publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
             case "setDefaultFindWebViewElementInterval" ->
                     setDefaultFindWebViewElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
-            case "getWebViewText" ->
-                    getWebViewTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
             case "webElementScrollToView" ->
                     webElementScrollToView(handleContext, step.getString("text"), step.getString("content"), step.getString("content"));
             case "isExistWebViewEle" ->
@@ -2356,9 +2350,6 @@ public class AndroidStepHandler {
             case "getPocoTextValue" ->
                     globalParams.put(step.getString("content"), getPocoText(handleContext, eleList.getJSONObject(0).getString("eleName")
                             , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
-            case "getPocoText" ->
-                    getPocoTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
             case "freezeSource" -> freezeSource(handleContext);
             case "thawSource" -> thawSource(handleContext);
             case "closePocoDriver" -> closePocoDriver(handleContext);
@@ -2375,6 +2366,16 @@ public class AndroidStepHandler {
             case "getClipperByKeyboard" ->
                     globalParams.put(step.getString("content"), getClipperByKeyboard(handleContext));
             case "setClipperByKeyboard" -> setClipperByKeyboard(handleContext, step.getString("content"));
+            // <= 2.5版本的文本断言语法(包括原生，webView，Poco三类)，保留做兼容，老版本升级上来的存量用例继续可用
+            case "getText" ->
+                    getTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            case "getWebViewText" ->
+                    getWebViewTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            case "getPocoText" ->
+                    getPocoTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
         }
         switchType(step, handleContext);
     }
