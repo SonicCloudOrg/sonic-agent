@@ -54,4 +54,23 @@ public class AssertUtil {
         return isSuccess;
     }
 
+    public String getAssertDesc(String originOpe) {
+        switch (originOpe) {
+            case "equal" -> {
+                return "等于";
+            }
+            case "notEqual" -> {
+                return "不等于";
+            }
+            case "contain" -> {
+                return "包含";
+            }
+            case "notContain" -> {
+                return "不包含";
+            }
+            default -> {
+                return "未知类型";
+            }
+        }
+    }
 }

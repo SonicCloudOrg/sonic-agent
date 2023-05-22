@@ -693,7 +693,7 @@ public class IOSStepHandler {
                 }
                 break;
             default:
-                handleContext.setE(new AssertionError("未知的元素类型" + elementType + ",无法断言元素个数"));
+                handleContext.setE(new AssertionError("未知的元素类型" + elementType + "，无法断言元素个数"));
                 break;
         }
         String runDetail = "期望个数：" + operation + " " + expectedCount + "，实际个数：" + " " + (elementList == null ? 0 : elementList.size());
@@ -1480,6 +1480,53 @@ public class IOSStepHandler {
         }
     }
 
+    /**
+     * >2.5.0版本，增强型的文本断言能力，支持指定断言的方式
+     *
+     * @param handleContext HandleContext
+     * @param des           元素名
+     * @param selector      元素定位方式
+     * @param pathValue     定位方式值
+     * @param operation     断言类型(equal,notEqual,contain,notContain)
+     * @param expect        期望值
+     * @param elementType   元素类型(原生，web，poco)
+     */
+    public void getElementTextAndAssertWithOperation(HandleContext handleContext, String des, String selector,
+                                                     String pathValue, String operation, String expect, int elementType) {
+        try {
+            String realValue = switch (elementType) {
+                case IOS_ELEMENT_TYPE -> getText(handleContext, des, selector, pathValue);
+                case POCO_ELEMENT_TYPE -> getPocoText(handleContext, des, selector, pathValue);
+                default -> throw new SonicRespException("未支持的元素类型" + elementType + "，无法进行文本断言");
+            };
+            if (handleContext.getE() != null) {
+                return;
+            }
+            handleContext.setStepDes("断言" + des + "文本");
+            try {
+                expect = TextHandler.replaceTrans(expect, globalParams);
+                AssertUtil assertUtil = new AssertUtil();
+                StringBuilder sbLog = new StringBuilder("真实值：");
+                sbLog.append(realValue);
+                sbLog.append("，期望 ");
+                sbLog.append(assertUtil.getAssertDesc(operation));
+                sbLog.append(" ");
+                sbLog.append(expect);
+                handleContext.setDetail(sbLog.toString());
+                switch (operation) {
+                    case "equal" -> assertEquals(realValue, expect);
+                    case "notEqual" -> assertNotEquals(realValue, expect);
+                    case "contain" -> assertTrue(realValue.contains(expect));
+                    case "notContain" -> assertFalse(realValue.contains(expect));
+                    default -> throw new SonicRespException("未支持的文本断言操作类型" + operation + "，无法进行文本断言");
+                }
+            } catch (AssertionError e) {
+                handleContext.setE(e);
+            }
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
 
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
@@ -1505,9 +1552,6 @@ public class IOSStepHandler {
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
             case "sendKeys" ->
                     sendKeys(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
-            case "getText" ->
-                    getTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
             case "isExistEle" ->
                     isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
@@ -1596,9 +1640,6 @@ public class IOSStepHandler {
             case "getPocoTextValue" ->
                     globalParams.put(step.getString("content"), getPocoText(handleContext, eleList.getJSONObject(0).getString("eleName")
                             , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
-            case "getPocoText" ->
-                    getPocoTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
             case "freezeSource" -> freezeSource(handleContext);
             case "thawSource" -> thawSource(handleContext);
             case "closePocoDriver" -> closePocoDriver(handleContext);
@@ -1608,6 +1649,26 @@ public class IOSStepHandler {
             case "iteratorIOSElement" ->
                     iteratorIOSElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
+            // <= 2.5版本的文本断言语法(包括原生，webView，Poco三类)，保留做兼容，老版本升级上来的存量用例继续可用
+            case "getText" ->
+                    getTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            case "getPocoText" ->
+                    getPocoTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            // > 2.5版本的文本断言语法，支持指定断言的方式
+            case "assertText" -> getElementTextAndAssertWithOperation(handleContext,
+                    eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getString("content"), step.getString("text"),
+                    IOS_ELEMENT_TYPE);
+            case "assertPocoText" -> getElementTextAndAssertWithOperation(handleContext,
+                    eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getString("content"), step.getString("text"),
+                    POCO_ELEMENT_TYPE);
         }
         switchType(step, handleContext);
     }
