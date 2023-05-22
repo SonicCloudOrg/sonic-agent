@@ -693,7 +693,7 @@ public class IOSStepHandler {
                 }
                 break;
             default:
-                handleContext.setE(new AssertionError("未知的元素类型" + elementType + ",无法断言元素个数"));
+                handleContext.setE(new AssertionError("未知的元素类型" + elementType + "，无法断言元素个数"));
                 break;
         }
         String runDetail = "期望个数：" + operation + " " + expectedCount + "，实际个数：" + " " + (elementList == null ? 0 : elementList.size());
@@ -1497,7 +1497,7 @@ public class IOSStepHandler {
             String realValue = switch (elementType) {
                 case IOS_ELEMENT_TYPE -> getText(handleContext, des, selector, pathValue);
                 case POCO_ELEMENT_TYPE -> getPocoText(handleContext, des, selector, pathValue);
-                default -> throw new SonicRespException("未支持的元素类型" + elementType + ",无法进行文本断言");
+                default -> throw new SonicRespException("未支持的元素类型" + elementType + "，无法进行文本断言");
             };
             if (handleContext.getE() != null) {
                 return;
@@ -1518,7 +1518,7 @@ public class IOSStepHandler {
                     case "notEqual" -> assertNotEquals(realValue, expect);
                     case "contain" -> assertTrue(realValue.contains(expect));
                     case "notContain" -> assertFalse(realValue.contains(expect));
-                    default -> throw new SonicRespException("未支持的文本断言操作类型" + operation + ",无法进行文本断言");
+                    default -> throw new SonicRespException("未支持的文本断言操作类型" + operation + "，无法进行文本断言");
                 }
             } catch (AssertionError e) {
                 handleContext.setE(e);
