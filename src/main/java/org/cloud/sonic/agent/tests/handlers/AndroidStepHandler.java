@@ -2199,6 +2199,55 @@ public class AndroidStepHandler {
         AndroidTouchHandler.switchTouchMode(iDevice, AndroidTouchHandler.TouchMode.valueOf(mode));
     }
 
+    /**
+     * >2.5.0版本，增强型的文本断言能力，支持指定断言的方式
+     *
+     * @param handleContext HandleContext
+     * @param des           元素名
+     * @param selector      元素定位方式
+     * @param pathValue     定位方式值
+     * @param operation     断言类型(equal,notEqual,contain,notContain)
+     * @param expect        期望值
+     * @param elementType   元素类型(原生，web，poco)
+     */
+    public void getElementTextAndAssertWithOperation(HandleContext handleContext, String des, String selector,
+                                                     String pathValue, String operation, String expect, int elementType) {
+        try {
+            String realValue = switch (elementType) {
+                case ANDROID_ELEMENT_TYPE -> getText(handleContext, des, selector, pathValue);
+                case WEB_ELEMENT_TYPE -> getWebViewText(handleContext, des, selector, pathValue);
+                case POCO_ELEMENT_TYPE -> getPocoText(handleContext, des, selector, pathValue);
+                default -> throw new SonicRespException("未支持的元素类型" + elementType + ",无法进行文本断言");
+            };
+            if (handleContext.getE() != null) {
+                return;
+            }
+            handleContext.setStepDes("断言" + des + "文本");
+            try {
+                expect = TextHandler.replaceTrans(expect, globalParams);
+                AssertUtil assertUtil = new AssertUtil();
+                StringBuilder sbLog = new StringBuilder("真实值：");
+                sbLog.append(realValue);
+                sbLog.append("，期望 ");
+                sbLog.append(assertUtil.getAssertDesc(operation));
+                sbLog.append(" ");
+                sbLog.append(expect);
+                handleContext.setDetail(sbLog.toString());
+                switch (operation) {
+                    case "equal" -> assertEquals(realValue, expect);
+                    case "notEqual" -> assertNotEquals(realValue, expect);
+                    case "contain" -> assertTrue(realValue.contains(expect));
+                    case "notContain" -> assertFalse(realValue.contains(expect));
+                    default -> throw new SonicRespException("未支持的文本断言操作类型" + operation + ",无法进行文本断言");
+                }
+            } catch (AssertionError e) {
+                handleContext.setE(e);
+            }
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void runStep(JSONObject stepJSON, HandleContext handleContext) throws Throwable {
         JSONObject step = stepJSON.getJSONObject("step");
         // 兼容childSteps
@@ -2376,6 +2425,25 @@ public class AndroidStepHandler {
             case "getPocoText" ->
                     getPocoTextAndAssert(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            // > 2.5版本的文本断言语法，支持指定断言的方式
+            case "assertText" -> getElementTextAndAssertWithOperation(handleContext,
+                    eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getString("content"), step.getString("text"),
+                    ANDROID_ELEMENT_TYPE);
+            case "assertWebViewText" -> getElementTextAndAssertWithOperation(handleContext,
+                    eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getString("content"), step.getString("text"),
+                    WEB_ELEMENT_TYPE);
+            case "assertPocoText" -> getElementTextAndAssertWithOperation(handleContext,
+                    eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getString("content"), step.getString("text"),
+                    POCO_ELEMENT_TYPE);
         }
         switchType(step, handleContext);
     }
