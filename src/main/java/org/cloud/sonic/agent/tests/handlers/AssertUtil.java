@@ -65,8 +65,11 @@ public class AssertUtil {
             case "contain" -> {
                 return "包含";
             }
-            default -> {
+            case "notContain" -> {
                 return "不包含";
+            }
+            default -> {
+                return "未知类型";
             }
         }
     }
