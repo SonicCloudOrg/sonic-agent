@@ -131,9 +131,18 @@ public class IOSStepHandler {
         }
         iosDriver.getWdaClient().setGlobalTimeOut(5 * 60 * 1000);
         log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
-        JSONObject appiumSettings = new JSONObject();
-        appiumSettings.put("snapshotMaxDepth", 30);
-        appiumSettings(appiumSettings);
+    }
+
+    public void setSnapshotMaxDepth(HandleContext handleContext, int depth) {
+        handleContext.setStepDes("设置控件获取最大遍历深度");
+        handleContext.setDetail("设置为 " + depth + " 层");
+        try {
+            JSONObject settings = new JSONObject();
+            settings.put("snapshotMaxDepth", depth);
+            appiumSettings(settings);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
     }
 
     public void closeIOSDriver() {
@@ -1518,7 +1527,8 @@ public class IOSStepHandler {
                     case "notEqual" -> assertNotEquals(realValue, expect);
                     case "contain" -> assertTrue(realValue.contains(expect));
                     case "notContain" -> assertFalse(realValue.contains(expect));
-                    default -> throw new SonicRespException("未支持的文本断言操作类型" + operation + "，无法进行文本断言");
+                    default ->
+                            throw new SonicRespException("未支持的文本断言操作类型" + operation + "，无法进行文本断言");
                 }
             } catch (AssertionError e) {
                 handleContext.setE(e);
@@ -1643,6 +1653,7 @@ public class IOSStepHandler {
             case "freezeSource" -> freezeSource(handleContext);
             case "thawSource" -> thawSource(handleContext);
             case "closePocoDriver" -> closePocoDriver(handleContext);
+            case "setSnapshotMaxDepth" -> setSnapshotMaxDepth(handleContext, step.getInteger("content"));
             case "iteratorPocoElement" ->
                     iteratorPocoElement(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));

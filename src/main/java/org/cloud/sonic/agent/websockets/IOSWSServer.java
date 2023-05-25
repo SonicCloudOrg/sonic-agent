@@ -389,11 +389,14 @@ public class IOSWSServer implements IIOSWSServer {
                                 try {
                                     JSONObject result = new JSONObject();
                                     result.put("msg", "tree");
-                                    result.put("detail", iosStepHandler.getResource());
                                     HandleContext handleContext = new HandleContext();
                                     if (msg.getBoolean("needImg")) {
                                         result.put("img", iosStepHandler.stepScreen(handleContext));
                                     }
+                                    if (msg.getInteger("depth") != null) {
+                                        iosStepHandler.setSnapshotMaxDepth(handleContext, msg.getInteger("depth"));
+                                    }
+                                    result.put("detail", iosStepHandler.getResource());
                                     if (handleContext.getE() != null) {
                                         log.error(handleContext.getE().getMessage());
                                         JSONObject resultFail = new JSONObject();

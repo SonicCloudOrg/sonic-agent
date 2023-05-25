@@ -2238,7 +2238,8 @@ public class AndroidStepHandler {
                     case "notEqual" -> assertNotEquals(realValue, expect);
                     case "contain" -> assertTrue(realValue.contains(expect));
                     case "notContain" -> assertFalse(realValue.contains(expect));
-                    default -> throw new SonicRespException("未支持的文本断言操作类型" + operation + "，无法进行文本断言");
+                    default ->
+                            throw new SonicRespException("未支持的文本断言操作类型" + operation + "，无法进行文本断言");
                 }
             } catch (AssertionError e) {
                 handleContext.setE(e);
