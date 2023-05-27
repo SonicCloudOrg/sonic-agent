@@ -1665,9 +1665,22 @@ public class AndroidStepHandler {
             String attrValue = "";
             switch (attr) {
                 case "type" -> attrValue = pocoElement.getPayload().getType();
+                case "layer" -> attrValue = pocoElement.getPayload().getLayer();
+                case "tag" -> attrValue = pocoElement.getPayload().getTag();
+                case "text" -> attrValue = pocoElement.getPayload().getText();
+                case "texture" -> attrValue = pocoElement.getPayload().getTexture();
+                case "_instanceId" -> attrValue = pocoElement.getPayload().get_instanceId() + "";
                 case "name" -> attrValue = pocoElement.getPayload().getName();
                 case "visible" -> attrValue = pocoElement.getPayload().getVisible().toString();
                 case "clickable" -> attrValue = pocoElement.getPayload().getClickable().toString();
+                case "_ilayer" -> attrValue = pocoElement.getPayload().get_ilayer() + "";
+                case "global" -> attrValue = pocoElement.getPayload().getZOrders().getGlobal() + "";
+                case "local" -> attrValue = pocoElement.getPayload().getZOrders().getLocal() + "";
+                case "components" -> attrValue = pocoElement.getPayload().getComponents().toString();
+                case "anchorPoint" -> attrValue = pocoElement.getPayload().getAnchorPoint().toString();
+                case "scale" -> attrValue = pocoElement.getPayload().getScale().toString();
+                case "size" -> attrValue = pocoElement.getPayload().getSize().toString();
+                case "pos" -> attrValue = pocoElement.getPayload().getPos().toString();
             }
             log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
             try {
