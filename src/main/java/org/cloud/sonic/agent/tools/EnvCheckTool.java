@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * 检查环境
@@ -40,33 +42,44 @@ import java.util.Arrays;
 public class EnvCheckTool {
 
     public static String system;
-    public static String sdkPath = "unknown \n";
-    public static String adbPath = "unknown \n";
-    public static String adbVersion = "unknown \n";
+    private final String HELP_URL = "https://sonic-cloud.cn/deploy/agent-deploy.html#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98-q-a";
 
-    @Value("${modules.android.enable}")
-    public boolean androidEnAble;
+    public static String adbVersion = "unknown";
+    public static String sasPrintVersion = "unknown";
+    public static String sibPrintVersion = "unknown";
+    public static String sgmPrintVersion = "unknown";
 
     static {
         system = System.getProperty("os.name").toLowerCase();
     }
 
+    @Value("${sonic.sas}")
+    private String sasVersion;
+
+    @Value("${sonic.sib}")
+    private String sibVersion;
+
+    @Value("${sonic.sgm}")
+    private String sgmVersion;
+
     @Bean
     public boolean checkEnv(ConfigurableApplicationContext context) {
         System.out.println("===================== Checking the Environment =====================");
         try {
-            if (androidEnAble) {
-                checkSDK();
-                checkAdb();
-            }
-            checkFiles();
+            checkConfigFiles();
+            checkMiniFiles();
+            checkPlugins();
         } catch (Exception e) {
             System.out.println(printInfo(e.getMessage()));
+            System.out.println("=========================== Check results ===========================");
+            printAllFail("Unfortunately, some of the check items did not pass!");
+            System.out.println(this);
             System.out.println("========================== Check Completed ==========================");
             context.close();
             System.exit(0);
         }
         System.out.println("=========================== Check results ===========================");
+        printAllPass("Congratulations, all check items have been done!");
         System.out.println(this);
         System.out.println("========================== Check Completed ==========================");
         return true;
@@ -75,11 +88,10 @@ public class EnvCheckTool {
     /**
      * 检查本地文件
      */
-    public void checkFiles() {
-        String type = "Check local resource";
+    public void checkConfigFiles() {
+        String type = "Check config folders";
+        printChecking(type);
         File config = new File("config/application-sonic-agent.yml");
-        File mini = new File("mini");
-        File plugins = new File("plugins");
         if (system.contains("linux") || system.contains("mac")) {
             try {
                 Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format("chmod -R 777 %s", new File("").getAbsolutePath())});
@@ -87,64 +99,166 @@ public class EnvCheckTool {
                 e.printStackTrace();
             }
         }
-        if (config.exists()
-                && mini.exists()
-                && plugins.exists()) {
+        if (config.exists()) {
             printPass(type);
         } else {
             printFail(type);
-            throw new RuntimeException("提示：请确保当前目录下有config(内含application-sonic-agent.yml)、mini、plugins文件夹");
+            throw new RuntimeException("Missing file! Please ensure that `config` (containing application-sonic-agent.yml) folders in the current directory");
         }
     }
 
-    /**
-     * 检查sdk环境
-     */
-    public void checkSDK() {
-        String type = "Check ANDROID_HOME Path";
-        sdkPath = System.getenv("ANDROID_HOME");
-        if (!StringUtils.hasText(sdkPath)) {
-            System.out.println("系统变量【ANDROID_HOME】返回值为空！");
-            printFail(type);
-            throw new RuntimeException(String.format("提示：可参考 https://sonic-cloud.cn/deploy?tag=agent " +
-                    "下载安卓SDK并设置ANDROID_HOME环境变量"));
-        }
-        printPass(type);
-    }
-
-    /**
-     * 检查adb环境
-     */
-    public void checkAdb() throws IOException, InterruptedException {
-        String type = "Check ADB env";
-        String commandStr = "adb version";
-        try {
-            adbPath = findCommandPath("adb");
-            adbVersion = exeCmd(false, commandStr);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            printFail(type);
-            throw new RuntimeException(String.format("提示：请确保安卓SDK目录下的platform-tools有adb工具"));
-        }
-        printPass(type);
-    }
-
-    public String findCommandPath(String command) throws IOException, InterruptedException {
-
-        String path = "";
-        if (system.contains("win")) {
-            path = exeCmd(false, "cmd", "/c", "where " + command);
-        } else if (system.contains("linux") || system.contains("mac")) {
-            path = exeCmd(false, "sh", "-c", "which " + command);
+    public void checkMiniFiles() {
+        String type = "Check mini folders";
+        printChecking(type);
+        File mini = new File("mini");
+        if (mini.exists()) {
+            printPass(type);
         } else {
-            throw new RuntimeException("匹配系统失败，请联系开发者支持，当前系统为：" + system);
+            printFail(type);
+            throw new RuntimeException("Missing file! Please ensure that `mini` folders in the current directory");
         }
+    }
 
-        if (!StringUtils.hasText(path)) {
-            throw new RuntimeException(String.format("获取【%s】路径出错！", command));
+    private boolean checkADB() {
+        String type = "Check ADB environment";
+        printChecking(type);
+        String path = System.getenv("ANDROID_HOME");
+        if (path != null) {
+            path += File.separator + "platform-tools" + File.separator + "adb";
+        } else {
+            path = "plugins" + File.separator + "adb";
         }
+        File adb = new File(path);
+        if (adb.exists()) {
+            adb.setExecutable(true);
+            adb.setWritable(true);
+            adb.setReadable(true);
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", adb.getAbsolutePath()));
+            if (ver.size() == 0) {
+                printFail(type);
+                throw new RuntimeException("Can not use adb! Please ensure that `adb` command useful!" + (system.toUpperCase(Locale.ROOT).contains("MAC") ? " You can see " + HELP_URL + " ." : ""));
+            } else {
+                adbVersion = ver.get(0);
+                printPass(type);
+                return true;
+            }
+        } else {
+            printFail(type);
+            throw new RuntimeException("Missing file! Please ensure that `adb` command useful or `plugins` folders (containing adb) in the current directory");
+        }
+    }
 
-        return path;
+    private boolean checkSAS() {
+        String type = "Check sonic-android-supply plugin";
+        printChecking(type);
+        File sasBinary = new File("plugins" + File.separator + "sonic-android-supply");
+        if (sasBinary.exists()) {
+            sasBinary.setExecutable(true);
+            sasBinary.setWritable(true);
+            sasBinary.setReadable(true);
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sasBinary.getAbsolutePath()));
+            sasPrintVersion = (ver.size() == 0 ? "null" : ver.get(0));
+            if (ver.size() == 0 || !BytesTool.versionCheck(sasVersion, ver.get(0))) {
+                printFail(type);
+                throw new RuntimeException(String.format("Start sonic-android-supply failed! Please check sonic-android-supply version or use [chmod -R 777 %s]. if still failed, you can try with [sudo]%s", new File("plugins").getAbsolutePath(), (system.toUpperCase(Locale.ROOT).contains("MAC") ? " or you can see " + HELP_URL : "")));
+            } else {
+                printPass(type);
+                return true;
+            }
+        } else {
+            printFail(type);
+            throw new RuntimeException("Missing file! Please ensure that `plugins` folders (containing sonic-android-supply) in the current directory");
+        }
+    }
+
+    private boolean checkSIB() {
+        String type = "Check sonic-ios-bridge plugin";
+        printChecking(type);
+        File sibBinary = new File("plugins" + File.separator + "sonic-ios-bridge");
+        if (sibBinary.exists()) {
+            sibBinary.setExecutable(true);
+            sibBinary.setWritable(true);
+            sibBinary.setReadable(true);
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sibBinary.getAbsolutePath()));
+            sibPrintVersion = (ver.size() == 0 ? "null" : ver.get(0));
+            if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {
+                printFail(type);
+                throw new RuntimeException(String.format("Start sonic-ios-bridge failed! Please check sib's version or use [chmod -R 777 %s]. if still failed, you can try with [sudo]%s", new File("plugins").getAbsolutePath(), (system.toUpperCase(Locale.ROOT).contains("MAC") ? " or you can see " + HELP_URL : "")));
+            } else {
+                printPass(type);
+                return true;
+            }
+        } else {
+            printFail(type);
+            throw new RuntimeException("Missing file! Please ensure that `plugins` folders (containing sonic-ios-bridge) in the current directory");
+        }
+    }
+
+    private boolean checkSGM() {
+        String type = "Check sonic-go-mitmproxy plugin";
+        printChecking(type);
+        File sgmBinary = new File("plugins" + File.separator + "sonic-go-mitmproxy");
+        if (sgmBinary.exists()) {
+            sgmBinary.setExecutable(true);
+            sgmBinary.setWritable(true);
+            sgmBinary.setReadable(true);
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgmBinary.getAbsolutePath()));
+            sgmPrintVersion = (ver.size() == 0 ? "null" : ver.get(0));
+            if (ver.size() == 0 || !BytesTool.versionCheck(sgmVersion, ver.get(0).replace("sonic-go-mitmproxy:", "").trim())) {
+                printFail(type);
+                throw new RuntimeException(String.format("Start sonic-go-mitmproxy failed! Please check sonic-go-mitmproxy version or use [chmod -R 777 %s]. if still failed, you can try with [sudo]%s", new File("plugins").getAbsolutePath(), (system.toUpperCase(Locale.ROOT).contains("MAC") ? " or you can see " + HELP_URL : "")));
+            } else {
+                printPass(type);
+                return true;
+            }
+        } else {
+            printFail(type);
+            throw new RuntimeException("Missing file! Please ensure that `plugins` folders (containing sonic-go-mitmproxy) in the current directory");
+        }
+    }
+
+    private boolean checkAPKs() {
+        String type = "Check apk files";
+        printChecking(type);
+        File saa = new File("plugins" + File.separator + "sonic-android-apk.apk");
+        File saus = new File("plugins" + File.separator + "sonic-appium-uiautomator2-server.apk");
+        File saust = new File("plugins" + File.separator + "sonic-appium-uiautomator2-server-test.apk");
+        if (saa.exists() && saus.exists() && saust.exists()) {
+            printPass(type);
+            return true;
+        } else {
+            printFail(type);
+            throw new RuntimeException("Missing file! Please ensure that `plugins` folders (containing `sonic-android-apk.apk` `sonic-appium-uiautomator2-server.apk` `sonic-appium-uiautomator2-server-test.apk`) in the current directory");
+        }
+    }
+
+    public void checkPlugins() {
+        String type = "Check all plugins";
+        File plugins = new File("plugins");
+        if (plugins.exists()) {
+            if (checkADB() && checkSAS() && checkSIB() && checkSGM() && checkAPKs()) {
+                printPass(type);
+            }
+        } else {
+            printFail(type);
+            throw new RuntimeException("Missing file! Please ensure that `plugins` folders in the current directory");
+        }
+    }
+
+    public void printAllPass(String s) {
+        if (system.contains("win")) {
+            System.out.println("✔ " + s + " ✔");
+        } else {
+            System.out.println("\33[32;1m✨ " + s + " ✨\033[0m");
+        }
+    }
+
+    public void printAllFail(String s) {
+        if (system.contains("win")) {
+            System.out.println("× " + s);
+        } else {
+            System.out.println("\33[31;1m❌ " + s + " \033[0m");
+        }
     }
 
     public void printPass(String s) {
@@ -171,6 +285,15 @@ public class EnvCheckTool {
         }
     }
 
+    public void printChecking(String s) {
+        s = s.replace("Check", "Checking");
+        if (system.contains("win")) {
+            System.out.println("· " + s + " ...");
+        } else {
+            System.out.println("\33[34;1m" + s + "...\033[0m");
+        }
+    }
+
     public static String exeCmd(boolean getError, String commandStr) throws IOException, InterruptedException {
 
         if (system.contains("win")) {
@@ -179,7 +302,7 @@ public class EnvCheckTool {
         if (system.contains("linux") || system.contains("mac")) {
             return exeCmd(getError, "sh", "-c", commandStr);
         }
-        throw new RuntimeException("匹配系统失败，请联系开发者支持，当前系统为：" + system);
+        throw new RuntimeException("error system: " + system);
     }
 
     public static String exeCmd(boolean getError, String... commandStr) throws IOException, InterruptedException {
@@ -201,16 +324,17 @@ public class EnvCheckTool {
 
         if (!StringUtils.hasText(result)) {
             Object[] c = Arrays.stream(commandStr).toArray();
-            throw new RuntimeException(String.format("执行【%s】命令出错！", c.length > 0 ? c[c.length - 1] : "unknown"));
+            throw new RuntimeException(String.format("execute【%s】error!", c.length > 0 ? c[c.length - 1] : "unknown"));
         }
         return result;
     }
 
     @Override
     public String toString() {
-        return printInfo("ANDROID_HOME: ") + sdkPath + "\n" +
-                printInfo("ADB path: ") + adbPath +
-                printInfo("ADB version: ") + adbVersion +
-                printInfo("System: ") + system;
+        return printInfo("System: ") + system + "\n" +
+                printInfo("ADB version: ") + adbVersion + "\n" +
+                printInfo("sonic-android-supply version: ") + sasPrintVersion + "\n" +
+                printInfo("sonic-ios-bridge version: ") + sibPrintVersion + "\n" +
+                printInfo("sonic-go-mitmproxy version: ") + sgmPrintVersion;
     }
 }
