@@ -101,8 +101,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         if (path != null) {
             path += File.separator + "platform-tools" + File.separator + "adb";
         } else {
-            log.error("Get ANDROID_HOME env failed!");
-            return null;
+            path = "plugins" + File.separator + "adb";
         }
         return path;
     }
