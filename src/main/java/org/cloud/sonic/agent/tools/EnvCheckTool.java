@@ -128,6 +128,9 @@ public class EnvCheckTool {
         } else {
             path = "plugins" + File.separator + "adb";
         }
+        if (system.contains("win")) {
+            path += ".exe";
+        }
         File adb = new File(path);
         if (adb.exists()) {
             adb.setExecutable(true);
@@ -151,7 +154,11 @@ public class EnvCheckTool {
     private boolean checkSAS() {
         String type = "Check sonic-android-supply plugin";
         printChecking(type);
-        File sasBinary = new File("plugins" + File.separator + "sonic-android-supply");
+        String path = "plugins" + File.separator + "sonic-android-supply";
+        if (system.contains("win")) {
+            path += ".exe";
+        }
+        File sasBinary = new File(path);
         if (sasBinary.exists()) {
             sasBinary.setExecutable(true);
             sasBinary.setWritable(true);
@@ -174,7 +181,11 @@ public class EnvCheckTool {
     private boolean checkSIB() {
         String type = "Check sonic-ios-bridge plugin";
         printChecking(type);
-        File sibBinary = new File("plugins" + File.separator + "sonic-ios-bridge");
+        String path = "plugins" + File.separator + "sonic-ios-bridge";
+        if (system.contains("win")) {
+            path += ".exe";
+        }
+        File sibBinary = new File(path);
         if (sibBinary.exists()) {
             sibBinary.setExecutable(true);
             sibBinary.setWritable(true);
@@ -197,7 +208,11 @@ public class EnvCheckTool {
     private boolean checkSGM() {
         String type = "Check sonic-go-mitmproxy plugin";
         printChecking(type);
-        File sgmBinary = new File("plugins" + File.separator + "sonic-go-mitmproxy");
+        String path = "plugins" + File.separator + "sonic-go-mitmproxy";
+        if (system.contains("win")) {
+            path += ".exe";
+        }
+        File sgmBinary = new File(path);
         if (sgmBinary.exists()) {
             sgmBinary.setExecutable(true);
             sgmBinary.setWritable(true);
