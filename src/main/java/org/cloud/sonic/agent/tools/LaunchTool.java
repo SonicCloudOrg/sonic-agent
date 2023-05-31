@@ -18,13 +18,11 @@
 package org.cloud.sonic.agent.tools;
 
 import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.common.maps.IOSProcessMap;
 import org.cloud.sonic.agent.transport.TransportConnectionThread;
 import org.cloud.sonic.agent.transport.TransportWorker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -33,10 +31,8 @@ import java.io.File;
 import java.util.List;
 
 @Component
+@Slf4j
 public class LaunchTool implements ApplicationRunner {
-    private final Logger logger = LoggerFactory.getLogger(LaunchTool.class);
-    @Value("${modules.sgm.enable}")
-    private boolean isEnableSgm;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -51,29 +47,26 @@ public class LaunchTool implements ApplicationRunner {
                 TransportConnectionThread.TIME_UNIT
         );
         TransportWorker.readQueue();
-        if (isEnableSgm) {
-            SGMTool.init();
-            new Thread(() -> {
-                File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
-                if (!file.exists()) {
-                    logger.info("Generating ca file...");
-                    SGMTool.startProxy("init", SGMTool.getCommand());
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    // 仅生成证书
-                    SGMTool.stopProxy("init");
-                    file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
-                    if (!file.exists()) {
-                        logger.info("init sonic-go-mitmproxy-ca failed!");
-                    } else {
-                        logger.info("init sonic-go-mitmproxy-ca Successful!");
-                    }
+        new Thread(() -> {
+            File file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
+            if (!file.exists()) {
+                log.info("Generating ca file...");
+                SGMTool.startProxy("init", SGMTool.getCommand());
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-            }).start();
-        }
+                // 仅生成证书
+                SGMTool.stopProxy("init");
+                file = new File("plugins/sonic-go-mitmproxy-ca-cert.pem");
+                if (!file.exists()) {
+                    log.info("init sonic-go-mitmproxy-ca failed!");
+                } else {
+                    log.info("init sonic-go-mitmproxy-ca Successful!");
+                }
+            }
+        }).start();
     }
 
     @PreDestroy
@@ -90,6 +83,6 @@ public class LaunchTool implements ApplicationRunner {
                 p.destroy();
             }
         }
-        logger.info("Release done!");
+        log.info("Release done!");
     }
 }

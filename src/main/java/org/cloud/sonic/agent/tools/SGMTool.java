@@ -36,25 +36,6 @@ public class SGMTool {
     private static final String pFile = new File("plugins").getAbsolutePath();
     private static final File sgmBinary = new File(pFile + File.separator + "sonic-go-mitmproxy");
     private static final String sgm = sgmBinary.getAbsolutePath();
-    private static String sgmVersion;
-    @Value("${sonic.sgm}")
-    private String ver;
-
-    @Bean
-    public void setSgmVer() {
-        sgmVersion = ver;
-    }
-
-    public static void init() {
-        sgmBinary.setExecutable(true);
-        sgmBinary.setWritable(true);
-        sgmBinary.setReadable(true);
-        List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgm));
-        if (ver.size() == 0 || !BytesTool.versionCheck(sgmVersion, ver.get(0).replace("sonic-go-mitmproxy:", "").trim())) {
-            log.info(String.format("Start sonic-go-mitmproxy failed! Please check sonic-go-mitmproxy version or use [chmod -R 777 %s], if still failed, you can try with [sudo]", pFile));
-            AgentManagerTool.stop();
-        }
-    }
 
     public static String getCommand(int pPort, int webPort) {
         return String.format(

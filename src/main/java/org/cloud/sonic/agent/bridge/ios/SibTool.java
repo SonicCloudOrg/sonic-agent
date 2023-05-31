@@ -69,8 +69,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     private static String bundleId;
     private static File sibBinary = new File("plugins" + File.separator + "sonic-ios-bridge");
     private static String sib = sibBinary.getAbsolutePath();
-    @Value("${sonic.sib}")
-    private String sibVersion;
     private static RestTemplate restTemplate;
     @Autowired
     private RestTemplate restTemplateBean;
@@ -88,15 +86,6 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public void init() {
-        sibBinary.setExecutable(true);
-        sibBinary.setWritable(true);
-        sibBinary.setReadable(true);
-        restTemplate = restTemplateBean;
-        List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sib));
-        if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {
-            logger.info(String.format("Start sonic-ios-bridge failed! Please check sib's version or use [chmod -R 777 %s], if still failed, you can try with [sudo]", new File("plugins").getAbsolutePath()));
-            AgentManagerTool.stop();
-        }
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             String processName = "sib";
             if (GlobalProcessMap.getMap().get(processName) != null) {
