@@ -805,6 +805,27 @@ public class AndroidStepHandler {
         }
     }
 
+    public void webViewLongPress(HandleContext handleContext, String des, String selector, String pathValue, int time) {
+        handleContext.setStepDes("长按" + des);
+        handleContext.setDetail("长按Web控件元素" + time + "毫秒 ");
+        try {
+            WebElement webElement = findWebEle(selector, pathValue);
+            if (webElement != null) {
+                JavascriptExecutor jsExe = chromeDriver;
+                // 执行长按操作
+                jsExe.executeScript("var event = new Event('long-press-start');" +
+                        "var element = arguments[0];" +
+                        "element.dispatchEvent(event);" +
+                        "setTimeout(function() {" +
+                        "  event = new Event('long-press-end');" +
+                        "  element.dispatchEvent(event);" +
+                        "}, " + time + ");", webElement);
+            }
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void clear(HandleContext handleContext, String des, String selector, String pathValue) {
         handleContext.setStepDes("清空" + des);
         handleContext.setDetail("清空" + selector + ": " + pathValue);
@@ -2378,6 +2399,9 @@ public class AndroidStepHandler {
             case "getWebViewTextValue" ->
                     globalParams.put(step.getString("content"), getWebViewText(handleContext, eleList.getJSONObject(0).getString("eleName")
                             , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
+            case "webViewLongPress" ->
+                    webViewLongPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getInteger("content"));
             case "findElementInterval" ->
                     setFindElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "runScript" -> runScript(handleContext, step.getString("content"), step.getString("text"));
