@@ -2071,6 +2071,22 @@ public class AndroidStepHandler {
         }
     }
 
+    public void webViewSendKeysByActions(HandleContext handleContext, String des, String selector, String pathValue, String keys) {
+        keys = TextHandler.replaceTrans(keys, globalParams);
+        handleContext.setStepDes("对" + des + "输入内容");
+        handleContext.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
+        try {
+            WebElement targetElement = findWebEle(selector, pathValue);
+            if (targetElement != null) {
+                JavascriptExecutor jsExe = chromeDriver;
+                jsExe.executeScript("arguments[0].focus();", targetElement);
+                targetElement.sendKeys(keys);
+            }
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void webViewClear(HandleContext handleContext, String des, String selector, String pathValue) {
         handleContext.setStepDes("清空" + des);
         handleContext.setDetail("清空" + selector + ": " + pathValue);
@@ -2369,6 +2385,9 @@ public class AndroidStepHandler {
                             , eleList.getJSONObject(0).getString("eleValue"));
             case "webViewSendKeys" ->
                     webViewSendKeys(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            case "webViewSendKeysByActions" ->
+                    webViewSendKeysByActions(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
             case "webViewClick" ->
                     webViewClick(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
