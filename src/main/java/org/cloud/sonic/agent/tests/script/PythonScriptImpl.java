@@ -35,7 +35,8 @@ public class PythonScriptImpl implements ScriptRunner {
                 script,
                 androidStepHandler.getAndroidDriver().getSessionId(),
                 androidStepHandler.getiDevice().getSerialNumber(),
-                androidStepHandler.getGlobalParams().toJSONString()
+                androidStepHandler.getGlobalParams().toJSONString(),
+                androidStepHandler.getAndroidDriver().getUiaClient().getRemoteUrl()
         )) {
             throw new RuntimeException("Run script failed");
         }
@@ -46,9 +47,10 @@ public class PythonScriptImpl implements ScriptRunner {
         if (execIsFailed(
                 iosStepHandler.log,
                 script,
-                iosStepHandler.getDriver().getSessionId(),
+                iosStepHandler.getIOSDriver().getSessionId(),
                 iosStepHandler.getUdId(),
-                iosStepHandler.getGlobalParams().toJSONString()
+                iosStepHandler.getGlobalParams().toJSONString(),
+                iosStepHandler.getIOSDriver().getWdaClient().getRemoteUrl()
         )) {
             throw new RuntimeException("Run script failed");
         }
@@ -75,10 +77,10 @@ public class PythonScriptImpl implements ScriptRunner {
                 try (BufferedReader stderr = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                     while (!currentThread.isStopped()) {
                         boolean exited = process.waitFor(1, TimeUnit.SECONDS);
-                        while ((len = stdout.read(buffer, 0 , BUFFER_SIZE)) > 0) {
+                        while ((len = stdout.read(buffer, 0, BUFFER_SIZE)) > 0) {
                             log.sendStepLog(StepType.INFO, "Script stdout", new String(buffer, 0, len));
                         }
-                        while ((len = stderr.read(buffer, 0 , BUFFER_SIZE)) > 0) {
+                        while ((len = stderr.read(buffer, 0, BUFFER_SIZE)) > 0) {
                             log.sendStepLog(StepType.WARN, "Script stderr", new String(buffer, 0, len));
                         }
                         if (exited) {

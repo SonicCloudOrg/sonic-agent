@@ -188,7 +188,7 @@ public class IOSStepHandler {
         setResultDetailStatus(ResultDetailStatus.WARN);
     }
 
-    public IOSDriver getDriver() {
+    public IOSDriver getIOSDriver() {
         return iosDriver;
     }
 

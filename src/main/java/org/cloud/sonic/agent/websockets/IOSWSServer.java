@@ -113,7 +113,7 @@ public class IOSWSServer implements IIOSWSServer {
                 IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
                 if (iosStepHandler != null) {
                     try {
-                        iosStepHandler.getDriver().pressButton("home");
+                        iosStepHandler.getIOSDriver().pressButton("home");
                     } catch (SonicRespException ignored) {
                     }
                 }
@@ -140,8 +140,8 @@ public class IOSWSServer implements IIOSWSServer {
             try {
                 iosStepHandler.startIOSDriver(udId, ports[0]);
                 result.put("status", "success");
-                result.put("width", iosStepHandler.getDriver().getWindowSize().getWidth());
-                result.put("height", iosStepHandler.getDriver().getWindowSize().getHeight());
+                result.put("width", iosStepHandler.getIOSDriver().getWindowSize().getWidth());
+                result.put("height", iosStepHandler.getIOSDriver().getWindowSize().getHeight());
                 result.put("wda", ports[0]);
                 screenMap.put(udId, ports[1]);
                 JSONObject appiumSettings = new JSONObject();
@@ -191,8 +191,8 @@ public class IOSWSServer implements IIOSWSServer {
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             IOSDriver iosDriver = null;
             IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
-            if (iosStepHandler != null && iosStepHandler.getDriver() != null) {
-                iosDriver = iosStepHandler.getDriver();
+            if (iosStepHandler != null && iosStepHandler.getIOSDriver() != null) {
+                iosDriver = iosStepHandler.getIOSDriver();
             }
             switch (msg.getString("type")) {
                 case "startPerfmon" -> SibTool.startPerfmon(udId, msg.getString("bundleId"), session, null, 1000);

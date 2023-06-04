@@ -199,7 +199,7 @@ public class TransportClient extends WebSocketClient {
                                 IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
                                 if (iosStepHandler != null) {
                                     try {
-                                        iosStepHandler.getDriver().pressButton("home");
+                                        iosStepHandler.getIOSDriver().pressButton("home");
                                     } catch (SonicRespException ignored) {
                                     }
                                 }
