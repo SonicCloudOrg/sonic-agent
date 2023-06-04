@@ -2372,7 +2372,9 @@ public class AndroidStepHandler {
             case "setDefaultFindWebViewElementInterval" ->
                     setDefaultFindWebViewElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "webElementScrollToView" ->
-                    webElementScrollToView(handleContext, step.getString("text"), step.getString("content"), step.getString("content"));
+                    webElementScrollToView(handleContext,  eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"),
+                            eleList.getJSONObject(0).getString("eleValue"));
             case "isExistWebViewEle" ->
                     isExistWebViewEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
