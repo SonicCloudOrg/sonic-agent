@@ -37,6 +37,7 @@ import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
+import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.enums.PasteboardType;
 import org.cloud.sonic.driver.common.models.BaseElement;
 import org.cloud.sonic.driver.common.models.WindowSize;
@@ -459,6 +460,21 @@ public class IOSStepHandler {
         handleContext.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
         try {
             findEle(selector, pathValue).sendKeys(keys);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void sendKeysByActions(HandleContext handleContext, String des, String selector, String pathValue, String keys) {
+        keys = TextHandler.replaceTrans(keys, globalParams);
+        handleContext.setStepDes("对" + des + "输入内容");
+        handleContext.setDetail("对" + selector + ": " + pathValue + " 输入: " + keys);
+        try {
+            IOSElement iosElement = findEle(selector, pathValue);
+            if (iosElement != null) {
+                iosElement.click();
+                iosDriver.sendKeys(keys);
+            }
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -1575,6 +1591,9 @@ public class IOSStepHandler {
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
             case "sendKeys" ->
                     sendKeys(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
+            case "sendKeysByActions" ->
+                    sendKeysByActions(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("content"));
             case "isExistEle" ->
                     isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
