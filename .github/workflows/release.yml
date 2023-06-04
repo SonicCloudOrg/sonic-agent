@@ -50,19 +50,26 @@ jobs:
         include:
           - platform: linux-x86
             depend: linux_x86
+            adb: linux
           - platform: linux-x86_64
             depend: linux_x86_64
+            adb: linux
           - platform: linux-arm64
             depend: linux_arm64
+            adb: linux
           - platform: macosx-x86_64
             depend: macosx_x86_64
+            adb: darwin
           - platform: macosx-arm64
             depend: macosx_arm64
+            adb: darwin
           - platform: windows-x86
             depend: windows_x86
+            adb: windows
             tail: .exe
           - platform: windows-x86_64
             depend: windows_x86_64
+            adb: windows
             tail: .exe
     runs-on: ubuntu-latest
     steps:
@@ -88,6 +95,14 @@ jobs:
         run: cp -r target/sonic-agent-${{ matrix.platform }}.jar sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
       - name: copy
         run: cp -r config/ mini/ sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/
+      - name: adb-download
+        uses: robinraju/release-downloader@v1.4
+        with:
+          repository: SonicCloudOrg/sonic-adb-binary
+          latest: true
+          fileName: "*"
+      - name: adb-unzip
+        run: unzip platform-tools_r34.0.3-${{matrix.adb}}.zip && mv platform-tools/* sonic-agent-${{ steps.previoustag.outputs.tag }}-${{matrix.depend}}/plugins/
       - name: sas-download
         uses: robinraju/release-downloader@v1.4
         with:
