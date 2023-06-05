@@ -18,12 +18,12 @@
 package org.cloud.sonic.agent.tests.android.minicap;
 
 import com.alibaba.fastjson.JSONObject;
+import jakarta.websocket.Session;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.Session;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;

@@ -37,7 +37,6 @@ import org.cloud.sonic.agent.tools.PortTool;
 import org.cloud.sonic.agent.tools.SpringTool;
 import org.cloud.sonic.agent.tools.file.DownloadTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
-import org.cloud.sonic.driver.android.service.AndroidElement;
 import org.cloud.sonic.driver.common.enums.PasteboardType;
 import org.cloud.sonic.driver.common.models.BaseElement;
 import org.cloud.sonic.driver.common.models.WindowSize;

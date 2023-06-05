@@ -19,9 +19,9 @@ package org.cloud.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
+import org.cloud.sonic.agent.tests.handlers.IOSStepHandler;
 import org.cloud.sonic.agent.tests.ios.IOSTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -20,13 +20,13 @@ package org.cloud.sonic.agent.tests.android.minicap;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IShellOutputReceiver;
+import jakarta.websocket.Session;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.Session;
 import java.io.File;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;

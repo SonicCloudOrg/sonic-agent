@@ -22,8 +22,8 @@ import org.cloud.sonic.agent.aspect.IteratorCheck;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.models.HandleContext;
-import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.RunStepThread;
+import org.cloud.sonic.agent.tests.android.AndroidRunStepThread;
 import org.cloud.sonic.agent.tests.ios.IOSRunStepThread;
 import org.springframework.stereotype.Component;
 

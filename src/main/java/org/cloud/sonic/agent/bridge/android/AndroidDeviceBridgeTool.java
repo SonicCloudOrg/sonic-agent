@@ -35,7 +35,6 @@ import org.cloud.sonic.agent.tools.file.FileTool;
 import org.cloud.sonic.agent.tools.file.UploadTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -61,7 +60,6 @@ import java.util.stream.Collectors;
  * @des ADB工具类
  * @date 2021/08/16 19:26
  */
-@ConditionalOnProperty(value = "modules.android.enable", havingValue = "true")
 @DependsOn({"androidThreadPoolInit"})
 @Component
 @Slf4j

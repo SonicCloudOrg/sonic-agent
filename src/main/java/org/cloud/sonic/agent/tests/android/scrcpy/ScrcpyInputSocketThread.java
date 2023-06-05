@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
+import jakarta.websocket.Session;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.ScreenMap;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
@@ -27,7 +28,6 @@ import org.cloud.sonic.agent.tools.PortTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.Session;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;

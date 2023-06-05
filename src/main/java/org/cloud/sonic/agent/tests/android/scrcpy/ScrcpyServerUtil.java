@@ -18,13 +18,13 @@
 package org.cloud.sonic.agent.tests.android.scrcpy;
 
 import com.android.ddmlib.IDevice;
+import jakarta.websocket.Session;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.tests.TaskManager;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.Session;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread.ANDROID_TEST_TASK_BOOT_PRE;

@@ -25,7 +25,6 @@ import org.cloud.sonic.agent.common.maps.GlobalProcessMap;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.cloud.sonic.agent.tools.PortTool;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.lang.NonNull;
@@ -39,7 +38,6 @@ import java.io.InputStreamReader;
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
 @Slf4j
-@ConditionalOnProperty(value = "modules.android.use-sas", havingValue = "true")
 @Component
 public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEvent> {
     private static File sasBinary = new File("plugins" + File.separator + "sonic-android-supply");

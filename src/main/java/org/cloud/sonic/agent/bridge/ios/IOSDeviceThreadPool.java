@@ -1,6 +1,5 @@
 package org.cloud.sonic.agent.bridge.ios;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,7 +12,6 @@ import java.util.concurrent.Executors;
  * @date 2021/08/25 19:26
  */
 @Configuration
-@ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 public class IOSDeviceThreadPool {
     public static ExecutorService cachedThreadPool;
 

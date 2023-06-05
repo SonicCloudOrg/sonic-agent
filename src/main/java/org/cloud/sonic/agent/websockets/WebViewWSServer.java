@@ -17,6 +17,9 @@
  */
 package org.cloud.sonic.agent.websockets;
 
+import jakarta.websocket.*;
+import jakarta.websocket.server.PathParam;
+import jakarta.websocket.server.ServerEndpoint;
 import org.cloud.sonic.agent.common.config.WsEndpointConfigure;
 import org.cloud.sonic.agent.tools.BytesTool;
 import org.java_websocket.client.WebSocketClient;
@@ -26,9 +29,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import jakarta.websocket.*;
-import jakarta.websocket.server.PathParam;
-import jakarta.websocket.server.ServerEndpoint;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;

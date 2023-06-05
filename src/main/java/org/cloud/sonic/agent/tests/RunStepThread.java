@@ -17,8 +17,6 @@
  */
 package org.cloud.sonic.agent.tests;
 
-import org.cloud.sonic.agent.tests.LogUtil;
-
 /**
  * @author JayWenStar
  * @date 2022/2/11 10:49 上午

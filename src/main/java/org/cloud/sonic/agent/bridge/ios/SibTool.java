@@ -26,13 +26,15 @@ import org.cloud.sonic.agent.common.interfaces.PlatformType;
 import org.cloud.sonic.agent.common.maps.*;
 import org.cloud.sonic.agent.tests.LogUtil;
 import org.cloud.sonic.agent.tests.ios.IOSBatteryThread;
-import org.cloud.sonic.agent.tools.*;
+import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.agent.tools.ProcessCommandTool;
+import org.cloud.sonic.agent.tools.ScheduleTool;
 import org.cloud.sonic.agent.transport.TransportWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
@@ -58,7 +60,6 @@ import java.util.concurrent.Semaphore;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
-@ConditionalOnProperty(value = "modules.ios.enable", havingValue = "true")
 @DependsOn({"iOSThreadPoolInit"})
 @Component
 @Order(value = Ordered.HIGHEST_PRECEDENCE)

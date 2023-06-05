@@ -18,6 +18,7 @@
 package org.cloud.sonic.agent.tests;
 
 import com.alibaba.fastjson.JSONObject;
+import jakarta.websocket.Session;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
 import org.cloud.sonic.agent.common.interfaces.StepType;
 import org.cloud.sonic.agent.common.maps.WebSocketSessionMap;
@@ -25,7 +26,6 @@ import org.cloud.sonic.agent.transport.TransportWorker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.Session;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;

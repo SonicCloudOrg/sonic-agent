@@ -12,17 +12,8 @@ sonic:
     # Change to SONIC_SERVER_PORT of server | 改成server的SONIC_SERVER_PORT
     port: 3000
 
+# The following will be migrated to the server configuration in the future | 以下未来会迁移到server配置
 modules:
-  android:
-    # Whether to enable Android module | 是否开启安卓模块
-    enable: true
-    # Whether to enable sonic-android-supply module | 是否开启sonic-android-supply功能
-    use-sas: true
   ios:
-    # Whether to turn on the iOS module. Please ensure that iTunes is installed on this computer for Windows users | 是否开启iOS模块。开启的windows用户请确保本机已安装iTunes
-    enable: true
     # Replace with the bundleId of wda. If there is no. xcrunner suffix, it will be automatically completed. | 替换为wda的bundleId，如果没有.xctrunner后缀会自动补全
     wda-bundle-id: com.sonic.WebDriverAgentRunner
-  sgm:
-    # Whether to enable the sonic-go-mitmproxy module | 是否开启sonic-go-mitmproxy功能
-    enable: true

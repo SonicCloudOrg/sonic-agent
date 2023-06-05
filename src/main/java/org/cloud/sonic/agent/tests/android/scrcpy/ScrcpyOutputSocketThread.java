@@ -17,11 +17,11 @@
  */
 package org.cloud.sonic.agent.tests.android.scrcpy;
 
+import jakarta.websocket.Session;
 import org.cloud.sonic.agent.tests.android.AndroidTestTaskBootThread;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.websocket.Session;
 import java.util.concurrent.BlockingQueue;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendByte;
