@@ -803,6 +803,17 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
         return size;
     }
+    public static int getScreenScale(String udId) {
+        String commandLine = "%s info -d com.apple.mobile.iTunes -u %s";
+        String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
+        int size = 2;
+        try {
+            JSONObject r = JSON.parseObject(re);
+            size = r.getInteger("ScreenScaleFactor");
+        } catch (Throwable ignored) {
+        }
+        return size;
+    }
 
     public static void mount(String udId) {
         String commandLine = "%s mount -u %s";

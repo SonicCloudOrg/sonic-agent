@@ -844,17 +844,9 @@ public class IOSStepHandler {
         }
         if (findResult != null) {
             try {
-                String[] size = SibTool.getSize(udId).split("x");
-                WindowSize windowSize = iosDriver.getWindowSize();
-                int width;
-                int ori = SibTool.getOrientation(udId);
-                if (ori == 1 || ori == 2) {
-                    width = windowSize.getWidth();
-                } else {
-                    width = windowSize.getHeight();
-                }
-                iosDriver.tap(findResult.getX() / (Integer.parseInt(size[0]) / width),
-                        findResult.getY() / (Integer.parseInt(size[0]) / width));
+                double scale = SibTool.getScreenScale(udId);
+                iosDriver.tap((int) (findResult.getX()*1.0 / scale),
+                        (int) (findResult.getY()*1.0 / scale));
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
                 handleContext.setE(e);
