@@ -1067,20 +1067,30 @@ public class AndroidStepHandler {
             handleContext.setE(e);
             return;
         }
-        int index = -1;
         if (BytesTool.isInt(params)) {
-            index = BytesTool.getInt(params);
-        }
-        for (int i = 0; i < handles.size(); i++) {
-            try {
-                chromeDriver.switchTo().window(handles.get(i));
-            } catch (Exception ignored) {
-            }
-            if (i == index || chromeDriver.getTitle().equals(params)
-                    || chromeDriver.getCurrentUrl().equals(params)) {
+            int index = BytesTool.getInt(params);
+            if (index <= handles.size() - 1 || handles.get(index) != null) {
+                try {
+                    chromeDriver.switchTo().window(handles.get(index));
+                } catch (Exception ignored) {
+                }
                 handleContext.setDetail("切换到Handle:" + params);
                 log.sendStepLog(StepType.INFO, "页面标题:" + chromeDriver.getTitle(), "");
                 return;
+            } else {
+                handleContext.setE(new SonicRespException(String.format("Handle list size is [%d], can not get the [%d] item", handles.size(), index)));
+            }
+        } else {
+            for (int i = 0; i < handles.size(); i++) {
+                try {
+                    chromeDriver.switchTo().window(handles.get(i));
+                } catch (Exception ignored) {
+                }
+                if (chromeDriver.getTitle().contains(params) || chromeDriver.getCurrentUrl().contains(params)) {
+                    handleContext.setDetail("切换到Handle:" + params);
+                    log.sendStepLog(StepType.INFO, "页面标题:" + chromeDriver.getTitle(), "");
+                    return;
+                }
             }
         }
         handleContext.setE(new SonicRespException("Handle not found!"));
@@ -2372,7 +2382,7 @@ public class AndroidStepHandler {
             case "setDefaultFindWebViewElementInterval" ->
                     setDefaultFindWebViewElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
             case "webElementScrollToView" ->
-                    webElementScrollToView(handleContext,  eleList.getJSONObject(0).getString("eleName"),
+                    webElementScrollToView(handleContext, eleList.getJSONObject(0).getString("eleName"),
                             eleList.getJSONObject(0).getString("eleType"),
                             eleList.getJSONObject(0).getString("eleValue"));
             case "isExistWebViewEle" ->
