@@ -63,8 +63,6 @@ public class TransportClient extends WebSocketClient {
     String host = String.valueOf(SpringTool.getPropertiesValue("sonic.agent.host"));
     String version = String.valueOf(SpringTool.getPropertiesValue("spring.version"));
     Integer port = Integer.valueOf(SpringTool.getPropertiesValue("sonic.agent.port"));
-    Boolean isEnableAndroid = Boolean.valueOf(SpringTool.getPropertiesValue("modules.android.enable"));
-    Boolean isEnableIOS = Boolean.valueOf(SpringTool.getPropertiesValue("modules.ios.enable"));
 
     public TransportClient(URI serverUri) {
         super(serverUri);
@@ -256,26 +254,22 @@ public class TransportClient extends WebSocketClient {
                         agentInfo.put("host", host);
                         agentInfo.put("hasHub", PHCTool.isSupport() ? 1 : 0);
                         TransportWorker.client.send(agentInfo.toJSONString());
-                        if (isEnableAndroid) {
-                            IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
-                            for (IDevice d : iDevices) {
-                                String status = AndroidDeviceManagerMap.getStatusMap().get(d.getSerialNumber());
-                                if (status != null) {
-                                    AndroidDeviceLocalStatus.send(d.getSerialNumber(), status);
-                                } else {
-                                    AndroidDeviceLocalStatus.send(d.getSerialNumber(), d.getState() == null ? null : d.getState().toString());
-                                }
+                        IDevice[] iDevices = AndroidDeviceBridgeTool.getRealOnLineDevices();
+                        for (IDevice d : iDevices) {
+                            String status = AndroidDeviceManagerMap.getStatusMap().get(d.getSerialNumber());
+                            if (status != null) {
+                                AndroidDeviceLocalStatus.send(d.getSerialNumber(), status);
+                            } else {
+                                AndroidDeviceLocalStatus.send(d.getSerialNumber(), d.getState() == null ? null : d.getState().toString());
                             }
                         }
-                        if (isEnableIOS) {
-                            List<String> udIds = SibTool.getDeviceList();
-                            for (String u : udIds) {
-                                String status = IOSDeviceManagerMap.getMap().get(u);
-                                if (status != null) {
-                                    IOSDeviceLocalStatus.send(u, status);
-                                } else {
-                                    IOSDeviceLocalStatus.send(u, DeviceStatus.ONLINE);
-                                }
+                        List<String> udIds = SibTool.getDeviceList();
+                        for (String u : udIds) {
+                            String status = IOSDeviceManagerMap.getMap().get(u);
+                            if (status != null) {
+                                IOSDeviceLocalStatus.send(u, status);
+                            } else {
+                                IOSDeviceLocalStatus.send(u, DeviceStatus.ONLINE);
                             }
                         }
                     } else {
