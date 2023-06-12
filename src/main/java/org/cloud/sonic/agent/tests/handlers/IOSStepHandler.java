@@ -740,7 +740,8 @@ public class IOSStepHandler {
 
     public void scrollToEle(HandleContext handleContext, String des, String selector, String pathValue, int maxTryTime,
                             String direction) {
-        handleContext.setStepDes(direction + "滚动到控件 " + des + " 可见");
+        String directionStr = "down".equals(direction) ? "向下" : "向上";
+        handleContext.setStepDes(directionStr + "滚动到控件 " + des + " 可见");
 
         final int xOffset = 20;
         boolean scrollToSuccess = false;
@@ -757,11 +758,12 @@ public class IOSStepHandler {
             }
 
             try {
-                if ("向上".equals(direction)) {
+                if ("up".equals(direction)) {
                     iosDriver.swipe(xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3);
+                } else if ("down".equals(direction)) {
+                    iosDriver.swipe(xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3);
                 } else {
-                    // 向下滑动
-                    iosDriver.swipe( xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3);
+                    handleContext.setE(new Exception("未知的滚动到方向类型设置"));
                 }
             } catch (Exception e) {
                 handleContext.setE(e);

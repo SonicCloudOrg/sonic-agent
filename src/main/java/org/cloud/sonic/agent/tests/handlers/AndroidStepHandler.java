@@ -827,7 +827,8 @@ public class AndroidStepHandler {
 
     public void scrollToEle(HandleContext handleContext, String des, String selector, String pathValue, int maxTryTime,
                             String direction) {
-        handleContext.setStepDes(direction + "滚动到控件 " + des + " 可见");
+        String directionStr = "down".equals(direction) ? "向下" : "向上";
+        handleContext.setStepDes(directionStr + "滚动到控件 " + des + " 可见");
 
         final int xOffset = 20;
         boolean scrollToSuccess = false;
@@ -844,11 +845,12 @@ public class AndroidStepHandler {
             }
 
             try {
-                if ("向上".equals(direction)) {
+                if ("up".equals(direction)) {
                     AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3);
-                } else {
-                    // 向下滑动
+                } else if ("down".equals(direction)) {
                     AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3);
+                } else {
+                    handleContext.setE(new Exception("未知的滚动到方向类型设置"));
                 }
             } catch (Exception e) {
                 handleContext.setE(e);
