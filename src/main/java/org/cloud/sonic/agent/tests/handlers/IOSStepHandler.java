@@ -89,6 +89,10 @@ public class IOSStepHandler {
     private static final int IOS_ELEMENT_TYPE = 1004;
     private static final int POCO_ELEMENT_TYPE = 1005;
 
+    // 屏幕的宽度与高度信息
+    private int screenWidth = 0;
+    private int screenHeight = 0;
+
     public String getTargetPackage() {
         return targetPackage;
     }
@@ -130,6 +134,9 @@ public class IOSStepHandler {
             throw out;
         }
         iosDriver.getWdaClient().setGlobalTimeOut(5 * 60 * 1000);
+        WindowSize size = iosDriver.getWindowSize();
+        screenWidth = size.getWidth();
+        screenHeight = size.getHeight();
         log.sendStepLog(StepType.PASS, "连接 WebDriverAgent 成功", "");
     }
 
@@ -731,6 +738,47 @@ public class IOSStepHandler {
         }
     }
 
+    public void scrollToEle(HandleContext handleContext, String des, String selector, String pathValue, int maxTryTime,
+                            String direction) {
+        String directionStr = "down".equals(direction) ? "向下" : "向上";
+        handleContext.setStepDes(directionStr + "滚动到控件 " + des + " 可见");
+
+        final int xOffset = 20;
+        boolean scrollToSuccess = false;
+        int tryScrollNums = 0;
+
+        while (tryScrollNums < maxTryTime) {
+            try {
+                IOSElement w = findEle(selector, pathValue, 1);
+                if (w != null) {
+                    scrollToSuccess = true;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+
+            try {
+                if ("up".equals(direction)) {
+                    iosDriver.swipe(xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3);
+                } else if ("down".equals(direction)) {
+                    iosDriver.swipe(xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3);
+                } else {
+                    handleContext.setE(new Exception("未知的滚动到方向类型设置"));
+                }
+            } catch (Exception e) {
+                handleContext.setE(e);
+            }
+
+            tryScrollNums++;
+        }
+
+        if (scrollToSuccess) {
+            handleContext.setDetail("实际滚动：" + tryScrollNums + "次后控件" + des + "可见");
+        } else {
+            handleContext.setE(new Exception("尝试滚动：" + maxTryTime + "次后控件" + des + "依然不可见"));
+        }
+    }
+
     public void getElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr, String expect) {
         handleContext.setStepDes("验证控件 " + des + " 属性");
         handleContext.setDetail("属性：" + attr + "，期望值：" + expect);
@@ -1282,19 +1330,23 @@ public class IOSStepHandler {
     }
 
     public IOSElement findEle(String selector, String pathValue) throws SonicRespException {
+        return findEle(selector, pathValue, null);
+    }
+
+    public IOSElement findEle(String selector, String pathValue, Integer retryTime) throws SonicRespException {
         IOSElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "iOSIterator" -> we = iosDriver.findElement(pathValue);
-            case "id" -> we = iosDriver.findElement(IOSSelector.Id, pathValue);
-            case "accessibilityId" -> we = iosDriver.findElement(IOSSelector.ACCESSIBILITY_ID, pathValue);
-            case "nsPredicate" -> we = iosDriver.findElement(IOSSelector.PREDICATE, pathValue);
-            case "name" -> we = iosDriver.findElement(IOSSelector.NAME, pathValue);
-            case "xpath" -> we = iosDriver.findElement(IOSSelector.XPATH, pathValue);
-            case "classChain" -> we = iosDriver.findElement(IOSSelector.CLASS_CHAIN, pathValue);
-            case "className" -> we = iosDriver.findElement(IOSSelector.CLASS_NAME, pathValue);
-            case "linkText" -> we = iosDriver.findElement(IOSSelector.LINK_TEXT, pathValue);
-            case "partialLinkText" -> we = iosDriver.findElement(IOSSelector.PARTIAL_LINK_TEXT, pathValue);
+            case "id" -> we = iosDriver.findElement(IOSSelector.Id, pathValue, retryTime);
+            case "accessibilityId" -> we = iosDriver.findElement(IOSSelector.ACCESSIBILITY_ID, pathValue, retryTime);
+            case "nsPredicate" -> we = iosDriver.findElement(IOSSelector.PREDICATE, pathValue, retryTime);
+            case "name" -> we = iosDriver.findElement(IOSSelector.NAME, pathValue, retryTime);
+            case "xpath" -> we = iosDriver.findElement(IOSSelector.XPATH, pathValue, retryTime);
+            case "classChain" -> we = iosDriver.findElement(IOSSelector.CLASS_CHAIN, pathValue, retryTime);
+            case "className" -> we = iosDriver.findElement(IOSSelector.CLASS_NAME, pathValue, retryTime);
+            case "linkText" -> we = iosDriver.findElement(IOSSelector.LINK_TEXT, pathValue, retryTime);
+            case "partialLinkText" -> we = iosDriver.findElement(IOSSelector.PARTIAL_LINK_TEXT, pathValue, retryTime);
             default ->
                     log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
         }
@@ -1594,6 +1646,12 @@ public class IOSStepHandler {
                     eleList.getJSONObject(0).getString("eleValue"),
                     step.getString("content"),
                     step.getInteger("text"), IOS_ELEMENT_TYPE);
+            case "scrollToEle" ->
+                    scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"),
+                            eleList.getJSONObject(0).getString("eleValue"),
+                            step.getInteger("content"),
+                            step.getString("text"));
             case "clear" ->
                     clear(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));

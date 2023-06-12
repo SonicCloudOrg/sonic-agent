@@ -100,6 +100,10 @@ public class AndroidStepHandler {
     private static final int WEB_ELEMENT_TYPE = 1002;
     private static final int POCO_ELEMENT_TYPE = 1003;
 
+    // 屏幕的宽度与高度信息
+    private int screenWidth = 0;
+    private int screenHeight = 0;
+
     public String getTargetPackage() {
         return targetPackage;
     }
@@ -147,10 +151,16 @@ public class AndroidStepHandler {
         }
         androidDriver.getUiaClient().setGlobalTimeOut(60000);
         log.sendStepLog(StepType.PASS, "连接 UIAutomator2 Server 成功", "");
+
+        // 获取屏幕的宽度与高度
+        String screenSizeInfo = AndroidDeviceBridgeTool.getScreenSize(iDevice);
+        String[] winSize = screenSizeInfo.split("x");
+        screenWidth = BytesTool.getInt(winSize[0]);
+        screenHeight = BytesTool.getInt(winSize[1]);
         log.androidInfo("Android", iDevice.getProperty(IDevice.PROP_BUILD_VERSION),
                 iDevice.getSerialNumber(), iDevice.getProperty(IDevice.PROP_DEVICE_MANUFACTURER),
                 iDevice.getProperty(IDevice.PROP_DEVICE_MODEL),
-                AndroidDeviceBridgeTool.getScreenSize(iDevice));
+                screenSizeInfo);
     }
 
     public void switchWindowMode(HandleContext handleContext, boolean isMulti) throws SonicRespException {
@@ -812,6 +822,47 @@ public class AndroidStepHandler {
             findEle(selector, pathValue).clear();
         } catch (Exception e) {
             handleContext.setE(e);
+        }
+    }
+
+    public void scrollToEle(HandleContext handleContext, String des, String selector, String pathValue, int maxTryTime,
+                            String direction) {
+        String directionStr = "down".equals(direction) ? "向下" : "向上";
+        handleContext.setStepDes(directionStr + "滚动到控件 " + des + " 可见");
+
+        final int xOffset = 20;
+        boolean scrollToSuccess = false;
+        int tryScrollNums = 0;
+
+        while (tryScrollNums < maxTryTime) {
+            try {
+                AndroidElement w = findEle(selector, pathValue, 1);
+                if (w != null) {
+                    scrollToSuccess = true;
+                    break;
+                }
+            } catch (Exception ignored) {
+            }
+
+            try {
+                if ("up".equals(direction)) {
+                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3);
+                } else if ("down".equals(direction)) {
+                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3);
+                } else {
+                    handleContext.setE(new Exception("未知的滚动到方向类型设置"));
+                }
+            } catch (Exception e) {
+                handleContext.setE(e);
+            }
+
+            tryScrollNums++;
+        }
+
+        if (scrollToSuccess) {
+            handleContext.setDetail("实际滚动：" + tryScrollNums + "次后控件" + des + "可见");
+        } else {
+            handleContext.setE(new Exception("尝试滚动：" + maxTryTime + "次后控件" + des + "依然不可见"));
         }
     }
 
@@ -1915,15 +1966,19 @@ public class AndroidStepHandler {
     }
 
     public AndroidElement findEle(String selector, String pathValue) throws SonicRespException {
+        return findEle(selector, pathValue, null);
+    }
+
+    public AndroidElement findEle(String selector, String pathValue, Integer retryTime) throws SonicRespException {
         AndroidElement we = null;
         pathValue = TextHandler.replaceTrans(pathValue, globalParams);
         switch (selector) {
             case "androidIterator" -> we = androidDriver.findElement(pathValue);
-            case "id" -> we = androidDriver.findElement(AndroidSelector.Id, pathValue);
-            case "accessibilityId" -> we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue);
-            case "xpath" -> we = androidDriver.findElement(AndroidSelector.XPATH, pathValue);
-            case "className" -> we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue);
-            case "androidUIAutomator" -> we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue);
+            case "id" -> we = androidDriver.findElement(AndroidSelector.Id, pathValue, retryTime);
+            case "accessibilityId" -> we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue, retryTime);
+            case "xpath" -> we = androidDriver.findElement(AndroidSelector.XPATH, pathValue, retryTime);
+            case "className" -> we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue, retryTime);
+            case "androidUIAutomator" -> we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue, retryTime);
             default ->
                     log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
         }
@@ -2326,6 +2381,12 @@ public class AndroidStepHandler {
             case "isExistEle" ->
                     isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
+            case "scrollToEle" ->
+                    scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"),
+                            eleList.getJSONObject(0).getString("eleValue"),
+                            step.getInteger("content"),
+                            step.getString("text"));
             case "isExistEleNum" -> isExistEleNum(handleContext, eleList.getJSONObject(0).getString("eleName"),
                     eleList.getJSONObject(0).getString("eleType"),
                     eleList.getJSONObject(0).getString("eleValue"),
