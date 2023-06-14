@@ -20,6 +20,7 @@ package org.cloud.sonic.agent.tests.handlers;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.cloud.sonic.agent.bridge.ios.IOSDeviceThreadPool;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.enums.ConditionEnum;
 import org.cloud.sonic.agent.common.enums.SonicEnum;
@@ -62,10 +63,8 @@ import org.springframework.util.CollectionUtils;
 import javax.imageio.stream.FileImageOutputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.Future;
 
 import static org.testng.Assert.*;
 
@@ -893,8 +892,8 @@ public class IOSStepHandler {
         if (findResult != null) {
             try {
                 double scale = SibTool.getScreenScale(udId);
-                iosDriver.tap((int) (findResult.getX()*1.0 / scale),
-                        (int) (findResult.getY()*1.0 / scale));
+                iosDriver.tap((int) (findResult.getX() * 1.0 / scale),
+                        (int) (findResult.getY() * 1.0 / scale));
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
                 handleContext.setE(e);
@@ -1011,6 +1010,147 @@ public class IOSStepHandler {
             Thread.sleep(time);
         } catch (InterruptedException e) {
             handleContext.setE(e);
+        }
+    }
+
+    public void runMonkey(HandleContext handleContext, JSONObject content, List<JSONObject> text) {
+        handleContext.setStepDes("运行随机事件测试完毕");
+        handleContext.setDetail("");
+        String packageName = content.getString("packageName");
+        int pctNum = content.getInteger("pctNum");
+        if (!SibTool.getAppList(udId).contains(packageName)) {
+            log.sendStepLog(StepType.ERROR, "应用未安装！", "设备未安装 " + packageName);
+            handleContext.setE(new Exception("未安装应用"));
+            return;
+        }
+        JSONArray options = content.getJSONArray("options");
+        WindowSize windowSize = null;
+        try {
+            windowSize = iosDriver.getWindowSize();
+        } catch (SonicRespException e) {
+            e.printStackTrace();
+        }
+        int width = windowSize.getWidth();
+        int height = windowSize.getHeight();
+        int sleepTime = 50;
+        int systemEvent = 0;
+        int tapEvent = 0;
+        int longPressEvent = 0;
+        int swipeEvent = 0;
+        int navEvent = 0;
+        boolean isOpenPackageListener = false;
+        if (!options.isEmpty()) {
+            for (Object j : options) {
+                JSONObject jsonOption = JSON.parseObject(j.toString());
+                if (jsonOption.getString("name").equals("sleepTime")) {
+                    sleepTime = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("systemEvent")) {
+                    systemEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("tapEvent")) {
+                    tapEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("longPressEvent")) {
+                    longPressEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("swipeEvent")) {
+                    swipeEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("navEvent")) {
+                    navEvent = jsonOption.getInteger("value");
+                }
+                if (jsonOption.getString("name").equals("isOpenPackageListener")) {
+                    isOpenPackageListener = jsonOption.getBoolean("value");
+                }
+            }
+        }
+        int finalSleepTime = sleepTime;
+        int finalTapEvent = tapEvent;
+        int finalLongPressEvent = longPressEvent;
+        int finalSwipeEvent = swipeEvent;
+        int finalSystemEvent = systemEvent;
+        int finalNavEvent = navEvent;
+        Future<?> randomThread = IOSDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    log.sendStepLog(StepType.INFO, "", "随机事件数：" + pctNum +
+                            "<br>目标应用：" + packageName
+                            + "<br>用户操作时延：" + finalSleepTime + " ms"
+                            + "<br>轻触事件权重：" + finalTapEvent
+                            + "<br>长按事件权重：" + finalLongPressEvent
+                            + "<br>滑动事件权重：" + finalSwipeEvent
+                            + "<br>物理按键事件权重：" + finalSystemEvent
+                            + "<br>系统事件权重：" + finalNavEvent
+                    );
+                    openApp(new HandleContext(), packageName);
+                    int totalCount = finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent;
+                    for (int i = 0; i < pctNum; i++) {
+                        try {
+                            int random = new Random().nextInt(totalCount);
+                            if (random < finalSystemEvent) {
+                                int key = new Random().nextInt(3);
+                                SystemButton keyType = switch (key) {
+                                    case 0 -> SystemButton.VOLUME_DOWN;
+                                    case 1 -> SystemButton.VOLUME_UP;
+                                    case 2 -> SystemButton.HOME;
+                                    default -> throw new IllegalStateException("Unexpected value: " + key);
+                                };
+                                iosDriver.pressButton(keyType);
+                            }
+                            if (random >= finalSystemEvent && random < (finalSystemEvent + finalTapEvent)) {
+                                int x = new Random().nextInt(width - 60) + 60;
+                                int y = new Random().nextInt(height - 60) + 60;
+                                iosDriver.tap(x, y);
+                            }
+                            if (random >= (finalSystemEvent + finalTapEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent)) {
+                                int x = new Random().nextInt(width - 60) + 60;
+                                int y = new Random().nextInt(height - 60) + 60;
+                                iosDriver.longPress(x, y, (new Random().nextInt(3) + 1) * 1000);
+                            }
+                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent)) {
+                                int x1 = new Random().nextInt(width - 60) + 60;
+                                int y1 = new Random().nextInt(height - 80) + 80;
+                                int x2 = new Random().nextInt(width - 60) + 60;
+                                int y2 = new Random().nextInt(height - 80) + 80;
+                                iosDriver.swipe(x1, y1, x2, y2);
+                            }
+                            if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent)) {
+                                iosDriver.appRunBackground((new Random().nextInt(3) + 1) * 1000);
+                            }
+                            Thread.sleep(finalSleepTime);
+                        } catch (Throwable e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        );
+
+        boolean finalIsOpenPackageListener = isOpenPackageListener;
+        Future<?> packageListener = IOSDeviceThreadPool.cachedThreadPool.submit(() -> {
+                    if (finalIsOpenPackageListener) {
+                        while (!randomThread.isDone()) {
+                            int waitTime = 0;
+                            while (waitTime <= 10 && (!randomThread.isDone())) {
+                                try {
+                                    Thread.sleep(5000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                SibTool.launch(udId, packageName);
+                                waitTime++;
+                            }
+                            SibTool.launch(udId, packageName);
+                        }
+                    }
+                }
+        );
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        log.sendStepLog(StepType.INFO, "", "测试目标包：" + packageName +
+                (isOpenPackageListener ? "<br>应用包名监听器已开启..." : ""));
+        while (!randomThread.isDone() || (!packageListener.isDone())) {
         }
     }
 
@@ -1646,12 +1786,11 @@ public class IOSStepHandler {
                     eleList.getJSONObject(0).getString("eleValue"),
                     step.getString("content"),
                     step.getInteger("text"), IOS_ELEMENT_TYPE);
-            case "scrollToEle" ->
-                    scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
-                            eleList.getJSONObject(0).getString("eleType"),
-                            eleList.getJSONObject(0).getString("eleValue"),
-                            step.getInteger("content"),
-                            step.getString("text"));
+            case "scrollToEle" -> scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getInteger("content"),
+                    step.getString("text"));
             case "clear" ->
                     clear(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
@@ -1693,6 +1832,8 @@ public class IOSStepHandler {
                     globalParams.put(step.getString("content"), getText(handleContext, eleList.getJSONObject(0).getString("eleName")
                             , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
             case "sendKeyForce" -> sendKeyForce(handleContext, step.getString("content"));
+            case "monkey" ->
+                    runMonkey(handleContext, step.getJSONObject("content"), step.getJSONArray("text").toJavaList(JSONObject.class));
             case "publicStep" -> publicStep(handleContext, step.getString("content"), step.getJSONArray("pubSteps"));
             case "findElementInterval" ->
                     setFindElementInterval(handleContext, step.getInteger("content"), step.getInteger("text"));
