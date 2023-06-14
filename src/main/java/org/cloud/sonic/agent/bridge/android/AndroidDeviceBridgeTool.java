@@ -579,7 +579,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
                 String.format("dumpsys window %s", api >= 29 ? "displays" : "windows"));
         String result = "";
         try {
-            String start = cmd.substring(cmd.indexOf("mCurrentFocus="));
+            String start = cmd.substring(cmd.indexOf("mCurrentFocus=Window"));
             String end = start.substring(start.indexOf("/") + 1);
             result = end.substring(0, end.indexOf("}"));
         } catch (Exception ignored) {
