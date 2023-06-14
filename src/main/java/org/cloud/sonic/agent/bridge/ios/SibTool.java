@@ -19,6 +19,7 @@ package org.cloud.sonic.agent.bridge.ios;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import jakarta.websocket.Session;
 import org.cloud.sonic.agent.common.interfaces.DeviceStatus;
@@ -57,6 +58,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 import static org.cloud.sonic.agent.tools.BytesTool.sendText;
 
@@ -486,7 +488,12 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }).start();
     }
 
-    public static void getAppList(String udId, Session session) {
+    public static List<String> getAppList(String udId) {
+        return getAppList(udId, null).stream().map(e->e.getString("bundleId")).collect(Collectors.toList());
+    }
+
+    public static List<JSONObject> getAppList(String udId, Session session) {
+        List<JSONObject> result = new ArrayList<>();
         Process appListProcess = null;
         String commandLine = "%s app list -u %s -j -i";
         String system = System.getProperty("os.name").toLowerCase();
@@ -509,10 +516,19 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 logger.info(e.getMessage());
                 break;
             }
-            JSONObject appList = new JSONObject();
-            appList.put("msg", "appListDetail");
-            appList.put("detail", JSON.parseObject(s));
-            sendText(session, appList.toJSONString());
+            try {
+                JSONObject appInfo = JSON.parseObject(s);
+                if (session != null) {
+                    JSONObject appList = new JSONObject();
+                    appList.put("msg", "appListDetail");
+                    appList.put("detail", appInfo);
+                    sendText(session, appList.toJSONString());
+                } else {
+                    result.add(appInfo);
+                }
+            } catch (JSONException e) {
+                logger.info(e.fillInStackTrace().toString());
+            }
         }
         try {
             stdInput.close();
@@ -525,6 +541,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             e.printStackTrace();
         }
         logger.info("app list done.");
+        return result;
     }
 
     public static void getProcessList(String udId, Session session) {
@@ -803,6 +820,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
         return size;
     }
+
     public static int getScreenScale(String udId) {
         String commandLine = "%s info -d com.apple.mobile.iTunes -u %s";
         String re = ProcessCommandTool.getProcessLocalCommandStr(String.format(commandLine, sib, udId));
