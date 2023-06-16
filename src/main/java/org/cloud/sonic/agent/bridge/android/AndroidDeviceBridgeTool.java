@@ -408,8 +408,8 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         executeCommand(iDevice, String.format("input keyevent %s", androidKey.getCode()));
     }
 
-    public static void uninstall(IDevice iDevice, String bundleId) throws InstallException {
-        iDevice.uninstallPackage(bundleId);
+    public static String uninstall(IDevice iDevice, String bundleId) throws InstallException {
+        return iDevice.uninstallPackage(bundleId);
     }
 
     public static void forceStop(IDevice iDevice, String bundleId) {
