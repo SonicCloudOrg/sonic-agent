@@ -381,9 +381,13 @@ public class AndroidStepHandler {
     public void uninstall(HandleContext handleContext, String appPackage) {
         handleContext.setStepDes("卸载应用");
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
-        handleContext.setDetail("App包名： " + appPackage);
         try {
-            AndroidDeviceBridgeTool.uninstall(iDevice, appPackage);
+            String errorMessage = AndroidDeviceBridgeTool.uninstall(iDevice, appPackage);
+            if (errorMessage == null) {
+                handleContext.setDetail("App包名：" + appPackage + "卸载成功");
+            } else {
+                handleContext.setE(new Exception("uninstall app " + appPackage + " failed,errorMessage:" + errorMessage));
+            }
         } catch (Exception e) {
             handleContext.setE(e);
         }
