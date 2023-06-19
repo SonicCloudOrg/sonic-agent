@@ -24,6 +24,8 @@ import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.enums.AndroidKey;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.driver.android.AndroidDriver;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -45,7 +47,7 @@ public class AndroidTouchHandler {
     public enum TouchMode {
         SONIC_APK,
         ADB,
-        APPIUM_SERVER;
+        UIAUTOMATOR2;
     }
 
     public static void switchTouchMode(IDevice iDevice, TouchMode mode) {
@@ -56,7 +58,7 @@ public class AndroidTouchHandler {
         return touchModeMap.get(iDevice.getSerialNumber()) == null ? TouchMode.ADB : touchModeMap.get(iDevice.getSerialNumber());
     }
 
-    public static void tap(IDevice iDevice, int x, int y) {
+    public static void tap(IDevice iDevice, int x, int y, AndroidDriver androidDriver) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
@@ -69,11 +71,12 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, "up\n");
             }
             case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
+            case UIAUTOMATOR2 -> androidDriver.tap(x, y);
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
 
-    public static void longPress(IDevice iDevice, int x, int y, int time) {
+    public static void longPress(IDevice iDevice, int x, int y, int time, AndroidDriver androidDriver) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
@@ -85,13 +88,13 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case ADB ->
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
+            case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
+            case UIAUTOMATOR2 -> androidDriver.longPress(x, y, time);
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
 
-    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) {
+    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2, AndroidDriver androidDriver) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re1 = transferWithRotation(iDevice, x1, y1);
@@ -110,8 +113,8 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case ADB ->
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            case UIAUTOMATOR2 -> androidDriver.swipe(x1, y1, x2, y2);
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
