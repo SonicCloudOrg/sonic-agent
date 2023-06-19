@@ -656,7 +656,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("长按" + des);
         handleContext.setDetail("长按坐标" + time + "毫秒 (" + point[0] + "," + point[1] + ")");
         try {
-            AndroidTouchHandler.longPress(iDevice, point[0], point[1], time, androidDriver);
+            AndroidTouchHandler.longPress(iDevice, point[0], point[1], time);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -685,7 +685,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("点击" + des);
         handleContext.setDetail("点击坐标(" + point[0] + "," + point[1] + ")");
         try {
-            AndroidTouchHandler.tap(iDevice, point[0], point[1], androidDriver);
+            AndroidTouchHandler.tap(iDevice, point[0], point[1]);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -701,7 +701,7 @@ public class AndroidStepHandler {
         handleContext.setStepDes("滑动拖拽" + des1 + "到" + des2);
         handleContext.setDetail("拖动坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
         try {
-            AndroidTouchHandler.swipe(iDevice, point1[0], point1[1], point2[0], point2[1], androidDriver);
+            AndroidTouchHandler.swipe(iDevice, point1[0], point1[1], point2[0], point2[1]);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -717,7 +717,7 @@ public class AndroidStepHandler {
             int y2 = webElement2.getRect().getY();
             handleContext.setStepDes("滑动拖拽" + des + "到" + des2);
             handleContext.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
-            AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2, androidDriver);
+            AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -744,7 +744,7 @@ public class AndroidStepHandler {
                     log.sendStepLog(StepType.INFO, "", "滑动距离超出设备顶部，默认取顶部边界值" + "<" + targetY + ">");
                 }
                 try {
-                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY, androidDriver);
+                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
@@ -758,7 +758,7 @@ public class AndroidStepHandler {
                     log.sendStepLog(StepType.INFO, "", "滑动距离超出设备底部，默认取底部边界值" + "<" + targetY + ">");
                 }
                 try {
-                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY, androidDriver);
+                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, centerX, targetY);
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
@@ -772,7 +772,7 @@ public class AndroidStepHandler {
                     log.sendStepLog(StepType.INFO, "", "滑动距离超出设备左侧，默认取左侧边界值" + "<" + targetX + ">");
                 }
                 try {
-                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY, androidDriver);
+                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
@@ -786,7 +786,7 @@ public class AndroidStepHandler {
                     log.sendStepLog(StepType.INFO, "", "滑动距离超出设备右侧，默认取右侧边界值" + "<" + targetX + ">");
                 }
                 try {
-                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY, androidDriver);
+                    AndroidTouchHandler.swipe(iDevice, centerX, centerY, targetX, centerY);
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
@@ -809,7 +809,7 @@ public class AndroidStepHandler {
             int height = webElement.getRect().getHeight();
             int centerX = x + (int) Math.ceil(width / 2.0);
             int centerY = y + (int) Math.ceil(height / 2.0);
-            AndroidTouchHandler.longPress(iDevice, centerX, centerY, time, androidDriver);
+            AndroidTouchHandler.longPress(iDevice, centerX, centerY, time);
         } catch (Exception e) {
             handleContext.setE(e);
         }
@@ -846,9 +846,9 @@ public class AndroidStepHandler {
 
             try {
                 if ("up".equals(direction)) {
-                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3, androidDriver);
+                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3);
                 } else if ("down".equals(direction)) {
-                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3, androidDriver);
+                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3);
                 } else {
                     handleContext.setE(new Exception("未知的滚动到方向类型设置"));
                 }
@@ -1085,7 +1085,7 @@ public class AndroidStepHandler {
         }
         if (findResult != null) {
             try {
-                AndroidTouchHandler.tap(iDevice, findResult.getX(), findResult.getY(), androidDriver);
+                AndroidTouchHandler.tap(iDevice, findResult.getX(), findResult.getY());
             } catch (Exception e) {
                 log.sendStepLog(StepType.ERROR, "点击" + des + "失败！", "");
                 handleContext.setE(e);
@@ -1349,19 +1349,19 @@ public class AndroidStepHandler {
                             if (random >= finalSystemEvent && random < (finalSystemEvent + finalTapEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                AndroidTouchHandler.tap(iDevice, x, y, androidDriver);
+                                AndroidTouchHandler.tap(iDevice, x, y);
                             }
                             if (random >= (finalSystemEvent + finalTapEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent)) {
                                 int x = new Random().nextInt(width - 60) + 60;
                                 int y = new Random().nextInt(height - 60) + 60;
-                                AndroidTouchHandler.longPress(iDevice, x, y, (new Random().nextInt(3) + 1) * 1000, androidDriver);
+                                AndroidTouchHandler.longPress(iDevice, x, y, (new Random().nextInt(3) + 1) * 1000);
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent)) {
                                 int x1 = new Random().nextInt(width - 60) + 60;
                                 int y1 = new Random().nextInt(height - 80) + 80;
                                 int x2 = new Random().nextInt(width - 60) + 60;
                                 int y2 = new Random().nextInt(height - 80) + 80;
-                                AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2, androidDriver);
+                                AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2);
                             }
                             if (random >= (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent) && random < (finalSystemEvent + finalTapEvent + finalLongPressEvent + finalSwipeEvent + finalNavEvent)) {
                                 int a = new Random().nextInt(2);
@@ -1671,7 +1671,7 @@ public class AndroidStepHandler {
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
-                AndroidTouchHandler.tap(iDevice, realCoordinates[0], realCoordinates[1], androidDriver);
+                AndroidTouchHandler.tap(iDevice, realCoordinates[0], realCoordinates[1]);
             } else {
                 throw new SonicRespException(value + " not found!");
             }
@@ -1688,7 +1688,7 @@ public class AndroidStepHandler {
             if (w != null) {
                 List<Float> pos = w.getPayload().getPos();
                 int[] realCoordinates = getTheRealCoordinatesOfPoco(pos.get(0), pos.get(1));
-                AndroidTouchHandler.longPress(iDevice, realCoordinates[0], realCoordinates[1], time, androidDriver);
+                AndroidTouchHandler.longPress(iDevice, realCoordinates[0], realCoordinates[1], time);
             } else {
                 throw new SonicRespException(value + " not found!");
             }
@@ -1709,7 +1709,7 @@ public class AndroidStepHandler {
 
                 List<Float> pos2 = w2.getPayload().getPos();
                 int[] realCoordinate2 = getTheRealCoordinatesOfPoco(pos2.get(0), pos2.get(1));
-                AndroidTouchHandler.swipe(iDevice, realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1], androidDriver);
+                AndroidTouchHandler.swipe(iDevice, realCoordinates1[0], realCoordinates1[1], realCoordinate2[0], realCoordinate2[1]);
             } else {
                 throw new SonicRespException(value + " or " + value2 + " not found!");
             }

@@ -59,7 +59,7 @@ public class AndroidTouchHandler {
         return touchModeMap.get(iDevice.getSerialNumber()) == null ? TouchMode.ADB : touchModeMap.get(iDevice.getSerialNumber());
     }
 
-    public static void tap(IDevice iDevice, int x, int y, AndroidDriver androidDriver) throws SonicRespException {
+    public static void tap(IDevice iDevice, int x, int y) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
@@ -82,7 +82,7 @@ public class AndroidTouchHandler {
         }
     }
 
-    public static void longPress(IDevice iDevice, int x, int y, int time, AndroidDriver androidDriver) throws SonicRespException {
+    public static void longPress(IDevice iDevice, int x, int y, int time) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
@@ -105,7 +105,7 @@ public class AndroidTouchHandler {
         }
     }
 
-    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2, AndroidDriver androidDriver) throws SonicRespException {
+    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re1 = transferWithRotation(iDevice, x1, y1);
