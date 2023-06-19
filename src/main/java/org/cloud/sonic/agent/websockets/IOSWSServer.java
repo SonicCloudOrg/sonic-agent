@@ -110,7 +110,7 @@ public class IOSWSServer implements IIOSWSServer {
         session.getUserProperties().put("schedule", ScheduleTool.schedule(() -> {
             log.info("time up!");
             if (session.isOpen()) {
-                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
+                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(udId);
                 if (iosStepHandler != null) {
                     try {
                         iosStepHandler.getIOSDriver().pressButton("home");
@@ -149,7 +149,7 @@ public class IOSWSServer implements IIOSWSServer {
                 appiumSettings.put("mjpegScalingFactor", 100);
                 appiumSettings.put("mjpegServerScreenshotQuality", 50);
                 iosStepHandler.appiumSettings(appiumSettings);
-                HandlerMap.getIOSMap().put(session.getUserProperties().get("id").toString(), iosStepHandler);
+                HandlerMap.getIOSMap().put(udId, iosStepHandler);
             } catch (Exception e) {
                 log.error(e.getMessage());
                 result.put("status", "error");
@@ -190,7 +190,7 @@ public class IOSWSServer implements IIOSWSServer {
         String udId = udIdMap.get(session);
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             IOSDriver iosDriver = null;
-            IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
+            IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(udId);
             if (iosStepHandler != null && iosStepHandler.getIOSDriver() != null) {
                 iosDriver = iosStepHandler.getIOSDriver();
             }
@@ -465,14 +465,14 @@ public class IOSWSServer implements IIOSWSServer {
             screenMap.remove(udId);
             SibTool.stopOrientationWatcher(udId);
             try {
-                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
+                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(udId);
                 if (iosStepHandler != null) {
                     iosStepHandler.closeIOSDriver();
                 }
             } catch (Exception e) {
                 log.info("close driver failed.");
             } finally {
-                HandlerMap.getIOSMap().remove(session.getUserProperties().get("id").toString());
+                HandlerMap.getIOSMap().remove(udId);
             }
             SibTool.stopWebInspector(udId);
             SibTool.stopPerfmon(udId);

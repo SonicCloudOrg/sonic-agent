@@ -23,7 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.enums.AndroidKey;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
+import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.tools.PortTool;
+import org.cloud.sonic.driver.android.AndroidDriver;
+import org.cloud.sonic.driver.common.tool.SonicRespException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -45,7 +48,7 @@ public class AndroidTouchHandler {
     public enum TouchMode {
         SONIC_APK,
         ADB,
-        APPIUM_SERVER;
+        APPIUM_UIAUTOMATOR2_SERVER;
     }
 
     public static void switchTouchMode(IDevice iDevice, TouchMode mode) {
@@ -56,7 +59,7 @@ public class AndroidTouchHandler {
         return touchModeMap.get(iDevice.getSerialNumber()) == null ? TouchMode.ADB : touchModeMap.get(iDevice.getSerialNumber());
     }
 
-    public static void tap(IDevice iDevice, int x, int y) {
+    public static void tap(IDevice iDevice, int x, int y) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
@@ -69,11 +72,17 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, "up\n");
             }
             case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
+            case APPIUM_UIAUTOMATOR2_SERVER -> {
+                AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
+                if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
+                    curStepHandler.getAndroidDriver().tap(x, y);
+                }
+            }
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
 
-    public static void longPress(IDevice iDevice, int x, int y, int time) {
+    public static void longPress(IDevice iDevice, int x, int y, int time) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re = transferWithRotation(iDevice, x, y);
@@ -85,13 +94,18 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case ADB ->
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
+            case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
+            case APPIUM_UIAUTOMATOR2_SERVER -> {
+                AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
+                if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
+                    curStepHandler.getAndroidDriver().longPress(x, y, time);
+                }
+            }
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
 
-    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) {
+    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re1 = transferWithRotation(iDevice, x1, y1);
@@ -110,8 +124,13 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case ADB ->
-                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            case APPIUM_UIAUTOMATOR2_SERVER -> {
+                AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
+                if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
+                    curStepHandler.getAndroidDriver().swipe(x1, y1, x2, y2);
+                }
+            }
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
