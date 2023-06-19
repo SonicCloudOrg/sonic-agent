@@ -194,7 +194,7 @@ public class TransportClient extends WebSocketClient {
                         }
                         if (session.isOpen()) {
                             if (ss.equals("IOSWSServer")) {
-                                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(session.getUserProperties().get("id").toString());
+                                IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(udId);
                                 if (iosStepHandler != null) {
                                     try {
                                         iosStepHandler.getIOSDriver().pressButton("home");
@@ -372,7 +372,7 @@ public class TransportClient extends WebSocketClient {
     private void runAndroidStep(JSONObject jsonObject) {
 
         AndroidPasswordMap.getMap().put(jsonObject.getString("udId"), jsonObject.getString("pwd"));
-        AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("sessionId"));
+        AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(jsonObject.getString("udId"));
         if (androidStepHandler == null) {
             return;
         }
@@ -394,7 +394,7 @@ public class TransportClient extends WebSocketClient {
      * IOS步骤调试
      */
     private void runIOSStep(JSONObject jsonObject) {
-        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(jsonObject.getString("sessionId"));
+        IOSStepHandler iosStepHandler = HandlerMap.getIOSMap().get(jsonObject.getString("udId"));
         if (iosStepHandler == null) {
             return;
         }

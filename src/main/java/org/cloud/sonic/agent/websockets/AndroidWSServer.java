@@ -252,7 +252,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                 BytesTool.sendText(session, result.toJSONString());
             }
             case "debug" -> {
-                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getUserProperties().get("id").toString());
+                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
                 switch (msg.getString("detail")) {
                     case "poco" -> AndroidDeviceThreadPool.cachedThreadPool.execute(() -> {
                         androidStepHandler.startPocoDriver(new HandleContext(), msg.getString("engine"), msg.getInteger("port"));
@@ -333,7 +333,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     case "closeDriver" -> {
                         if (androidStepHandler != null && androidStepHandler.getAndroidDriver() != null) {
                             androidStepHandler.closeAndroidDriver();
-                            HandlerMap.getAndroidMap().remove(session.getUserProperties().get("id").toString());
+                            HandlerMap.getAndroidMap().remove(iDevice.getSerialNumber());
                         }
                     }
                     case "tree" -> {
@@ -404,7 +404,7 @@ public class AndroidWSServer implements IAndroidWSServer {
                     androidStepHandler.startAndroidDriver(iDevice, port);
                     result.put("status", "success");
                     result.put("port", port);
-                    HandlerMap.getAndroidMap().put(session.getUserProperties().get("id").toString(), androidStepHandler);
+                    HandlerMap.getAndroidMap().put(iDevice.getSerialNumber(), androidStepHandler);
                 } catch (Exception e) {
                     log.error(e.getMessage());
                     result.put("status", "error");
@@ -424,14 +424,14 @@ public class AndroidWSServer implements IAndroidWSServer {
             AndroidDeviceLocalStatus.finish(session.getUserProperties().get("udId") + "");
             IDevice iDevice = udIdMap.get(session);
             try {
-                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(session.getUserProperties().get("id").toString());
+                AndroidStepHandler androidStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
                 if (androidStepHandler != null) {
                     androidStepHandler.closeAndroidDriver();
                 }
             } catch (Exception e) {
                 log.info("close driver failed.");
             } finally {
-                HandlerMap.getAndroidMap().remove(session.getUserProperties().get("id").toString());
+                HandlerMap.getAndroidMap().remove(iDevice.getSerialNumber());
             }
             if (iDevice != null) {
                 AndroidDeviceBridgeTool.clearProxy(iDevice);
