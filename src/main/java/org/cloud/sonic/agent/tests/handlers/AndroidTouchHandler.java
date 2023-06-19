@@ -47,7 +47,7 @@ public class AndroidTouchHandler {
     public enum TouchMode {
         SONIC_APK,
         ADB,
-        UIAUTOMATOR2;
+        APPIUM_UIAUTOMATOR2_SERVER;
     }
 
     public static void switchTouchMode(IDevice iDevice, TouchMode mode) {
@@ -71,7 +71,7 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, "up\n");
             }
             case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input tap %d %d", x, y));
-            case UIAUTOMATOR2 -> androidDriver.tap(x, y);
+            case APPIUM_UIAUTOMATOR2_SERVER -> androidDriver.tap(x, y);
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
@@ -89,7 +89,7 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, "up\n");
             }
             case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x, y, x, y, time));
-            case UIAUTOMATOR2 -> androidDriver.longPress(x, y, time);
+            case APPIUM_UIAUTOMATOR2_SERVER -> androidDriver.longPress(x, y, time);
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
@@ -114,7 +114,7 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, "up\n");
             }
             case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
-            case UIAUTOMATOR2 -> androidDriver.swipe(x1, y1, x2, y2);
+            case APPIUM_UIAUTOMATOR2_SERVER -> androidDriver.swipe(x1, y1, x2, y2);
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
         }
     }
