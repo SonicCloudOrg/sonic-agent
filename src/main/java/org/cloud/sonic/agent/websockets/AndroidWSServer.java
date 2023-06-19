@@ -212,8 +212,12 @@ public class AndroidWSServer implements IAndroidWSServer {
             case "uninstallApp" -> {
                 JSONObject result = new JSONObject();
                 try {
-                    AndroidDeviceBridgeTool.uninstall(iDevice, msg.getString("detail"));
-                    result.put("detail", "success");
+                    String errorMessage = AndroidDeviceBridgeTool.uninstall(iDevice, msg.getString("detail"));
+                    if (errorMessage == null) {
+                        result.put("detail", "success");
+                    } else {
+                        result.put("detail", "fail");
+                    }
                 } catch (InstallException e) {
                     result.put("detail", "fail");
                     e.printStackTrace();
