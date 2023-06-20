@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 
 @Slf4j
 public class AndroidTouchHandler {
@@ -44,6 +45,7 @@ public class AndroidTouchHandler {
     private static final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
     private static final Map<String, TouchMode> touchModeMap = new ConcurrentHashMap<>();
     private static final Map<String, int[]> sizeMap = new ConcurrentHashMap<>();
+    private static final int SWIPE_DURATION = 500;
 
     public enum TouchMode {
         SONIC_APK,
@@ -116,7 +118,34 @@ public class AndroidTouchHandler {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                writeToOutputStream(iDevice, String.format("move %d %d\n", re2[0], re2[1]));
+                // 默认500毫秒完成滑动操作
+                int duration = SWIPE_DURATION;
+                long startTime = System.currentTimeMillis();
+                while (true) {
+                    // 当前时间
+                    long currentTime = System.currentTimeMillis();
+                    // 计算时间进度
+                    float timeProgress = (currentTime - startTime) / (float) duration;
+                    if (timeProgress >= 1.0f) {
+                        // 已经过渡到结束值，停止过渡
+                        writeToOutputStream(iDevice, String.format("move %d %d\n", re2[0], re2[1]));
+                        break;
+                    }
+                    BiFunction<Integer, Integer, Integer> transitionX = (start, end) ->
+                            (int) (start + (end - start) * timeProgress);
+                    BiFunction<Integer, Integer, Integer> transitionY = (start, end) ->
+                            (int) (start + (end - start) * timeProgress);
+
+                    int currentX = transitionX.apply(re1[0], re2[0]);
+                    int currentY = transitionY.apply(re1[1], re2[1]);
+                    // 使用当前坐标进行操作
+                    writeToOutputStream(iDevice, String.format("move %d %d\n", currentX, currentY));
+                    try {
+                        Thread.sleep(5);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
                 try {
                     Thread.sleep(200);
                 } catch (InterruptedException e) {
@@ -124,11 +153,12 @@ public class AndroidTouchHandler {
                 }
                 writeToOutputStream(iDevice, "up\n");
             }
-            case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d", x1, y1, x2, y2, 300));
+            case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d",
+                    x1, y1, x2, y2, SWIPE_DURATION));
             case APPIUM_UIAUTOMATOR2_SERVER -> {
                 AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
                 if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
-                    curStepHandler.getAndroidDriver().swipe(x1, y1, x2, y2);
+                    curStepHandler.getAndroidDriver().swipe(x1, y1, x2, y2, SWIPE_DURATION);
                 }
             }
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));
