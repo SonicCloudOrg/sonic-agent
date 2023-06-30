@@ -1747,6 +1747,19 @@ public class AndroidStepHandler {
         }
     }
 
+    public void obtainPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue,
+                                  String attr, String variable) {
+        handleContext.setStepDes("获取控件 " + des + " 属性到变量");
+        handleContext.setDetail("目标属性：" + attr + "，目标变量：" + variable);
+        try {
+            String attrValue = getPocoAttrValue(handleContext, selector, pathValue, attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            globalParams.put(variable, attrValue);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
     private String getPocoAttrValue(HandleContext handleContext, String selector, String pathValue, String attr) {
         String attrValue = "";
         try {
@@ -2525,6 +2538,10 @@ public class AndroidStepHandler {
             case "getPocoElementAttr" ->
                     getPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
+            case "obtainPocoElementAttr" ->
+                    obtainPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
+                            step.getString("text"), step.getString("content"));
             case "logPocoElementAttr" ->
                     logPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
