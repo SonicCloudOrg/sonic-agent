@@ -992,6 +992,19 @@ public class AndroidStepHandler {
         }
     }
 
+    public void obtainElementAttr(HandleContext handleContext, String des, String selector, String pathValue,
+                                  String attr, String variable) {
+        handleContext.setStepDes("获取控件 " + des + " 属性到变量");
+        handleContext.setDetail("目标属性：" + attr + "，目标变量：" + variable);
+        try {
+            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            globalParams.put(variable, attrValue);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void logElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
         handleContext.setDetail("目标属性：" + attr);
@@ -2373,6 +2386,10 @@ public class AndroidStepHandler {
             case "getElementAttr" ->
                     getElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
+            case "obtainElementAttr" ->
+                    obtainElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
+                            step.getString("text"), step.getString("content"));
             case "logElementAttr" ->
                     logElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
