@@ -511,7 +511,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String s;
         while (true) {
             try {
-                if ((s = stdInput.readLine()) == null) break;
+                if (StringUtils.isEmpty(s = stdInput.readLine())) break;
             } catch (IOException e) {
                 logger.info(e.getMessage());
                 break;
