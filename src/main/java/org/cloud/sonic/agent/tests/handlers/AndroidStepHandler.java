@@ -992,6 +992,19 @@ public class AndroidStepHandler {
         }
     }
 
+    public void obtainElementAttr(HandleContext handleContext, String des, String selector, String pathValue,
+                                  String attr, String variable) {
+        handleContext.setStepDes("获取控件 " + des + " 属性到变量");
+        handleContext.setDetail("目标属性：" + attr + "，目标变量：" + variable);
+        try {
+            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            globalParams.put(variable, attrValue);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void logElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {
         handleContext.setStepDes("日志输出控件 " + des + " 属性");
         handleContext.setDetail("目标属性：" + attr);
@@ -1725,9 +1738,32 @@ public class AndroidStepHandler {
     public void getPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr, String expect) {
         handleContext.setStepDes("验证控件 " + des + " 属性");
         handleContext.setDetail("属性：" + attr + "，期望值：" + expect);
+        String attrValue = getPocoAttrValue(handleContext, selector, pathValue, attr);
+        log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+        try {
+            assertEquals(attrValue, expect);
+        } catch (AssertionError e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void obtainPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue,
+                                  String attr, String variable) {
+        handleContext.setStepDes("获取控件 " + des + " 属性到变量");
+        handleContext.setDetail("目标属性：" + attr + "，目标变量：" + variable);
+        try {
+            String attrValue = getPocoAttrValue(handleContext, selector, pathValue, attr);
+            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+            globalParams.put(variable, attrValue);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
+    private String getPocoAttrValue(HandleContext handleContext, String selector, String pathValue, String attr) {
+        String attrValue = "";
         try {
             PocoElement pocoElement = findPocoEle(selector, pathValue);
-            String attrValue = "";
             switch (attr) {
                 case "type" -> attrValue = pocoElement.getPayload().getType();
                 case "layer" -> attrValue = pocoElement.getPayload().getLayer();
@@ -1747,15 +1783,10 @@ public class AndroidStepHandler {
                 case "size" -> attrValue = pocoElement.getPayload().getSize().toString();
                 case "pos" -> attrValue = pocoElement.getPayload().getPos().toString();
             }
-            log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
-            try {
-                assertEquals(attrValue, expect);
-            } catch (AssertionError e) {
-                handleContext.setE(e);
-            }
         } catch (Throwable e) {
             handleContext.setE(e);
         }
+        return attrValue;
     }
 
     public String getPocoText(HandleContext handleContext, String des, String selector, String pathValue) {
@@ -2373,6 +2404,10 @@ public class AndroidStepHandler {
             case "getElementAttr" ->
                     getElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
+            case "obtainElementAttr" ->
+                    obtainElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
+                            step.getString("text"), step.getString("content"));
             case "logElementAttr" ->
                     logElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
@@ -2491,9 +2526,6 @@ public class AndroidStepHandler {
             case "pocoClick" ->
                     pocoClick(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"));
-            case "logPocoElementAttr" ->
-                    logPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
-                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
             case "pocoLongPress" ->
                     pocoLongPress(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue")
@@ -2506,6 +2538,13 @@ public class AndroidStepHandler {
             case "getPocoElementAttr" ->
                     getPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
+            case "obtainPocoElementAttr" ->
+                    obtainPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
+                            step.getString("text"), step.getString("content"));
+            case "logPocoElementAttr" ->
+                    logPocoElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
+                            , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
             case "getPocoTextValue" ->
                     globalParams.put(step.getString("content"), getPocoText(handleContext, eleList.getJSONObject(0).getString("eleName")
                             , eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")));
