@@ -25,7 +25,6 @@ import org.cloud.sonic.agent.common.enums.AndroidKey;
 import org.cloud.sonic.agent.common.maps.AndroidDeviceManagerMap;
 import org.cloud.sonic.agent.common.maps.HandlerMap;
 import org.cloud.sonic.agent.tools.PortTool;
-import org.cloud.sonic.driver.android.AndroidDriver;
 import org.cloud.sonic.driver.common.tool.SonicRespException;
 
 import java.io.IOException;
@@ -45,7 +44,8 @@ public class AndroidTouchHandler {
     private static final Map<String, Thread> touchMap = new ConcurrentHashMap<>();
     private static final Map<String, TouchMode> touchModeMap = new ConcurrentHashMap<>();
     private static final Map<String, int[]> sizeMap = new ConcurrentHashMap<>();
-    private static final int SWIPE_DURATION = 500;
+    // 默认的滑动操作完成时间，单位为毫秒
+    private static final int DEFAULT_SWIPE_DURATION = 500;
 
     public enum TouchMode {
         SONIC_APK,
@@ -108,6 +108,10 @@ public class AndroidTouchHandler {
     }
 
     public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2) throws SonicRespException {
+        swipe(iDevice, x1, y1, x2, y2, DEFAULT_SWIPE_DURATION);
+    }
+
+    public static void swipe(IDevice iDevice, int x1, int y1, int x2, int y2, int swipeDuration) throws SonicRespException {
         switch (getTouchMode(iDevice)) {
             case SONIC_APK -> {
                 int[] re1 = transferWithRotation(iDevice, x1, y1);
@@ -118,14 +122,12 @@ public class AndroidTouchHandler {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                // 默认500毫秒完成滑动操作
-                int duration = SWIPE_DURATION;
                 long startTime = System.currentTimeMillis();
                 while (true) {
                     // 当前时间
                     long currentTime = System.currentTimeMillis();
                     // 计算时间进度
-                    float timeProgress = (currentTime - startTime) / (float) duration;
+                    float timeProgress = (currentTime - startTime) / (float) swipeDuration;
                     if (timeProgress >= 1.0f) {
                         // 已经过渡到结束值，停止过渡
                         writeToOutputStream(iDevice, String.format("move %d %d\n", re2[0], re2[1]));
@@ -154,11 +156,11 @@ public class AndroidTouchHandler {
                 writeToOutputStream(iDevice, "up\n");
             }
             case ADB -> AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input swipe %d %d %d %d %d",
-                    x1, y1, x2, y2, SWIPE_DURATION));
+                    x1, y1, x2, y2, swipeDuration));
             case APPIUM_UIAUTOMATOR2_SERVER -> {
                 AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
                 if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
-                    curStepHandler.getAndroidDriver().swipe(x1, y1, x2, y2, SWIPE_DURATION);
+                    curStepHandler.getAndroidDriver().swipe(x1, y1, x2, y2, swipeDuration);
                 }
             }
             default -> throw new IllegalStateException("Unexpected value: " + getTouchMode(iDevice));

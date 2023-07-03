@@ -850,9 +850,9 @@ public class AndroidStepHandler {
 
             try {
                 if ("up".equals(direction)) {
-                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3);
+                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight / 3, xOffset, screenHeight * 2 / 3, 1000);
                 } else if ("down".equals(direction)) {
-                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3);
+                    AndroidTouchHandler.swipe(iDevice, xOffset, screenHeight * 2 / 3, xOffset, screenHeight / 3, 1000);
                 } else {
                     handleContext.setE(new Exception("未知的滚动到方向类型设置"));
                 }
