@@ -418,6 +418,25 @@ public class AndroidStepHandler {
         }
     }
 
+    public void appAutoGrantPermissions(HandleContext handleContext, String packageName) {
+        handleContext.setStepDes("自动授权应用权限");
+        String targetPackageName = TextHandler.replaceTrans(packageName, globalParams);
+        handleContext.setDetail("授权 " + targetPackageName);
+        if (iDevice != null) {
+            String dumpsysCommandStr = String.format("dumpsys package %s", targetPackageName);
+            String getDetailCommandResult = AndroidDeviceBridgeTool.executeCommand(iDevice, dumpsysCommandStr);
+            List<AndroidPermissionItem> allPermissionItems =
+                    AndroidPermissionExtractor.extractPermissions(getDetailCommandResult,
+                    Arrays.asList("install", "runtime"), true);
+            allPermissionItems.stream().filter(permissionItem -> !permissionItem.isGranted())
+                    .forEach(permissionItem -> {
+                        String curPermission = permissionItem.getPermission();
+                        String grandCommandStr = String.format("pm grant %s %s", targetPackageName, curPermission);
+                        AndroidDeviceBridgeTool.executeCommand(iDevice, grandCommandStr);
+                    });
+        }
+    }
+
     public void openApp(HandleContext handleContext, String appPackage) {
         handleContext.setStepDes("打开应用");
         appPackage = TextHandler.replaceTrans(appPackage, globalParams);
@@ -2389,6 +2408,7 @@ public class AndroidStepHandler {
         switch (step.getString("stepType")) {
             case "switchTouchMode" -> switchTouchMode(handleContext, step.getString("content"));
             case "appReset" -> appReset(handleContext, step.getString("text"));
+            case "appAutoGrantPermissions" -> appAutoGrantPermissions(handleContext, step.getString("text"));
             case "stepHold" -> stepHold(handleContext, step.getInteger("content"));
             case "toWebView" -> toWebView(handleContext, step.getString("content"), step.getString("text"));
             case "toHandle" -> toHandle(handleContext, step.getString("content"));
