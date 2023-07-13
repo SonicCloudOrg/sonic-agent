@@ -419,7 +419,7 @@ public class AndroidStepHandler {
     }
 
     public void appAutoGrantPermissions(HandleContext handleContext, String packageName) {
-        handleContext.setStepDes("自动授权应用");
+        handleContext.setStepDes("自动授权应用权限");
         String targetPackageName = TextHandler.replaceTrans(packageName, globalParams);
         handleContext.setDetail("授权 " + targetPackageName);
         if (iDevice != null) {
