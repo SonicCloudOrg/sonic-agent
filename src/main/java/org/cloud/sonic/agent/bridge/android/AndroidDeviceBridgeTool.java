@@ -899,16 +899,21 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         } else {
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
-                // fix m1 arm version obtained is lower than 87 for special processing
                 String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/",
                         ChromeDriverMap.getMap().get(majorChromeVersion)), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
+                boolean findM1ChromeDriver = false;
                 for (Object obj : JSONArray.parseArray(driverList)) {
                     JSONObject jsonObject = JSONObject.parseObject(obj.toString());
                     String fullName = jsonObject.getString("name");
                     if (fullName.contains("m1") || fullName.contains("arm")) {
                         system = fullName.substring(fullName.indexOf("mac"), fullName.indexOf("."));
+                        findM1ChromeDriver = true;
                         break;
                     }
+                }
+                // <=86版本，google未提供M1架构的chromeDriver，改为固定用chromedriver_mac64.zip
+                if (!findM1ChromeDriver) {
+                    system = "mac64";
                 }
             } else {
                 system = "mac64";
