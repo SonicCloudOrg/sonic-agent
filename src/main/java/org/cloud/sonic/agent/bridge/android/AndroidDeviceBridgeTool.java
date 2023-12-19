@@ -891,6 +891,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         }
 
         String majorChromeVersion = getMajorChromeVersion(fullChromeVersion);
+        boolean greaterThen114 = majorChromeVersion != null && Integer.parseInt(majorChromeVersion) > 114;
         HttpHeaders headers = new HttpHeaders();
         if (system.contains("win")) {
             system = "win32";
@@ -899,29 +900,48 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
         } else {
             String arch = System.getProperty("os.arch").toLowerCase();
             if (arch.contains("aarch64")) {
-                String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/",
-                        ChromeDriverMap.getMap().get(majorChromeVersion)), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
-                boolean findM1ChromeDriver = false;
-                for (Object obj : JSONArray.parseArray(driverList)) {
-                    JSONObject jsonObject = JSONObject.parseObject(obj.toString());
-                    String fullName = jsonObject.getString("name");
-                    if (fullName.contains("m1") || fullName.contains("arm")) {
-                        system = fullName.substring(fullName.indexOf("mac"), fullName.indexOf("."));
-                        findM1ChromeDriver = true;
-                        break;
+                if (greaterThen114) {
+                    system = "mac-arm64";
+                } else {
+                    String driverList = restTemplate.exchange(String.format("https://registry.npmmirror.com/-/binary/chromedriver/%s/",
+                            ChromeDriverMap.getMap().get(majorChromeVersion)), HttpMethod.GET, new HttpEntity(headers), String.class).getBody();
+                    boolean findM1ChromeDriver = false;
+                    for (Object obj : JSONArray.parseArray(driverList)) {
+                        JSONObject jsonObject = JSONObject.parseObject(obj.toString());
+                        String fullName = jsonObject.getString("name");
+                        if (fullName.contains("m1") || fullName.contains("arm")) {
+                            system = fullName.substring(fullName.indexOf("mac"), fullName.indexOf("."));
+                            findM1ChromeDriver = true;
+                            break;
+                        }
+                    }
+                    // <=86版本，google未提供M1架构的chromeDriver，改为固定用chromedriver_mac64.zip
+                    if (!findM1ChromeDriver) {
+                        system = "mac64";
                     }
                 }
-                // <=86版本，google未提供M1架构的chromeDriver，改为固定用chromedriver_mac64.zip
-                if (!findM1ChromeDriver) {
+            } else {
+                if (greaterThen114) {
+                    system = "mac-x64";
+                } else {
                     system = "mac64";
                 }
-            } else {
-                system = "mac64";
             }
         }
-        File file = DownloadTool.download(String.format("https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip",
-                ChromeDriverMap.getMap().get(majorChromeVersion), system));
-        return FileTool.unZipChromeDriver(file, fullChromeVersion);
+        File file;
+        if (greaterThen114) {
+            // Starting with M115 the ChromeDriver release process is integrated with that of Chrome.
+            // The latest Chrome + ChromeDriver releases per release channel (Stable, Beta, Dev, Canary) are available
+            // at the Chrome for Testing (CfT) availability dashboard.
+            file = DownloadTool.download(String.format(
+                    "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/%s/%s/chromedriver-%s.zip",
+                    ChromeDriverMap.getMap().get(majorChromeVersion), system, system));
+        } else {
+            file = DownloadTool.download(String.format(
+                    "https://cdn.npmmirror.com/binaries/chromedriver/%s/chromedriver_%s.zip",
+                    ChromeDriverMap.getMap().get(majorChromeVersion), system));
+        }
+        return FileTool.unZipChromeDriver(file, fullChromeVersion, greaterThen114, system);
     }
 
     public static List<JSONObject> getWebView(IDevice iDevice) {
