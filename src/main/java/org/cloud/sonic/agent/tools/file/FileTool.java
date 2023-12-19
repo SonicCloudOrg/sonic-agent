@@ -55,7 +55,16 @@ public class FileTool {
         }
     }
 
-    public static File unZipChromeDriver(File source, String version) {
+    /**
+     * 解压缩下载完成的chromeDriver.zip文件
+     *
+     * @param source         原始的下载临时文件
+     * @param version        完整的chrome版本
+     * @param greaterThen114 是否>=115(大于115的场景下，使用的是google官方Chrome for Testing (CfT)下载路径)
+     * @param systemName     系统类型(大于115的场景下，判断产物文件会使用到)
+     * @return chromeDriver文件
+     */
+    public static File unZipChromeDriver(File source, String version, boolean greaterThen114, String systemName) {
         int BUFFER = 2048;
         File webview = new File("webview");
         if (!webview.exists()) {
@@ -73,7 +82,11 @@ public class FileTool {
             while (emu.hasMoreElements()) {
                 ZipEntry entry = (ZipEntry) emu.nextElement();
                 BufferedInputStream bis = new BufferedInputStream(zipFile.getInputStream(entry));
-                if (entry.getName().equals(tail)) {
+                // >=115之后的版本，entry.name字段有变更，带上了系统类型
+                final String targetFileName = greaterThen114 ?
+                        String.format("chromedriver-%s/%s", systemName, tail)
+                        : tail;
+                if (entry.getName().equals(targetFileName)) {
                     String fileName = version + "_" + tail;
                     File file = new File(webview + File.separator + fileName);
                     File parent = file.getParentFile();
