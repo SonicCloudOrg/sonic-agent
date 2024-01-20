@@ -11,6 +11,10 @@ sonic:
     host: ${SONIC_SERVER_HOST:192.168.1.1}
     # Change to SONIC_SERVER_PORT of server | 改成server的SONIC_SERVER_PORT
     port: ${SONIC_SERVER_PORT:3000}
+    # Change to true if HTTPS Server
+    https: ${SONIC_SERVER_HTTPS:false}
+    # Change to CA Certificate of HTTPS Server
+    ca: ${SONIC_SERVER_CA:/usr/local/share/ca-certificates/ca-cert.crt}
 
 # The following will be migrated to the server configuration in the future | 以下未来会迁移到server配置
 modules:
