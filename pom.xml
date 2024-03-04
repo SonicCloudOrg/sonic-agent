@@ -72,7 +72,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>2.0.38</version>
+            <version>2.0.47</version>
         </dependency>
         <!--     Sonic UIAutomation Driver   -->
         <dependency>
