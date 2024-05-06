@@ -20,11 +20,15 @@ package org.cloud.sonic.agent.common.maps;
 import java.util.HashMap;
 import java.util.Map;
 
+
 /**
- * @see {http://chromedriver.storage.googleapis.com/index.html}
+ * 维护不同版本的chromeDriver的映射表
+ * <=114版本，参考http://chromedriver.storage.googleapis.com/index.html
+ * >=115版本，官方迁移到了新的地址下，后续扩充需要到新版本下寻找
+ * 对应的json匹配链接地址为：https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json
  */
 public class ChromeDriverMap {
-    private static Map<String, String> chromeDriverMap = new HashMap<>() {
+    private static final Map<String, String> chromeDriverMap = new HashMap<>() {
         {
             put("55", "2.28");
             put("56", "2.28");
@@ -92,6 +96,12 @@ public class ChromeDriverMap {
             put("118", "118.0.5993.70");
             put("119", "119.0.6045.105");
             put("120", "120.0.6099.71");
+            put("121", "121.0.6101.0");
+            put("122", "122.0.6170.0");
+            put("123", "123.0.6262.0");
+            put("124", "124.0.6325.0");
+            put("125", "125.0.6412.0");
+            put("126", "126.0.6423.0");
         }
     };
 

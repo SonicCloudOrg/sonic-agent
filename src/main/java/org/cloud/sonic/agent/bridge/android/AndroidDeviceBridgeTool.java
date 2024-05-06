@@ -934,7 +934,7 @@ public class AndroidDeviceBridgeTool implements ApplicationListener<ContextRefre
             // The latest Chrome + ChromeDriver releases per release channel (Stable, Beta, Dev, Canary) are available
             // at the Chrome for Testing (CfT) availability dashboard.
             file = DownloadTool.download(String.format(
-                    "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/%s/%s/chromedriver-%s.zip",
+                    "https://storage.googleapis.com/chrome-for-testing-public/%s/%s/chromedriver-%s.zip",
                     ChromeDriverMap.getMap().get(majorChromeVersion), system, system));
         } else {
             file = DownloadTool.download(String.format(
