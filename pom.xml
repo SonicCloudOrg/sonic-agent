@@ -132,7 +132,7 @@
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjweaver</artifactId>
-            <version>1.9.19</version>
+            <version>1.9.22.1</version>
         </dependency>
     </dependencies>
 
