@@ -721,8 +721,8 @@ public class AndroidStepHandler {
         double x2 = Double.parseDouble(xy2.substring(0, xy2.indexOf(",")));
         double y2 = Double.parseDouble(xy2.substring(xy2.indexOf(",") + 1));
         int[] point2 = computedPoint(x2, y2);
-        handleContext.setStepDes("滑动拖拽" + des1 + "到" + des2);
-        handleContext.setDetail("拖动坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
+        handleContext.setStepDes("从" + des1 + "滑动到" + des2);
+        handleContext.setDetail("从坐标(" + point1[0] + "," + point1[1] + ")滑动到(" + point2[0] + "," + point2[1] + ")");
         try {
             AndroidTouchHandler.swipe(iDevice, point1[0], point1[1], point2[0], point2[1]);
         } catch (Exception e) {
@@ -738,10 +738,42 @@ public class AndroidStepHandler {
             int y1 = webElement.getRect().getY();
             int x2 = webElement2.getRect().getX();
             int y2 = webElement2.getRect().getY();
-            handleContext.setStepDes("滑动拖拽" + des + "到" + des2);
-            handleContext.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+            handleContext.setStepDes("从" + des + "滑动到" + des2);
+            handleContext.setDetail("从坐标(" + x1 + "," + y1 + ")滑动到坐标(" + x2 + "," + y2 + ")");
             AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2);
         } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void dragByPoint(HandleContext handleContext, String des1, String xy1, String des2, String xy2) {
+        double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
+        double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
+        int[] point1 = computedPoint(x1, y1);
+        double x2 = Double.parseDouble(xy2.substring(0, xy2.indexOf(",")));
+        double y2 = Double.parseDouble(xy2.substring(xy2.indexOf(",") + 1));
+        int[] point2 = computedPoint(x2, y2);
+        handleContext.setStepDes("拖拽" + des1 + "到" + des2);
+        handleContext.setDetail("拖拽坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
+        try {
+            AndroidTouchHandler.drag(iDevice, point1[0], point1[1], point2[0], point2[1]);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void dragByEle(HandleContext handleContext, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
+        try {
+            AndroidElement webElement = findEle(selector, pathValue);
+            AndroidElement webElement2 = findEle(selector2, pathValue2);
+            int x1 = webElement.getRect().getX();
+            int y1 = webElement.getRect().getY();
+            int x2 = webElement2.getRect().getX();
+            int y2 = webElement2.getRect().getY();
+            handleContext.setStepDes("拖拽" + des + "到" + des2);
+            handleContext.setDetail("拖拽坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
+            AndroidTouchHandler.drag(iDevice, x1, y1, x2, y2);
+        } catch (SonicRespException e) {
             handleContext.setE(e);
         }
     }
@@ -771,7 +803,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
+                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到坐标(" + centerX + "," + targetY + ")");
             }
             case "down" -> {
                 handleContext.setStepDes("从设备中心位置向下滑动" + distance + "像素");
@@ -785,7 +817,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
+                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到(" + centerX + "," + targetY + ")");
             }
             case "left" -> {
                 handleContext.setStepDes("从设备中心位置向左滑动" + distance + "像素");
@@ -799,7 +831,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
+                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到(" + targetX + "," + centerY + ")");
             }
             case "right" -> {
                 handleContext.setStepDes("从设备中心位置向右滑动" + distance + "像素");
@@ -813,7 +845,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
+                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到(" + targetX + "," + centerY + ")");
             }
             default ->
                     throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
@@ -1767,7 +1799,7 @@ public class AndroidStepHandler {
     }
 
     public void obtainPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue,
-                                  String attr, String variable) {
+                                      String attr, String variable) {
         handleContext.setStepDes("获取控件 " + des + " 属性到变量");
         handleContext.setDetail("目标属性：" + attr + "，目标变量：" + variable);
         try {
@@ -2462,6 +2494,12 @@ public class AndroidStepHandler {
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
             case "swipe2" ->
                     swipe(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                            , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
+            case "drag" ->
+                    dragByPoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                            , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+            case "drag2" ->
+                    dragByEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
             case "tap" ->
                     tap(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
