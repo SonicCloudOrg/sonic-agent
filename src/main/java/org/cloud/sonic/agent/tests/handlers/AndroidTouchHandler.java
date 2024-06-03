@@ -229,6 +229,23 @@ public class AndroidTouchHandler {
         }
     }
 
+    public static void motionEvent(IDevice iDevice, String motionEventType, int x1, int y1) throws SonicRespException {
+        switch (getTouchMode(iDevice)) {
+            case ADB ->
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input motionevent %s %d %d", motionEventType, x1, y1));
+            case SONIC_APK -> {
+                int[] re1 = transferWithRotation(iDevice, x1, y1);
+                writeToOutputStream(iDevice, String.format("%s %d %d\n", motionEventType.toLowerCase(), re1[0], re1[1]));
+            }
+            case APPIUM_UIAUTOMATOR2_SERVER -> {
+                AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
+                if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
+                    curStepHandler.getAndroidDriver().touchAction(motionEventType.toLowerCase(), x1, y1);
+                }
+            }
+        }
+    }
+
     private static int[] transferWithRotation(IDevice iDevice, int x, int y) {
         Integer directionStatus = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
         if (directionStatus == null) {

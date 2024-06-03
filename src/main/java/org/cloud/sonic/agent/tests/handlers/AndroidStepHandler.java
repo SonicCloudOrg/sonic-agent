@@ -70,6 +70,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.util.CollectionUtils;
 
 import javax.imageio.stream.FileImageOutputStream;
+import java.awt.desktop.AboutHandler;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -427,7 +428,7 @@ public class AndroidStepHandler {
             String getDetailCommandResult = AndroidDeviceBridgeTool.executeCommand(iDevice, dumpsysCommandStr);
             List<AndroidPermissionItem> allPermissionItems =
                     AndroidPermissionExtractor.extractPermissions(getDetailCommandResult,
-                    Arrays.asList("install", "runtime"), true);
+                            Arrays.asList("install", "runtime"), true);
             allPermissionItems.stream().filter(permissionItem -> !permissionItem.isGranted())
                     .forEach(permissionItem -> {
                         String curPermission = permissionItem.getPermission();
@@ -773,6 +774,32 @@ public class AndroidStepHandler {
             handleContext.setStepDes("拖拽" + des + "到" + des2);
             handleContext.setDetail("拖拽坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
             AndroidTouchHandler.drag(iDevice, x1, y1, x2, y2);
+        } catch (SonicRespException e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void motionEventByPoint(HandleContext handleContext, String des, String xy, String motionEventType) throws SonicRespException {
+        double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
+        double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
+        int[] point = computedPoint(x, y);
+        handleContext.setStepDes("通过坐标" + des + "触发" + motionEventType + "-Motion事件");
+        handleContext.setDetail("对坐标" + point[0] + "," + point[1] + String.format("执行Motion事件(%s)", motionEventType));
+        try {
+            AndroidTouchHandler.motionEvent(iDevice, motionEventType, point[0], point[1]);
+        } catch (SonicRespException e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void motionEventByEle(HandleContext handleContext, String des, String selector, String pathValue, String motionEventType) throws SonicRespException {
+        try {
+            AndroidElement webElement = findEle(selector, pathValue);
+            int x = webElement.getRect().getX();
+            int y = webElement.getRect().getY();
+            handleContext.setStepDes("通过" + des + "触发" + motionEventType + "-Motion事件");
+            handleContext.setDetail("对坐标" + x + "," + y + String.format("执行Motion事件(%s)", motionEventType));
+            AndroidTouchHandler.motionEvent(iDevice, motionEventType, x, y);
         } catch (SonicRespException e) {
             handleContext.setE(e);
         }
@@ -2061,10 +2088,12 @@ public class AndroidStepHandler {
         switch (selector) {
             case "androidIterator" -> we = androidDriver.findElement(pathValue);
             case "id" -> we = androidDriver.findElement(AndroidSelector.Id, pathValue, retryTime);
-            case "accessibilityId" -> we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue, retryTime);
+            case "accessibilityId" ->
+                    we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue, retryTime);
             case "xpath" -> we = androidDriver.findElement(AndroidSelector.XPATH, pathValue, retryTime);
             case "className" -> we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue, retryTime);
-            case "androidUIAutomator" -> we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue, retryTime);
+            case "androidUIAutomator" ->
+                    we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue, retryTime);
             default ->
                     log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
         }
@@ -2456,10 +2485,9 @@ public class AndroidStepHandler {
             case "getElementAttr" ->
                     getElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
-            case "obtainElementAttr" ->
-                    obtainElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
-                            eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
-                            step.getString("text"), step.getString("content"));
+            case "obtainElementAttr" -> obtainElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
+                    step.getString("text"), step.getString("content"));
             case "logElementAttr" ->
                     logElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
@@ -2472,12 +2500,11 @@ public class AndroidStepHandler {
             case "isExistEle" ->
                     isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
-            case "scrollToEle" ->
-                    scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
-                            eleList.getJSONObject(0).getString("eleType"),
-                            eleList.getJSONObject(0).getString("eleValue"),
-                            step.getInteger("content"),
-                            step.getString("text"));
+            case "scrollToEle" -> scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"),
+                    eleList.getJSONObject(0).getString("eleValue"),
+                    step.getInteger("content"),
+                    step.getString("text"));
             case "isExistEleNum" -> isExistEleNum(handleContext, eleList.getJSONObject(0).getString("eleName"),
                     eleList.getJSONObject(0).getString("eleType"),
                     eleList.getJSONObject(0).getString("eleValue"),
@@ -2501,6 +2528,12 @@ public class AndroidStepHandler {
             case "drag2" ->
                     dragByEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
+            case "motionEvent" -> motionEventByEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"), eleList.getJSONObject(0).getString("text"));
+            case "motionEventByPoint" ->
+                    motionEventByPoint(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleValue"),
+                            eleList.getJSONObject(0).getString("text"));
             case "tap" ->
                     tap(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
             case "longPressPoint" ->
