@@ -2529,11 +2529,11 @@ public class AndroidStepHandler {
                     dragByEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
             case "motionEvent" -> motionEventByEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
-                    eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"), eleList.getJSONObject(0).getString("text"));
+                    eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
             case "motionEventByPoint" ->
                     motionEventByPoint(handleContext, eleList.getJSONObject(0).getString("eleName"),
                             eleList.getJSONObject(0).getString("eleValue"),
-                            eleList.getJSONObject(0).getString("text"));
+                            step.getString("text"));
             case "tap" ->
                     tap(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
             case "longPressPoint" ->
