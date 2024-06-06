@@ -1029,6 +1029,7 @@ public class AndroidStepHandler {
                 String[] xy2 = parts[1].substring(0, parts[1].length() - 1).split(",");
                 String attrValue = (Integer.parseInt(xy2[0]) + Integer.parseInt(xy[0])) / 2 + "," + (Integer.parseInt(xy2[1]) + Integer.parseInt(xy[1])) / 2;
                 log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
+                globalParams.put(variable, attrValue);
                 return;
             }
             String attrValue = findEle(selector, pathValue).getAttribute(attr);
