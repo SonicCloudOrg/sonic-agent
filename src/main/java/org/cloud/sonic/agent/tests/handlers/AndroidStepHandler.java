@@ -673,6 +673,7 @@ public class AndroidStepHandler {
     }
 
     public void longPressPoint(HandleContext handleContext, String des, String xy, int time) {
+        xy = TextHandler.replaceTrans(xy, globalParams);
         double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
         double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
         int[] point = computedPoint(x, y);
@@ -702,6 +703,7 @@ public class AndroidStepHandler {
     }
 
     public void tap(HandleContext handleContext, String des, String xy) {
+        xy = TextHandler.replaceTrans(xy, globalParams);
         double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
         double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
         int[] point = computedPoint(x, y);
@@ -715,6 +717,9 @@ public class AndroidStepHandler {
     }
 
     public void swipePoint(HandleContext handleContext, String des1, String xy1, String des2, String xy2) {
+        // 让坐标系也支持变量替换
+        xy1 = TextHandler.replaceTrans(xy1, globalParams);
+        xy2 = TextHandler.replaceTrans(xy2, globalParams);
         double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
         double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
         int[] point1 = computedPoint(x1, y1);

@@ -507,6 +507,7 @@ public class IOSStepHandler {
 
     public void longPressPoint(HandleContext handleContext, String des, String xy, int time) {
         try {
+            xy = TextHandler.replaceTrans(xy, globalParams);
             double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
             double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
             int[] point = computedPoint(x, y);
@@ -530,6 +531,7 @@ public class IOSStepHandler {
 
     public void tap(HandleContext handleContext, String des, String xy) {
         try {
+            xy = TextHandler.replaceTrans(xy, globalParams);
             double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
             double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
             int[] point = computedPoint(x, y);
@@ -543,6 +545,8 @@ public class IOSStepHandler {
 
     public void swipePoint(HandleContext handleContext, String des1, String xy1, String des2, String xy2) {
         try {
+            xy1 = TextHandler.replaceTrans(xy1, globalParams);
+            xy2 = TextHandler.replaceTrans(xy2, globalParams);
             double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
             double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
             int[] point1 = computedPoint(x1, y1);
