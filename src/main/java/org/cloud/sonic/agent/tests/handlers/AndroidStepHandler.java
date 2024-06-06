@@ -748,6 +748,8 @@ public class AndroidStepHandler {
     }
 
     public void dragByPoint(HandleContext handleContext, String des1, String xy1, String des2, String xy2) {
+        xy1 = TextHandler.replaceTrans(xy1, globalParams);
+        xy2 = TextHandler.replaceTrans(xy2, globalParams);
         double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
         double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
         int[] point1 = computedPoint(x1, y1);
