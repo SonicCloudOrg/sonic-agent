@@ -21,8 +21,18 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.tools.SpringTool;
 
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.FileInputStream;
 import java.net.URI;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * @author Eason
@@ -41,6 +51,8 @@ public class TransportConnectionThread implements Runnable {
 
     String serverHost = String.valueOf(SpringTool.getPropertiesValue("sonic.server.host"));
     Integer serverPort = Integer.valueOf(SpringTool.getPropertiesValue("sonic.server.port"));
+    String serverCaPath = String.valueOf(SpringTool.getPropertiesValue("sonic.server.ca"));
+    Boolean serverHttps = Boolean.valueOf(SpringTool.getPropertiesValue("sonic.server.https"));
     String key = String.valueOf(SpringTool.getPropertiesValue("sonic.agent.key"));
 
     @Override
@@ -50,10 +62,36 @@ public class TransportConnectionThread implements Runnable {
             if (!TransportWorker.isKeyAuth) {
                 return;
             }
-            String url = String.format("ws://%s:%d/server/websockets/agent/%s",
-                    serverHost, serverPort, key).replace(":80/", "/");
+            String url = String.format("ws://%s:%d/server/websockets/agent/%s", serverHost, serverPort, key)
+                            .replace(":80/", "/")
+                            .replace("ws://", serverHttps ? "wss://" : "ws://");
+
             URI uri = URI.create(url);
             TransportClient transportClient = new TransportClient(uri);
+
+            if (serverHttps) {
+                try {
+                    log.info("Server Websocket: " + url);
+                    log.info("Server Ca: " + serverCaPath);
+                    InputStream is = new FileInputStream(serverCaPath);
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                    X509Certificate caCert = (X509Certificate)cf.generateCertificate(is);
+                    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                    ks.load(null); // You don't need the KeyStore instance to come from a file.
+                    ks.setCertificateEntry("caCert", caCert);
+                    tmf.init(ks);
+
+                    SSLContext sslContext = SSLContext.getInstance("TLS");
+                    sslContext.init(null, tmf.getTrustManagers(), null);
+                    transportClient.setSocketFactory(sslContext.getSocketFactory());
+                }
+                catch (Exception ex) {
+                    StringWriter sw = new StringWriter();
+                    ex.printStackTrace(new PrintWriter(sw));
+                    log.error(sw.toString());
+                }
+            }
             transportClient.connect();
         } else {
             JSONObject ping = new JSONObject();
