@@ -118,7 +118,7 @@ public class AndroidTouchHandler {
                 int[] re2 = transferWithRotation(iDevice, x2, y2);
                 writeToOutputStream(iDevice, String.format("down %d %d\n", re1[0], re1[1]));
                 try {
-                    Thread.sleep(5); // 滑动效果不需要长按300ms
+                    Thread.sleep(300);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

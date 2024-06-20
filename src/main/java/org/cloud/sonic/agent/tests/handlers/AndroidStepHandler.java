@@ -70,7 +70,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.util.CollectionUtils;
 
 import javax.imageio.stream.FileImageOutputStream;
-import java.awt.desktop.AboutHandler;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -428,7 +427,7 @@ public class AndroidStepHandler {
             String getDetailCommandResult = AndroidDeviceBridgeTool.executeCommand(iDevice, dumpsysCommandStr);
             List<AndroidPermissionItem> allPermissionItems =
                     AndroidPermissionExtractor.extractPermissions(getDetailCommandResult,
-                            Arrays.asList("install", "runtime"), true);
+                    Arrays.asList("install", "runtime"), true);
             allPermissionItems.stream().filter(permissionItem -> !permissionItem.isGranted())
                     .forEach(permissionItem -> {
                         String curPermission = permissionItem.getPermission();
@@ -727,8 +726,8 @@ public class AndroidStepHandler {
         double x2 = Double.parseDouble(xy2.substring(0, xy2.indexOf(",")));
         double y2 = Double.parseDouble(xy2.substring(xy2.indexOf(",") + 1));
         int[] point2 = computedPoint(x2, y2);
-        handleContext.setStepDes("从" + des1 + "滑动到" + des2);
-        handleContext.setDetail("从坐标(" + point1[0] + "," + point1[1] + ")滑动到(" + point2[0] + "," + point2[1] + ")");
+        handleContext.setStepDes("滑动拖拽" + des1 + "到" + des2);
+        handleContext.setDetail("拖动坐标(" + point1[0] + "," + point1[1] + ")到(" + point2[0] + "," + point2[1] + ")");
         try {
             AndroidTouchHandler.swipe(iDevice, point1[0], point1[1], point2[0], point2[1]);
         } catch (Exception e) {
@@ -744,8 +743,8 @@ public class AndroidStepHandler {
             int y1 = webElement.getRect().getY();
             int x2 = webElement2.getRect().getX();
             int y2 = webElement2.getRect().getY();
-            handleContext.setStepDes("从" + des + "滑动到" + des2);
-            handleContext.setDetail("从坐标(" + x1 + "," + y1 + ")滑动到坐标(" + x2 + "," + y2 + ")");
+            handleContext.setStepDes("滑动拖拽" + des + "到" + des2);
+            handleContext.setDetail("拖动坐标(" + x1 + "," + y1 + ")到(" + x2 + "," + y2 + ")");
             AndroidTouchHandler.swipe(iDevice, x1, y1, x2, y2);
         } catch (Exception e) {
             handleContext.setE(e);
@@ -837,7 +836,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到坐标(" + centerX + "," + targetY + ")");
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
             case "down" -> {
                 handleContext.setStepDes("从设备中心位置向下滑动" + distance + "像素");
@@ -851,7 +850,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到(" + centerX + "," + targetY + ")");
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + centerX + "," + targetY + ")");
             }
             case "left" -> {
                 handleContext.setStepDes("从设备中心位置向左滑动" + distance + "像素");
@@ -865,7 +864,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到(" + targetX + "," + centerY + ")");
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }
             case "right" -> {
                 handleContext.setStepDes("从设备中心位置向右滑动" + distance + "像素");
@@ -879,7 +878,7 @@ public class AndroidStepHandler {
                 } catch (Exception e) {
                     handleContext.setE(e);
                 }
-                handleContext.setDetail("从坐标(" + centerX + "," + centerY + ")滑动到(" + targetX + "," + centerY + ")");
+                handleContext.setDetail("拖动坐标(" + centerX + "," + centerY + ")到(" + targetX + "," + centerY + ")");
             }
             default ->
                     throw new Exception("Sliding in this direction is not supported. Only up/down/left/right are supported!");
@@ -1853,7 +1852,7 @@ public class AndroidStepHandler {
     }
 
     public void obtainPocoElementAttr(HandleContext handleContext, String des, String selector, String pathValue,
-                                      String attr, String variable) {
+                                  String attr, String variable) {
         handleContext.setStepDes("获取控件 " + des + " 属性到变量");
         handleContext.setDetail("目标属性：" + attr + "，目标变量：" + variable);
         try {
@@ -2115,12 +2114,10 @@ public class AndroidStepHandler {
         switch (selector) {
             case "androidIterator" -> we = androidDriver.findElement(pathValue);
             case "id" -> we = androidDriver.findElement(AndroidSelector.Id, pathValue, retryTime);
-            case "accessibilityId" ->
-                    we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue, retryTime);
+            case "accessibilityId" -> we = androidDriver.findElement(AndroidSelector.ACCESSIBILITY_ID, pathValue, retryTime);
             case "xpath" -> we = androidDriver.findElement(AndroidSelector.XPATH, pathValue, retryTime);
             case "className" -> we = androidDriver.findElement(AndroidSelector.CLASS_NAME, pathValue, retryTime);
-            case "androidUIAutomator" ->
-                    we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue, retryTime);
+            case "androidUIAutomator" -> we = androidDriver.findElement(AndroidSelector.UIAUTOMATOR, pathValue, retryTime);
             default ->
                     log.sendStepLog(StepType.ERROR, "查找控件元素失败", "这个控件元素类型: " + selector + " 不存在!!!");
         }
@@ -2512,9 +2509,10 @@ public class AndroidStepHandler {
             case "getElementAttr" ->
                     getElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"), step.getString("content"));
-            case "obtainElementAttr" -> obtainElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
-                    eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
-                    step.getString("text"), step.getString("content"));
+            case "obtainElementAttr" ->
+                    obtainElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"),
+                            step.getString("text"), step.getString("content"));
             case "logElementAttr" ->
                     logElementAttr(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
@@ -2527,11 +2525,12 @@ public class AndroidStepHandler {
             case "isExistEle" ->
                     isExistEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType")
                             , eleList.getJSONObject(0).getString("eleValue"), step.getBoolean("content"));
-            case "scrollToEle" -> scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
-                    eleList.getJSONObject(0).getString("eleType"),
-                    eleList.getJSONObject(0).getString("eleValue"),
-                    step.getInteger("content"),
-                    step.getString("text"));
+            case "scrollToEle" ->
+                    scrollToEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleType"),
+                            eleList.getJSONObject(0).getString("eleValue"),
+                            step.getInteger("content"),
+                            step.getString("text"));
             case "isExistEleNum" -> isExistEleNum(handleContext, eleList.getJSONObject(0).getString("eleName"),
                     eleList.getJSONObject(0).getString("eleType"),
                     eleList.getJSONObject(0).getString("eleValue"),
