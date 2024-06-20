@@ -11,6 +11,9 @@ public class TextHandlerTest {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("hello", "world");
         jsonObject.put("hello2", "world2");
+        jsonObject.put("xy", "1,2");
+        jsonObject.put("x", "0.3");
+        jsonObject.put("y", "0.4");
         String s = TextHandler.replaceTrans("{{hello}}", jsonObject);
         Assert.assertEquals("world", s);
         s = TextHandler.replaceTrans("ss{{hello}}ss", jsonObject);
@@ -32,5 +35,9 @@ public class TextHandlerTest {
         Assert.assertTrue(Integer.parseInt(s) <= 6 && Integer.parseInt(s) >= 3);
         s = TextHandler.replaceTrans("{{random[h|2|3]}}", jsonObject);
         Assert.assertEquals(1, s.length());
+        s = TextHandler.replaceTrans("{{x}},{{y}}", jsonObject);
+        Assert.assertEquals("0.3,0.4", s);
+        s = TextHandler.replaceTrans("{{xy}}", jsonObject);
+        Assert.assertEquals("1,2", s);
     }
 }

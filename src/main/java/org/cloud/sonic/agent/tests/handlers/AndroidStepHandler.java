@@ -674,6 +674,7 @@ public class AndroidStepHandler {
     }
 
     public void longPressPoint(HandleContext handleContext, String des, String xy, int time) {
+        xy = TextHandler.replaceTrans(xy, globalParams);
         double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
         double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
         int[] point = computedPoint(x, y);
@@ -703,6 +704,7 @@ public class AndroidStepHandler {
     }
 
     public void tap(HandleContext handleContext, String des, String xy) {
+        xy = TextHandler.replaceTrans(xy, globalParams);
         double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
         double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
         int[] point = computedPoint(x, y);
@@ -716,6 +718,9 @@ public class AndroidStepHandler {
     }
 
     public void swipePoint(HandleContext handleContext, String des1, String xy1, String des2, String xy2) {
+        // 让坐标系也支持变量替换
+        xy1 = TextHandler.replaceTrans(xy1, globalParams);
+        xy2 = TextHandler.replaceTrans(xy2, globalParams);
         double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
         double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
         int[] point1 = computedPoint(x1, y1);
@@ -1059,8 +1064,14 @@ public class AndroidStepHandler {
     public void getElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr, String expect) {
         handleContext.setStepDes("验证控件 " + des + " 属性");
         handleContext.setDetail("属性：" + attr + "，期望值：" + expect);
+        String attrValue;
         try {
-            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            if (attr.equals("centerCoordinate")) {
+                String bounds = findEle(selector, pathValue).getAttribute("bounds"); // [x1,y1][x2,y2]
+                attrValue = getCenterCoordinate(bounds);
+            } else {
+                attrValue = findEle(selector, pathValue).getAttribute(attr);
+            }
             log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
             try {
                 assertEquals(attrValue, expect);
@@ -1076,13 +1087,27 @@ public class AndroidStepHandler {
                                   String attr, String variable) {
         handleContext.setStepDes("获取控件 " + des + " 属性到变量");
         handleContext.setDetail("目标属性：" + attr + "，目标变量：" + variable);
+        String attrValue;
         try {
-            String attrValue = findEle(selector, pathValue).getAttribute(attr);
+            // 自定义一个获取控件中心坐标的逻辑，方便通过控件获取一个坐标去做滑动、拖拽等操作
+            if (attr.equals("centerCoordinate")) {
+                String bounds = findEle(selector, pathValue).getAttribute("bounds"); // [x1,y1][x2,y2]
+                attrValue = getCenterCoordinate(bounds);
+            } else {
+                attrValue = findEle(selector, pathValue).getAttribute(attr);
+            }
             log.sendStepLog(StepType.INFO, "", attr + " 属性获取结果: " + attrValue);
             globalParams.put(variable, attrValue);
         } catch (Exception e) {
             handleContext.setE(e);
         }
+    }
+
+    private String getCenterCoordinate(String bounds) {
+        String[] parts = bounds.split("]\\[");
+        String[] xy = parts[0].substring(1).split(",");
+        String[] xy2 = parts[1].substring(0, parts[1].length() - 1).split(",");
+        return (Integer.parseInt(xy2[0]) + Integer.parseInt(xy[0])) / 2 + "," + (Integer.parseInt(xy2[1]) + Integer.parseInt(xy[1])) / 2;
     }
 
     public void logElementAttr(HandleContext handleContext, String des, String selector, String pathValue, String attr) {

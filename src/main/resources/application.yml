@@ -9,7 +9,7 @@ spring:
 sonic:
   saa: 2.0.8
   sgm: 1.3.4
-  sib: 1.3.18
+  sib: 1.3.19
   sas: 0.1.12
   saus: 5.7.4
 
