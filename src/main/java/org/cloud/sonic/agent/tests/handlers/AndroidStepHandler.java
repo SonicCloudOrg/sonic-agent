@@ -760,7 +760,7 @@ public class AndroidStepHandler {
         double x2 = Double.parseDouble(xy2.substring(0, xy2.indexOf(",")));
         double y2 = Double.parseDouble(xy2.substring(xy2.indexOf(",") + 1));
         int[] point2 = computedPoint(x2, y2);
-        handleContext.setStepDes("模拟长按目标" + des1 + "然后拖拽移动到" + des2 + "松手");
+        handleContext.setStepDes("模拟长按「" + des1 + "」然后拖拽移动到「" + des2 + "」松手");
         handleContext.setDetail("拖拽坐标(" + point1[0] + "," + point1[1] + ")的元素移动到(" + point2[0] + "," + point2[1] + ")");
         try {
             AndroidTouchHandler.drag(iDevice, point1[0], point1[1], point2[0], point2[1]);
@@ -777,7 +777,7 @@ public class AndroidStepHandler {
             int y1 = webElement.getRect().getY();
             int x2 = webElement2.getRect().getX();
             int y2 = webElement2.getRect().getY();
-            handleContext.setStepDes("模拟长按目标" + des + "然后拖拽移动到" + des2 + "松手");
+            handleContext.setStepDes("模拟长按「" + des + "」然后拖拽移动到「" + des2 + "」松手");
             handleContext.setDetail("拖拽坐标(" + x1 + "," + y1 + ")的元素移动到(" + x2 + "," + y2 + ")");
             AndroidTouchHandler.drag(iDevice, x1, y1, x2, y2);
         } catch (SonicRespException e) {
