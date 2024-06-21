@@ -751,6 +751,66 @@ public class AndroidStepHandler {
         }
     }
 
+    public void dragByPoint(HandleContext handleContext, String des1, String xy1, String des2, String xy2) {
+        xy1 = TextHandler.replaceTrans(xy1, globalParams);
+        xy2 = TextHandler.replaceTrans(xy2, globalParams);
+        double x1 = Double.parseDouble(xy1.substring(0, xy1.indexOf(",")));
+        double y1 = Double.parseDouble(xy1.substring(xy1.indexOf(",") + 1));
+        int[] point1 = computedPoint(x1, y1);
+        double x2 = Double.parseDouble(xy2.substring(0, xy2.indexOf(",")));
+        double y2 = Double.parseDouble(xy2.substring(xy2.indexOf(",") + 1));
+        int[] point2 = computedPoint(x2, y2);
+        handleContext.setStepDes("模拟长按「" + des1 + "」然后拖拽移动到「" + des2 + "」松手");
+        handleContext.setDetail("拖拽坐标(" + point1[0] + "," + point1[1] + ")的元素移动到(" + point2[0] + "," + point2[1] + ")");
+        try {
+            AndroidTouchHandler.drag(iDevice, point1[0], point1[1], point2[0], point2[1]);
+        } catch (Exception e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void dragByEle(HandleContext handleContext, String des, String selector, String pathValue, String des2, String selector2, String pathValue2) {
+        try {
+            AndroidElement webElement = findEle(selector, pathValue);
+            AndroidElement webElement2 = findEle(selector2, pathValue2);
+            int x1 = webElement.getRect().getX();
+            int y1 = webElement.getRect().getY();
+            int x2 = webElement2.getRect().getX();
+            int y2 = webElement2.getRect().getY();
+            handleContext.setStepDes("模拟长按「" + des + "」然后拖拽移动到「" + des2 + "」松手");
+            handleContext.setDetail("拖拽坐标(" + x1 + "," + y1 + ")的元素移动到(" + x2 + "," + y2 + ")");
+            AndroidTouchHandler.drag(iDevice, x1, y1, x2, y2);
+        } catch (SonicRespException e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void motionEventByPoint(HandleContext handleContext, String des, String xy, String motionEventType) throws SonicRespException {
+        double x = Double.parseDouble(xy.substring(0, xy.indexOf(",")));
+        double y = Double.parseDouble(xy.substring(xy.indexOf(",") + 1));
+        int[] point = computedPoint(x, y);
+        handleContext.setStepDes("通过坐标" + des + "触发" + motionEventType + "-Motion事件");
+        handleContext.setDetail("对坐标" + point[0] + "," + point[1] + String.format("执行Motion事件(%s)", motionEventType));
+        try {
+            AndroidTouchHandler.motionEvent(iDevice, motionEventType, point[0], point[1]);
+        } catch (SonicRespException e) {
+            handleContext.setE(e);
+        }
+    }
+
+    public void motionEventByEle(HandleContext handleContext, String des, String selector, String pathValue, String motionEventType) throws SonicRespException {
+        try {
+            AndroidElement webElement = findEle(selector, pathValue);
+            int x = webElement.getRect().getX();
+            int y = webElement.getRect().getY();
+            handleContext.setStepDes("通过" + des + "触发" + motionEventType + "-Motion事件");
+            handleContext.setDetail("对坐标" + x + "," + y + String.format("执行Motion事件(%s)", motionEventType));
+            AndroidTouchHandler.motionEvent(iDevice, motionEventType, x, y);
+        } catch (SonicRespException e) {
+            handleContext.setE(e);
+        }
+    }
+
     public void swipeByDefinedDirection(HandleContext handleContext, String slideDirection, int distance) throws Exception {
         String size = AndroidDeviceBridgeTool.getScreenSize(iDevice);
         String[] winSize = size.split("x");
@@ -2488,6 +2548,18 @@ public class AndroidStepHandler {
             case "swipe2" ->
                     swipe(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
                             , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
+            case "drag" ->
+                    dragByPoint(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue")
+                            , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleValue"));
+            case "drag2" ->
+                    dragByEle(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue")
+                            , eleList.getJSONObject(1).getString("eleName"), eleList.getJSONObject(1).getString("eleType"), eleList.getJSONObject(1).getString("eleValue"));
+            case "motionEvent" -> motionEventByEle(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                    eleList.getJSONObject(0).getString("eleType"), eleList.getJSONObject(0).getString("eleValue"), step.getString("text"));
+            case "motionEventByPoint" ->
+                    motionEventByPoint(handleContext, eleList.getJSONObject(0).getString("eleName"),
+                            eleList.getJSONObject(0).getString("eleValue"),
+                            step.getString("text"));
             case "tap" ->
                     tap(handleContext, eleList.getJSONObject(0).getString("eleName"), eleList.getJSONObject(0).getString("eleValue"));
             case "longPressPoint" ->

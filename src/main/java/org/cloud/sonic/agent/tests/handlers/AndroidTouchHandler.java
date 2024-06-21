@@ -167,6 +167,85 @@ public class AndroidTouchHandler {
         }
     }
 
+    public static void drag(IDevice iDevice, int x1, int y1, int x2, int y2) throws SonicRespException {
+        drag(iDevice, x1, y1, x2, y2, DEFAULT_SWIPE_DURATION);
+    }
+
+    public static void drag(IDevice iDevice, int x1, int y1, int x2, int y2, int swipeDuration) throws SonicRespException {
+        switch (getTouchMode(iDevice)) {
+            case ADB ->
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input draganddrop %d %d %d %d %d", x1, y1, x2, y2, swipeDuration));
+            case APPIUM_UIAUTOMATOR2_SERVER -> {
+                AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
+                if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
+                    curStepHandler.getAndroidDriver().drag(x1, y1, x2, y2, swipeDuration, null, null);
+                }
+            }
+            case SONIC_APK -> {
+                // 原本这段代码是在`swipe(IDevice iDevice, int x1, int y1, int x2, int y2, int swipeDuration)`中的
+                // 但是swipe的效果应该是在屏幕滑动，而不是在第一个坐标按下时存在延迟，所以放在drag方法里面更加符合
+                int[] re1 = transferWithRotation(iDevice, x1, y1);
+                int[] re2 = transferWithRotation(iDevice, x2, y2);
+                writeToOutputStream(iDevice, String.format("down %d %d\n", re1[0], re1[1]));
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                long startTime = System.currentTimeMillis();
+                while (true) {
+                    // 当前时间
+                    long currentTime = System.currentTimeMillis();
+                    // 计算时间进度
+                    float timeProgress = (currentTime - startTime) / (float) swipeDuration;
+                    if (timeProgress >= 1.0f) {
+                        // 已经过渡到结束值，停止过渡
+                        writeToOutputStream(iDevice, String.format("move %d %d\n", re2[0], re2[1]));
+                        break;
+                    }
+                    BiFunction<Integer, Integer, Integer> transitionX = (start, end) ->
+                            (int) (start + (end - start) * timeProgress);
+                    BiFunction<Integer, Integer, Integer> transitionY = (start, end) ->
+                            (int) (start + (end - start) * timeProgress);
+
+                    int currentX = transitionX.apply(re1[0], re2[0]);
+                    int currentY = transitionY.apply(re1[1], re2[1]);
+                    // 使用当前坐标进行操作
+                    writeToOutputStream(iDevice, String.format("move %d %d\n", currentX, currentY));
+                    try {
+                        Thread.sleep(5);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                writeToOutputStream(iDevice, "up\n");
+            }
+
+        }
+    }
+
+    public static void motionEvent(IDevice iDevice, String motionEventType, int x1, int y1) throws SonicRespException {
+        switch (getTouchMode(iDevice)) {
+            case ADB ->
+                    AndroidDeviceBridgeTool.executeCommand(iDevice, String.format("input motionevent %s %d %d", motionEventType, x1, y1));
+            case SONIC_APK -> {
+                int[] re1 = transferWithRotation(iDevice, x1, y1);
+                writeToOutputStream(iDevice, String.format("%s %d %d\n", motionEventType.toLowerCase(), re1[0], re1[1]));
+            }
+            case APPIUM_UIAUTOMATOR2_SERVER -> {
+                AndroidStepHandler curStepHandler = HandlerMap.getAndroidMap().get(iDevice.getSerialNumber());
+                if (curStepHandler != null && curStepHandler.getAndroidDriver() != null) {
+                    curStepHandler.getAndroidDriver().touchAction(motionEventType.toLowerCase(), x1, y1);
+                }
+            }
+        }
+    }
+
     private static int[] transferWithRotation(IDevice iDevice, int x, int y) {
         Integer directionStatus = AndroidDeviceManagerMap.getRotationMap().get(iDevice.getSerialNumber());
         if (directionStatus == null) {
