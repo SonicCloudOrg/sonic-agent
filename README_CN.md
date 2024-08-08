@@ -30,7 +30,7 @@
 
 ### 官方网站
 
-[Sonic Official Website](https://sonic-cloud.cn)
+[Sonic Official Website](https://soniccloudorg.github.io/)
 
 ## 背景
 
@@ -44,11 +44,11 @@
 
 ## 部署方式
 
-[查看这里](https://sonic-cloud.cn/deploy/agent-deploy.html)
+[查看这里](https://soniccloudorg.github.io/deploy/agent-deploy.html)
 
 ## 打包方式
 
-[查看这里](https://sonic-cloud.cn/contribute?tag=con-agent)
+[查看这里](https://soniccloudorg.github.io/contribute/con-agent.html)
 
 ## 赞助商
 

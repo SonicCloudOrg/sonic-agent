@@ -30,7 +30,7 @@
 
 ### Official Website
 
-[Sonic Official Website](https://sonic-cloud.cn)
+[Sonic Official Website](https://soniccloudorg.github.io/)
 
 ## Background
 
@@ -45,11 +45,11 @@
 
 ## Deploy
 
-[Look Here!](https://sonic-cloud.cn/deploy/agent-deploy.html)
+[Look Here!](https://soniccloudorg.github.io/deploy/agent-deploy.html)
 
 ## Package
 
-[Look Here!](https://sonic-cloud.cn/contribute?tag=con-agent)
+[Look Here!](https://soniccloudorg.github.io/contribute/con-agent.html)
 
 ## Sponsors
 
