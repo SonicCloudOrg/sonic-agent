@@ -1005,4 +1005,14 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             e.printStackTrace();
         }
     }
+
+    public static boolean isUpperThanIos17(String udId) {
+        JSONObject deviceInfoObj = IOSInfoMap.getDetailMap().get(udId);
+        if (deviceInfoObj != null && deviceInfoObj.containsKey("productVersion")) {
+            String productVersion = deviceInfoObj.getString("productVersion");
+            return CompareVersionUtil.compareVersion(productVersion, "17.0") >= 0;
+        }
+        return false;
+    }
+
 }
