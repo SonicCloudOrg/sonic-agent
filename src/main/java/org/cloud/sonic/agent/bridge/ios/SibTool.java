@@ -70,7 +70,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
 
-    @Value("${modules.ios.wda-xcode-project-path}")
+    @Value("${modules.ios.wda-xcode-project-path:default}")
     private String getXcodeProjectPath;
 
     private static String bundleId;
