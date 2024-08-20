@@ -214,7 +214,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         Socket mjpeg = PortTool.getBindSocket();
         int wdaPort = PortTool.releaseAndGetPort(wda);
         int mjpegPort = PortTool.releaseAndGetPort(mjpeg);
-        startWda(udId, wdaPort, mjpegPort);
+        return startWda(udId, wdaPort, mjpegPort);
     }
 
     public static int[] startWda(String udId, int wdaPort, int mjpegPort) throws IOException, InterruptedException {
