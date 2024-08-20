@@ -285,8 +285,32 @@ public class IOSWSServer implements IIOSWSServer {
                     sendText(session, proxy.toJSONString());
                 }
                 case "installCert" -> SibTool.launch(udId, "com.apple.mobilesafari");
-                case "launch" -> SibTool.launch(udId, msg.getString("pkg"));
-                case "kill" -> SibTool.kill(udId, msg.getString("pkg"));
+                case "launch" -> {
+                    if (SibTool.isUpperThanIos17(udId)) {
+                        if (iosDriver != null) {
+                            try {
+                                iosDriver.appActivate(msg.getString("pkg"));
+                            } catch (SonicRespException e) {
+                                log.info(e.fillInStackTrace().toString());
+                            }
+                        }
+                    } else {
+                        SibTool.launch(udId, msg.getString("pkg"));
+                    }
+                }
+                case "kill" -> {
+                    if (SibTool.isUpperThanIos17(udId)) {
+                        if (iosDriver != null) {
+                            try {
+                                iosDriver.appTerminate(msg.getString("pkg"));
+                            } catch (SonicRespException e) {
+                                log.info(e.fillInStackTrace().toString());
+                            }
+                        }
+                    } else {
+                        SibTool.kill(udId, msg.getString("pkg"));
+                    }
+                }
                 case "uninstallApp" -> SibTool.uninstall(udId, msg.getString("detail"));
                 case "debug" -> {
                     switch (msg.getString("detail")) {
