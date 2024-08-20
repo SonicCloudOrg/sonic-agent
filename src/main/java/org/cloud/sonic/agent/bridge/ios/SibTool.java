@@ -69,10 +69,16 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     private static final Logger logger = LoggerFactory.getLogger(SibTool.class);
     @Value("${modules.ios.wda-bundle-id}")
     private String getBundleId;
+
+    @Value("${modules.ios.wda-xcode-project-path:default}")
+    private String getXcodeProjectPath;
+
     private static String bundleId;
+    private static String xcodeProjectPath;
     private static File sibBinary = new File("plugins" + File.separator + "sonic-ios-bridge");
     private static String sib = sibBinary.getAbsolutePath();
     private static RestTemplate restTemplate;
+
     @Autowired
     private RestTemplate restTemplateBean;
     private static Map<String, Integer> webViewMap = new HashMap<>();
@@ -80,6 +86,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     @Bean
     public void setEnv() {
         bundleId = getBundleId;
+        xcodeProjectPath = getXcodeProjectPath;
     }
 
     @Override
@@ -101,9 +108,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String system = System.getProperty("os.name").toLowerCase();
             try {
                 if (system.contains("win")) {
-                    listenProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib)});
+                    listenProcess = Runtime.getRuntime()
+                            .exec(new String[]{"cmd", "/c", String.format(commandLine, sib)});
                 } else if (system.contains("linux") || system.contains("mac")) {
-                    listenProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib)});
+                    listenProcess = Runtime.getRuntime()
+                            .exec(new String[]{"sh", "-c", String.format(commandLine, sib)});
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -113,7 +122,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    if ((s = stdInput.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -144,8 +154,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 new IOSBatteryThread(),
                 IOSBatteryThread.DELAY,
                 IOSBatteryThread.DELAY,
-                IOSBatteryThread.TIME_UNIT
-        );
+                IOSBatteryThread.TIME_UNIT);
 
         logger.info("iOS devices listening...");
     }
@@ -208,6 +217,14 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static int[] startWda(String udId) throws IOException, InterruptedException {
+        Socket wda = PortTool.getBindSocket();
+        Socket mjpeg = PortTool.getBindSocket();
+        int wdaPort = PortTool.releaseAndGetPort(wda);
+        int mjpegPort = PortTool.releaseAndGetPort(mjpeg);
+        return startWda(udId, wdaPort, mjpegPort);
+    }
+
+    public static int[] startWda(String udId, int wdaPort, int mjpegPort) throws IOException, InterruptedException {
         List<Process> processList;
         if (IOSProcessMap.getMap().get(udId) != null) {
             processList = IOSProcessMap.getMap().get(udId);
@@ -218,33 +235,56 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
                 }
             }
         }
-        Socket wda = PortTool.getBindSocket();
-        Socket mjpeg = PortTool.getBindSocket();
-        int wdaPort = PortTool.releaseAndGetPort(wda);
-        int mjpegPort = PortTool.releaseAndGetPort(mjpeg);
+        wdaPort = (wdaPort == 0) ? PortTool.getPort() : wdaPort;
+        mjpegPort = (mjpegPort == 0) ? PortTool.getPort() : mjpegPort;
         Process wdaProcess = null;
-        String commandLine = "%s run wda -u %s -b %s --mjpeg-remote-port 9100" +
-                " --server-remote-port 8100 --mjpeg-local-port %d --server-local-port %d";
+        final Process[] iProxyProcess = {null};
+        String commandLine;
+
+        // ios17 support, but mac only
+        if (isUpperThanIos17(udId)) {
+            commandLine = String.format(
+                    "xcodebuild -project %s -scheme WebDriverAgentRunner -destination 'id=%s' test",
+                    xcodeProjectPath, udId);
+        } else {
+            commandLine = String.format(
+                    "%s run wda -u %s -b %s --mjpeg-remote-port 9100 --server-remote-port 8100 --mjpeg-local-port %d --server-local-port %d",
+                    sib, udId, bundleId, mjpegPort, wdaPort);
+        }
         String system = System.getProperty("os.name").toLowerCase();
         if (system.contains("win")) {
-            wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
+            wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", commandLine});
         } else if (system.contains("linux") || system.contains("mac")) {
-            wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
+            wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", commandLine});
         }
         InputStreamReader inputStreamReader = new InputStreamReader(wdaProcess.getInputStream());
         BufferedReader stdInput = new BufferedReader(inputStreamReader);
         Semaphore isFinish = new Semaphore(0);
+
+        int finalWdaPort = wdaPort;
+        int finalMjpegPort = mjpegPort;
+
         Thread wdaThread = new Thread(() -> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    if ((s = stdInput.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
                 }
                 logger.info(s);
-                if (s.contains("WebDriverAgent server start successful")) {
+                if (s.contains("ServerURLHere->")) {
+                    if (SibTool.isUpperThanIos17(udId)) {
+                        try {
+                            iProxyProcess[0] = Runtime.getRuntime().exec(
+                                    new String[]{"sh", "-c", String.format("iproxy -u %s %d:8100 %d:9100 -s 0.0.0.0",
+                                            udId, finalWdaPort, finalMjpegPort)});
+                        } catch (IOException e) {
+                            logger.info(e.getMessage());
+                        }
+                    }
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
@@ -277,78 +317,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
         processList = new ArrayList<>();
         processList.add(wdaProcess);
+        if (iProxyProcess[0] != null) {
+            processList.add(iProxyProcess[0]);
+        }
         IOSProcessMap.getMap().put(udId, processList);
         return new int[]{wdaPort, mjpegPort};
-    }
-
-    public static void startWda(String udId, int wdaPort, int mjpegPort) throws IOException, InterruptedException {
-        List<Process> processList;
-        if (IOSProcessMap.getMap().get(udId) != null) {
-            processList = IOSProcessMap.getMap().get(udId);
-            for (Process p : processList) {
-                if (p != null) {
-                    p.children().forEach(ProcessHandle::destroy);
-                    p.destroy();
-                }
-            }
-        }
-        wdaPort = (wdaPort == 0) ? PortTool.getPort() : wdaPort;
-        mjpegPort = (mjpegPort == 0) ? PortTool.getPort() : mjpegPort;
-        Process wdaProcess = null;
-        String commandLine = "%s run wda -u %s -b %s --mjpeg-remote-port 9100" +
-                " --server-remote-port 8100 --mjpeg-local-port %d --server-local-port %d";
-        String system = System.getProperty("os.name").toLowerCase();
-        if (system.contains("win")) {
-            wdaProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
-        } else if (system.contains("linux") || system.contains("mac")) {
-            wdaProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, bundleId, mjpegPort, wdaPort)});
-        }
-        InputStreamReader inputStreamReader = new InputStreamReader(wdaProcess.getInputStream());
-        BufferedReader stdInput = new BufferedReader(inputStreamReader);
-        Semaphore isFinish = new Semaphore(0);
-        Thread wdaThread = new Thread(() -> {
-            String s;
-            while (true) {
-                try {
-                    if ((s = stdInput.readLine()) == null) break;
-                } catch (IOException e) {
-                    logger.info(e.getMessage());
-                    break;
-                }
-                logger.info(s);
-                if (s.contains("WebDriverAgent server start successful")) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    isFinish.release();
-                }
-            }
-            try {
-                stdInput.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                inputStreamReader.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            logger.info("WebDriverAgent print thread shutdown.");
-        });
-        wdaThread.start();
-        int wait = 0;
-        while (!isFinish.tryAcquire()) {
-            Thread.sleep(500);
-            wait++;
-            if (wait >= 120) {
-                logger.info(udId + " WebDriverAgent start timeout!");
-            }
-        }
-        processList = new ArrayList<>();
-        processList.add(wdaProcess);
-        IOSProcessMap.getMap().put(udId, processList);
     }
 
     public static void reboot(String udId) {
@@ -362,8 +335,13 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static void install(String udId, String path) {
-        String commandLine = "%s app install -u %s -p %s";
-        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, path));
+        String commandLine;
+        if (isUpperThanIos17(udId)) {
+            commandLine = String.format("ideviceinstaller -u %s -i %s", udId, path);
+        } else {
+            commandLine = String.format("%s app install -u %s -p %s", sib, udId, path);
+        }
+        ProcessCommandTool.getProcessLocalCommand(commandLine);
     }
 
     public static void stopSysLog(String udId) {
@@ -400,7 +378,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    if ((s = stdInput.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -455,7 +434,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    if ((s = stdInput.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -489,7 +469,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static List<String> getAppList(String udId) {
-        return getAppList(udId, null).stream().map(e->e.getString("bundleId")).collect(Collectors.toList());
+        return getAppList(udId, null).stream().map(e -> e.getString("bundleId")).collect(Collectors.toList());
     }
 
     public static List<JSONObject> getAppList(String udId, Session session) {
@@ -499,9 +479,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String system = System.getProperty("os.name").toLowerCase();
         try {
             if (system.contains("win")) {
-                appListProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                appListProcess = Runtime.getRuntime()
+                        .exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                appListProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                appListProcess = Runtime.getRuntime()
+                        .exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -511,7 +493,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String s;
         while (true) {
             try {
-                if (StringUtils.isEmpty(s = stdInput.readLine())) break;
+                if (StringUtils.isEmpty(s = stdInput.readLine()))
+                    break;
             } catch (IOException e) {
                 logger.info(e.getMessage());
                 break;
@@ -550,9 +533,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String system = System.getProperty("os.name").toLowerCase();
         try {
             if (system.contains("win")) {
-                appProcess = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
+                appProcess = Runtime.getRuntime()
+                        .exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                appProcess = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
+                appProcess = Runtime.getRuntime()
+                        .exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId)});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -562,7 +547,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String s;
         while (true) {
             try {
-                if ((s = stdInput.readLine()) == null) break;
+                if ((s = stdInput.readLine()) == null)
+                    break;
             } catch (IOException e) {
                 logger.info(e.getMessage());
                 break;
@@ -615,8 +601,13 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public static void uninstall(String udId, String pkg) {
-        String commandLine = "%s app uninstall -u %s -b %s";
-        ProcessCommandTool.getProcessLocalCommand(String.format(commandLine, sib, udId, pkg));
+        String commandLine;
+        if (isUpperThanIos17(udId)) {
+            commandLine = String.format("ideviceinstaller -u %s -U %s", udId, pkg);
+        } else {
+            commandLine = String.format("%s app uninstall -u %s -b %s", sib, udId, pkg);
+        }
+        ProcessCommandTool.getProcessLocalCommand(commandLine);
     }
 
     public static int battery(String udId) {
@@ -641,9 +632,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         try {
             String system = System.getProperty("os.name").toLowerCase();
             if (system.contains("win")) {
-                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -657,7 +650,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInputErr.readLine()) == null) break;
+                    if ((s = stdInputErr.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -683,7 +677,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    if ((s = stdInput.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -741,9 +736,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         try {
             String system = System.getProperty("os.name").toLowerCase();
             if (system.contains("win")) {
-                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, local, target)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, local, target)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, local, target)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, local, target)});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -756,7 +753,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInputErr.readLine()) == null) break;
+                    if ((s = stdInputErr.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -780,7 +778,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    if ((s = stdInput.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -853,8 +852,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         }
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Type", "application/json");
-        ResponseEntity<JSONArray> responseEntity =
-                restTemplate.exchange("http://localhost:" + port + "/json/list", HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
+        ResponseEntity<JSONArray> responseEntity = restTemplate.exchange("http://localhost:" + port + "/json/list",
+                HttpMethod.GET, new HttpEntity(headers), JSONArray.class);
         if (responseEntity.getStatusCode() == HttpStatus.OK) {
             return responseEntity.getBody().toJavaList(JSONObject.class);
         } else {
@@ -879,9 +878,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
         String tail = bundleId.length() == 0 ? "" : (" --proc-cpu --proc-mem -b " + bundleId);
         try {
             if (system.contains("win")) {
-                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, interval, udId, tail)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"cmd", "/c", String.format(commandLine, sib, interval, udId, tail)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, interval, udId, tail)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"sh", "-c", String.format(commandLine, sib, interval, udId, tail)});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -894,7 +895,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInputErr.readLine()) == null) break;
+                    if ((s = stdInputErr.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -918,7 +920,8 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String s;
             while (true) {
                 try {
-                    if ((s = stdInput.readLine()) == null) break;
+                    if ((s = stdInput.readLine()) == null)
+                        break;
                 } catch (IOException e) {
                     logger.info(e.getMessage());
                     break;
@@ -974,9 +977,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             Process ps = null;
             int port = PortTool.getPort();
             if (system.contains("win")) {
-                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
             }
             GlobalProcessMap.getMap().put(processName, ps);
             shareJSON.put("port", port);
@@ -996,9 +1001,11 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
             String system = System.getProperty("os.name").toLowerCase();
             Process ps = null;
             if (system.contains("win")) {
-                ps = Runtime.getRuntime().exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"cmd", "/c", String.format(commandLine, sib, udId, port)});
             } else if (system.contains("linux") || system.contains("mac")) {
-                ps = Runtime.getRuntime().exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
+                ps = Runtime.getRuntime()
+                        .exec(new String[]{"sh", "-c", String.format(commandLine, sib, udId, port)});
             }
             GlobalProcessMap.getMap().put(processName, ps);
         } catch (Exception e) {

@@ -17,3 +17,5 @@ modules:
   ios:
     # Replace with the bundleId of wda. If there is no. xcrunner suffix, it will be automatically completed. | 替换为wda的bundleId，如果没有.xctrunner后缀会自动补全
     wda-bundle-id: com.sonic.WebDriverAgentRunner
+    # (mac only) Replace with the xcode project path of wda. | 替换为wda的xcode project目录
+    wda-xcode-project-path: WebdriverAgent/WebDriverAgent.xcodeproj
