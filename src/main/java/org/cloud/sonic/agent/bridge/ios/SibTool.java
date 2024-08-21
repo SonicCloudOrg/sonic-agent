@@ -96,6 +96,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     }
 
     public void init() {
+        restTemplate = restTemplateBean;
         IOSDeviceThreadPool.cachedThreadPool.execute(() -> {
             String processName = "sib";
             if (GlobalProcessMap.getMap().get(processName) != null) {
