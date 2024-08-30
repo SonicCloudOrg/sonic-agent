@@ -110,7 +110,7 @@
         <dependency>
             <groupId>io.github.soniccloudorg</groupId>
             <artifactId>sonic-vision-core</artifactId>
-            <version>1.0.14-${platform}</version>
+            <version>1.0.15-${platform}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.groovy</groupId>
