@@ -475,6 +475,17 @@ public class IOSWSServer implements IIOSWSServer {
                             }
                             sendText(session, result.toJSONString());
                         }
+                        case "checkLocation" -> {
+                            JSONObject jsonCheck = new JSONObject();
+                            jsonCheck.put("msg", "generateStep");
+                            jsonCheck.put("key", key);
+                            jsonCheck.put("udId", udId);
+                            jsonCheck.put("sessionId", session.getUserProperties().get("id").toString());
+                            jsonCheck.put("element", msg.getString("element"));
+                            jsonCheck.put("eleType", msg.getString("eleType"));
+                            jsonCheck.put("pf", 2);
+                            TransportWorker.send(jsonCheck);
+                        }
                     }
                 }
             }

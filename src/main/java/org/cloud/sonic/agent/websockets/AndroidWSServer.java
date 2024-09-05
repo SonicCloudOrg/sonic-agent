@@ -391,6 +391,18 @@ public class AndroidWSServer implements IAndroidWSServer {
                             });
                         }
                     }
+                    case "checkLocation" -> {
+                        JSONObject jsonCheck = new JSONObject();
+                        jsonCheck.put("msg", "generateStep");
+                        jsonCheck.put("key", key);
+                        jsonCheck.put("udId", iDevice.getSerialNumber());
+                        jsonCheck.put("pwd", msg.getString("pwd"));
+                        jsonCheck.put("sessionId", session.getUserProperties().get("id").toString());
+                        jsonCheck.put("element", msg.getString("element"));
+                        jsonCheck.put("eleType", msg.getString("eleType"));
+                        jsonCheck.put("pf", 1);
+                        TransportWorker.send(jsonCheck);
+                    }
                 }
             }
         }
