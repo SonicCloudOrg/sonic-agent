@@ -136,7 +136,7 @@ public class EnvCheckTool {
             adb.setExecutable(true);
             adb.setWritable(true);
             adb.setReadable(true);
-            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", adb.getAbsolutePath()));
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("\"%s\" version", adb.getAbsolutePath()));
             if (ver.size() == 0) {
                 printFail(type);
                 throw new RuntimeException("Can not use adb! Please ensure that `adb` command useful!" + (system.toUpperCase(Locale.ROOT).contains("MAC") ? " You can see " + HELP_URL + " ." : ""));
@@ -163,7 +163,7 @@ public class EnvCheckTool {
             sasBinary.setExecutable(true);
             sasBinary.setWritable(true);
             sasBinary.setReadable(true);
-            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sasBinary.getAbsolutePath()));
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("\"%s\" version", sasBinary.getAbsolutePath()));
             sasPrintVersion = (ver.size() == 0 ? "null" : ver.get(0));
             if (ver.size() == 0 || !BytesTool.versionCheck(sasVersion, ver.get(0))) {
                 printFail(type);
@@ -190,7 +190,7 @@ public class EnvCheckTool {
             sibBinary.setExecutable(true);
             sibBinary.setWritable(true);
             sibBinary.setReadable(true);
-            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s version", sibBinary.getAbsolutePath()));
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("\"%s\" version", sibBinary.getAbsolutePath()));
             sibPrintVersion = (ver.size() == 0 ? "null" : ver.get(0));
             if (ver.size() == 0 || !BytesTool.versionCheck(sibVersion, ver.get(0))) {
                 printFail(type);
@@ -217,7 +217,7 @@ public class EnvCheckTool {
             sgmBinary.setExecutable(true);
             sgmBinary.setWritable(true);
             sgmBinary.setReadable(true);
-            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("%s -version", sgmBinary.getAbsolutePath()));
+            List<String> ver = ProcessCommandTool.getProcessLocalCommand(String.format("\"%s\" -version", sgmBinary.getAbsolutePath()));
             sgmPrintVersion = (ver.size() == 0 ? "null" : ver.get(0));
             if (ver.size() == 0 || !BytesTool.versionCheck(sgmVersion, ver.get(0).replace("sonic-go-mitmproxy:", "").trim())) {
                 printFail(type);
