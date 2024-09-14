@@ -34,6 +34,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -41,6 +44,7 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
     private static final File sasBinary = new File("plugins" + File.separator + "sonic-android-supply");
     private static final String sas = sasBinary.getAbsolutePath();
 
+    private static final Map<String, Thread> perfmonThreads = new ConcurrentHashMap<>();
     @Override
     public void onApplicationEvent(@NonNull ContextRefreshedEvent event) {
         log.info("Enable sonic-android-supply Module");
@@ -80,26 +84,61 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
     }
 
     public static void stopPerfmon(String udId) {
+        // 中断并移除性能监控线程
+        Thread perfmonThread = perfmonThreads.get(udId);
+        if (perfmonThread != null) {
+            perfmonThread.interrupt(); // 中断线程
+            perfmonThreads.remove(udId); // 移除线程
+        }
         terminateProcess(String.format("process-%s-perfmon", udId));
     }
 
     private static void terminateProcess(String processName) {
         Process ps = GlobalProcessMap.getMap().get(processName);
         if (ps != null) {
-            ps.children().forEach(ProcessHandle::destroy);
-            ps.destroy();
-            GlobalProcessMap.getMap().remove(processName);
+            ps.children().forEach(ProcessHandle::destroy); // 销毁子进程
+            ps.destroy(); // 销毁当前进程
+
+            try {
+                boolean exited = ps.waitFor(5, TimeUnit.SECONDS); // 等待进程终止，超时5秒
+                if (!exited) {
+                    ps.destroyForcibly(); // 强制终止
+                }
+            } catch (InterruptedException e) {
+                log.error("Process termination interrupted: ", e);
+                Thread.currentThread().interrupt(); // 重新设置中断状态
+            }
+
+            GlobalProcessMap.getMap().remove(processName); // 从全局映射中移除进程
         }
     }
 
     public static void startPerfmon(String udId, String pkg, Session session, LogUtil logUtil, int interval) {
-        stopPerfmon(udId);
+        stopPerfmon(udId); // 启动前先停止已有监控
         String processName = String.format("process-%s-perfmon", udId);
         String commandLine = String.format("%s perfmon -s %s -r %d %s -j --sys-cpu --sys-mem --sys-network", sas, udId, interval, pkg.isEmpty() ? "" : "--proc-cpu --proc-fps --proc-mem --proc-threads -p " + pkg);
+
         try {
             Process ps = executeCommand(commandLine);
             GlobalProcessMap.getMap().put(processName, ps);
-            handlePerfmonOutput(ps, session, logUtil);
+
+            // 启动输出线程并保存
+            Thread perfmonThread = new Thread(() -> {
+                try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(ps.getInputStream()))) {
+                    String line;
+                    while (!Thread.currentThread().isInterrupted() && (line = stdInput.readLine()) != null) {
+                        processPerfmonLine(line, session, logUtil);
+                    }
+                } catch (IOException e) {
+                    // 忽略流关闭的异常
+                    if (!"Stream closed".equals(e.getMessage())) {
+                        log.error("Error reading perfmon output", e);
+                    }
+                }
+            });
+            perfmonThreads.put(udId, perfmonThread);
+            perfmonThread.start(); // 启动输出线程
+
         } catch (IOException e) {
             log.error("Error starting performance monitor", e);
         }
@@ -132,7 +171,10 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
                     log.info("Output: " + line);
                 }
             } catch (IOException e) {
-                log.error("Error reading standard output", e);
+                // 忽略流关闭的异常
+                if (!"Stream closed".equals(e.getMessage())) {
+                    log.error("Error reading standard output", e);
+                }
             }
         }).start();
 
@@ -144,29 +186,12 @@ public class AndroidSupplyTool implements ApplicationListener<ContextRefreshedEv
                     log.error("Error: " + line);
                 }
             } catch (IOException e) {
-                log.error("Error reading error output", e);
+                // 忽略流关闭的异常
+                if (!"Stream closed".equals(e.getMessage())) {
+                    log.error("Error reading error output", e);
+                }
             }
         }).start();
-    }
-
-    private static void handlePerfmonOutput(Process ps, Session session, LogUtil logUtil) throws IOException {
-        try (BufferedReader stdInput = new BufferedReader(new InputStreamReader(ps.getInputStream()));
-             BufferedReader stdInputErr = new BufferedReader(new InputStreamReader(ps.getErrorStream()))) {
-            Thread errThread = new Thread(() -> logErrorStream(stdInputErr));
-            errThread.start();
-            String line;
-            while ((line = stdInput.readLine()) != null) {
-                processPerfmonLine(line, session, logUtil);
-            }
-        }
-    }
-
-    private static void logErrorStream(BufferedReader stdInputErr) {
-        try {
-            stdInputErr.lines().forEach(log::info);
-        } catch (Exception e) {
-            log.error("Error reading error stream", e);
-        }
     }
 
     private static void processPerfmonLine(String line, Session session, LogUtil logUtil) {
