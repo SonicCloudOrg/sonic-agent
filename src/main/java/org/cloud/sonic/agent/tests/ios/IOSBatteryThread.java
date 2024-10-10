@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.ios.SibTool;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.StringTool;
 import org.cloud.sonic.agent.transport.TransportWorker;
 
 import java.util.ArrayList;
@@ -48,60 +49,57 @@ public class IOSBatteryThread implements Runnable {
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
         if (TransportWorker.client == null) {
+        	log.debug("TransportWorker.client is null.");
             return;
         }
 
         List<String> deviceList = SibTool.getDeviceList();
         if (deviceList.size() == 0) {
+        	log.debug("No iOS devices to check battery.");
             return;
         }
 
         List<JSONObject> detail = new ArrayList<>();
-        JSONObject devicesBattery;
         for (String udId : deviceList) {
             try {
-                devicesBattery = SibTool.getBattery(udId);
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
-            }
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("udId", udId);
-            jsonObject.put("vol", devicesBattery.getInteger("Voltage"));
-            int tem = devicesBattery.getInteger("Temperature") / 10;
-            jsonObject.put("tem", tem);
-            jsonObject.put("level", devicesBattery.getInteger("CurrentCapacity"));
-            detail.add(jsonObject);
-            //control
-            if (tem >= BytesTool.highTemp * 10) {
-                Integer times = DevicesBatteryMap.getTempMap().get(udId);
-                if (times == null) {
-                    //Send Error Msg
-                    JSONObject errCall = new JSONObject();
+            	final JSONObject devicesBattery = SibTool.getBattery(udId);
+                final JSONObject jsonObject = new JSONObject();
+                jsonObject.put("udId", udId);
+                jsonObject.put("vol", devicesBattery.getInteger("Voltage"));
+                final int tem = devicesBattery.getInteger("Temperature")/10;
+                jsonObject.put("tem", tem);
+                jsonObject.put("level", devicesBattery.getInteger("CurrentCapacity"));
+                detail.add(jsonObject);
+                
+                // control
+                if (tem>=BytesTool.highTemp*10) {
+                    Integer times = DevicesBatteryMap.getTempMap().get(udId);
+                    final JSONObject errCall = new JSONObject();
                     errCall.put("msg", "errCall");
                     errCall.put("udId", udId);
                     errCall.put("tem", tem);
-                    errCall.put("type", 1);
+                    if (times==null) {
+                        times = 1;
+                    } else {
+                        times += 1;
+                    } // end if
+                    DevicesBatteryMap.getTempMap().put(udId, times);
+                    if (times >= (BytesTool.highTempTime * 2)) {
+                        errCall.put("type", 2); // Send shutdown Msg
+                        log.error("iOS device {} battery temperature too high (over {} times; threshold= {}, current= {}), shutting down...", udId, times, BytesTool.highTemp, tem);
+                        SibTool.shutdown(udId);
+                        DevicesBatteryMap.getTempMap().remove(udId);
+                    } else {
+                    	errCall.put("type", 1); // Send Error Msg
+                    	log.warn("iOS device {} battery temperature too high ({} time; threshold= {}, current= {})", udId, StringTool.ordinal(times), BytesTool.highTemp, tem);
+                    } // end if
                     TransportWorker.send(errCall);
-                    DevicesBatteryMap.getTempMap().put(udId, 1);
                 } else {
-                    DevicesBatteryMap.getTempMap().put(udId, times + 1);
-                }
-                times = DevicesBatteryMap.getTempMap().get(udId);
-                if (times >= (BytesTool.highTempTime * 2)) {
-                    //Send shutdown Msg
-                    JSONObject errCall = new JSONObject();
-                    errCall.put("msg", "errCall");
-                    errCall.put("udId", udId);
-                    errCall.put("tem", tem);
-                    errCall.put("type", 2);
-                    TransportWorker.send(errCall);
-                    SibTool.shutdown(udId);
                     DevicesBatteryMap.getTempMap().remove(udId);
-                }
-            } else {
-                DevicesBatteryMap.getTempMap().remove(udId);
-            }
+                } // end if
+            } catch (Exception e) {
+                log.atWarn().addKeyValue("udid", udId).log("Failed to get battery level of iOS device: ↴", e);
+            } // end try
         }
         JSONObject result = new JSONObject();
         result.put("msg", "battery");
@@ -109,7 +107,7 @@ public class IOSBatteryThread implements Runnable {
         try {
             TransportWorker.send(result);
         } catch (Exception e) {
-            log.error("Send battery msg failed, cause: ", e);
+            log.error("Send battery msg failed: ↴", e);
         }
     }
 }
