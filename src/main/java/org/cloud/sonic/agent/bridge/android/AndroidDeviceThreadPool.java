@@ -1,5 +1,6 @@
 package org.cloud.sonic.agent.bridge.android;
 
+import jakarta.annotation.PreDestroy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,7 +17,15 @@ public class AndroidDeviceThreadPool {
     public static ExecutorService cachedThreadPool;
 
     @Bean
-    public void androidThreadPoolInit() {
+    public ExecutorService androidThreadPoolInit() {
         cachedThreadPool = Executors.newCachedThreadPool();
+        return cachedThreadPool;
+    }
+
+    @PreDestroy
+    public void shutdownThreadPool() {
+        if (cachedThreadPool != null) {
+            cachedThreadPool.shutdown();
+        }
     }
 }
