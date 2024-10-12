@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.annotation.Bean;
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
@@ -83,7 +83,7 @@ public class SibTool implements ApplicationListener<ContextRefreshedEvent> {
     private RestTemplate restTemplateBean;
     private static Map<String, Integer> webViewMap = new HashMap<>();
 
-    @Bean
+    @PostConstruct
     public void setEnv() {
         bundleId = getBundleId;
         xcodeProjectPath = getXcodeProjectPath;
