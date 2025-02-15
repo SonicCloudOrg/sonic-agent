@@ -17,12 +17,14 @@
  */
 package org.cloud.sonic.agent.tests.android;
 
+import android.os.BatteryManager;
 import com.alibaba.fastjson.JSONObject;
 import com.android.ddmlib.IDevice;
 import lombok.extern.slf4j.Slf4j;
 import org.cloud.sonic.agent.bridge.android.AndroidDeviceBridgeTool;
 import org.cloud.sonic.agent.common.maps.DevicesBatteryMap;
 import org.cloud.sonic.agent.tools.BytesTool;
+import org.cloud.sonic.agent.tools.StringTool;
 import org.cloud.sonic.agent.transport.TransportWorker;
 import org.springframework.util.StringUtils;
 
@@ -49,61 +51,74 @@ public class AndroidBatteryThread implements Runnable {
     public void run() {
         Thread.currentThread().setName(THREAD_NAME);
         if (TransportWorker.client == null) {
+        	log.debug("TransportWorker.client is null.");
             return;
         }
 
         IDevice[] deviceList = AndroidDeviceBridgeTool.getRealOnLineDevices();
         if (deviceList == null || deviceList.length == 0) {
+        	log.debug("No Android devices are online to check battery.");
             return;
         }
         List<JSONObject> detail = new ArrayList<>();
+        final String strStartLine = "Max charging voltage:";
         for (IDevice iDevice : deviceList) {
-            JSONObject jsonObject = new JSONObject();
-            String battery = AndroidDeviceBridgeTool
-                    .executeCommand(iDevice, "dumpsys battery").replace("Max charging voltage", "");
-            if (StringUtils.hasText(battery)) {
-                String realTem = battery.substring(battery.indexOf("temperature")).trim();
-                int tem = BytesTool.getInt(realTem.substring(13, realTem.indexOf("\n")));
-                String realLevel = battery.substring(battery.indexOf("level")).trim();
-                int level = BytesTool.getInt(realLevel.substring(7, realLevel.indexOf("\n")));
-                String realVol = battery.substring(battery.indexOf("voltage")).trim();
-                int vol = BytesTool.getInt(realVol.substring(9, realVol.indexOf("\n")));
-                jsonObject.put("udId", iDevice.getSerialNumber());
+        	String udid = null;
+        	try {
+        		udid = iDevice.getSerialNumber(); // just in case that device disconnects in the middle of executing the following code
+	            JSONObject jsonObject = new JSONObject();
+	            String battery = AndroidDeviceBridgeTool.executeCommand(iDevice, "dumpsys battery");
+	            if (!StringUtils.hasText(battery)) { continue; } // end if
+	            int pMaxVolt = battery.indexOf(strStartLine);
+	            if (pMaxVolt<0) { continue; } // end if
+	            battery = battery.substring(battery.indexOf("\n", pMaxVolt+strStartLine.length()));
+                final String realTem = battery.substring(battery.indexOf(BatteryManager.EXTRA_TEMPERATURE+":")).trim();
+                final int tem = BytesTool.getInt(realTem.substring(BatteryManager.EXTRA_TEMPERATURE.length()+2, realTem.indexOf("\n")));
+                final String realLevel = battery.substring(battery.indexOf(BatteryManager.EXTRA_LEVEL+":")).trim();
+                final int level = BytesTool.getInt(realLevel.substring(BatteryManager.EXTRA_LEVEL.length()+2, realLevel.indexOf("\n")));
+                final String realVol = battery.substring(battery.indexOf(BatteryManager.EXTRA_VOLTAGE+":")).trim();
+                final int vol = BytesTool.getInt(realVol.substring(BatteryManager.EXTRA_VOLTAGE.length()+2, realVol.indexOf("\n")));                
+                final String realStatus = battery.substring(battery.indexOf(BatteryManager.EXTRA_STATUS+":")).trim();
+                final int intStatus = Integer.parseInt(realStatus.substring(BatteryManager.EXTRA_STATUS.length()+2, realStatus.indexOf("\n")), 10);
+                final String realHealth = battery.substring(battery.indexOf(BatteryManager.EXTRA_HEALTH+":")).trim();
+                final int intHealth = Integer.parseInt(realHealth.substring(BatteryManager.EXTRA_HEALTH.length()+2, realHealth.indexOf("\n")), 10);
+                jsonObject.put("udId", udid);
                 jsonObject.put("tem", tem);
                 jsonObject.put("level", level);
                 jsonObject.put("vol", vol);
+                jsonObject.put(BatteryManager.EXTRA_STATUS, intStatus);
+                jsonObject.put(BatteryManager.EXTRA_HEALTH, intHealth);
                 detail.add(jsonObject);
-                //control
+                
+                // control
                 if (tem >= BytesTool.highTemp * 10) {
-                    Integer times = DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber());
+                	final JSONObject errCall = new JSONObject();
+                	errCall.put("msg", "errCall");
+                	errCall.put("udId", udid);
+                	errCall.put("tem", tem);
+                    Integer times = DevicesBatteryMap.getTempMap().get(udid);
                     if (times == null) {
-                        //Send Error Msg
-                        JSONObject errCall = new JSONObject();
-                        errCall.put("msg", "errCall");
-                        errCall.put("udId", iDevice.getSerialNumber());
-                        errCall.put("tem", tem);
-                        errCall.put("type", 1);
-                        TransportWorker.send(errCall);
-                        DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), 1);
+                    	times = 1;
                     } else {
-                        DevicesBatteryMap.getTempMap().put(iDevice.getSerialNumber(), times + 1);
-                    }
-                    times = DevicesBatteryMap.getTempMap().get(iDevice.getSerialNumber());
+                        times += 1;
+                    } // end if
+                    DevicesBatteryMap.getTempMap().put(udid, times);
                     if (times >= (BytesTool.highTempTime * 2)) {
-                        //Send shutdown Msg
-                        JSONObject errCall = new JSONObject();
-                        errCall.put("msg", "errCall");
-                        errCall.put("udId", iDevice.getSerialNumber());
-                        errCall.put("tem", tem);
-                        errCall.put("type", 2);
-                        TransportWorker.send(errCall);
+                        errCall.put("type", 2); // Send shutdown Msg
+                        log.error("Android device {} battery temperature too high (over {} times; threshold= {}, current= {}), shutting down...", udid, times, BytesTool.highTemp, tem);
                         AndroidDeviceBridgeTool.shutdown(iDevice);
-                        DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
-                    }
+                        DevicesBatteryMap.getTempMap().remove(udid);
+                    } else {
+                    	errCall.put("type", 1); // Send Error Msg
+                    	log.warn("Android device {} battery temperature too high ({} time; threshold= {}, current= {})", udid, StringTool.ordinal(times), BytesTool.highTemp, tem);
+                    } // end if
+                    TransportWorker.send(errCall);
                 } else {
-                    DevicesBatteryMap.getTempMap().remove(iDevice.getSerialNumber());
-                }
-            }
+                    DevicesBatteryMap.getTempMap().remove(udid);
+                } // end if
+        	} catch (Exception e) {
+        		log.atWarn().addKeyValue("udid", udid).log("Failed to get battery status: ↴", e);
+        	} // end try
         }
         JSONObject result = new JSONObject();
         result.put("msg", "battery");
@@ -111,7 +126,7 @@ public class AndroidBatteryThread implements Runnable {
         try {
             TransportWorker.send(result);
         } catch (Exception e) {
-            log.error("Send battery msg failed, cause: ", e);
+            log.error("Send battery msg failed: ↴", e);
         }
     }
 }
